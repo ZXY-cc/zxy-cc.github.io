@@ -445,11 +445,10 @@ a:hover { color: var(--accent-3); text-decoration: none; }
   will-change: transform;
 }
 
-/* ---------- 头部 ---------- */
-.site-head { margin-top: 46px; padding: 28px 32px 22px; }
-
-.head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.brand-wrap { display: flex; align-items: center; gap: 15px; }
+/* ---------- 头部：导航在最上一栏，搜索独占整行 ---------- */
+.site-head { margin-top: 40px; padding: 13px 18px; }
+.head-bar { display: flex; align-items: center; gap: 14px; }
+.brand-wrap { display: flex; align-items: center; gap: 11px; flex: 0 0 auto; }
 
 /* 圆润胖星标：蜜金柔光托底，边缘化在雾里 */
 .puffy-mark { position: relative; flex: 0 0 auto; display: grid; place-items: center; width: 34px; height: 34px; }
@@ -465,7 +464,7 @@ a:hover { color: var(--accent-3); text-decoration: none; }
   animation: puff 5.5s ease-in-out infinite alternate;
 }
 
-.site-title { font-size: 27px; font-weight: 650; letter-spacing: 1.2px; line-height: 1.3; }
+.site-title { font-size: 19px; font-weight: 650; letter-spacing: 1px; line-height: 1.3; white-space: nowrap; }
 .site-title a {
   background: linear-gradient(100deg, #6e91d6 0%, #a98bd4 52%, #e096bd 100%);
   -webkit-background-clip: text; background-clip: text;
@@ -473,8 +472,6 @@ a:hover { color: var(--accent-3); text-decoration: none; }
 }
 :root[data-theme="night"] .site-title a { background-image: linear-gradient(100deg, #b6d0ff 0%, #ddbdfa 52%, #f9bddb 100%); }
 .site-title a:hover { filter: brightness(1.08); }
-
-.tagline { margin: 5px 0 0; color: var(--muted); font-size: 13.5px; letter-spacing: .3px; }
 
 .icon-btn {
   flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%;
@@ -489,10 +486,8 @@ a:hover { color: var(--accent-3); text-decoration: none; }
 .icon-btn:hover { transform: rotate(-18deg) scale(1.08); color: var(--accent-3); box-shadow: 0 0 18px rgba(171, 139, 212, .28), var(--glass-inner); }
 .icon-btn svg { display: block; width: 18px; height: 18px; }
 
-.head-bottom { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 26px; flex-wrap: wrap; }
-
-.nav { display: flex; gap: 5px; font-size: 14px; }
-.nav a { color: var(--muted); padding: 7px 17px; border-radius: 999px; border: 1px solid transparent; }
+.nav { display: flex; gap: 2px; font-size: 13px; margin-left: auto; min-width: 0; flex-wrap: nowrap; }
+.nav a { color: var(--muted); padding: 6px 9px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
 .nav a:hover { color: var(--ink-strong); background: rgba(255, 255, 255, .26); }
 .nav a.active {
   color: var(--ink-strong); font-weight: 600;
@@ -503,29 +498,28 @@ a:hover { color: var(--accent-3); text-decoration: none; }
 }
 .nav a.active::after {
   content: ''; display: inline-block; vertical-align: middle;
-  width: 11px; height: 11px; margin-left: 8px;
+  width: 9px; height: 9px; margin-left: 6px;
   background-image: var(--puffy-mark);
   background-size: contain; background-repeat: no-repeat;
   opacity: .58;
 }
 
-.search-box {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 15px; border-radius: 999px;
-  background: var(--glass-sheen), var(--glass-strong);
-  border: 1px solid var(--glass-line);
-  box-shadow: var(--glass-inner);
-  
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; margin-top: 12px; padding: 11px 20px;
+  border-radius: 999px;
   color: var(--muted);
   transition: box-shadow .3s ease, border-color .3s ease;
 }
-.search-box:focus-within { border-color: rgba(171, 139, 212, .6); box-shadow: 0 0 18px rgba(171, 139, 212, .20), var(--glass-inner); }
-.search-box input {
-  width: 150px; border: 0; outline: 0; background: none;
-  color: var(--ink); font: inherit; font-size: 13px;
+.search-bar:focus-within { border-color: rgba(171, 139, 212, .6); box-shadow: 0 0 18px rgba(171, 139, 212, .20), var(--glass-inner); }
+.search-bar input {
+  flex: 1 1 auto; width: 100%; min-width: 0;
+  border: 0; outline: 0; background: none;
+  color: var(--ink); font: inherit; font-size: 13.5px;
 }
-.search-box input::placeholder { color: var(--faint); }
-.search-box input::-webkit-search-cancel-button { cursor: pointer; }
+.search-bar input::placeholder { color: var(--faint); }
+.search-bar input::-webkit-search-cancel-button { cursor: pointer; }
+.search-tip { flex: 0 0 auto; font-size: 11px; letter-spacing: .8px; color: var(--faint); }
 
 main { min-height: 320px; }
 
@@ -698,7 +692,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
    只作用于夜间，白天一行不动。蓝色小字改近白冷调并加极淡暗描边；
    搜索 / 主题 / 星标 / 条纹等符号同步提亮；胶囊与代码块换深蓝底，
    避免亮字压在亮底上。 */
-:root[data-theme="night"] .tagline,
+:root[data-theme="night"] .profile-bio,
+:root[data-theme="night"] .p-stat span,
+:root[data-theme="night"] .search-tip,
 :root[data-theme="night"] .nav a,
 :root[data-theme="night"] .page-note,
 :root[data-theme="night"] .post-meta,
@@ -708,10 +704,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .site-foot,
 :root[data-theme="night"] .line-numbers,
 :root[data-theme="night"] .copy-btn,
-:root[data-theme="night"] .search-box input::placeholder {
+:root[data-theme="night"] .search-bar input::placeholder {
   text-shadow: var(--night-ink-halo);
 }
-:root[data-theme="night"] .search-box,
+:root[data-theme="night"] .search-bar,
 :root[data-theme="night"] .icon-btn { color: var(--accent); }
 :root[data-theme="night"] .nav a:hover { color: #ffffff; background: rgba(18, 30, 74, .42); }
 :root[data-theme="night"] .nav a.active { color: #ffffff; }
@@ -735,18 +731,78 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* ============================================================
    功能扩展层：全部沿用上面的主题变量与 .glass，不改动任何既有 UI 规则。
-   新增页面：项目 / 归档 / 照片墙 / 相册 / 说说 / 杂谈 / 友链 / 关于 /
+   新增页面：首页名片 / 项目 / 归档 / 照片墙 / 相册 / 说说 / 杂谈 / 友链 / 关于 /
    全局搜索 / 创作台；新增特效：滚动渐显、卡片指针高光、光标柔光、
-   稀疏弹幕、夜间流萤、启动闪屏、图片灯箱。
+   夜间流萤、启动闪屏、图片灯箱。
    ============================================================ */
 
 /* ---------- 头像 ---------- */
-.nav { flex-wrap: wrap; }
 .avatar { display: block; object-fit: cover; border-radius: 50%; flex: 0 0 auto;
   border: 2px solid var(--glass-line); box-shadow: var(--glass-shadow), var(--glass-inner); }
 .avatar-brand { width: 48px; height: 48px; }
 .avatar-sm { width: 30px; height: 30px; border-width: 1px; }
 .avatar-lg { width: 92px; height: 92px; border-width: 3px; }
+
+/* ---------- 首页名片：仿参考站结构，配色沿用本站晴蓝樱粉 ---------- */
+.profile-card {
+  --stat-1: #6e91d6; --stat-2: #a073c9; --stat-3: #cf7fae;
+  position: relative; overflow: hidden;
+  margin: 16px 0 6px; padding: 32px 36px 28px;
+  border-radius: var(--radius-lg);
+}
+.profile-card::before {
+  content: ''; position: absolute; top: -50%; right: -12%; width: 62%; height: 170%;
+  pointer-events: none; opacity: .72;
+  background: radial-gradient(closest-side, var(--star-mist), var(--star-fade) 58%, transparent 78%),
+              radial-gradient(closest-side at 72% 34%, var(--wash-pink), transparent 74%);
+}
+.profile-card > * { position: relative; z-index: 1; }
+.profile-top { display: flex; align-items: center; gap: 26px; }
+.profile-avatar-wrap {
+  flex: 0 0 auto; padding: 3px; border-radius: 27px;
+  background: linear-gradient(140deg, #93b6f0, #b79ae2 52%, #f0aecf);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.55), 0 10px 30px rgba(112,138,190,.22);
+}
+.profile-avatar {
+  display: block; width: 106px; height: 106px; border-radius: 23px;
+  object-fit: cover; border: 2px solid rgba(255,255,255,.78);
+}
+.profile-id { min-width: 0; }
+.profile-name {
+  margin: 0 0 6px; font-family: Georgia, "Songti SC", "STSong", "Noto Serif SC", "SimSun", serif;
+  font-size: 34px; font-weight: 600; letter-spacing: 1.2px; line-height: 1.25;
+  color: var(--ink-strong);
+}
+.profile-bio { margin: 0; font-size: 14.5px; line-height: 1.95; color: var(--muted); letter-spacing: .2px; }
+.profile-foot { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 28px; }
+.profile-stats { display: flex; align-items: stretch; }
+.p-stat { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 74px; padding: 0 12px; text-align: center; color: inherit; }
+.p-stat + .p-stat { border-left: 1px solid var(--line); }
+.p-stat b { font-size: 25px; font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums;
+  color: var(--stat-1); }
+.p-stat:nth-child(2) b { color: var(--stat-2); }
+.p-stat:nth-child(3) b { color: var(--stat-3); }
+.p-stat span { font-size: 11.5px; letter-spacing: .8px; color: var(--muted); margin-top: 3px; }
+.p-stat:hover b { filter: brightness(1.06); }
+.p-links { display: flex; gap: 9px; margin-left: auto; flex-wrap: wrap; }
+.p-link { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
+  color: var(--accent); background: var(--glass-sheen), var(--glass-strong);
+  border: 1px solid var(--glass-line); box-shadow: var(--glass-inner);
+  transition: transform .3s ease, box-shadow .3s ease, color .3s ease; }
+.p-link:hover { transform: translateY(-3px); color: var(--accent-3);
+  box-shadow: 0 10px 22px rgba(112,138,190,.20), var(--glass-inner); }
+.p-link svg { display: block; width: 20px; height: 20px; }
+.p-link.is-accent { color: #fff; border-color: rgba(255,255,255,.62);
+  background: linear-gradient(135deg, #8fb1ee, #b298e0 54%, #eda9ce);
+  box-shadow: 0 8px 22px rgba(171,139,212,.30), var(--glass-inner); }
+.p-link.is-accent:hover { color: #fff; }
+:root[data-theme="night"] .profile-card { --stat-1: #b6d0ff; --stat-2: #ddbdfa; --stat-3: #f9bddb; }
+:root[data-theme="night"] .profile-name,
+:root[data-theme="night"] .p-stat b { text-shadow: 0 2px 10px rgba(8,16,44,.48); }
+:root[data-theme="night"] .profile-avatar-wrap {
+  box-shadow: 0 0 0 1px rgba(208,226,255,.40), 0 10px 30px rgba(8,16,44,.32); }
+:root[data-theme="night"] .p-link { color: var(--accent); }
 
 /* ---------- 通用页头与统计 ---------- */
 .page-head { margin: 34px 0 20px; }
@@ -994,7 +1050,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .stab.on,
 :root[data-theme="night"] .filter.on { color: #ffffff; }
 
-/* ---------- 启动闪屏 / 光标柔光 / 弹幕 / 流萤 ---------- */
+/* ---------- 启动闪屏 / 光标柔光 / 流萤 ---------- */
 .splash { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;
   pointer-events: none;
   background: linear-gradient(150deg, var(--sky-top), var(--sky-mid) 48%, var(--sky-low));
@@ -1010,11 +1066,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .cursor-glow { position: fixed; left: 0; top: 0; width: 340px; height: 340px; margin: -170px 0 0 -170px;
   z-index: 0; pointer-events: none; border-radius: 50%; opacity: .32;
   background: radial-gradient(circle, var(--star-halo), transparent 70%); }
-.whispers { position: absolute; inset: 0; overflow: hidden; }
-.whisper { position: absolute; left: 100%; white-space: nowrap; font-size: 12px; letter-spacing: 1.2px;
-  color: var(--faint); opacity: .34; text-shadow: 0 1px 6px rgba(255,255,255,.30);
-  animation: whisper-float var(--wdur, 30s) linear forwards; }
-@keyframes whisper-float { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-190vw, 0, 0); } }
 .fireflies { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
 :root[data-theme="night"] .fireflies { opacity: 1; }
 .firefly { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--star-dot);
@@ -1073,7 +1124,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .f-row { grid-template-columns: 1fr; }
   .studio-form { padding: 20px 18px; }
   .studio-head { flex-direction: column; align-items: flex-start; }
-  .cursor-glow, .whispers { display: none; }
+  .cursor-glow { display: none; }
   .photo-tile img { height: 160px; }
 }
 @media (max-width: 400px) {
@@ -1081,18 +1132,44 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .avatar-lg { width: 74px; height: 74px; }
 }
 
+/* ---------- 名片响应式 ---------- */
+@media (max-width: 640px) {
+  .profile-card { padding: 24px 20px 22px; border-radius: 22px; }
+  .profile-top { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .profile-avatar { width: 82px; height: 82px; border-radius: 19px; }
+  .profile-avatar-wrap { border-radius: 22px; }
+  .profile-name { font-size: 26px; }
+  .profile-bio { font-size: 13px; line-height: 1.8; }
+  .profile-foot { margin-top: 20px; gap: 14px; }
+  .p-stat { min-width: 60px; padding: 0 9px; }
+  .p-stat b { font-size: 21px; }
+  .p-links { margin-left: 0; width: 100%; }
+  .p-link { width: 38px; height: 38px; border-radius: 12px; }
+}
+
+/* 中等宽度：头栏放不下时，导航换到同一块玻璃里的第二行 */
+@media (max-width: 780px) {
+  .head-bar { flex-wrap: wrap; }
+  .brand-wrap { flex: 1 1 auto; }
+  .icon-btn { margin-left: auto; }
+  .nav { order: 3; flex: 1 1 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 640px) {
   .wrap { padding: 0 16px; }
-  .site-head { margin-top: 22px; padding: 22px 20px 18px; border-radius: 22px; }
-  .site-title { font-size: 23px; }
+  .site-head { margin-top: 22px; padding: 12px 14px; border-radius: 20px; }
+  .head-bar { flex-wrap: wrap; gap: 10px; }
+  .brand-wrap { flex: 1 1 auto; }
+  .icon-btn { margin-left: auto; }
+  .site-title { font-size: 18px; }
   .puffy-mark { width: 29px; height: 29px; }
   .puffy-mark svg { width: 22px; height: 22px; }
-  .head-bottom { margin-top: 20px; }
-  .nav { flex: 1 1 auto; }
-  .nav a { padding: 6px 12px; }
-  .search-box { flex: 1 1 100%; }
-  .search-box input { width: 100%; }
+  .nav { order: 3; flex: 1 1 100%; }
+  .nav a { padding: 6px 11px; }
+  .search-bar { margin-top: 10px; padding: 10px 16px; }
+  .search-tip { display: none; }
   .post-item { padding: 20px 20px; }
   .post-title { font-size: 18px; }
   .article { padding: 26px 20px; border-radius: 22px; }
@@ -1113,7 +1190,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* 更窄的屏幕：继续收窄卡片内边距，保住正文有效行宽 */
 @media (max-width: 400px) {
   .wrap { padding: 0 12px; }
-  .site-head { padding: 18px 16px 16px; }
+  .site-head { padding: 10px 12px; }
   .post-item { padding: 18px 16px; }
   .article { padding: 22px 16px; }
   .tag-cloud, .about-card { padding: 18px 16px; }

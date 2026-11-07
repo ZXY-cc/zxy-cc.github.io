@@ -71,30 +71,24 @@
     <span class="shoot shoot-b"></span>
     <span class="shoot shoot-c"></span>
   </div>
-  <!-- 星夜才亮起的流萤，与稀疏飘过的短句 -->
+  <!-- 星夜才亮起的流萤 -->
   <div class="fireflies">
     <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
     <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
   </div>
-  <div class="whispers" id="whispers"></div>
 </div>
 
 <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
 <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
 <div class="wrap">
+  <!-- 最上面一栏：品牌 + 导航 + 主题切换 -->
   <header class="site-head glass">
-    <div class="head-top">
+    <div class="head-bar">
       <div class="brand-wrap">
         <img class="avatar avatar-brand" src="assets/avatar.jpg" alt="站长头像">
-        <div>
-          <div class="site-title"><a href="#/" id="brand">纸上留白</a></div>
-          <p class="tagline" id="tagline"></p>
-        </div>
+        <div class="site-title"><a href="#/" id="brand">纸上留白</a></div>
       </div>
-      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换为星夜模式" title="切换为星夜模式"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z" fill="currentColor"/></svg></button>
-    </div>
-    <div class="head-bottom">
       <nav class="nav">
         <a href="#/" data-nav="home">文章</a>
         <a href="#/timeline" data-nav="timeline">归档</a>
@@ -106,12 +100,16 @@
         <a href="#/tags" data-nav="tags">标签</a>
         <a href="#/about" data-nav="about">关于</a>
       </nav>
-      <label class="search-box" for="search">
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 15.5 21 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <input id="search" type="search" placeholder="搜索文章或标签" autocomplete="off" aria-label="搜索文章或标签">
-      </label>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换为星夜模式" title="切换为星夜模式"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z" fill="currentColor"/></svg></button>
     </div>
   </header>
+
+  <!-- 第二栏：搜索独占整行 -->
+  <label class="search-bar glass" for="search" role="search">
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 15.5 21 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <input id="search" type="search" placeholder="搜索文章、杂谈、说说、项目与相册" autocomplete="off" aria-label="全站搜索">
+    <span class="search-tip" aria-hidden="true">全站检索</span>
+  </label>
 
   <main id="app" aria-live="polite"></main>
 

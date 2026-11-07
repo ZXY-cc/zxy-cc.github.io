@@ -49,7 +49,8 @@
 
   document.title = TITLE;
   document.getElementById('brand').textContent = TITLE;
-  document.getElementById('tagline').textContent = CFG.tagline || SITE.tagline || '';
+  var tagEl = document.getElementById('tagline');
+  if (tagEl) tagEl.textContent = CFG.tagline || SITE.tagline || '';
   document.getElementById('foot-left').textContent =
     '© ' + (SITE.since || new Date().getFullYear()) + ' ' + (CFG.author || SITE.author || '');
   var footNote = document.getElementById('foot-note');
@@ -367,8 +368,52 @@
       (n ? '' : '<p class="page-note">没有找到相关内容，换个词试试。</p>');
   }
 
+  /* ---------- 首页名片 ----------
+     结构仿参考站：圆角头像 + 名字 + 简介，底部三组统计与一排图标按钮；
+     数量和链接都取自 site-data.js，站长在创作台里改数据即可同步。 */
+  var P_ICONS = {
+    github: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2.2a9.8 9.8 0 0 0-3.1 19.1c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c2-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.4 4.6-4.6 4.9.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A9.8 9.8 0 0 0 12 2.2Z"/></svg>',
+    archive: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="4.2" width="17.6" height="4" rx="1.2"/><path d="M5 8.2v10.3c0 .9.7 1.5 1.5 1.5h11c.8 0 1.5-.6 1.5-1.5V8.2M9.8 12.2h4.4"/></svg>',
+    image: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="4.6" width="17.6" height="14.8" rx="2.4"/><circle cx="8.4" cy="9.6" r="1.5"/><path d="m4.4 17.2 4.7-4.4 3.6 3.2 2.8-2.4 4.1 3.6"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 11.6c0 4-3.7 7.2-8.2 7.2-.9 0-1.8-.1-2.6-.4L4.2 20l1.4-4a6.7 6.7 0 0 1-1.8-4.4c0-4 3.7-7.2 8.2-7.2s8.2 3.2 8.2 7.2Z"/></svg>',
+    link: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.8 14.2 14.2 9.8M7.6 11.2 6 12.8a3.4 3.4 0 0 0 4.8 4.8l1.6-1.6M16.4 12.8 18 11.2a3.4 3.4 0 0 0-4.8-4.8l-1.6 1.6"/></svg>',
+    star: '<svg viewBox="0 0 100 100" aria-hidden="true" fill="currentColor"><use href="#puffy-star"/></svg>'
+  };
+  function profileLinksHtml() {
+    var links = (CFG.social && CFG.social.length) ? CFG.social : [
+      { name: 'GitHub', icon: 'github', url: 'https://github.com/ZXY-cc', note: '代码存放处' },
+      { name: '归档', icon: 'archive', url: '#/timeline', note: '全部记录' },
+      { name: '关于', icon: 'star', url: '#/about', note: '关于这个站', accent: true }
+    ];
+    return links.map(function (s) {
+      var ext = /^https?:/.test(s.url || '');
+      var label = s.name + (s.note ? ' · ' + s.note : '');
+      return '<a class="p-link' + (s.accent ? ' is-accent' : '') + '" href="' + esc(s.url) + '"' +
+        (ext ? ' target="_blank" rel="noopener noreferrer"' : '') +
+        ' title="' + esc(label) + '" aria-label="' + esc(s.name) + '">' +
+        (P_ICONS[s.icon] || P_ICONS.star) + '</a>';
+    }).join('');
+  }
+  function profileCard() {
+    var name = CFG.displayName || SITE.title || '纸上留白';
+    var bio = CFG.bio || CFG.tagline || SITE.tagline || '';
+    var stats = [
+      [POSTS.length, '文章', '#/'],
+      [arr('chatter').length, '杂谈', '#/chatter'],
+      [photoCount(), '照片', '#/photowall']
+    ];
+    return '<section class="profile-card glass sheen reveal" aria-label="站长名片">' +
+      '<div class="profile-top"><span class="profile-avatar-wrap">' +
+      avatarImg('avatar profile-avatar') + '</span>' +
+      '<div class="profile-id"><h1 class="profile-name">' + esc(name) + '</h1>' +
+      '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
+      '<div class="profile-foot"><div class="profile-stats">' +
+      stats.map(function (s) {
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
+      }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
+  }
   function renderHome() {
-    return statHtml() + renderList(query ? [] : POSTS, query ? '' : '最近的记录');
+    return profileCard() + renderList(query ? [] : POSTS, query ? '' : '最近的记录');
   }
 
   /* ---------- 行号 ---------- */
@@ -751,7 +796,7 @@
     updateScroll();
   }
 
-  /* ---------- 特效：启动淡入 / 滚动渐显 / 指针光泽 / 弹幕 / 流萤 / 运行时长 ---------- */
+  /* ---------- 特效：启动淡入 / 滚动渐显 / 指针光泽 / 流萤 / 运行时长 ---------- */
   function reduced() {
     try { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
     catch (e) { return false; }
@@ -800,25 +845,6 @@
           busy = false;
         });
       }, { passive: true });
-    }
-    /* 弹幕短句：稀疏、缓慢、绝不遮挡内容 */
-    var field = document.getElementById('whispers');
-    if (field && fine && !reduced()) {
-      var lines = CFG.whispers || [];
-      var wi = 0;
-      function emit() {
-        if (!lines.length || !field.appendChild) return;
-        var s = document.createElement('span');
-        s.className = 'whisper';
-        s.textContent = lines[wi % lines.length];
-        s.style.top = (14 + (wi * 23) % 62).toFixed(1) + '%';
-        s.style.setProperty('--wdur', (26 + (wi % 4) * 6) + 's');
-        field.appendChild(s);
-        wi++;
-        window.setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 34000);
-      }
-      window.setTimeout(emit, 3200);
-      window.setInterval(emit, 11000);
     }
     /* 运行时长 */
     var up = document.getElementById('uptime');

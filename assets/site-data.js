@@ -8,20 +8,19 @@ window.STUDIO_DATA = {
   "site": {
     "avatar": "assets/avatar.jpg",
     "author": "我",
+    "displayName": "纸上留白",
+    "bio": "在算法、代码与一点随想之间慢慢走。近期正忙着把想法写下来，顺手给这片星空添几颗会发光的星星。",
     "tagline": "记录一些想法，和把它们弄明白的过程。",
     "founded": "2026-11-07",
     "intro": "<p>喜欢把事情拆开看清楚，再慢慢写下来。算法、代码、还有一点没什么用的随想，都放在这里。</p><p>这个站是纯静态的：没有数据库、没有统计脚本、不追踪任何人。几份 HTML、CSS、JavaScript 加一张头像，就能一直开下去。</p>",
     "skills": ["算法", "C / C++", "Python", "静态站点", "水彩与星空", "折腾"],
     "social": [
-      { "name": "GitHub", "url": "https://github.com/ZXY-cc", "note": "代码存放处" },
-      { "name": "归档", "url": "#/timeline", "note": "全部记录" }
-    ],
-    "whispers": [
-      "今晚的星星慢一点落",
-      "把想法写下来，才算真的想过",
-      "风从纸页之间穿过去",
-      "有一些光刚好落在字上",
-      "慢慢来，也没关系"
+      { "name": "GitHub", "icon": "github", "url": "https://github.com/ZXY-cc", "note": "代码存放处" },
+      { "name": "归档", "icon": "archive", "url": "#/timeline", "note": "全部记录" },
+      { "name": "照片墙", "icon": "image", "url": "#/photowall", "note": "抬头看到的颜色" },
+      { "name": "说说", "icon": "chat", "url": "#/moments", "note": "随手记的几句话" },
+      { "name": "友链", "icon": "link", "url": "#/friends", "note": "常去的地方" },
+      { "name": "关于", "icon": "star", "url": "#/about", "note": "关于这个站", "accent": true }
     ],
     "footerNote": "纯静态 · 无追踪 · 无依赖 · 有一点点星光"
   },
