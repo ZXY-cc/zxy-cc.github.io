@@ -160,10 +160,12 @@
     for (var i = 0; i < 72; i++) {
       var puffy = i % 8 === 0;
       var warm = !puffy && i % 13 === 5;
+      var still = !puffy && !warm;
       var s = document.createElement('span');
-      s.className = puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star');
+      s.className = puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star is-still');
       var size = puffy ? (11 + rnd() * 10).toFixed(1) + 'px' : (1 + rnd() * 2.1).toFixed(1) + 'px';
-      /* 四点弧线游走：位移、旋转幅度比上一版更明显，周期仍保持缓慢 */
+      /* 四点弧线游走：位移、旋转幅度比上一版更明显，周期仍保持缓慢。
+         极小小星静止，动感交给大胖星 / 暖光星；随机调用顺序不变以保持固定布局。 */
       var dx = rnd() * 46 - 23;
       var dy = rnd() * 40 - 20;
       var spin = puffy ? (rnd() * 110 - 55) : (rnd() * 72 - 36);
@@ -171,8 +173,11 @@
       var dy2 = -dy * .42 + (rnd() * 10 - 5);
       var dx3 = dx * .48 + (rnd() * 10 - 5);
       var dy3 = dy * 1.2 + (rnd() * 12 - 6);
-      var css = 'left:' + (rnd() * 100).toFixed(2) + '%;' +
-        'top:' + (rnd() * 100).toFixed(2) + '%;' +
+      var pos = 'left:' + (rnd() * 100).toFixed(2) + '%;' +
+        'top:' + (rnd() * 100).toFixed(2) + '%;';
+      var dur = (26 + rnd() * 26).toFixed(1) + 's';
+      var delay = (-(rnd() * 40)).toFixed(1) + 's';
+      var motion =
         '--dx:' + dx.toFixed(1) + 'px;' +
         '--dy:' + dy.toFixed(1) + 'px;' +
         '--spin:' + spin.toFixed(1) + 'deg;' +
@@ -182,8 +187,9 @@
         '--dx3:' + dx3.toFixed(1) + 'px;' +
         '--dy3:' + dy3.toFixed(1) + 'px;' +
         '--spin3:' + (spin * .74).toFixed(1) + 'deg;' +
-        '--dur:' + (26 + rnd() * 26).toFixed(1) + 's;' +
-        '--delay:' + (-(rnd() * 40)).toFixed(1) + 's;';
+        '--dur:' + dur + ';' +
+        '--delay:' + delay + ';';
+      var css = pos + (still ? '--sop:' + (.58 + (i % 5) * .06).toFixed(2) + ';' : motion);
       css += puffy ? '--size:' + size + ';' : 'width:' + size + ';height:' + size + ';';
       s.style.cssText = css;
       if (puffy) s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg>';

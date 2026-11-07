@@ -7,7 +7,9 @@
    星星 / 白花动画只用 transform+opacity，滚动监听用 requestAnimationFrame 节流。
    本版：漂移改四点弧线并加大位移与旋转；新增偶尔掠过、留下渐隐光迹的流星；
    蜜金雾晕面积放大并用多段渐变柔化边缘；星夜底色压暗一档托住亮色文字。
-   流星统一从右上掠向左下，头部飞出屏幕才熄灭；光迹细线两端收透明、外叠宽雾。 */
+   流星统一从右上掠向左下，头部飞出屏幕才熄灭；光迹细线两端收透明、外叠宽雾。
+   本版：流星飞行段略放宽（稍慢）、光迹更快淡出；极小小星改为静态只留明暗层次；
+   背景爱心由淡蓝改为樱粉，晴空与星夜分别取色。 */
 
 :root {
   /* 天空：明亮奶蓝 → 雾紫 → 樱粉 → 奶油白 */
@@ -36,6 +38,7 @@
   --accent-2: #ab8bd4;
   --accent-3: #e096bd;
   --accent-soft: rgba(140, 165, 225, .15);
+  --heart-fill: #f3b4d2;
   --line: rgba(255, 255, 255, .74);
 
   /* 通透玻璃：白色填充压得很低，靠折射高光与边缘描边勾出厚度 */
@@ -100,6 +103,7 @@
   --accent-2: #d0b2f8;
   --accent-3: #f7b4d8;
   --accent-soft: rgba(169, 198, 255, .16);
+  --heart-fill: #f8bedb;
   --line: rgba(226, 236, 255, .26);
 
   --glass: linear-gradient(140deg, rgba(255, 255, 255, .14) 0%, rgba(255, 255, 255, .04) 46%, rgba(255, 255, 255, .10) 100%);
@@ -208,7 +212,7 @@ body {
   opacity: var(--frost-opacity, .30);
 }
 
-/* ---------- 静态装饰：小白花 / 淡蓝心 / 柔光星芒 ---------- */
+/* ---------- 静态装饰：小白花 / 樱粉心 / 柔光星芒 ---------- */
 .blooms { position: absolute; inset: 0; }
 .sky-deco {
   position: absolute; height: auto; aspect-ratio: 1;
@@ -224,13 +228,13 @@ body {
 .blooms .sky-deco:nth-child(7) { --dx: 30px;  --dy: 15px;  --spin: 29deg;  --dur: 57s; --delay: -18s; }
 .blooms .sky-deco:nth-child(8) { --dx: -18px; --dy: -29px; --spin: -24deg; --dur: 88s; --delay: -41s; }
 .bloom { opacity: .52; filter: blur(.5px); }
-.heart { fill: #b8dcf0; opacity: .36; filter: blur(.8px); }
+.heart { fill: var(--heart-fill, #f3b4d2); opacity: .42; filter: blur(.8px); }
 .sparkle { fill: var(--star-soft); opacity: .56; filter: blur(.6px) drop-shadow(0 0 6px var(--star-glow)); }
 :root[data-theme="night"] .bloom { opacity: .34; }
-:root[data-theme="night"] .heart { opacity: .28; }
+:root[data-theme="night"] .heart { opacity: .34; }
 
 /* ---------- 星星：圆润胖星，不用五角星字符 ---------- */
-.stars { position: absolute; inset: 0; }
+.stars { position: absolute; inset: 0; contain: layout paint; }
 
 .star {
   position: absolute; border-radius: 50%;
@@ -238,6 +242,8 @@ body {
   box-shadow: 0 0 10px 3px var(--star-mist);
   animation: star-drift var(--dur, 34s) ease-in-out var(--delay, 0s) infinite;
 }
+/* 极小小星：不位移、不旋转，只保留静态明暗层次；动感交给大胖星与暖光星 */
+.star.is-still { animation: none; opacity: var(--sop, .72); }
 /* 少量暖金光点：把黄色光效散到整片天空里 */
 .star.is-warm {
   background: var(--star-soft);
@@ -342,16 +348,16 @@ body {
 @keyframes shoot-head {
   0%, 43.9%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.8); }
   44%         { opacity: var(--speak, .9); transform: translate3d(0, 0, 0) scale(1); }
-  49%         { opacity: var(--speak, .9); transform: translate3d(var(--sdist, 120vw), 0, 0) scale(1); }
-  49.1%, 100% { opacity: 0; transform: translate3d(var(--sdist, 120vw), 0, 0) scale(.6); }
+  51%         { opacity: var(--speak, .9); transform: translate3d(var(--sdist, 120vw), 0, 0) scale(1); }
+  51.1%, 100% { opacity: 0; transform: translate3d(var(--sdist, 120vw), 0, 0) scale(.6); }
 }
 @keyframes shoot-trail {
   0%, 43.9%   { opacity: 0; transform: scaleX(0); }
   44%         { opacity: var(--speak, .9); transform: scaleX(.02); }
-  49%         { opacity: var(--speak, .9); transform: scaleX(1); }
-  56%         { opacity: var(--shold, .55); transform: scaleX(1); }
-  66%         { opacity: 0; transform: scaleX(1); }
-  66.1%, 100% { opacity: 0; transform: scaleX(0); }
+  51%         { opacity: var(--speak, .9); transform: scaleX(1); }
+  54%         { opacity: var(--shold, .55); transform: scaleX(1); }
+  59%         { opacity: 0; transform: scaleX(1); }
+  59.1%, 100% { opacity: 0; transform: scaleX(0); }
 }
 
 /* 四点弧线游走 + 旋转 + 明暗呼吸，只走 transform / opacity 合成；
