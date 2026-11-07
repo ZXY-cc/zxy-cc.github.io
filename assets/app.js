@@ -146,7 +146,7 @@
   }
 
   /* ---------- 星空：固定种子，保证每次布局一致 ----------
-     大星用圆润胖星 SVG（symbol #puffy-star），不用任何五角星文字符号；
+     大星统一用圆角五角星 SVG（symbol #puffy-star），全站不再使用四角星图形；
      少量小星标 is-warm 散出蜜金光点；暖色一律由 CSS 的雾晕与柔光提供。 */
   function initSky() {
     var box = document.getElementById('stars');
@@ -223,6 +223,9 @@
     try { if (window.localStorage) window.localStorage.setItem('zb-theme', t); }
     catch (e) { /* file:// 下可能不可用，忽略 */ }
   }
+  /* 主题图标改用内联 SVG，避免字体缺字时字符变成方框 */
+  var ICON_MOON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z" fill="currentColor"/></svg>';
+  var ICON_SUN = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
   function applyTheme(t) {
     var root = document.documentElement;
     if (root && root.dataset) {
@@ -232,7 +235,7 @@
     var btn = document.getElementById('theme-toggle');
     if (btn) {
       var night = t === 'night';
-      btn.textContent = night ? '☀' : '☾';
+      btn.innerHTML = night ? ICON_SUN : ICON_MOON;
       btn.setAttribute('aria-label', night ? '切换为晴空模式' : '切换为星夜模式');
       btn.setAttribute('title', night ? '切换为晴空模式' : '切换为星夜模式');
     }
