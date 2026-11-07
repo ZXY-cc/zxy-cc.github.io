@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" width="800" height="560">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#cfe6fb"/><stop offset=".52" stop-color="#dfe6fb"/><stop offset="1" stop-color="#fff7f2"/>
+  </linearGradient>
+  <radialGradient id="glow" cx="72%" cy="20%" r="62%">
+    <stop offset="0" stop-color="#f6c9dc" stop-opacity=".72"/><stop offset="1" stop-color="#f6c9dc" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="soft" cx="18%" cy="82%" r="60%">
+    <stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#dfe6fb" stop-opacity=".62"/><stop offset="1" stop-color="#cfe6fb" stop-opacity=".86"/>
+  </linearGradient>
+</defs>
+<rect width="800" height="560" fill="url(#bg)"/>
+<rect width="800" height="560" fill="url(#glow)"/>
+<rect width="800" height="560" fill="url(#soft)"/>
+<path d="M0 410 Q 120 330 240 392 T 480 372 T 800 404 L800 560 L0 560 Z" fill="url(#hill)" opacity=".55"/>
+<path d="M0 470 Q 170 418 320 462 T 620 444 T 800 470 L800 560 L0 560 Z" fill="#cfe6fb" opacity=".26"/>
+<circle cx="164" cy="223" r="0.9" fill="#fff8e6" opacity="0.18"/>
+<circle cx="301" cy="312" r="1.6" fill="#fff8e6" opacity="0.28"/>
+<circle cx="438" cy="21" r="2.2" fill="#fff8e6" opacity="0.38"/>
+<circle cx="575" cy="110" r="2.9" fill="#fff8e6" opacity="0.48"/>
+<circle cx="712" cy="199" r="0.9" fill="#fff8e6" opacity="0.58"/>
+<circle cx="59" cy="288" r="1.6" fill="#fff8e6" opacity="0.18"/>
+<circle cx="196" cy="377" r="2.2" fill="#fff8e6" opacity="0.28"/>
+<circle cx="333" cy="86" r="2.9" fill="#fff8e6" opacity="0.38"/>
+<circle cx="470" cy="175" r="0.9" fill="#fff8e6" opacity="0.48"/>
+<circle cx="607" cy="264" r="1.6" fill="#fff8e6" opacity="0.58"/>
+<circle cx="744" cy="353" r="2.2" fill="#fff8e6" opacity="0.18"/>
+<circle cx="91" cy="62" r="2.9" fill="#fff8e6" opacity="0.28"/>
+<circle cx="228" cy="151" r="0.9" fill="#fff8e6" opacity="0.38"/>
+<circle cx="365" cy="240" r="1.6" fill="#fff8e6" opacity="0.48"/>
+<circle cx="502" cy="329" r="2.2" fill="#fff8e6" opacity="0.58"/>
+<circle cx="639" cy="38" r="2.9" fill="#fff8e6" opacity="0.18"/>
+<circle cx="776" cy="127" r="0.9" fill="#fff8e6" opacity="0.28"/>
+<circle cx="123" cy="216" r="1.6" fill="#fff8e6" opacity="0.38"/>
+<circle cx="260" cy="305" r="2.2" fill="#fff8e6" opacity="0.48"/>
+<circle cx="397" cy="14" r="2.9" fill="#fff8e6" opacity="0.58"/>
+<circle cx="534" cy="103" r="0.9" fill="#fff8e6" opacity="0.18"/>
+<circle cx="671" cy="192" r="1.6" fill="#fff8e6" opacity="0.28"/>
+<circle cx="18" cy="281" r="2.2" fill="#fff8e6" opacity="0.38"/>
+<circle cx="155" cy="370" r="2.9" fill="#fff8e6" opacity="0.48"/>
+<circle cx="292" cy="79" r="0.9" fill="#fff8e6" opacity="0.58"/>
+<circle cx="429" cy="168" r="1.6" fill="#fff8e6" opacity="0.18"/>
+<g transform="translate(311 149) rotate(63) scale(0.50)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(522 316) rotate(100) scale(0.72)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(733 23) rotate(137) scale(0.94)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(184 190) rotate(174) scale(0.50)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(395 357) rotate(211) scale(0.72)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(606 64) rotate(248) scale(0.94)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(57 231) rotate(285) scale(0.50)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(268 398) rotate(322) scale(0.72)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+<g transform="translate(479 105) rotate(359) scale(0.94)" opacity=".34"><path d="M 0 -12 C 14 -4 16 10 0 22 C -16 10 -14 -4 0 -12 Z" fill="#f6c9dc"/></g>
+</svg>

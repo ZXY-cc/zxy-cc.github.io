@@ -6,6 +6,8 @@
 <title>纸上留白</title>
 <meta name="description" content="一个关于技术、算法与日常记录的个人博客">
 <meta name="theme-color" content="#dceafb">
+<link rel="icon" href="assets/avatar.jpg">
+<link rel="apple-touch-icon" href="assets/avatar.jpg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -69,15 +71,22 @@
     <span class="shoot shoot-b"></span>
     <span class="shoot shoot-c"></span>
   </div>
+  <!-- 星夜才亮起的流萤，与稀疏飘过的短句 -->
+  <div class="fireflies">
+    <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+    <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+  </div>
+  <div class="whispers" id="whispers"></div>
 </div>
 
+<div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
 <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
 <div class="wrap">
   <header class="site-head glass">
     <div class="head-top">
       <div class="brand-wrap">
-        <span class="puffy-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span>
+        <img class="avatar avatar-brand" src="assets/avatar.jpg" alt="站长头像">
         <div>
           <div class="site-title"><a href="#/" id="brand">纸上留白</a></div>
           <p class="tagline" id="tagline"></p>
@@ -88,6 +97,12 @@
     <div class="head-bottom">
       <nav class="nav">
         <a href="#/" data-nav="home">文章</a>
+        <a href="#/timeline" data-nav="timeline">归档</a>
+        <a href="#/projects" data-nav="projects">项目</a>
+        <a href="#/photowall" data-nav="photowall">照片墙</a>
+        <a href="#/moments" data-nav="moments">说说</a>
+        <a href="#/chatter" data-nav="chatter">杂谈</a>
+        <a href="#/friends" data-nav="friends">友链</a>
         <a href="#/tags" data-nav="tags">标签</a>
         <a href="#/about" data-nav="about">关于</a>
       </nav>
@@ -102,7 +117,9 @@
 
   <footer class="site-foot glass">
     <span id="foot-left"></span>
-    <span>纯静态 · 无追踪 · 无依赖</span>
+    <span id="foot-note">纯静态 · 无追踪 · 无依赖</span>
+    <span class="uptime" id="uptime"></span>
+    <span class="owner-door" id="owner-door" title="✦" aria-hidden="true">✦</span>
   </footer>
 </div>
 
@@ -110,7 +127,28 @@
   <span class="puffy-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span>
 </button>
 
+<!-- 图片灯箱 -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片查看器">
+  <span class="lb-backdrop"></span>
+  <button class="lb-btn lb-close" type="button" data-lb="close" aria-label="关闭">×</button>
+  <button class="lb-btn lb-prev" type="button" data-lb="prev" aria-label="上一张">‹</button>
+  <img class="lb-img" id="lb-img" src="" alt="">
+  <button class="lb-btn lb-next" type="button" data-lb="next" aria-label="下一张">›</button>
+  <div class="lb-cap"><span id="lb-title"></span><i id="lb-note"></i><span id="lb-index"></span></div>
+</div>
+
+<!-- 启动闪屏：每个浏览会话只出现一次 -->
+<div class="splash" id="splash" aria-hidden="true">
+  <div class="splash-inner">
+    <svg class="splash-star" viewBox="0 0 100 100"><use href="#puffy-star"/></svg>
+    <span class="splash-name">纸 上 留 白</span>
+    <span class="splash-note">把想法写下来，才算真的想过</span>
+  </div>
+</div>
+
 <script src="assets/posts.js"></script>
+<script src="assets/site-data.js"></script>
+<script src="assets/studio.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>
