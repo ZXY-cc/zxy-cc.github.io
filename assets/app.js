@@ -163,12 +163,25 @@
       var s = document.createElement('span');
       s.className = puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star');
       var size = puffy ? (11 + rnd() * 10).toFixed(1) + 'px' : (1 + rnd() * 2.1).toFixed(1) + 'px';
-      var spin = puffy ? (rnd() * 70 - 35) : (rnd() * 44 - 22);
+      /* 四点弧线游走：位移、旋转幅度比上一版更明显，周期仍保持缓慢 */
+      var dx = rnd() * 46 - 23;
+      var dy = rnd() * 40 - 20;
+      var spin = puffy ? (rnd() * 110 - 55) : (rnd() * 72 - 36);
+      var dx2 = dx * .55 + (rnd() * 12 - 6);
+      var dy2 = -dy * .42 + (rnd() * 10 - 5);
+      var dx3 = dx * .48 + (rnd() * 10 - 5);
+      var dy3 = dy * 1.2 + (rnd() * 12 - 6);
       var css = 'left:' + (rnd() * 100).toFixed(2) + '%;' +
         'top:' + (rnd() * 100).toFixed(2) + '%;' +
-        '--dx:' + (rnd() * 30 - 15).toFixed(1) + 'px;' +
-        '--dy:' + (rnd() * 26 - 13).toFixed(1) + 'px;' +
+        '--dx:' + dx.toFixed(1) + 'px;' +
+        '--dy:' + dy.toFixed(1) + 'px;' +
         '--spin:' + spin.toFixed(1) + 'deg;' +
+        '--dx2:' + dx2.toFixed(1) + 'px;' +
+        '--dy2:' + dy2.toFixed(1) + 'px;' +
+        '--spin2:' + (spin * .42).toFixed(1) + 'deg;' +
+        '--dx3:' + dx3.toFixed(1) + 'px;' +
+        '--dy3:' + dy3.toFixed(1) + 'px;' +
+        '--spin3:' + (spin * .74).toFixed(1) + 'deg;' +
         '--dur:' + (26 + rnd() * 26).toFixed(1) + 's;' +
         '--delay:' + (-(rnd() * 40)).toFixed(1) + 's;';
       css += puffy ? '--size:' + size + ';' : 'width:' + size + ';height:' + size + ';';

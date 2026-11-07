@@ -4,7 +4,9 @@
    暖黄比上一版更明确：以大面积雾晕托底 + 胖星柔光 + 模糊流星的黄光，
    仍然不做高饱和实体色块。星星为圆角胖星 SVG（symbol #puffy-star）。
    性能：静态水彩全部改用渐变烘焙，去掉全屏 backdrop-filter 与大面积 filter；
-   星星 / 白花动画只用 transform+opacity，滚动监听用 requestAnimationFrame 节流。 */
+   星星 / 白花动画只用 transform+opacity，滚动监听用 requestAnimationFrame 节流。
+   本版：漂移改四点弧线并加大位移与旋转；新增偶尔掠过、留下渐隐光迹的流星；
+   蜜金雾晕面积放大并用多段渐变柔化边缘；星夜底色压暗一档托住亮色文字。 */
 
 :root {
   /* 天空：明亮奶蓝 → 雾紫 → 樱粉 → 奶油白 */
@@ -54,31 +56,39 @@
   --star-soft: rgba(250, 214, 140, .90);
   --star-mist: rgba(255, 214, 132, .42);
   --star-halo: rgba(255, 220, 148, .38);
+  --star-fade: rgba(255, 226, 166, .14);
   --star-glow: rgba(255, 208, 120, .55);
   --star-dot: rgba(255, 244, 214, .94);
   --puffy-mark: url("data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'><path%20fill='%23f7d189'%20d='M%2044.3%2014.0%20Q%2050.0%206.0%2055.7%2014.0%20L%2061.1%2021.5%20Q%2065.9%2028.2%2073.7%2030.6%20L%2082.5%2033.4%20Q%2091.8%2036.4%2086.0%2044.3%20L%2080.5%2051.8%20Q%2075.7%2058.3%2075.7%2066.5%20L%2075.8%2075.8%20Q%2075.9%2085.6%2066.6%2082.5%20L%2057.8%2079.6%20Q%2050.0%2077.0%2042.2%2079.6%20L%2033.4%2082.5%20Q%2024.1%2085.6%2024.2%2075.8%20L%2024.3%2066.5%20Q%2024.3%2058.3%2019.5%2051.8%20L%2014.0%2044.3%20Q%208.2%2036.4%2017.5%2033.4%20L%2026.3%2030.6%20Q%2034.1%2028.2%2038.9%2021.5%20L%2044.3%2014.0%20Z'/></svg>");
 
   --radius: 20px;
   --radius-lg: 28px;
+
+  /* 夜空下整体压暗，日光层与薄雾层的透明度单独可调 */
+  --frost-opacity: .30;
+  --sunbeam-opacity: .70;
 }
 
-/* 星夜：仍是蓝调夜空，不压成黑；暖雾稍强一点 */
+/* 星夜：仍是蓝调夜空，不压成黑；底色压暗一档，亮色文字更清楚 */
 :root[data-theme="night"] {
-  --sky-top: #5c7cbe;
-  --sky-mid: #7886c6;
-  --sky-low: #a583bd;
-  --sky-floor: #d5a6c3;
+  --sky-top: #4d6aa9;
+  --sky-mid: #6572b2;
+  --sky-low: #8d70ac;
+  --sky-floor: #bb90b3;
 
-  --wash-blue: rgba(146, 186, 246, .40);
-  --wash-pink: rgba(242, 168, 208, .36);
-  --wash-cream: rgba(255, 244, 236, .26);
-  --haze-a: rgba(176, 172, 232, .34);
-  --haze-b: rgba(232, 180, 212, .30);
-  --warm-mist: rgba(255, 222, 152, .22);
-  --warm-mist-2: rgba(255, 216, 158, .15);
-  --gold-a: rgba(255, 210, 124, .30);
-  --gold-b: rgba(255, 222, 152, .24);
-  --gold-c: rgba(255, 216, 138, .20);
+  --wash-blue: rgba(146, 186, 246, .32);
+  --wash-pink: rgba(242, 168, 208, .29);
+  --wash-cream: rgba(255, 244, 236, .18);
+  --haze-a: rgba(176, 172, 232, .26);
+  --haze-b: rgba(232, 180, 212, .23);
+  --warm-mist: rgba(255, 222, 152, .20);
+  --warm-mist-2: rgba(255, 216, 158, .14);
+  --gold-a: rgba(255, 210, 124, .28);
+  --gold-b: rgba(255, 222, 152, .22);
+  --gold-c: rgba(255, 216, 138, .18);
+
+  --frost-opacity: .14;
+  --sunbeam-opacity: .34;
 
   --ink: #eef2ff;
   --ink-strong: #ffffff;
@@ -91,8 +101,8 @@
   --accent-soft: rgba(169, 198, 255, .16);
   --line: rgba(226, 236, 255, .26);
 
-  --glass: linear-gradient(140deg, rgba(255, 255, 255, .20) 0%, rgba(255, 255, 255, .06) 46%, rgba(255, 255, 255, .14) 100%);
-  --glass-strong: linear-gradient(140deg, rgba(255, 255, 255, .30), rgba(255, 255, 255, .15));
+  --glass: linear-gradient(140deg, rgba(255, 255, 255, .14) 0%, rgba(255, 255, 255, .04) 46%, rgba(255, 255, 255, .10) 100%);
+  --glass-strong: linear-gradient(140deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .11));
   --glass-line: rgba(230, 240, 255, .28);
   --glass-shadow: 0 18px 50px rgba(20, 34, 84, .22);
   --glass-inner: inset 0 1px 0 rgba(240, 246, 255, .26), inset 0 -1px 0 rgba(240, 246, 255, .08);
@@ -106,6 +116,7 @@
   --star-soft: rgba(255, 231, 173, .94);
   --star-mist: rgba(255, 220, 145, .40);
   --star-halo: rgba(255, 224, 156, .34);
+  --star-fade: rgba(255, 228, 172, .13);
   --star-glow: rgba(255, 216, 138, .62);
   --star-dot: rgba(255, 248, 224, .94);
 }
@@ -156,7 +167,7 @@ body {
   background: linear-gradient(118deg,
     transparent 32%, rgba(255, 255, 255, .30) 44%,
     rgba(255, 244, 249, .28) 51%, rgba(255, 255, 255, .18) 58%, transparent 70%);
-  opacity: .70;
+  opacity: var(--sunbeam-opacity, .70);
 }
 
 /* 雾蒙：所有颜色交界处的大范围柔化 */
@@ -172,9 +183,9 @@ body {
 .warm-mist {
   position: absolute; inset: 0;
   background:
-    radial-gradient(48% 42% at 68% 22%, var(--warm-mist), transparent 72%),
-    radial-gradient(42% 38% at 20% 76%, var(--warm-mist-2), transparent 70%),
-    radial-gradient(30% 26% at 88% 66%, var(--warm-mist-2), transparent 74%);
+    radial-gradient(58% 50% at 68% 22%, var(--warm-mist), transparent 78%),
+    radial-gradient(50% 44% at 20% 76%, var(--warm-mist-2), transparent 76%),
+    radial-gradient(38% 34% at 88% 66%, var(--warm-mist-2), transparent 80%);
   opacity: .82;
 }
 
@@ -182,9 +193,10 @@ body {
 .gold-mist {
   position: absolute; inset: 0;
   background:
-    radial-gradient(36% 32% at 72% 16%, var(--gold-a), transparent 72%),
-    radial-gradient(30% 26% at 22% 68%, var(--gold-b), transparent 74%),
-    radial-gradient(24% 20% at 86% 72%, var(--gold-c), transparent 76%);
+    radial-gradient(48% 42% at 70% 18%, var(--gold-a), transparent 80%),
+    radial-gradient(40% 34% at 22% 68%, var(--gold-b), transparent 82%),
+    radial-gradient(32% 28% at 86% 72%, var(--gold-c), transparent 84%),
+    radial-gradient(66% 58% at 56% 44%, var(--star-fade), transparent 86%);
   opacity: .86;
 }
 
@@ -192,7 +204,7 @@ body {
 .frost {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .05) 46%, rgba(255, 255, 255, .22));
-  opacity: .30;
+  opacity: var(--frost-opacity, .30);
 }
 
 /* ---------- 静态装饰：小白花 / 淡蓝心 / 柔光星芒 ---------- */
@@ -202,14 +214,14 @@ body {
   animation: deco-drift var(--dur, 64s) ease-in-out var(--delay, 0s) infinite;
 }
 /* 白花 / 软心 / 星芒：各自不同方向与周期的缓慢游走 + 旋转 */
-.blooms .sky-deco:nth-child(1) { --dx: 20px;  --dy: -13px; --spin: 11deg;  --dur: 68s; --delay: -7s; }
-.blooms .sky-deco:nth-child(2) { --dx: -17px; --dy: 15px;  --spin: -14deg; --dur: 76s; --delay: -23s; }
-.blooms .sky-deco:nth-child(3) { --dx: 14px;  --dy: 18px;  --spin: 16deg;  --dur: 62s; --delay: -35s; }
-.blooms .sky-deco:nth-child(4) { --dx: -22px; --dy: -10px; --spin: -9deg;  --dur: 84s; --delay: -12s; }
-.blooms .sky-deco:nth-child(5) { --dx: 12px;  --dy: -16px; --spin: 13deg;  --dur: 71s; --delay: -46s; }
-.blooms .sky-deco:nth-child(6) { --dx: -15px; --dy: 12px;  --spin: -12deg; --dur: 79s; --delay: -29s; }
-.blooms .sky-deco:nth-child(7) { --dx: 18px;  --dy: 9px;   --spin: 18deg;  --dur: 57s; --delay: -18s; }
-.blooms .sky-deco:nth-child(8) { --dx: -11px; --dy: -18px; --spin: -15deg; --dur: 88s; --delay: -41s; }
+.blooms .sky-deco:nth-child(1) { --dx: 32px;  --dy: -21px; --spin: 18deg;  --dur: 68s; --delay: -7s; }
+.blooms .sky-deco:nth-child(2) { --dx: -27px; --dy: 24px;  --spin: -22deg; --dur: 76s; --delay: -23s; }
+.blooms .sky-deco:nth-child(3) { --dx: 23px;  --dy: 29px;  --spin: 26deg;  --dur: 62s; --delay: -35s; }
+.blooms .sky-deco:nth-child(4) { --dx: -35px; --dy: -16px; --spin: -15deg; --dur: 84s; --delay: -12s; }
+.blooms .sky-deco:nth-child(5) { --dx: 20px;  --dy: -26px; --spin: 21deg;  --dur: 71s; --delay: -46s; }
+.blooms .sky-deco:nth-child(6) { --dx: -25px; --dy: 20px;  --spin: -19deg; --dur: 79s; --delay: -29s; }
+.blooms .sky-deco:nth-child(7) { --dx: 30px;  --dy: 15px;  --spin: 29deg;  --dur: 57s; --delay: -18s; }
+.blooms .sky-deco:nth-child(8) { --dx: -18px; --dy: -29px; --spin: -24deg; --dur: 88s; --delay: -41s; }
 .bloom { opacity: .52; filter: blur(.5px); }
 .heart { fill: #b8dcf0; opacity: .36; filter: blur(.8px); }
 .sparkle { fill: var(--star-soft); opacity: .56; filter: blur(.6px) drop-shadow(0 0 6px var(--star-glow)); }
@@ -222,13 +234,13 @@ body {
 .star {
   position: absolute; border-radius: 50%;
   background: var(--star-dot);
-  box-shadow: 0 0 8px 2px var(--star-mist);
+  box-shadow: 0 0 10px 3px var(--star-mist);
   animation: star-drift var(--dur, 34s) ease-in-out var(--delay, 0s) infinite;
 }
 /* 少量暖金光点：把黄色光效散到整片天空里 */
 .star.is-warm {
   background: var(--star-soft);
-  box-shadow: 0 0 10px 3px var(--star-mist), 0 0 22px 8px var(--gold-c);
+  box-shadow: 0 0 12px 4px var(--star-mist), 0 0 32px 12px var(--gold-c);
 }
 .star.is-puffy {
   width: var(--size, 14px); height: var(--size, 14px);
@@ -237,14 +249,16 @@ body {
 }
 /* 每颗胖星自带两层化开的暖雾，越往外越淡 */
 .star.is-puffy::before {
-  content: ''; position: absolute; inset: -150%;
-  background: radial-gradient(circle, var(--star-mist) 0%, var(--star-halo) 34%, transparent 70%);
-  opacity: .74;
+  content: ''; position: absolute; inset: -210%;
+  background: radial-gradient(circle,
+    var(--star-mist) 0%, var(--star-halo) 22%,
+    var(--star-fade) 46%, transparent 76%);
+  opacity: .72;
 }
 .star.is-puffy svg {
   position: relative; display: block; width: 100%; height: 100%;
   fill: var(--star-soft); opacity: .90;
-  filter: drop-shadow(0 0 8px var(--star-glow));
+  filter: drop-shadow(0 0 10px var(--star-glow));
 }
 
 /* 飘落花瓣 */
@@ -287,15 +301,68 @@ body {
 .meteor-b { top: 40%; left: 90%; --len: 140px; --angle: -21deg; --tx: -300px; --ty: 135px; --dur: 29s; --delay: 14s; --peak: .56; }
 .meteor-c { top: 7%;  left: 46%; --len: 120px; --angle: -31deg; --tx: -280px; --ty: 175px; --dur: 37s; --delay: 24s; --peak: .44; }
 
-/* 每颗星自己缓慢游走 + 旋转 + 明暗呼吸，只走 transform / opacity 合成 */
+/* ---------- 偶尔掠过的流星：头部快速划过，光迹留下后一点点散去 ---------- */
+.shoots { position: absolute; inset: 0; }
+.shoot {
+  position: absolute;
+  width: var(--slen, 300px); height: 2px;
+  transform: rotate(var(--sangle, -26deg));
+  transform-origin: 0 50%;
+}
+/* 光迹：随头部拉长，停驻片刻后逐段淡去；边缘靠多段渐变与柔光化开 */
+.shoot::before {
+  content: ''; position: absolute; left: 0; top: -2px;
+  width: 100%; height: 4px; border-radius: 999px;
+  background: linear-gradient(90deg,
+    transparent 0%, var(--star-fade) 10%, var(--star-mist) 36%,
+    rgba(255, 226, 164, .58) 74%, rgba(255, 246, 214, .84) 100%);
+  box-shadow: 0 0 16px 3px var(--star-mist);
+  transform: scaleX(0); transform-origin: 0 50%;
+  opacity: 0;
+  animation: shoot-trail var(--scycle, 19s) linear var(--sdelay, 0s) infinite;
+}
+/* 蜜金头部：只在快速划过的那一小段可见 */
+.shoot::after {
+  content: ''; position: absolute; left: 0; top: -5px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle, #fff9e8 0%, var(--star) 42%, transparent 76%);
+  box-shadow: 0 0 14px 5px var(--star-glow), 0 0 32px 12px var(--star-mist);
+  opacity: 0;
+  animation: shoot-head var(--scycle, 19s) linear var(--sdelay, 0s) infinite;
+}
+.shoot-a { top: 24%; left: 58%; --slen: 320px; --sangle: -24deg; --scycle: 19s; --sdelay: -2s; --speak: .92; --shold: .66; }
+.shoot-b { top: 56%; left: 76%; --slen: 280px; --sangle: -30deg; --scycle: 27s; --sdelay: -9s; --speak: .76; --shold: .52; }
+.shoot-c { top: 12%; left: 26%; --slen: 250px; --sangle: -20deg; --scycle: 34s; --sdelay: -5s; --speak: .62; --shold: .42; }
+
+@keyframes shoot-head {
+  0%, 43.9%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.8); }
+  44%         { opacity: var(--speak, .9); transform: translate3d(0, 0, 0) scale(1); }
+  50%         { opacity: var(--speak, .9); transform: translate3d(var(--slen, 300px), 0, 0) scale(.86); }
+  50.1%, 100% { opacity: 0; transform: translate3d(var(--slen, 300px), 0, 0) scale(.5); }
+}
+@keyframes shoot-trail {
+  0%, 43.9%   { opacity: 0; transform: scaleX(0); }
+  44%         { opacity: var(--speak, .9); transform: scaleX(.02); }
+  50%         { opacity: var(--speak, .9); transform: scaleX(1); }
+  58%         { opacity: var(--shold, .55); transform: scaleX(1); }
+  68%         { opacity: 0; transform: scaleX(1); }
+  68.1%, 100% { opacity: 0; transform: scaleX(0); }
+}
+
+/* 四点弧线游走 + 旋转 + 明暗呼吸，只走 transform / opacity 合成；
+   两个中途点由脚本注入（白花用默认兜底），避免整片天空同步直线往返。 */
 @keyframes star-drift {
-  0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(.90); opacity: .34; }
-  50%  { transform: translate3d(var(--dx, 12px), var(--dy, -10px), 0) rotate(var(--spin, 22deg)) scale(1.06); opacity: .90; }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(.90); opacity: .34; }
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(.88); opacity: .30; }
+  25%  { transform: translate3d(var(--dx2, 9px), var(--dy2, 6px), 0) rotate(var(--spin2, 12deg)) scale(.98); opacity: .64; }
+  50%  { transform: translate3d(var(--dx, 18px), var(--dy, -16px), 0) rotate(var(--spin, 34deg)) scale(1.10); opacity: .94; }
+  75%  { transform: translate3d(var(--dx3, 7px), var(--dy3, -18px), 0) rotate(var(--spin3, 20deg)) scale(1.01); opacity: .66; }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(.88); opacity: .30; }
 }
 @keyframes deco-drift {
   0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-  50%  { transform: translate3d(var(--dx, 16px), var(--dy, -12px), 0) rotate(var(--spin, 14deg)); }
+  25%  { transform: translate3d(var(--dx2, 14px), var(--dy2, 8px), 0) rotate(var(--spin2, 7deg)); }
+  50%  { transform: translate3d(var(--dx, 26px), var(--dy, -18px), 0) rotate(var(--spin, 20deg)); }
+  75%  { transform: translate3d(var(--dx3, 11px), var(--dy3, -22px), 0) rotate(var(--spin3, 14deg)); }
   100% { transform: translate3d(0, 0, 0) rotate(0deg); }
 }
 @keyframes puff { from { opacity: .44; transform: scale(.92) rotate(-5deg); } to { opacity: .82; transform: scale(1.06) rotate(5deg); } }
@@ -347,8 +414,8 @@ a:hover { color: var(--accent-3); text-decoration: none; }
 /* 圆润胖星标：蜜金柔光托底，边缘化在雾里 */
 .puffy-mark { position: relative; flex: 0 0 auto; display: grid; place-items: center; width: 34px; height: 34px; }
 .puffy-mark::before {
-  content: ''; position: absolute; inset: -11px; border-radius: 50%;
-  background: radial-gradient(circle, var(--star-mist) 0%, var(--star-halo) 42%, transparent 72%);
+  content: ''; position: absolute; inset: -14px; border-radius: 50%;
+  background: radial-gradient(circle, var(--star-mist) 0%, var(--star-halo) 30%, var(--star-fade) 56%, transparent 78%);
   filter: blur(9px); opacity: .9;
 }
 .puffy-mark svg {
