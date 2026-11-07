@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>排序算法笔记：从冒泡到基数 · 纸上留白</title>
+<meta name="description" content="把几种基础排序的性质放在一起对照，顺便留一份能直接编译的 C 实现。">
+<link rel="canonical" href="https://zxyblog.dpdns.org/posts/sorting-notes.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="排序算法笔记：从冒泡到基数 · 纸上留白">
+<meta property="og:description" content="把几种基础排序的性质放在一起对照，顺便留一份能直接编译的 C 实现。">
+<meta property="og:url" content="https://zxyblog.dpdns.org/posts/sorting-notes.html">
+<meta property="article:published_time" content="2026-11-05">
+<style>
+:root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#dceafb,#eae6fb 46%,#fdeef5);color:var(--ink);font:15.5px/1.9 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:36px 22px 70px}
+.crumb{font-size:13px;color:var(--muted);margin:0 0 18px}
+.crumb a{color:var(--brand);text-decoration:none}
+article{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;padding:32px 36px;box-shadow:0 10px 30px rgba(112,138,190,.10)}
+h1{font-size:27px;margin:0 0 8px;letter-spacing:.5px}
+.meta{color:var(--muted);font-size:13px;margin:0 0 26px}
+h2{font-size:22px;margin:34px 0 14px;padding-left:13px;border-left:3px solid var(--brand)}
+h3{font-size:17px;margin:24px 0 10px}
+p{margin:0 0 18px}
+strong{color:var(--ink)}
+code{background:#eef3ff;border-radius:5px;padding:1px 6px;font-size:13px}
+pre{background:#eef3ff;border-radius:10px;padding:16px;overflow:auto;font-size:13px;line-height:1.7}
+blockquote{margin:20px 0;padding:12px 18px;border-left:3px solid var(--brand);background:#eef3ff;border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:22px 0;font-size:14px;background:rgba(255,255,255,.5)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
+th{background:#eef3ff}
+ul,ol{padding-left:22px}
+a{color:var(--brand)}
+.back{margin:24px 0 0;font-size:14px}
+@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="crumb"><a href="/">纸上留白</a> / 静态阅读版</p>
+<article>
+<h1>排序算法笔记：从冒泡到基数</h1>
+<p class="meta">2026-11-05 · 约 4 分钟 · 算法 / C</p>
+<div class="body"><p>排序算法大概是所有人最早接触的一组算法。它们的思路差别很大，但放在一起对照时，最容易记住的反而不是代码，而是「什么时候该用哪一个」。</p><h2>性质对照</h2><table><thead><tr><th>算法</th><th>平均时间</th><th>最坏时间</th><th>空间</th><th>稳定性</th></tr></thead><tbody><tr><td>冒泡排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>稳定</td></tr><tr><td>插入排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>稳定</td></tr><tr><td>选择排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>不稳定</td></tr><tr><td>计数排序</td><td>O(n + w)</td><td>O(n + w)</td><td>O(w)</td><td>稳定</td></tr><tr><td>基数排序</td><td>O(d(n + k))</td><td>O(d(n + k))</td><td>O(n + k)</td><td>稳定</td></tr></tbody></table><p>表中 <code>n</code> 是元素个数，<code>w</code> 是值域大小，<code>k</code> 是每一位可能的取值数，<code>d</code> 是位数。前三种基于比较，逃脱不了 <code>O(n log n)</code> 的下界；后两种不比较元素大小，用空间换时间，在特定条件下能做得更快。</p><h2>冒泡排序的 C 实现</h2><p>相邻元素两两比较，把较大的一路交换到末尾。加一个「本轮是否发生过交换」的标志，可以在已经有序时提前结束。</p><pre><code>#include &lt;stdio.h&gt;
+
+void bubble_sort(int a[], int n) {
+    for (int i = 0; i &lt; n - 1; i++) {
+        int swapped = 0;
+        for (int j = 0; j &lt; n - 1 - i; j++) {
+            if (a[j] &gt; a[j + 1]) {
+                int t = a[j];
+                a[j] = a[j + 1];
+                a[j + 1] = t;
+                swapped = 1;
+            }
+        }
+        if (!swapped) break;
+    }
+}
+
+int main(void) {
+    int a[] = {5, 2, 9, 1, 5, 6};
+    int n = sizeof(a) / sizeof(a[0]);
+    bubble_sort(a, n);
+    for (int i = 0; i &lt; n; i++) printf("%d ", a[i]);
+    return 0;
+}</code></pre><h2>什么时候值得用</h2><p>数据规模很小或者基本有序时，插入排序常数最小，实际跑得比复杂算法快；值域是有限的小整数时，计数排序几乎是线性的；关键字能按位拆分（比如定长整数、日期字符串）时，基数排序很合适，但它要求每一位的排序本身是稳定的。</p><p>至于冒泡排序，它现在的主要价值是教学：用最直观的方式说明「一次遍历能确定一个最终位置」这件事。</p></div>
+</article>
+<p class="back"><a href="/#/post/sorting-notes">在站点中打开 →</a></p>
+</div>
+</body>
+</html>

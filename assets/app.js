@@ -31,6 +31,14 @@
     }
     POSTS.push(p);
   });
+  /* 版本日志文章由构建脚本从 博客版本日志.md 生成，posts.js 保持逐字节不动 */
+  if (window.CHANGELOG_POST && window.CHANGELOG_POST.slug) {
+    var cp = window.CHANGELOG_POST, hitCp = false;
+    for (var ci = 0; ci < POSTS.length; ci++) {
+      if (POSTS[ci].slug === cp.slug) { POSTS[ci] = cp; hitCp = true; break; }
+    }
+    if (!hitCp) POSTS.push(cp);
+  }
   POSTS.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
 
   var TITLE = SITE.title || '我的博客';
@@ -90,13 +98,13 @@
   function renderList(posts, note) {
     var head = note ? '<p class="page-note">' + esc(note) + '</p>' : '';
     if (!posts.length) return head + '<p class="page-note">这里还没有文章。</p>';
-    return head + posts.map(function (p) {
+    return head + '<div class="post-list">' + posts.map(function (p) {
       return '<article class="post-item reveal">' +
         metaHtml(p) +
         '<a class="post-title" href="#/post/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a>' +
         '<p class="post-summary">' + esc(p.summary) + '</p>' +
         tagsHtml(p.tags) + '</article>';
-    }).join('');
+    }).join('') + '</div>';
   }
   function tocHtml(body) {
     var heads = [], re = /<h2[^>]*>([\s\S]*?)<\/h2>/g, m;
@@ -306,7 +314,26 @@
       }).join('') + '</div>';
   }
 
-  /* ---------- 关于 ---------- */
+  /* ---------- 关于：内嵌同名 HTML 版本日志预览 ---------- */
+  function changelogPreview() {
+    var meta = window.CHANGELOG_META || {};
+    var frame = window.CHANGELOG_HTML
+      ? '<iframe class="cl-frame" id="cl-frame" title="博客版本日志 HTML 预览" loading="lazy"></iframe>'
+      : '<p class="page-note">版本日志尚未生成。</p>';
+    return '<section class="changelog-preview glass reveal" aria-label="博客版本日志预览">' +
+      '<div class="cl-head"><div><p class="page-kicker">CHANGELOG</p>' +
+      '<h2>博客版本日志</h2>' +
+      '<p class="cl-sub">每次更新都会同步到这里。下方是同名 HTML 页面的实时预览，共 ' +
+      (meta.count || 0) + ' 个版本，最后更新 ' + esc(meta.date || '') +
+      '（' + esc(meta.version || '') + '）。</p></div>' +
+      '<div class="cl-actions">' +
+      '<a class="soft-btn" href="' + encodeURI('博客版本日志.html') +
+      '" target="_blank" rel="noopener noreferrer">打开完整版 ↗</a>' +
+      '<a class="soft-btn" href="' + encodeURI('博客版本日志.md') +
+      '" target="_blank" rel="noopener noreferrer">Markdown 原文 ↗</a>' +
+      '<a class="soft-btn" href="#/post/blog-changelog">阅读文章 →</a></div></div>' +
+      frame + '</section>';
+  }
   function renderAbout() {
     return pageHead('关于', '关于这个站，和写它的人', 'ABOUT') +
       '<div class="about-card glass reveal"><div class="about-top">' + avatarImg('avatar avatar-lg') +
@@ -325,7 +352,7 @@
       '<div><b>' + esc(founded) + '</b><span>建站日期</span></div>' +
       '<div><b>' + runningDays() + ' 天</b><span>已在线</span></div>' +
       '<div><b>' + POSTS.length + ' / ' + photoCount() + '</b><span>文章 / 照片</span></div>' +
-      '<div><b>0</b><span>追踪脚本</span></div></div>';
+      '<div><b>0</b><span>追踪脚本</span></div></div>' + changelogPreview();
   }
 
   /* ---------- 全局搜索 ---------- */
@@ -444,8 +471,37 @@
     Array.prototype.forEach.call(nodes, function (n) { revealObserver.observe(n); });
   }
   var revealObserver = null;
+  /* 版本日志 iframe：直接把生成的 HTML 全文写进 srcdoc，无需网络请求 */
+  function postChangelogTheme() {
+    var frame = document.getElementById('cl-frame');
+    if (!frame || !frame.contentWindow || !frame.contentWindow.postMessage) return;
+    var night = !!(document.documentElement && document.documentElement.dataset &&
+      document.documentElement.dataset.theme === 'night');
+    try { frame.contentWindow.postMessage({ type: 'zb-theme', theme: night ? 'night' : 'day' }, '*'); }
+    catch (e) {}
+  }
+  function initChangelogFrame() {
+    var frame = document.getElementById('cl-frame');
+    if (!frame || !window.CHANGELOG_HTML || !frame.setAttribute) return;
+    frame.setAttribute('srcdoc', window.CHANGELOG_HTML);
+    if (frame.addEventListener) frame.addEventListener('load', postChangelogTheme);
+  }
+  function initChangelogSync() {
+    if (document.addEventListener) document.addEventListener('zb:theme', postChangelogTheme);
+    if (window.addEventListener) {
+      window.addEventListener('message', function (e) {
+        var d = e && e.data;
+        if (!d || d.type !== 'cl-height' || typeof d.height !== 'number') return;
+        var frame = document.getElementById('cl-frame');
+        if (frame && frame.style) {
+          frame.style.height = Math.min(1800, Math.max(340, Math.round(d.height) + 26)) + 'px';
+        }
+      });
+    }
+  }
   function paint(html, active, subTitle) {
     app.innerHTML = html;
+    initChangelogFrame();
     document.title = (subTitle ? subTitle + ' · ' : '') + TITLE;
     Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
@@ -828,19 +884,27 @@
     var fine = false;
     try { fine = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches; } catch (e) {}
     if (fine && !reduced()) {
-      var px = 0, py = 0, busy = false;
+      /* 性能：卡片范围只在 pointerover 时读一次布局，逐帧不再调用 elementFromPoint / getBoundingClientRect */
+      var px = 0, py = 0, busy = false, host = null, rect = null;
+      function cacheHost(t) {
+        host = (t && t.closest) ? t.closest('.sheen') : null;
+        rect = (host && host.getBoundingClientRect) ? host.getBoundingClientRect() : null;
+      }
+      document.addEventListener('pointerover', function (e) { cacheHost(e.target); }, { passive: true });
+      document.addEventListener('pointerout', function (e) {
+        var h = (e.target && e.target.closest) ? e.target.closest('.sheen') : null;
+        var to = e.relatedTarget;
+        if (h && h === host && (!to || !h.contains || !h.contains(to))) { host = null; rect = null; }
+      }, { passive: true });
       document.addEventListener('pointermove', function (e) {
         px = e.clientX; py = e.clientY;
         if (busy) return;
         busy = true;
         (window.requestAnimationFrame || function (f) { window.setTimeout(f, 16); })(function () {
           if (glow && glow.style) glow.style.transform = 'translate3d(' + px + 'px,' + py + 'px,0)';
-          var card = document.elementFromPoint ? document.elementFromPoint(px, py) : null;
-          var host = card && card.closest ? card.closest('.sheen') : null;
-          if (host && host.style) {
-            var r = host.getBoundingClientRect ? host.getBoundingClientRect() : { left: 0, top: 0, width: 1, height: 1 };
-            host.style.setProperty('--mx', ((px - r.left) / (r.width || 1) * 100).toFixed(1) + '%');
-            host.style.setProperty('--my', ((py - r.top) / (r.height || 1) * 100).toFixed(1) + '%');
+          if (host && rect && host.style && host.style.setProperty) {
+            host.style.setProperty('--mx', ((px - rect.left) / (rect.width || 1) * 100).toFixed(1) + '%');
+            host.style.setProperty('--my', ((py - rect.top) / (rect.height || 1) * 100).toFixed(1) + '%');
           }
           busy = false;
         });
@@ -863,5 +927,6 @@
   initTheme();
   initSearch();
   initInteractions();
+  initChangelogSync();
   route();
 })();

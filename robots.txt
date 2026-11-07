@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://zxyblog.dpdns.org/sitemap.xml
