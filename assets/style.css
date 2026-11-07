@@ -6,7 +6,8 @@
    性能：静态水彩全部改用渐变烘焙，去掉全屏 backdrop-filter 与大面积 filter；
    星星 / 白花动画只用 transform+opacity，滚动监听用 requestAnimationFrame 节流。
    本版：漂移改四点弧线并加大位移与旋转；新增偶尔掠过、留下渐隐光迹的流星；
-   蜜金雾晕面积放大并用多段渐变柔化边缘；星夜底色压暗一档托住亮色文字。 */
+   蜜金雾晕面积放大并用多段渐变柔化边缘；星夜底色压暗一档托住亮色文字。
+   流星统一从右上掠向左下，头部飞出屏幕才熄灭；光迹细线两端收透明、外叠宽雾。 */
 
 :root {
   /* 天空：明亮奶蓝 → 雾紫 → 樱粉 → 奶油白 */
@@ -301,52 +302,56 @@ body {
 .meteor-b { top: 40%; left: 90%; --len: 140px; --angle: -21deg; --tx: -300px; --ty: 135px; --dur: 29s; --delay: 14s; --peak: .56; }
 .meteor-c { top: 7%;  left: 46%; --len: 120px; --angle: -31deg; --tx: -280px; --ty: 175px; --dur: 37s; --delay: 24s; --peak: .44; }
 
-/* ---------- 偶尔掠过的流星：头部快速划过，光迹留下后一点点散去 ---------- */
+/* ---------- 偶尔掠过的流星：从右上到左下，头部出屏后才熄灭 ---------- */
 .shoots { position: absolute; inset: 0; }
 .shoot {
   position: absolute;
-  width: var(--slen, 300px); height: 2px;
-  transform: rotate(var(--sangle, -26deg));
+  width: var(--slen, 100vw); height: 2px;
+  /* 旋转 150–160deg，让局部 +x 指向左下；起点固定在右上天空 */
+  transform: rotate(var(--sangle, 156deg));
   transform-origin: 0 50%;
 }
-/* 光迹：随头部拉长，停驻片刻后逐段淡去；边缘靠多段渐变与柔光化开 */
+/* 光迹：细亮线 + 更宽的极淡雾晕，两端都收到透明，柔化后与蓝粉底色相接 */
 .shoot::before {
-  content: ''; position: absolute; left: 0; top: -2px;
-  width: 100%; height: 4px; border-radius: 999px;
-  background: linear-gradient(90deg,
-    transparent 0%, var(--star-fade) 10%, var(--star-mist) 36%,
-    rgba(255, 226, 164, .58) 74%, rgba(255, 246, 214, .84) 100%);
-  box-shadow: 0 0 16px 3px var(--star-mist);
+  content: ''; position: absolute; left: 0; top: -8px;
+  width: 100%; height: 16px; border-radius: 999px;
+  background:
+    linear-gradient(90deg,
+      transparent 0%, transparent 10%, var(--star-fade) 24%,
+      rgba(255, 222, 160, .22) 58%, rgba(255, 238, 196, .46) 88%,
+      rgba(255, 248, 224, .54) 96%, transparent 100%) center / 100% 2px no-repeat,
+    radial-gradient(ellipse 62% 100% at 84% 50%, var(--star-fade), transparent 82%);
+  filter: blur(1.4px);
   transform: scaleX(0); transform-origin: 0 50%;
   opacity: 0;
   animation: shoot-trail var(--scycle, 19s) linear var(--sdelay, 0s) infinite;
 }
-/* 蜜金头部：只在快速划过的那一小段可见 */
+/* 蜜金头部：一路飞到屏幕外才熄灭，飞行途中始终保持亮度 */
 .shoot::after {
   content: ''; position: absolute; left: 0; top: -5px;
   width: 12px; height: 12px; border-radius: 50%;
   background: radial-gradient(circle, #fff9e8 0%, var(--star) 42%, transparent 76%);
-  box-shadow: 0 0 14px 5px var(--star-glow), 0 0 32px 12px var(--star-mist);
+  box-shadow: 0 0 12px 4px var(--star-glow), 0 0 28px 10px var(--star-fade);
   opacity: 0;
   animation: shoot-head var(--scycle, 19s) linear var(--sdelay, 0s) infinite;
 }
-.shoot-a { top: 24%; left: 58%; --slen: 320px; --sangle: -24deg; --scycle: 19s; --sdelay: -2s; --speak: .92; --shold: .66; }
-.shoot-b { top: 56%; left: 76%; --slen: 280px; --sangle: -30deg; --scycle: 27s; --sdelay: -9s; --speak: .76; --shold: .52; }
-.shoot-c { top: 12%; left: 26%; --slen: 250px; --sangle: -20deg; --scycle: 34s; --sdelay: -5s; --speak: .62; --shold: .42; }
+.shoot-a { top: 10%; left: 84%; --sangle: 156deg; --slen: 104vw; --sdist: 124vw; --scycle: 19s; --sdelay: -2s; --speak: .92; --shold: .66; }
+.shoot-b { top: 34%; left: 96%; --sangle: 150deg; --slen: 100vw; --sdist: 122vw; --scycle: 27s; --sdelay: -9s; --speak: .76; --shold: .52; }
+.shoot-c { top: 4%;  left: 68%; --sangle: 160deg; --slen: 90vw;  --sdist: 108vw; --scycle: 34s; --sdelay: -5s; --speak: .62; --shold: .42; }
 
 @keyframes shoot-head {
   0%, 43.9%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.8); }
   44%         { opacity: var(--speak, .9); transform: translate3d(0, 0, 0) scale(1); }
-  50%         { opacity: var(--speak, .9); transform: translate3d(var(--slen, 300px), 0, 0) scale(.86); }
-  50.1%, 100% { opacity: 0; transform: translate3d(var(--slen, 300px), 0, 0) scale(.5); }
+  49%         { opacity: var(--speak, .9); transform: translate3d(var(--sdist, 120vw), 0, 0) scale(1); }
+  49.1%, 100% { opacity: 0; transform: translate3d(var(--sdist, 120vw), 0, 0) scale(.6); }
 }
 @keyframes shoot-trail {
   0%, 43.9%   { opacity: 0; transform: scaleX(0); }
   44%         { opacity: var(--speak, .9); transform: scaleX(.02); }
-  50%         { opacity: var(--speak, .9); transform: scaleX(1); }
-  58%         { opacity: var(--shold, .55); transform: scaleX(1); }
-  68%         { opacity: 0; transform: scaleX(1); }
-  68.1%, 100% { opacity: 0; transform: scaleX(0); }
+  49%         { opacity: var(--speak, .9); transform: scaleX(1); }
+  56%         { opacity: var(--shold, .55); transform: scaleX(1); }
+  66%         { opacity: 0; transform: scaleX(1); }
+  66.1%, 100% { opacity: 0; transform: scaleX(0); }
 }
 
 /* 四点弧线游走 + 旋转 + 明暗呼吸，只走 transform / opacity 合成；
