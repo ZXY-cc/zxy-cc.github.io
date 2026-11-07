@@ -140,6 +140,7 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     addLineNumbers();
+    measureScroll();
     updateScroll();
     window.scrollTo(0, 0);
   }
@@ -156,16 +157,20 @@
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
       return seed / 0x7fffffff;
     }
-    for (var i = 0; i < 96; i++) {
+    for (var i = 0; i < 72; i++) {
       var puffy = i % 8 === 0;
       var warm = !puffy && i % 13 === 5;
       var s = document.createElement('span');
       s.className = puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star');
       var size = puffy ? (11 + rnd() * 10).toFixed(1) + 'px' : (1 + rnd() * 2.1).toFixed(1) + 'px';
+      var spin = puffy ? (rnd() * 70 - 35) : (rnd() * 44 - 22);
       var css = 'left:' + (rnd() * 100).toFixed(2) + '%;' +
         'top:' + (rnd() * 100).toFixed(2) + '%;' +
-        '--dur:' + (4 + rnd() * 4).toFixed(1) + 's;' +
-        '--delay:' + (rnd() * 6).toFixed(1) + 's;';
+        '--dx:' + (rnd() * 30 - 15).toFixed(1) + 'px;' +
+        '--dy:' + (rnd() * 26 - 13).toFixed(1) + 'px;' +
+        '--spin:' + spin.toFixed(1) + 'deg;' +
+        '--dur:' + (26 + rnd() * 26).toFixed(1) + 's;' +
+        '--delay:' + (-(rnd() * 40)).toFixed(1) + 's;';
       css += puffy ? '--size:' + size + ';' : 'width:' + size + ';height:' + size + ';';
       s.style.cssText = css;
       if (puffy) s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg>';
@@ -241,12 +246,17 @@
   }
 
   /* ---------- 阅读进度 / 回到顶部 / 代码复制 ---------- */
+  var scrollMax = 1;
+  function measureScroll() {
+    var h = (document.documentElement && document.documentElement.scrollHeight || 0) - (window.innerHeight || 0);
+    scrollMax = h > 0 ? h : 1;
+  }
   function updateScroll() {
     var bar = document.getElementById('reading-progress');
     var top = document.getElementById('to-top');
     var y = window.scrollY || 0;
-    var h = (document.documentElement && document.documentElement.scrollHeight || 0) - (window.innerHeight || 0);
-    if (bar && bar.style) bar.style.width = (h > 0 ? Math.min(100, y / h * 100) : 0) + '%';
+    var ratio = Math.min(1, Math.max(0, y / scrollMax));
+    if (bar && bar.style) bar.style.transform = 'scaleX(' + ratio.toFixed(4) + ')';
     if (top && top.classList) {
       if (y > 320) top.classList.add('show');
       else top.classList.remove('show');
@@ -305,8 +315,23 @@
     if (top && top.addEventListener) {
       top.addEventListener('click', function () { window.scrollTo(0, 0); });
     }
-    window.addEventListener('scroll', updateScroll);
+    var ticking = false;
+    function raf(fn) {
+      if (window.requestAnimationFrame) return window.requestAnimationFrame(fn);
+      return window.setTimeout(fn, 16);
+    }
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      raf(function () { updateScroll(); ticking = false; });
+    }, { passive: true });
+    window.addEventListener('resize', function () {
+      measureScroll();
+      updateScroll();
+    }, { passive: true });
     window.addEventListener('hashchange', route);
+    measureScroll();
+    updateScroll();
   }
 
   initSky();
