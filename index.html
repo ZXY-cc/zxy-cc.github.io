@@ -5,25 +5,108 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>纸上留白</title>
 <meta name="description" content="一个关于技术、算法与日常记录的个人博客">
+<meta name="theme-color" content="#dceafb">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+
+<!-- 图形精灵：圆润胖星 / 柔光星芒 / 花瓣 / 小白花 / 软心 -->
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="puffy-star" viewBox="0 0 100 100">
+    <path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 L 44.3 14.0 Z"/>
+  </symbol>
+  <symbol id="soft-sparkle" viewBox="0 0 100 100">
+    <path d="M 50 6 Q 57 43 94 50 Q 57 57 50 94 Q 43 57 6 50 Q 43 43 50 6 Z"/>
+  </symbol>
+  <symbol id="petal" viewBox="0 0 100 100">
+    <path d="M 50 4 C 78 16 90 44 50 94 C 10 44 22 16 50 4 Z"/>
+  </symbol>
+  <symbol id="bloom" viewBox="0 0 100 100">
+    <g fill="#ffffff" fill-opacity=".78">
+      <ellipse cx="50" cy="30" rx="15" ry="21"/>
+      <ellipse cx="50" cy="30" rx="15" ry="21" transform="rotate(72 50 50)"/>
+      <ellipse cx="50" cy="30" rx="15" ry="21" transform="rotate(144 50 50)"/>
+      <ellipse cx="50" cy="30" rx="15" ry="21" transform="rotate(216 50 50)"/>
+      <ellipse cx="50" cy="30" rx="15" ry="21" transform="rotate(288 50 50)"/>
+    </g>
+    <circle cx="50" cy="50" r="10" fill="#f6e4b8" fill-opacity=".55"/>
+  </symbol>
+  <symbol id="soft-heart" viewBox="0 0 100 100">
+    <path d="M 50 88 C 12 62 6 38 24 26 C 38 17 47 26 50 34 C 53 26 62 17 76 26 C 94 38 88 62 50 88 Z"/>
+  </symbol>
+</svg>
+
+<div class="sky" aria-hidden="true">
+  <div class="sky-base"></div>
+  <div class="wash wash-blue"></div>
+  <div class="wash wash-pink"></div>
+  <div class="wash wash-cream"></div>
+  <div class="sunbeam"></div>
+  <div class="haze haze-one"></div>
+  <div class="haze haze-two"></div>
+  <div class="warm-mist"></div>
+  <div class="gold-mist"></div>
+  <div class="frost"></div>
+
+  <div class="blooms">
+    <svg class="sky-deco bloom" viewBox="0 0 100 100" style="left:6%;top:11%;width:76px"><use href="#bloom"/></svg>
+    <svg class="sky-deco bloom" viewBox="0 0 100 100" style="right:9%;top:33%;width:54px"><use href="#bloom"/></svg>
+    <svg class="sky-deco bloom" viewBox="0 0 100 100" style="left:14%;bottom:13%;width:62px"><use href="#bloom"/></svg>
+    <svg class="sky-deco heart" viewBox="0 0 100 100" style="right:17%;top:9%;width:38px"><use href="#soft-heart"/></svg>
+    <svg class="sky-deco heart" viewBox="0 0 100 100" style="left:33%;top:57%;width:28px"><use href="#soft-heart"/></svg>
+    <svg class="sky-deco heart" viewBox="0 0 100 100" style="right:6%;bottom:19%;width:44px"><use href="#soft-heart"/></svg>
+    <svg class="sky-deco sparkle" viewBox="0 0 100 100" style="left:47%;top:8%;width:22px"><use href="#soft-sparkle"/></svg>
+    <svg class="sky-deco sparkle" viewBox="0 0 100 100" style="right:28%;bottom:28%;width:18px"><use href="#soft-sparkle"/></svg>
+  </div>
+
+  <div class="petals" id="petals"></div>
+  <div class="stars" id="stars"></div>
+  <div class="meteors">
+    <span class="meteor meteor-a"></span>
+    <span class="meteor meteor-b"></span>
+    <span class="meteor meteor-c"></span>
+  </div>
+</div>
+
+<div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
 <div class="wrap">
-  <header class="site-head">
-    <div class="site-title"><a href="#/" id="brand">纸上留白</a></div>
-    <p class="tagline" id="tagline"></p>
-    <nav class="nav">
-      <a href="#/" data-nav="home">文章</a>
-      <a href="#/tags" data-nav="tags">标签</a>
-      <a href="#/about" data-nav="about">关于</a>
-    </nav>
+  <header class="site-head glass">
+    <div class="head-top">
+      <div class="brand-wrap">
+        <span class="puffy-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span>
+        <div>
+          <div class="site-title"><a href="#/" id="brand">纸上留白</a></div>
+          <p class="tagline" id="tagline"></p>
+        </div>
+      </div>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换为星夜模式" title="切换为星夜模式">☾</button>
+    </div>
+    <div class="head-bottom">
+      <nav class="nav">
+        <a href="#/" data-nav="home">文章</a>
+        <a href="#/tags" data-nav="tags">标签</a>
+        <a href="#/about" data-nav="about">关于</a>
+      </nav>
+      <label class="search-box" for="search">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 15.5 21 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input id="search" type="search" placeholder="搜索文章或标签" autocomplete="off" aria-label="搜索文章或标签">
+      </label>
+    </div>
   </header>
+
   <main id="app" aria-live="polite"></main>
-  <footer class="site-foot">
+
+  <footer class="site-foot glass">
     <span id="foot-left"></span>
     <span>纯静态 · 无追踪 · 无依赖</span>
   </footer>
 </div>
+
+<button class="to-top" id="to-top" type="button" aria-label="回到顶部" title="回到顶部">
+  <span class="puffy-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span>
+</button>
+
 <script src="assets/posts.js"></script>
 <script src="assets/app.js"></script>
 </body>
