@@ -147,6 +147,7 @@
 
   /* ---------- 星空：固定种子，保证每次布局一致 ----------
      大星统一用圆角五角星 SVG（symbol #puffy-star），全站不再使用四角星图形；
+     每颗动星生成时随机一个朝向，之后只平移不旋转；
      少量小星标 is-warm 散出蜜金光点；暖色一律由 CSS 的雾晕与柔光提供。 */
   function initSky() {
     var box = document.getElementById('stars');
@@ -164,11 +165,12 @@
       var s = document.createElement('span');
       s.className = puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star is-still');
       var size = puffy ? (11 + rnd() * 10).toFixed(1) + 'px' : (1 + rnd() * 2.1).toFixed(1) + 'px';
-      /* 四点弧线游走：位移、旋转幅度比上一版更明显，周期仍保持缓慢。
-         极小小星静止，动感交给大胖星 / 暖光星；随机调用顺序不变以保持固定布局。 */
-      var dx = rnd() * 46 - 23;
-      var dy = rnd() * 40 - 20;
-      var spin = puffy ? (rnd() * 110 - 55) : (rnd() * 72 - 36);
+      /* 生成时随机定一个朝向（--spin0），此后全程不旋转，只做四点弧线平移；
+         位移幅度比上一版再放大一档。极小小星静止，动感交给大胖星 / 暖光星；
+         随机调用次数与顺序不变，保持既有星点与花瓣的固定布局。 */
+      var dx = rnd() * 56 - 28;
+      var dy = rnd() * 50 - 25;
+      var spin0 = rnd() * 360;
       var dx2 = dx * .55 + (rnd() * 12 - 6);
       var dy2 = -dy * .42 + (rnd() * 10 - 5);
       var dx3 = dx * .48 + (rnd() * 10 - 5);
@@ -180,13 +182,11 @@
       var motion =
         '--dx:' + dx.toFixed(1) + 'px;' +
         '--dy:' + dy.toFixed(1) + 'px;' +
-        '--spin:' + spin.toFixed(1) + 'deg;' +
+        '--spin0:' + spin0.toFixed(1) + 'deg;' +
         '--dx2:' + dx2.toFixed(1) + 'px;' +
         '--dy2:' + dy2.toFixed(1) + 'px;' +
-        '--spin2:' + (spin * .42).toFixed(1) + 'deg;' +
         '--dx3:' + dx3.toFixed(1) + 'px;' +
         '--dy3:' + dy3.toFixed(1) + 'px;' +
-        '--spin3:' + (spin * .74).toFixed(1) + 'deg;' +
         '--dur:' + dur + ';' +
         '--delay:' + delay + ';';
       var css = pos + (still ? '--sop:' + (.58 + (i % 5) * .06).toFixed(2) + ';' : motion);

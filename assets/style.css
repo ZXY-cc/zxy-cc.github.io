@@ -11,7 +11,8 @@
    本版：流星飞行段略放宽（稍慢）、光迹更快淡出；极小小星改为静态只留明暗层次；
    背景爱心由淡蓝改为樱粉，晴空与星夜分别取色。
    本版：流星再放慢一点；光迹右端锚定头部、只向走过的后方延伸，慢速流星的头部改到行进前方；
-   全站星形统一为圆角五角星（移除四角星芒）；按评审补对比度、移动端减负、窄屏断点与 SVG 主题图标。 */
+   全站星形统一为圆角五角星（移除四角星芒）；按评审补对比度、移动端减负、窄屏断点与 SVG 主题图标。
+   本版：星星生成时随机一个朝向、之后只平移不旋转；白花旋转幅度加大；花/星/爱心位移再放大一档。 */
 
 :root {
   /* 天空：明亮奶蓝 → 雾紫 → 樱粉 → 奶油白 */
@@ -222,15 +223,20 @@ body {
   position: absolute; height: auto; aspect-ratio: 1;
   animation: deco-drift var(--dur, 64s) ease-in-out var(--delay, 0s) infinite;
 }
-/* 白花 / 爱心 / 五角星：各自不同方向与周期的缓慢游走 + 旋转 */
-.blooms .sky-deco:nth-child(1) { --dx: 32px;  --dy: -21px; --spin: 18deg;  --dur: 68s; --delay: -7s; }
-.blooms .sky-deco:nth-child(2) { --dx: -27px; --dy: 24px;  --spin: -22deg; --dur: 76s; --delay: -23s; }
-.blooms .sky-deco:nth-child(3) { --dx: 23px;  --dy: 29px;  --spin: 26deg;  --dur: 62s; --delay: -35s; }
-.blooms .sky-deco:nth-child(4) { --dx: -35px; --dy: -16px; --spin: -15deg; --dur: 84s; --delay: -12s; }
-.blooms .sky-deco:nth-child(5) { --dx: 20px;  --dy: -26px; --spin: 21deg;  --dur: 71s; --delay: -46s; }
-.blooms .sky-deco:nth-child(6) { --dx: -25px; --dy: 20px;  --spin: -19deg; --dur: 79s; --delay: -29s; }
-.blooms .sky-deco:nth-child(7) { --dx: 30px;  --dy: 15px;  --spin: 29deg;  --dur: 57s; --delay: -18s; }
-.blooms .sky-deco:nth-child(8) { --dx: -18px; --dy: -29px; --spin: -24deg; --dur: 88s; --delay: -41s; }
+/* 白花 / 爱心 / 五角星：各自不同方向与周期的缓慢游走；只有白花明显旋转 */
+.blooms .sky-deco:nth-child(1) { --dx: 40px;  --dy: -26px; --spin: 18deg;  --dur: 68s; --delay: -7s; }
+.blooms .sky-deco:nth-child(2) { --dx: -34px; --dy: 30px;  --spin: -22deg; --dur: 76s; --delay: -23s; }
+.blooms .sky-deco:nth-child(3) { --dx: 29px;  --dy: 36px;  --spin: 26deg;  --dur: 62s; --delay: -35s; }
+.blooms .sky-deco:nth-child(4) { --dx: -44px; --dy: -20px; --spin: -15deg; --dur: 84s; --delay: -12s; }
+.blooms .sky-deco:nth-child(5) { --dx: 25px;  --dy: -33px; --spin: 21deg;  --dur: 71s; --delay: -46s; }
+.blooms .sky-deco:nth-child(6) { --dx: -31px; --dy: 25px;  --spin: -19deg; --dur: 79s; --delay: -29s; }
+.blooms .sky-deco:nth-child(7) { --dx: 38px;  --dy: 19px;  --spin: 29deg;  --dur: 57s; --delay: -18s; }
+.blooms .sky-deco:nth-child(8) { --dx: -23px; --dy: -36px; --spin: -24deg; --dur: 88s; --delay: -41s; }
+/* 白花旋转幅度单独放大；五角星装饰只保留生成时的初始朝向，之后不再旋转 */
+.blooms .sky-deco.bloom { --spin-boost: 1.45; }
+.blooms .sky-deco.sparkle { --spin-boost: 0; }
+.blooms .sky-deco.sparkle:nth-child(7) { --dir0: -16deg; }
+.blooms .sky-deco.sparkle:nth-child(8) { --dir0: 24deg; }
 .bloom { opacity: .52; filter: blur(.5px); }
 .heart { fill: var(--heart-fill, #f3b4d2); opacity: .42; filter: blur(.8px); }
 /* 装饰五角星：与胖星共用 #puffy-star 轮廓，站点内不再出现四角星芒 */
@@ -372,23 +378,24 @@ body {
   61.1%, 100% { opacity: 0; transform: translate3d(0, 0, 0) scaleX(.02); }
 }
 
-/* 四点弧线游走 + 旋转 + 明暗呼吸，只走 transform / opacity 合成；
-   两个中途点由脚本注入（白花用默认兜底），避免整片天空同步直线往返。 */
+/* 星星生成时随机一个朝向（--spin0），此后全程恒定不旋转，只做四点弧线平移与明暗呼吸；
+   白花 / 爱心仍缓慢旋转，白花用 --spin-boost 放大，五角星装饰 boost=0 只留初始朝向。
+   只走 transform / opacity 合成；中途点由脚本注入（装饰用放大后的默认兜底）。 */
 @keyframes star-drift {
-  0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(.88); opacity: .30; }
-  25%  { transform: translate3d(var(--dx2, 9px), var(--dy2, 6px), 0) rotate(var(--spin2, 12deg)) scale(.98); opacity: .64; }
-  50%  { transform: translate3d(var(--dx, 18px), var(--dy, -16px), 0) rotate(var(--spin, 34deg)) scale(1.10); opacity: .94; }
-  75%  { transform: translate3d(var(--dx3, 7px), var(--dy3, -18px), 0) rotate(var(--spin3, 20deg)) scale(1.01); opacity: .66; }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(.88); opacity: .30; }
+  0%   { transform: translate3d(0, 0, 0) rotate(var(--spin0, 0deg)); opacity: .30; }
+  25%  { transform: translate3d(var(--dx2, 12px), var(--dy2, 8px), 0) rotate(var(--spin0, 0deg)); opacity: .64; }
+  50%  { transform: translate3d(var(--dx, 24px), var(--dy, -20px), 0) rotate(var(--spin0, 0deg)); opacity: .94; }
+  75%  { transform: translate3d(var(--dx3, 9px), var(--dy3, -24px), 0) rotate(var(--spin0, 0deg)); opacity: .66; }
+  100% { transform: translate3d(0, 0, 0) rotate(var(--spin0, 0deg)); opacity: .30; }
 }
 @keyframes deco-drift {
-  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-  25%  { transform: translate3d(var(--dx2, 14px), var(--dy2, 8px), 0) rotate(var(--spin2, 7deg)); }
-  50%  { transform: translate3d(var(--dx, 26px), var(--dy, -18px), 0) rotate(var(--spin, 20deg)); }
-  75%  { transform: translate3d(var(--dx3, 11px), var(--dy3, -22px), 0) rotate(var(--spin3, 14deg)); }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  0%   { transform: translate3d(0, 0, 0) rotate(var(--dir0, 0deg)); }
+  25%  { transform: translate3d(var(--dx2, 18px), var(--dy2, 10px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin2, 9deg) * var(--spin-boost, 1))); }
+  50%  { transform: translate3d(var(--dx, 32px), var(--dy, -22px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin, 20deg) * var(--spin-boost, 1))); }
+  75%  { transform: translate3d(var(--dx3, 14px), var(--dy3, -27px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin3, 14deg) * var(--spin-boost, 1))); }
+  100% { transform: translate3d(0, 0, 0) rotate(var(--dir0, 0deg)); }
 }
-@keyframes puff { from { opacity: .44; transform: scale(.92) rotate(-5deg); } to { opacity: .82; transform: scale(1.06) rotate(5deg); } }
+@keyframes puff { from { opacity: .44; transform: scale(.92); } to { opacity: .82; transform: scale(1.06); } }
 @keyframes petal-fall {
   0% { transform: translate3d(0, -14vh, 0) rotate(0deg); opacity: 0; }
   10% { opacity: var(--op, .5); }
