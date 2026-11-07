@@ -12,7 +12,9 @@
    背景爱心由淡蓝改为樱粉，晴空与星夜分别取色。
    本版：流星再放慢一点；光迹右端锚定头部、只向走过的后方延伸，慢速流星的头部改到行进前方；
    全站星形统一为圆角五角星（移除四角星芒）；按评审补对比度、移动端减负、窄屏断点与 SVG 主题图标。
-   本版：星星生成时随机一个朝向、之后只平移不旋转；白花旋转幅度加大；花/星/爱心位移再放大一档。 */
+   本版：星星生成时随机一个朝向、之后只平移不旋转；白花旋转幅度加大；花/星/爱心位移再放大一档。
+   本版：星夜的蓝色小字与符号改近白冷调并加极淡暗描边，玻璃面板由透白改透深蓝紫，
+   让 12–14px 的细笔画在夜空里也站得住；白天模式配色完全不动。 */
 
 :root {
   /* 天空：明亮奶蓝 → 雾紫 → 樱粉 → 奶油白 */
@@ -77,7 +79,9 @@
   --sunbeam-opacity: .70;
 }
 
-/* 星夜：仍是蓝调夜空，不压成黑；底色压暗一档，亮色文字更清楚 */
+/* 星夜：仍是蓝调夜空，不压成黑；底色压暗一档，亮色文字更清楚。
+   小字 / 蓝色符号统一提到近白冷调，玻璃面板由透白改透深蓝紫，
+   让 12–14px 的细笔画在夜空里也站得住（实测对比度 >= 4.5:1）。 */
 :root[data-theme="night"] {
   --sky-top: #4d6aa9;
   --sky-mid: #6572b2;
@@ -95,31 +99,34 @@
   --gold-b: rgba(255, 222, 152, .22);
   --gold-c: rgba(255, 216, 138, .18);
 
-  --frost-opacity: .14;
-  --sunbeam-opacity: .34;
+  --frost-opacity: .10;
+  --sunbeam-opacity: .26;
 
-  --ink: #eef2ff;
+  /* 近白冷调：保留一点蓝味，但不再用会糊在玻璃里的中亮蓝 */
+  --ink: #f4f7ff;
   --ink-strong: #ffffff;
-  --muted: #d8e2fb;
-  --faint: #c2cff0;
+  --muted: #e6eeff;
+  --faint: #d4e1fc;
 
-  --accent: #a9c6ff;
-  --accent-2: #d0b2f8;
-  --accent-3: #f7b4d8;
-  --accent-soft: rgba(169, 198, 255, .16);
+  --accent: #dbe9ff;
+  --accent-2: #e2cdfb;
+  --accent-3: #ffd2e9;
+  --accent-soft: rgba(126, 162, 226, .22);
   --heart-fill: #f8bedb;
-  --line: rgba(226, 236, 255, .26);
+  --line: rgba(226, 236, 255, .32);
 
-  --glass: linear-gradient(140deg, rgba(255, 255, 255, .14) 0%, rgba(255, 255, 255, .04) 46%, rgba(255, 255, 255, .10) 100%);
-  --glass-strong: linear-gradient(140deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .11));
-  --glass-line: rgba(230, 240, 255, .28);
-  --glass-shadow: 0 18px 50px rgba(20, 34, 84, .22);
-  --glass-inner: inset 0 1px 0 rgba(240, 246, 255, .26), inset 0 -1px 0 rgba(240, 246, 255, .08);
-  --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, .08) 100%);
+  /* 半透深蓝紫玻璃：仍是亚克力，但给亮色文字足够深的底 */
+  --glass: linear-gradient(140deg,
+    rgba(18, 28, 72, .64) 0%, rgba(14, 22, 62, .68) 46%, rgba(24, 30, 78, .66) 100%);
+  --glass-strong: linear-gradient(140deg, rgba(22, 34, 84, .72), rgba(14, 22, 62, .68));
+  --glass-line: rgba(208, 226, 255, .34);
+  --glass-shadow: 0 18px 50px rgba(12, 22, 58, .34);
+  --glass-inner: inset 0 1px 0 rgba(226, 238, 255, .22), inset 0 -1px 0 rgba(226, 238, 255, .07);
+  --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, .04) 100%);
 
-  --code-bg: rgba(255, 255, 255, .09);
-  --code-ink: #f2f5ff;
-  --code-line: rgba(230, 240, 255, .22);
+  --code-bg: rgba(16, 26, 66, .36);
+  --code-ink: #f6f8ff;
+  --code-line: rgba(206, 224, 255, .24);
 
   --star: #ffdf9c;
   --star-soft: rgba(255, 231, 173, .94);
@@ -128,6 +135,9 @@
   --star-fade: rgba(255, 228, 172, .13);
   --star-glow: rgba(255, 216, 138, .62);
   --star-dot: rgba(255, 248, 224, .94);
+
+  /* 细笔画的极淡暗描边：只托底，不改变字色观感 */
+  --night-ink-halo: 0 1px 2px rgba(8, 16, 44, .60);
 }
 
 * { box-sizing: border-box; }
@@ -683,6 +693,45 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .to-top .puffy-mark svg { width: 23px; height: 23px; }
 .to-top.show { opacity: 1; transform: none; pointer-events: auto; }
 .to-top:hover { box-shadow: 0 0 24px rgba(171, 139, 212, .32), var(--glass-inner); transform: translateY(-3px); }
+
+/* ---------- 星夜：小字与符号的清晰度 ----------
+   只作用于夜间，白天一行不动。蓝色小字改近白冷调并加极淡暗描边；
+   搜索 / 主题 / 星标 / 条纹等符号同步提亮；胶囊与代码块换深蓝底，
+   避免亮字压在亮底上。 */
+:root[data-theme="night"] .tagline,
+:root[data-theme="night"] .nav a,
+:root[data-theme="night"] .page-note,
+:root[data-theme="night"] .post-meta,
+:root[data-theme="night"] .post-summary,
+:root[data-theme="night"] .toc-title,
+:root[data-theme="night"] .tag-count,
+:root[data-theme="night"] .site-foot,
+:root[data-theme="night"] .line-numbers,
+:root[data-theme="night"] .copy-btn,
+:root[data-theme="night"] .search-box input::placeholder {
+  text-shadow: var(--night-ink-halo);
+}
+:root[data-theme="night"] .search-box,
+:root[data-theme="night"] .icon-btn { color: var(--accent); }
+:root[data-theme="night"] .nav a:hover { color: #ffffff; background: rgba(18, 30, 74, .42); }
+:root[data-theme="night"] .nav a.active { color: #ffffff; }
+:root[data-theme="night"] .nav a.active::after { opacity: .92; }
+:root[data-theme="night"] .toc-item::before { opacity: .88; }
+:root[data-theme="night"] .post-item::before { opacity: .92; }
+:root[data-theme="night"] .tag,
+:root[data-theme="night"] .toc-item,
+:root[data-theme="night"] .back-link,
+:root[data-theme="night"] .article :not(pre) > code {
+  color: var(--accent);
+  text-shadow: var(--night-ink-halo);
+}
+:root[data-theme="night"] .tag { border-color: rgba(208, 226, 255, .30); }
+:root[data-theme="night"] .tag-count { color: var(--accent); }
+:root[data-theme="night"] .copy-btn { background: rgba(18, 30, 74, .60); }
+:root[data-theme="night"] .copy-btn:hover { background: rgba(38, 54, 112, .82); color: #ffffff; }
+:root[data-theme="night"] .article table { background: rgba(16, 26, 66, .28); }
+:root[data-theme="night"] .article th { background: rgba(30, 44, 98, .44); }
+:root[data-theme="night"] pre { box-shadow: inset 0 1px 0 rgba(226, 238, 255, .16), 0 10px 30px rgba(8, 16, 44, .22); }
 
 /* ---------- 响应式 ---------- */
 @media (max-width: 640px) {
