@@ -356,7 +356,7 @@
   }
   /* 工具栏：前面是 Markdown，后面是 LaTeX；点击往光标处插入对应源码 */
   var MD_TOOLS = [
-    ['H2', '## ', '', '二级标题'], ['H3', '### ', '', '三级标题'],
+    ['H1', '# ', '', '一级标题'], ['H2', '## ', '', '二级标题'], ['H3', '### ', '', '三级标题'],
     ['B', '**', '**', '加粗'], ['I', '*', '*', '斜体'], ['S', '~~', '~~', '删除线'],
     ['`', '`', '`', '行内代码'], ['{ }', '\n```c\n', '\n```\n', '代码块'],
     ['❝', '> ', '', '引用'], ['•', '- ', '', '无序列表'], ['1.', '1. ', '', '有序列表'],
@@ -426,13 +426,15 @@
     }).join('') + '</div>';
   }
   function field(label, id, ph, type) {
-    return '<label class="f-label" for="' + id + '">' + label + '</label>' +
-      '<input class="f-input" id="' + id + '" type="' + (type || 'text') + '" placeholder="' + (ph || '') + '">';
+    /* 每个字段包成一个 .f-cell：在 .f-row 两列网格里格子才是完整字段（标签在上、输入框在下），
+       否则 label / input 各自成为网格项，会排成「左标签右输入」的半行，视觉上留白 */
+    return '<span class="f-cell"><label class="f-label" for="' + id + '">' + label + '</label>' +
+      '<input class="f-input" id="' + id + '" type="' + (type || 'text') + '" placeholder="' + (ph || '') + '"></span>';
   }
   function area(label, id, ph, rows) {
-    return '<label class="f-label" for="' + id + '">' + label + '</label>' +
+    return '<span class="f-cell"><label class="f-label" for="' + id + '">' + label + '</label>' +
       '<textarea class="f-input f-area" id="' + id + '" rows="' + (rows || 7) +
-      '" placeholder="' + (ph || '') + '"></textarea>';
+      '" placeholder="' + (ph || '') + '"></textarea></span>';
   }
   /* 仿参考站：左侧沉浸式编辑区（大标题 + 整行工具栏 + 正文），
      右侧窄栏放封面 / 标签 / 分类 / 摘要 / 日期与发布动作。 */
