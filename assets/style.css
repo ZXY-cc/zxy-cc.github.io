@@ -1060,6 +1060,13 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
    全屏布局后把整块收进居中栏，避免表单在宽屏被拉得过长；
    页头 / 标签条 / 表单三层用统一圆角与渐变竖条，和各分页观感一致。 */
 .studio-wrap { width: 100%; max-width: 56rem; margin: 0 auto; }
+/* 非站长设备访问创作台路由时看到的就是这个 404 卡片，与访问任何不存在路径一致 */
+.notfound { max-width: 480px; margin: 44px auto; padding: 40px 36px; text-align: center;
+  border-radius: var(--radius-lg); border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow), var(--glass-inner); }
+.notfound h1 { font-size: 21px; color: var(--ink-strong); margin: 0 0 12px; font-weight: 650; }
+.notfound p { font-size: 13.5px; color: var(--muted); line-height: 1.9; }
+.notfound .soft-btn { margin-top: 6px; display: inline-block; }
 .studio-lock { max-width: 480px; margin: 44px auto; padding: 34px 36px; text-align: center;
   border-radius: var(--radius-lg); border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); }
