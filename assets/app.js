@@ -1032,6 +1032,46 @@
       tick();
       window.setInterval(tick, 60000);
     }
+    /* 点击星爆：高画质下在点击处溅出一圈小星星，向四周飞散后快速消散；
+       只平移与缩放、不旋转，prefers-reduced-motion 与中低画质自动关闭 */
+    function initStarBurst() {
+      if (reduced()) return;
+      if (!document.addEventListener || !document.body || !document.body.appendChild) return;
+      if (typeof document.body.animate !== 'function') return;
+      document.addEventListener('pointerdown', function (e) {
+        if (readQuality() !== 'high') return;
+        var x = e.clientX, y = e.clientY;
+        if (typeof x !== 'number' || typeof y !== 'number') return;
+        var n = 9 + (Math.random() * 3 | 0);
+        var box = document.createElement('div');
+        box.setAttribute('class', 'star-burst');
+        box.setAttribute('aria-hidden', 'true');
+        box.style.cssText = 'left:' + x + 'px;top:' + y + 'px;';
+        document.body.appendChild(box);
+        var done = 0;
+        function sweep() { done++; if (done >= n && box.parentNode) box.parentNode.removeChild(box); }
+        for (var i = 0; i < n; i++) {
+          var size = 7 + Math.random() * 9;
+          var half = (size / 2).toFixed(1);
+          var s = document.createElement('span');
+          s.style.cssText = 'width:' + size.toFixed(1) + 'px;height:' + size.toFixed(1) +
+            'px;margin:-' + half + 'px 0 0 -' + half + 'px;';
+          s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg>';
+          box.appendChild(s);
+          var ang = (Math.PI * 2 * i) / n + Math.random() * .55;
+          var dist = 34 + Math.random() * 54;
+          var dx = Math.cos(ang) * dist;
+          var dy = Math.sin(ang) * dist - 14;
+          var anim = s.animate([
+            { transform: 'translate(0,0) scale(1)', opacity: .95 },
+            { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(.18)', opacity: 0 }
+          ], { duration: 460 + Math.random() * 240, easing: 'cubic-bezier(.16,.84,.44,1)', fill: 'forwards' });
+          anim.addEventListener('finish', sweep);
+          anim.addEventListener('cancel', sweep);
+        }
+      }, { passive: true });
+    }
+    initStarBurst();
     initLightbox();
   }
 
