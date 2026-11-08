@@ -1,4 +1,4 @@
-/* 纸上留白 · 站长创作台
+/* 星梦Staream · 站长创作台
    静态站没有账号系统，因此「是不是我」由两层凭证判定：
    1) 设备凭证：一次性激活码的 SHA-256 摘要写在源码里（明文不落盘），
       校验通过后在本机写入带签名的 30 天会话；只有这台设备会看到创作台入口。
@@ -20,7 +20,9 @@
   var BRANCH = 'main';
   var DAYS = 30;
   var KINDS = ['posts', 'moments', 'chatter', 'albums', 'projects', 'friends'];
-  var state = { tab: 'post', msg: '', busy: false, files: [] };
+  var DRAFT_KEY = 'zb-studio-draft';
+  var CATS = ['随笔', '算法', '建站', '随想', '笔记', '其它'];
+  var state = { tab: 'post', msg: '', busy: false, files: [], mode: 'write', draft: null, saveTimer: null };
 
   /* ---------- 同步 SHA-256（不依赖 Web Crypto，http / file 下同样可用） ---------- */
   var K = [
@@ -163,54 +165,30 @@
     }
   }
 
-  /* ---------- 轻量 Markdown ---------- */
+  /* ---------- Markdown + LaTeX ----------
+     渲染统一交给 assets/markdown.js（window.ZBMD）：创作台预览、前台文章、
+     静态阅读版共用同一套输出，公式与代码块都不会被二次转义。 */
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
-  function inline(s) {
-    var t = esc(s);
-    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|#[^)\s]*|\/[^)\s]*)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    return t;
+  function mdRender(s) {
+    return window.ZBMD ? window.ZBMD.render(s) : '<p>' + esc(s) + '</p>';
   }
-  function md2html(src) {
-    var lines = String(src || '').split(/\r?\n/);
-    var out = [], i = 0, list = false, quote = false, code = false, buf = [];
-    function closeList() { if (list) { out.push('</ul>'); list = false; } }
-    function closeQuote() { if (quote) { out.push('</blockquote>'); quote = false; } }
-    while (i < lines.length) {
-      var l = lines[i];
-      if (/^```/.test(l)) {
-        if (code) { out.push('<pre><code>' + esc(buf.join('\n')) + '</code></pre>'); buf = []; }
-        code = !code; i++; continue;
-      }
-      if (code) { buf.push(l); i++; continue; }
-      if (/^###\s+/.test(l)) {
-        closeList(); closeQuote(); out.push('<h3>' + inline(l.replace(/^###\s+/, '')) + '</h3>');
-      } else if (/^##\s+/.test(l)) {
-        closeList(); closeQuote(); out.push('<h2>' + inline(l.replace(/^##\s+/, '')) + '</h2>');
-      } else if (/^>\s?/.test(l)) {
-        closeList();
-        if (!quote) { out.push('<blockquote>'); quote = true; }
-        out.push('<p>' + inline(l.replace(/^>\s?/, '')) + '</p>');
-      } else if (/^[-*]\s+/.test(l)) {
-        closeQuote();
-        if (!list) { out.push('<ul>'); list = true; }
-        out.push('<li>' + inline(l.replace(/^[-*]\s+/, '')) + '</li>');
-      } else if (/^\s*$/.test(l)) {
-        closeList(); closeQuote();
-      } else {
-        closeList(); closeQuote(); out.push('<p>' + inline(l) + '</p>');
-      }
-      i++;
-    }
-    closeList(); closeQuote();
-    if (code && buf.length) out.push('<pre><code>' + esc(buf.join('\n')) + '</code></pre>');
-    return out.join('');
+  function htmlOfBody(s) { return mdRender(s); }
+  /* 早期文章只存渲染后的 HTML，回填编辑器时近似还原为可读的 Markdown */
+  function htmlToMd(s) {
+    return String(s || '')
+      .replace(/<h2[^>]*>/gi, '## ').replace(/<\/h2>/gi, '\n\n')
+      .replace(/<h3[^>]*>/gi, '### ').replace(/<\/h3>/gi, '\n\n')
+      .replace(/<li[^>]*>/gi, '- ').replace(/<\/li>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+      .replace(/\n{3,}/g, '\n\n').trim();
   }
 
   /* ---------- 小工具 ---------- */
@@ -222,7 +200,168 @@
   function uid(p) { return p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function val(id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
   function splitTags(s) { return s.split(/[,，、\s]+/).filter(Boolean); }
-  function htmlOfBody(s) { return md2html(s); }
+
+  /* ---------- 写文章工作台：草稿、工具栏与属性 ---------- */
+  function blankDraft() {
+    return { slug: '', title: '', markdown: '', tags: [], cover: '',
+      summary: '', category: '随笔', date: today(), status: 'draft', savedAt: '' };
+  }
+  function readDraft() {
+    var d = null, b = blankDraft();
+    try { d = JSON.parse(ls(DRAFT_KEY) || 'null'); } catch (e) { d = null; }
+    if (d && typeof d === 'object') {
+      ['slug', 'title', 'markdown', 'cover', 'summary', 'category', 'date', 'status', 'savedAt']
+        .forEach(function (k) { if (d[k] != null) b[k] = String(d[k]); });
+      if (Object.prototype.toString.call(d.tags) === '[object Array]') b.tags = d.tags.slice();
+    }
+    return b;
+  }
+  function savedLabel() {
+    var d = state.draft || blankDraft();
+    return d.savedAt ? '已自动保存至本机 · ' + d.savedAt : '文档尚未保存在本机';
+  }
+  function paintSaveLabel() {
+    var a = document.getElementById('draft-saved');
+    if (a) a.textContent = savedLabel();
+    var b = document.getElementById('meta-saved');
+    if (b) b.textContent = (state.draft && state.draft.savedAt) ? state.draft.savedAt : '尚未落盘';
+  }
+  function syncFromForm() {
+    var d = state.draft || (state.draft = readDraft());
+    d.title = val('f-title');
+    var body = document.getElementById('f-body');
+    if (body) d.markdown = body.value;
+    d.cover = val('f-cover');
+    d.summary = val('f-summary');
+    d.category = val('f-category') || d.category;
+    d.date = val('f-date') || d.date;
+    var wc = document.getElementById('word-count');
+    if (wc) wc.textContent = String(d.markdown.replace(/\s/g, '').length) + ' 字';
+    return d;
+  }
+  function writeDraft(quiet) {
+    var d = syncFromForm(), t = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    d.savedAt = p(t.getHours()) + ':' + p(t.getMinutes());
+    if (!setLs(DRAFT_KEY, JSON.stringify(d))) {
+      if (!quiet) say('本机存储空间不足，请先发布并清理。', 'warn');
+      return false;
+    }
+    paintSaveLabel();
+    return true;
+  }
+  function scheduleSave() {
+    if (state.saveTimer) window.clearTimeout(state.saveTimer);
+    state.saveTimer = window.setTimeout(function () { writeDraft(true); }, 500);
+  }
+  function refreshPreview() {
+    var box = document.getElementById('post-preview');
+    if (box) box.innerHTML = mdRender(syncFromForm().markdown);
+    var desk = document.getElementById('desk-body');
+    if (desk) desk.setAttribute('data-mode', state.mode);
+  }
+  function setMode(m) {
+    state.mode = m;
+    var desk = document.getElementById('desk-body');
+    if (desk) desk.setAttribute('data-mode', m);
+    var btns = document.querySelectorAll ? document.querySelectorAll('[data-mode-btn]') : [];
+    Array.prototype.forEach.call(btns, function (b) {
+      var on = b.getAttribute('data-mode-btn') === m;
+      if (b.classList) b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    refreshPreview();
+  }
+  function renderTagPills() {
+    var box = document.getElementById('tag-pills');
+    if (!box) return;
+    var d = state.draft || blankDraft();
+    box.innerHTML = d.tags.length ? d.tags.map(function (t) {
+      return '<span class="zb-tag-pill">#' + esc(t) +
+        '<button type="button" data-tag-del="' + esc(t) + '" aria-label="移除标签">×</button></span>';
+    }).join('') : '<span class="tag-empty">还没有标签</span>';
+  }
+  function historyTags() {
+    var seen = {}, out = [];
+    (window.POSTS || []).concat(DATA.posts || []).forEach(function (p) {
+      (p.tags || []).forEach(function (t) { if (!seen[t]) { seen[t] = 1; out.push(t); } });
+    });
+    return out.slice(0, 18);
+  }
+  function renderTagHistory() {
+    var box = document.getElementById('tag-history');
+    if (!box) return;
+    var cur = (state.draft || blankDraft()).tags;
+    box.innerHTML = historyTags().map(function (t) {
+      return '<button type="button" class="tag-history-btn' + (cur.indexOf(t) >= 0 ? ' on' : '') +
+        '" data-tag-add="' + esc(t) + '">+ ' + esc(t) + '</button>';
+    }).join('') || '<span class="tag-empty">暂无历史标签</span>';
+  }
+  function renderCover() {
+    var box = document.getElementById('cover-box');
+    if (!box) return;
+    var u = val('f-cover');
+    box.innerHTML = u ? '<img src="' + esc(u) + '" alt="封面预览">' :
+      '<span class="cover-empty">点击上传封面 / 粘贴图片 URL</span>';
+  }
+  function addTag(t) {
+    var d = state.draft || (state.draft = readDraft());
+    t = String(t || '').trim().replace(/^#/, '');
+    if (!t || d.tags.indexOf(t) >= 0) return;
+    d.tags.push(t);
+    renderTagPills(); renderTagHistory(); writeDraft(true);
+  }
+  function delTag(t) {
+    var d = state.draft || readDraft();
+    d.tags = d.tags.filter(function (x) { return x !== t; });
+    state.draft = d;
+    renderTagPills(); renderTagHistory(); writeDraft(true);
+  }
+  function insertMd(before, after, placeholder) {
+    var ta = document.getElementById('f-body');
+    if (!ta) return;
+    var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+    var sel = v.slice(s, e) || placeholder || '';
+    ta.value = v.slice(0, s) + before + sel + (after || '') + v.slice(e);
+    ta.focus();
+    if (ta.setSelectionRange) {
+      var caret = s + before.length + sel.length;
+      ta.setSelectionRange(caret, caret);
+    }
+    syncFromForm(); refreshPreview(); scheduleSave();
+  }
+  /* 工具栏：前面是 Markdown，后面是 LaTeX；点击往光标处插入对应源码 */
+  var MD_TOOLS = [
+    ['H2', '## ', '', '二级标题'], ['H3', '### ', '', '三级标题'],
+    ['B', '**', '**', '加粗'], ['I', '*', '*', '斜体'], ['S', '~~', '~~', '删除线'],
+    ['`', '`', '`', '行内代码'], ['{ }', '\n```c\n', '\n```\n', '代码块'],
+    ['❝', '> ', '', '引用'], ['•', '- ', '', '无序列表'], ['1.', '1. ', '', '有序列表'],
+    ['☑', '- [ ] ', '', '任务项'],
+    ['▦', '\n| 列一 | 列二 |\n| :---: | :---: |\n| 内容 | 内容 |\n', '', '表格'],
+    ['↗', '[', '](https://)', '链接'], ['▣', '![说明](', ')', '图片'],
+    ['—', '\n---\n', '', '分隔线'],
+    ['$', '$', '$', '行内公式'], ['$$', '\n$$\n', '\n$$\n', '块级公式'],
+    ['a/b', '\\frac{', '}{b}', '分式'], ['√', '\\sqrt{', '}', '根号'],
+    ['∑', '\\sum_{i=1}^{n} ', '', '求和'], ['α', '\\alpha ', '', '希腊字母']
+  ];
+  var TEX_SNIPPETS = [
+    ['\\frac{a}{b}', '分式'], ['\\sqrt{x}', '根号'], ['x^{2}', '上标'],
+    ['a_{i}', '下标'], ['\\sum_{i=1}^{n}', '求和'], ['\\int_0^1', '积分'],
+    ['\\lim_{x \\to 0}', '极限'], ['\\alpha \\beta \\gamma', '希腊字母'],
+    ['\\le \\ge \\ne \\approx', '关系符'], ['\\times \\cdot \\pm \\infty', '运算符'],
+    ['\\mathbb{R}', '数集'], ['\\text{文字}', '公式内文字'],
+    ['$$\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$$', '整行示例']
+  ];
+  function toolHtml() {
+    return MD_TOOLS.map(function (t, i) {
+      return '<button class="md-tool" type="button" data-md="' + i + '" title="' + esc(t[3]) +
+        '" aria-label="' + esc(t[3]) + '">' + esc(t[0]) + '</button>';
+    }).join('');
+  }
+  function setDeskWidth(on) {
+    var shell = document.querySelector && document.querySelector('.shell');
+    if (shell && shell.classList) shell.classList.toggle('is-wide', !!on);
+  }
   function download(name, text) {
     try {
       var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -236,7 +375,7 @@
     } catch (e) { say('下载失败，请改用导出内容手动复制。'); }
   }
   function dataFile() {
-    return '/* 纸上留白 · 由创作台发布生成 */\nwindow.STUDIO_DATA = ' +
+    return '/* 星梦Staream · 由创作台发布生成 */\nwindow.STUDIO_DATA = ' +
       JSON.stringify(DATA, null, 2) + ';\n';
   }
   function say(msg, kind) {
@@ -282,16 +421,82 @@
       '<textarea class="f-input f-area" id="' + id + '" rows="' + (rows || 7) +
       '" placeholder="' + (ph || '') + '"></textarea>';
   }
+  /* 仿参考站：左侧沉浸式编辑区（大标题 + 整行工具栏 + 正文），
+     右侧窄栏放封面 / 标签 / 分类 / 摘要 / 日期与发布动作。 */
   function formPost() {
-    return '<div class="studio-form glass">' +
-      '<h2>写一篇新文章</h2><p class="f-hint">正文支持 ## 标题、- 列表、> 引用、```代码块、`行内代码` 与 **加粗**。</p>' +
-      field('标题', 'f-title', '给这篇文章起个名字') +
-      '<div class="f-row">' + field('日期', 'f-date', today(), 'date') + field('标签（逗号分隔）', 'f-tags', '算法, 笔记') + '</div>' +
-      field('摘要', 'f-summary', '一句话说明写了什么') +
-      area('正文', 'f-body', '## 第一节\n\n从这里开始写…', 12) +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-post">保存到本机</button>' +
-      '<button class="soft-btn" type="button" data-act="preview-post">预览</button></div>' +
-      '<div id="post-preview" class="studio-preview"></div></div>';
+    var d = state.draft || readDraft();
+    var modes = [['write', '写作'], ['split', '并排'], ['preview', '预览']];
+    return '<div class="studio-desk" id="studio-desk">' +
+      '<section class="desk-editor glass">' +
+        '<div class="desk-title-row">' +
+          '<input id="f-title" class="desk-title" type="text" placeholder="文章大标题…" ' +
+            'value="' + esc(d.title) + '" aria-label="文章标题">' +
+          '<span class="desk-saved" id="draft-saved">' + esc(savedLabel()) + '</span>' +
+        '</div>' +
+        '<div class="desk-toolbar" role="toolbar" aria-label="Markdown 与 LaTeX 工具栏">' +
+          '<div class="md-tools">' + toolHtml() + '</div>' +
+          '<div class="mode-switch" role="group" aria-label="编辑视图">' + modes.map(function (m) {
+            return '<button type="button" data-mode-btn="' + m[0] + '" aria-pressed="' +
+              (state.mode === m[0] ? 'true' : 'false') + '" class="' +
+              (state.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>';
+          }).join('') + '</div>' +
+        '</div>' +
+        '<div class="desk-body" id="desk-body" data-mode="' + state.mode + '">' +
+          '<textarea id="f-body" class="desk-textarea" spellcheck="false" ' +
+            'placeholder="用 Markdown 写正文，用 $…$ / $$…$$ 写 LaTeX 公式…">' +
+            esc(d.markdown) + '</textarea>' +
+          '<div id="post-preview" class="desk-preview article-body"></div>' +
+        '</div>' +
+        '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · 自动保存在本机</span>' +
+          '<span id="word-count">0 字</span>' +
+          '<button class="mini-btn" type="button" data-act="tex-help">公式速查</button></div>' +
+        '<div id="tex-help" class="tex-help" hidden><b>常用 LaTeX · 点击插入</b>' +
+          '<div class="tex-list">' + TEX_SNIPPETS.map(function (t, n) {
+            return '<button type="button" data-tex="' + n + '" title="插入到正文">' +
+              '<code>' + esc(t[0]) + '</code><span>' + esc(t[1]) + '</span></button>';
+          }).join('') + '</div></div>' +
+      '</section>' +
+      '<aside class="desk-meta glass">' +
+        '<div class="meta-head"><span>POST MODE</span><h2>属性设置</h2></div>' +
+        '<div class="meta-scroll">' +
+          '<section class="meta-group"><div class="meta-label l-blue">COVER IMAGE · 封面图</div>' +
+            '<div class="cover-box" id="cover-box" data-act="cover-pick" role="button" tabindex="0" ' +
+              'title="点击选择本地图片"></div>' +
+            '<input class="f-input" id="f-cover" type="text" placeholder="或粘贴图片 URL…" ' +
+              'value="' + esc(d.cover) + '" aria-label="封面图地址">' +
+            '<input class="f-input f-file" id="f-cover-file" type="file" accept="image/*" aria-label="上传封面图">' +
+          '</section>' +
+          '<section class="meta-group"><div class="meta-label l-pink">RELEVANT TAGS · 标签</div>' +
+            '<div class="tag-pills" id="tag-pills"></div>' +
+            '<input class="f-input" id="f-tag-input" type="text" placeholder="+ 输入标签后按回车">' +
+            '<div class="tag-history" id="tag-history"></div>' +
+          '</section>' +
+          '<section class="meta-group"><div class="meta-label l-violet">WORDS STORIES · 分类</div>' +
+            '<div class="cat-pills" id="cat-pills">' + CATS.map(function (c) {
+              return '<button type="button" data-cat="' + esc(c) + '" class="' +
+                (d.category === c ? 'on' : '') + '">' + esc(c) + '</button>';
+            }).join('') + '</div>' +
+            '<input class="f-input" id="f-category" type="text" placeholder="也可以自己写一个" ' +
+              'value="' + esc(d.category) + '" aria-label="分类">' +
+          '</section>' +
+          '<section class="meta-group"><div class="meta-label l-green">DESCRIPTION · 摘要</div>' +
+            '<textarea class="f-input f-area" id="f-summary" rows="4" ' +
+              'placeholder="记录一下这篇内容的核心思绪…">' + esc(d.summary) + '</textarea>' +
+            '<p class="meta-note">摘要会显示在首页卡片与搜索结果里。</p>' +
+          '</section>' +
+          '<section class="meta-group"><div class="meta-label l-amber">PUBLISH DATE · 日期</div>' +
+            '<input class="f-input" id="f-date" type="date" value="' + esc(d.date) + '">' +
+          '</section>' +
+        '</div>' +
+        '<div class="meta-foot">' +
+          '<div class="meta-status">最近落盘：<b id="meta-saved">' + esc(d.savedAt || '尚未落盘') + '</b></div>' +
+          '<div class="meta-actions">' +
+            '<button class="soft-btn" type="button" data-act="draft-save">存为草稿</button>' +
+            '<button class="primary-btn" type="button" data-act="publish-post">正式发布</button>' +
+          '</div>' +
+          '<p class="meta-hint">发布先写入本机内容；要让访客看到，请到「发布上线」导出或一键提交。</p>' +
+        '</div>' +
+      '</aside></div>';
   }
   function albumOptions() {
     var albums = DATA.albums || [];
@@ -350,6 +555,8 @@
         var name = k === 'posts' ? x.title : (x.title || x.name || (x.text || '').slice(0, 22));
         rows.push('<div class="manage-row"><span class="mr-kind">' + labels[k] + '</span>' +
           '<b>' + esc(name) + '</b><span class="mr-id">' + esc(keyOf(x, k)) + '</span>' +
+          (k === 'posts' ? '<button class="mini-btn" type="button" data-edit="' +
+            esc(k + '::' + keyOf(x, k)) + '">编辑</button>' : '') +
           '<button class="mini-btn" type="button" data-del="' + esc(k + '::' + keyOf(x, k)) + '">删除</button></div>');
       });
     });
@@ -384,7 +591,7 @@
     }[state.tab]();
   }
   function studioHtml() {
-    return '<div class="studio-wrap" id="studio-panel">' +
+    return '<div class="studio-wrap' + (state.tab === 'post' ? ' is-desk' : '') + '" id="studio-panel">' +
       '<div class="studio-head glass"><div><div class="page-kicker">OWNER STUDIO</div>' +
       '<h1>创作台</h1><p>这台设备已识别为站长的设备 · 内容先存本机，发布后才对所有访客可见。</p></div>' +
       '<button class="soft-btn" type="button" data-act="lock">退出站长模式</button></div>' +
@@ -393,18 +600,18 @@
   }
 
   /* ---------- 图片压缩 ---------- */
-  function compress(file, done) {
+  function compress(file, done, maxSide, quality) {
     try {
       var reader = new FileReader();
       reader.onload = function (ev) {
         var img = new Image();
         img.onload = function () {
-          var max = 1200, w = img.width, h = img.height;
+          var max = maxSide || 1200, w = img.width, h = img.height;
           var s = Math.min(1, max / Math.max(w, h));
           var c = document.createElement('canvas');
           c.width = Math.round(w * s); c.height = Math.round(h * s);
           c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          done(c.toDataURL('image/jpeg', .82));
+          done(c.toDataURL('image/jpeg', quality || .82));
         };
         img.onerror = function () { done(''); };
         img.src = ev.target.result;
@@ -415,19 +622,25 @@
   }
 
   /* ---------- 保存动作 ---------- */
-  function savePost() {
-    var title = val('f-title');
-    var body = val('f-body');
-    if (!title) return say('请先写标题。', 'warn');
-    if (!body) return say('正文还是空的。', 'warn');
-    var html = htmlOfBody(body);
-    /* 时间统一只留日期，不再生成阅读时长字段 */
+  /* 保存时同时留下 Markdown / LaTeX 原文与渲染后的 HTML：
+     原文供再次编辑，HTML 供前台与静态阅读版直接显示；时间统一只留日期。 */
+  function savePost(asDraft) {
+    var d = syncFromForm();
+    if (!d.title) return say('请先写标题。', 'warn');
+    if (!d.markdown) return say('正文还是空的。', 'warn');
+    writeDraft(true);
+    if (asDraft) return say('草稿已保存到本机，下次打开创作台会继续这一篇。');
     var item = {
-      slug: uid('p'), title: title, date: val('f-date') || today(),
-      tags: splitTags(val('f-tags')), summary: val('f-summary') || title, body: html
+      slug: d.slug || uid('p'), title: d.title, date: d.date || today(),
+      tags: d.tags.slice(), category: d.category || '', cover: d.cover || '',
+      summary: d.summary || (window.ZBMD ? window.ZBMD.plain(d.markdown).slice(0, 90) : '') || d.title,
+      markdown: d.markdown, body: mdRender(d.markdown),
+      format: 'markdown', status: 'published'
     };
     if (!upsert('posts', item)) return say('本机存储空间不足，请先到「发布上线」导出并清理。', 'warn');
-    reloadSoon('文章已保存');
+    d.slug = item.slug; d.status = 'published';
+    writeDraft(true);
+    reloadSoon('文章已发布到本机内容');
   }
   function saveMoment() {
     var text = val('f-moment-text');
@@ -553,6 +766,60 @@
     var panel = t.closest('#studio-panel') || t.closest('.studio-lock');
     var door = t.closest('#owner-door');
     if (!panel && !door) return;
+
+    /* 写作工作台：工具栏插入、视图切换、标签 / 分类、公式速查 */
+    var mdBtn = t.closest('[data-md]');
+    if (mdBtn) {
+      var tool = MD_TOOLS[Number(mdBtn.getAttribute('data-md'))];
+      if (tool) insertMd(tool[1], tool[2], '');
+      return;
+    }
+    var modeBtn = t.closest('[data-mode-btn]');
+    if (modeBtn) { setMode(modeBtn.getAttribute('data-mode-btn')); return; }
+    var tagDel = t.closest('[data-tag-del]');
+    if (tagDel) { delTag(tagDel.getAttribute('data-tag-del')); return; }
+    var tagAdd = t.closest('[data-tag-add]');
+    if (tagAdd) { addTag(tagAdd.getAttribute('data-tag-add')); return; }
+    var catBtn = t.closest('[data-cat]');
+    if (catBtn) {
+      var cv = catBtn.getAttribute('data-cat'), ci = document.getElementById('f-category');
+      if (ci) ci.value = cv;
+      var cats = document.querySelectorAll ? document.querySelectorAll('[data-cat]') : [];
+      Array.prototype.forEach.call(cats, function (b) {
+        if (b.classList) b.classList.toggle('on', b.getAttribute('data-cat') === cv);
+      });
+      writeDraft(true);
+      return;
+    }
+    var texBtn = t.closest('[data-tex]');
+    if (texBtn) {
+      var sn = TEX_SNIPPETS[Number(texBtn.getAttribute('data-tex'))];
+      if (sn) insertMd(sn[0], '', '');
+      return;
+    }
+    var edit = t.closest('[data-edit]');
+    if (edit) {
+      var ep = edit.getAttribute('data-edit').split('::');
+      var target = (DATA[ep[0]] || []).filter(function (x) {
+        return keyOf(x, ep[0]) === ep[1];
+      })[0];
+      if (target) {
+        var d = blankDraft();
+        d.slug = target.slug || ''; d.title = target.title || '';
+        d.markdown = target.markdown || htmlToMd(target.body);
+        d.tags = (target.tags || []).slice(); d.cover = target.cover || '';
+        d.summary = target.summary || ''; d.category = target.category || '随笔';
+        d.date = target.date || today(); d.status = target.status || 'published';
+        state.draft = d;
+        state.tab = 'post';
+        /* 先重绘出写作表单，再落盘，避免旧页面的空表单把刚载入的标题覆盖掉 */
+        render(document.getElementById('app'));
+        writeDraft(true);
+        say('已载入这篇文章，可以继续编辑 Markdown 与公式。');
+      }
+      return;
+    }
+
     if (t.closest('[data-act="unlock"]')) {
       var code = val('f-code');
       if (!checkCode(code)) return say('激活码不对。', 'warn');
@@ -578,17 +845,24 @@
     if (!act) return;
     var a = act.getAttribute('data-act');
     if (a === 'lock') { revoke(); syncNav(); render(document.getElementById('app')); return; }
-    if (a === 'save-post') return savePost();
+    if (a === 'draft-save') return savePost(true);
+    if (a === 'publish-post') return savePost(false);
+    if (a === 'cover-pick') {
+      var cf = document.getElementById('f-cover-file');
+      if (cf && cf.click) cf.click();
+      return;
+    }
+    if (a === 'tex-help') {
+      var th = document.getElementById('tex-help');
+      if (th) th.hidden = !th.hidden;
+      return;
+    }
     if (a === 'save-photo') return savePhoto();
     if (a === 'save-moment') return saveMoment();
     if (a === 'save-chatter') return saveChatter();
     if (a === 'save-project') return saveProject();
     if (a === 'save-friend') return saveFriend();
-    if (a === 'preview-post') {
-      var box = document.getElementById('post-preview');
-      if (box) box.innerHTML = '<h3>预览</h3><div class="article-body">' + htmlOfBody(val('f-body')) + '</div>';
-      return;
-    }
+    if (a === 'preview-post') { setMode('preview'); return; }
     if (a === 'export-js') return download('site-data.js', dataFile());
     if (a === 'export-json') return download('studio-backup.json', JSON.stringify(DATA, null, 2));
     if (a === 'publish') return publish();
@@ -620,9 +894,44 @@
     if (t.id === 'f-moment-img' && t.files && t.files.length) {
       compress(t.files[0], function (src) { state.momentImg = src || ''; });
     }
+    if (t.id === 'f-cover-file' && t.files && t.files.length) {
+      compress(t.files[0], function (src) {
+        if (!src) return say('图片读取失败。', 'warn');
+        var f = document.getElementById('f-cover');
+        if (f) f.value = src;
+        renderCover(); writeDraft(true);
+      }, 900, .72);
+    }
     if (t.id === 'f-album') {
       var nb = document.getElementById('new-album-box');
       if (nb) nb.style.display = t.value === '__new__' ? '' : 'none';
+    }
+  }
+  /* 输入即自动落盘；并排 / 预览模式下实时重渲染 Markdown 与公式 */
+  function onInput(e) {
+    var t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === 'f-body' || t.id === 'f-title' || t.id === 'f-summary') {
+      syncFromForm();
+      if (state.mode !== 'write') refreshPreview();
+      scheduleSave();
+    } else if (t.id === 'f-cover') {
+      renderCover(); scheduleSave();
+    } else if (t.id === 'f-category' || t.id === 'f-date') {
+      scheduleSave();
+    }
+  }
+  function onKeydown(e) {
+    var t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === 'f-tag-input' && (e.key === 'Enter' || e.keyCode === 13)) {
+      if (e.preventDefault) e.preventDefault();
+      addTag(t.value);
+      t.value = '';
+    }
+    if (t.id === 'f-body' && (e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+      if (e.preventDefault) e.preventDefault();
+      insertMd('**', '**', '');
     }
   }
   function bindDoor() {
@@ -640,6 +949,9 @@
 
   function render(el) {
     if (!el) return;
+    var isDesk = isOwner() && state.tab === 'post';
+    setDeskWidth(isDesk);
+    if (isOwner() && !state.draft) state.draft = readDraft();
     el.innerHTML = isOwner() ? studioHtml() : lockHtml();
     var nb = document.getElementById('new-album-box');
     var sel = document.getElementById('f-album');
@@ -649,6 +961,10 @@
     var pat = ls(PAT_KEY);
     var f = document.getElementById('f-pat');
     if (pat && f) f.value = pat;
+    if (isDesk) {
+      renderTagPills(); renderTagHistory(); renderCover();
+      syncFromForm(); setMode(state.mode); paintSaveLabel();
+    }
   }
 
   window.STUDIO = {
@@ -667,5 +983,7 @@
   if (appEl && appEl.addEventListener) {
     appEl.addEventListener('click', onClick);
     appEl.addEventListener('change', onChange);
+    appEl.addEventListener('input', onInput);
+    appEl.addEventListener('keydown', onKeydown);
   }
 })();

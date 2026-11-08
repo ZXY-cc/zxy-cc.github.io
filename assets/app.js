@@ -41,7 +41,8 @@
   }
   POSTS.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
 
-  var TITLE = SITE.title || '我的博客';
+  /* 站名统一取扩展数据层的 displayName；posts.js 只读作文章源，不再提供显示名 */
+  var TITLE = CFG.displayName || '星梦Staream';
   var founded = CFG.founded || SITE.since || '2026-11-07';
   function runningDays() {
     var t = new Date(String(founded).replace(/-/g, '/')).getTime();
@@ -124,6 +125,9 @@
       if (x.slug === p.slug) return false;
       return (x.tags || []).some(function (t) { return (p.tags || []).indexOf(t) >= 0; });
     }).slice(0, 2);
+    /* 创作台写的文章保留 Markdown / LaTeX 原文，前台用同一套引擎渲染；
+       早期文章只有 body（已是 HTML），直接沿用。 */
+    var body = (p.markdown && window.ZBMD) ? window.ZBMD.render(p.markdown) : (p.body || '');
     var nav = '<div class="post-nav reveal">' +
       (prev ? '<a class="pn" href="#/post/' + encodeURIComponent(prev.slug) + '"><span>← 较新</span>' + esc(prev.title) + '</a>' : '<span></span>') +
       (next ? '<a class="pn pn-right" href="#/post/' + encodeURIComponent(next.slug) + '"><span>较早 →</span>' + esc(next.title) + '</a>' : '<span></span>') +
@@ -135,11 +139,11 @@
     return '<article class="article reveal"><div class="article-inner">' +
       '<div class="article-byline"><div class="article-author">' + avatarImg('avatar avatar-sm') +
       '<span>' + esc(CFG.author || SITE.author || '我') + '</span><i>·</i><span>' +
-      wordsOf(p.body) + ' 字</span></div>' +
+      wordsOf(body) + ' 字</span></div>' +
       '<time class="article-date">' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
       '<h1>' + esc(p.title) + '</h1>' + tagsHtml(p.tags) +
-      tocHtml(p.body) +
-      '<div class="article-body">' + (p.body || '') + '</div>' +
+      tocHtml(body) +
+      '<div class="article-body">' + body + '</div>' +
       '<div class="article-actions"><button class="soft-btn" type="button" data-share="' +
       esc('#/post/' + p.slug) + '">复制文章链接</button>' +
       '<a class="soft-btn" href="#/">← 返回文章列表</a></div>' +
@@ -300,7 +304,9 @@
       esc(c.mood || '杂谈') + '</span></div>' +
       '<time class="article-date">' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
       '<h1>' + esc(c.title) + '</h1>' + tagsHtml(c.tags) +
-      '<div class="article-body">' + (c.body || '') + '</div></div></article>';
+      '<div class="article-body">' +
+      ((c.markdown && window.ZBMD) ? window.ZBMD.render(c.markdown) : (c.body || '')) +
+      '</div></div></article>';
   }
 
   /* ---------- 友链 ---------- */
@@ -494,7 +500,7 @@
     }).join('');
   }
   function profileCard() {
-    var name = CFG.displayName || SITE.title || '纸上留白';
+    var name = TITLE;
     var bio = CFG.bio || CFG.tagline || SITE.tagline || '';
     var stats = [
       [POSTS.length, '文章', '#/'],
@@ -573,6 +579,9 @@
   }
   function paint(html, active, subTitle) {
     app.innerHTML = html;
+    /* 创作台会临时放宽内容栏，渲染其它分页时恢复定宽 */
+    var shell = document.querySelector && document.querySelector('.shell');
+    if (shell && shell.classList) shell.classList.remove('is-wide');
     initChangelogFrame();
     document.title = (subTitle ? subTitle + ' · ' : '') + TITLE;
     Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {

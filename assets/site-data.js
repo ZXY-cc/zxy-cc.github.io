@@ -1,4 +1,4 @@
-/* 纸上留白 · 扩展数据层
+/* 星梦Staream · 扩展数据层
    posts.js 只负责 window.SITE / window.POSTS，永远不改动；
    本文件是唯一的「内容覆盖层」：内置示例数据 + 站长创作台发布的内容。
    studio.js 一键发布时整体重写本文件，因此这里保持纯 JSON 结构、无任何逻辑。 */
@@ -8,7 +8,7 @@ window.STUDIO_DATA = {
   "site": {
     "avatar": "assets/avatar.jpg",
     "author": "我",
-    "displayName": "纸上留白",
+    "displayName": "星梦Staream",
     "bio": "在算法、代码与一点随想之间慢慢走。近期正忙着把想法写下来，顺手给这片星空添几颗会发光的星星。",
     "tagline": "记录一些想法，和把它们弄明白的过程。",
     "founded": "2026-11-07",
@@ -27,7 +27,7 @@ window.STUDIO_DATA = {
   "projects": [
     {
       "id": "p-paper",
-      "name": "纸上留白 · 静态博客",
+      "name": "星梦Staream · 静态博客",
       "desc": "零依赖的单页博客：hash 路由、玻璃星空、日夜主题、全局搜索与照片灯箱，托管在 GitHub Pages 上，绑自己的域名。",
       "tags": ["静态站点", "CSS", "JavaScript"],
       "status": "在用",
