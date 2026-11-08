@@ -365,22 +365,25 @@
   }
 
   /* ---------- 设置：画质档位 ----------
-     高 = 站点原本的完整效果；中 / 低 按 QUALITY_SPEC 逐层减负。
+     高 = 站点原本的完整效果，也是所有访客的默认档；极高 = 高的全部效果 + 实时毛玻璃，
+     以后新增的画质细节都挂在极高上；中 / 低按 QUALITY_SPEC 逐层减负，全部不开实时毛玻璃。
      根节点 data-quality 驱动 CSS（首屏由 index.html 里的内联脚本预置，避免闪烁），
      qualityNow 供脚本判断是否需要跑逐帧光幕；切换即时生效，无需刷新。 */
   var QUALITY_KEY = 'zb-quality';
   var QUALITY_OPTS = [
-    { id: 'high', name: '高', desc: '完整效果：星空、花瓣、花朵爱心游走、全部流星与光幕、实时毛玻璃' },
+    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上，再开启实时毛玻璃；以后新增的画质细节都会出现在这一档' },
+    { id: 'high', name: '高', desc: '完整效果：星空、花瓣、花朵爱心游走、全部流星与光幕（默认档）' },
     { id: 'mid', name: '中', desc: '星点减半、花朵爱心静止；关闭鼠标光幕与卡片高光，保留主要动效' },
-    { id: 'low', name: '低', desc: '静态精简星空：关闭装饰、流星、流萤、光幕、毛玻璃与入场动画' }
+    { id: 'low', name: '低', desc: '静态精简星空：关闭装饰、流星、流萤、光幕与入场动画' }
   ];
   var QUALITY_SPEC = [
-    ['星星 / 花瓣', '72 / 12', '36 / 6', '18 / 0'],
-    ['花朵与爱心', '缓慢游走旋转', '静止', '隐藏'],
-    ['流星', '常驻 3 + 快速 3', '各留 1 条', '关闭'],
-    ['流萤', '夜间 8 只', '夜间 4 只', '关闭'],
-    ['鼠标光幕 / 卡片高光', '开启', '关闭', '关闭'],
-    ['实时毛玻璃 / 入场动画', '开启', '开启', '关闭']
+    ['星星 / 花瓣', '72 / 12', '72 / 12', '36 / 6', '18 / 0'],
+    ['花朵与爱心', '缓慢游走旋转', '缓慢游走旋转', '静止', '隐藏'],
+    ['流星', '常驻 3 + 快速 3', '常驻 3 + 快速 3', '各留 1 条', '关闭'],
+    ['流萤', '夜间 8 只', '夜间 8 只', '夜间 4 只', '关闭'],
+    ['鼠标光幕 / 卡片高光', '开启', '开启', '关闭', '关闭'],
+    ['实时毛玻璃', '开启', '关闭', '关闭', '关闭'],
+    ['入场动画', '开启', '开启', '开启', '关闭']
   ];
   var qualityNow = 'high';
   /* 用户没选过画质时，按设备能力自动降档：内存/核心极少直接给静态档，
@@ -418,11 +421,11 @@
     return '高';
   }
   function qualitySpecHtml() {
-    var head = '<thead><tr><th scope="col">效果</th><th scope="col">高</th>' +
-      '<th scope="col">中</th><th scope="col">低</th></tr></thead>';
+    var head = '<thead><tr><th scope="col">效果</th><th scope="col">极高</th>' +
+      '<th scope="col">高</th><th scope="col">中</th><th scope="col">低</th></tr></thead>';
     var body = '<tbody>' + QUALITY_SPEC.map(function (r) {
       return '<tr><th scope="row">' + esc(r[0]) + '</th><td>' + esc(r[1]) +
-        '</td><td>' + esc(r[2]) + '</td><td>' + esc(r[3]) + '</td></tr>';
+        '</td><td>' + esc(r[2]) + '</td><td>' + esc(r[3]) + '</td><td>' + esc(r[4]) + '</td></tr>';
     }).join('') + '</tbody>';
     return '<div class="q-spec-wrap"><table class="q-spec">' + head + body + '</table></div>';
   }
@@ -442,7 +445,7 @@
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 高画质即站点原本的完整效果；中 / 低 依次减少装饰与实时渲染。</p></section>';
+      '</b> · 首次访问默认高画质；「极高」在其上额外开启实时毛玻璃，中 / 低 依次减少装饰与实时渲染。</p></section>';
   }
 
   /* ---------- 全局搜索 ---------- */
@@ -1008,8 +1011,8 @@
         if (h && h === host && (!to || !h.contains || !h.contains(to))) { host = null; rect = null; }
       }, { passive: true });
       document.addEventListener('pointermove', function (e) {
-        /* 中 / 低 画质不再跑逐帧光幕与卡片高光 */
-        if (qualityNow !== 'high') return;
+        /* 中 / 低 画质不再跑逐帧光幕与卡片高光（极高与高一致） */
+        if (qualityNow !== 'high' && qualityNow !== 'ultra') return;
         px = e.clientX; py = e.clientY;
         if (busy) return;
         busy = true;
@@ -1039,7 +1042,7 @@
       if (!document.addEventListener || !document.body || !document.body.appendChild) return;
       if (typeof document.body.animate !== 'function') return;
       document.addEventListener('pointerdown', function (e) {
-        if (readQuality() !== 'high') return;
+        if (readQuality() !== 'high' && readQuality() !== 'ultra') return;
         var x = e.clientX, y = e.clientY;
         if (typeof x !== 'number' || typeof y !== 'number') return;
         var n = 9 + (Math.random() * 3 | 0);

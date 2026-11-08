@@ -58,7 +58,8 @@
   --glass-strong: linear-gradient(140deg, rgba(255, 255, 255, .60), rgba(255, 255, 255, .34));
   --glass-line: rgba(255, 255, 255, .72);
   --glass-shadow: 0 14px 40px rgba(112, 138, 190, .10), 0 2px 12px rgba(112, 138, 190, .05);
-  --glass-blur: blur(10px) saturate(128%);
+  /* 实时毛玻璃只在极高画质开启（背景多为平滑水彩渐变，模糊收益小、逐帧重绘成本高） */
+  --glass-blur: none;
   --glass-inner: inset 0 1px 0 rgba(255, 255, 255, .86), inset 0 -1px 0 rgba(255, 255, 255, .20);
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .30) 0%, rgba(255, 255, 255, 0) 34%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, .12) 100%);
 
@@ -1232,9 +1233,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-spec tbody tr:last-child th, .q-spec tbody tr:last-child td { border-bottom: none; }
 .q-spec tbody tr:hover td { background: var(--accent-soft); }
 
-/* ---------- 画质档位：高 = 完整效果，中 / 低 逐层减负 ----------
+/* ---------- 画质档位：高 = 完整效果（默认档），极高 = 高 + 实时毛玻璃，中 / 低 逐层减负 ----------
    只作用于根节点带 data-quality 的情况，高画质（默认、无该属性）一行都不改。
    CSS 负责静态装饰与渲染开销，脚本负责跳过逐帧的光幕与卡片高光。 */
+/* 极高：在「高」之上独占实时毛玻璃；以后新增的画质细节都挂在这一档 */
+:root[data-quality="ultra"] { --glass-blur: blur(10px) saturate(128%); }
 /* 中：星星 72→36、花瓣 12→6；常驻流星与快速流星各留 1、流萤留 4 */
 :root[data-quality="mid"] .stars .star.q-high { display: none; }
 :root[data-quality="mid"] .petals .petal.q-high { display: none; }
