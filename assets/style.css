@@ -770,18 +770,12 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .nav a.active::after { opacity: .5; }
 
 /* 点击星爆：一圈小星星从点击处向四周溅射后快速消散（仅高画质开启）；
-   星星与天空的胖星同款：蜜金填充 + 两层化开的暖雾光幕 */
+   星星与天空的胖星同款：蜜金填充，发光贴合星星轮廓（不做圆形光幕，避免多星叠加成实心圆饼） */
 .star-burst { position: fixed; z-index: 60; width: 0; height: 0; pointer-events: none; }
 .star-burst span { position: absolute; left: 0; top: 0; display: block; will-change: transform, opacity; }
-.star-burst span::before {
-  content: ''; position: absolute; inset: -55%;
-  background: radial-gradient(circle,
-    var(--star-glow) 0%, transparent 68%);
-  opacity: .32;
-}
-.star-burst span svg { position: relative; display: block; width: 100%; height: 100%;
+.star-burst span svg { display: block; width: 100%; height: 100%;
   fill: var(--star-soft); opacity: .95;
-  filter: drop-shadow(0 0 5px var(--star-glow)) drop-shadow(0 0 11px var(--star-mist)); }
+  filter: drop-shadow(0 0 4px var(--star-glow)) drop-shadow(0 0 9px var(--star-mist)); }
 :root[data-theme="night"] .toc-item::before { opacity: .88; }
 :root[data-theme="night"] .post-item::before { opacity: .92; }
 :root[data-theme="night"] .tag,
