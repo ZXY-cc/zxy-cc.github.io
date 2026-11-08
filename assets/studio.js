@@ -518,8 +518,7 @@
       '<select class="f-input" id="f-album">' + albumOptions() + '</select>' +
       '<div id="new-album-box">' + field('新相册标题', 'f-album-title', '例如：周末的光') +
       field('新相册说明', 'f-album-desc', '一句话') + '</div>' +
-      '<label class="f-label" for="f-files">选择图片（可多选）</label>' +
-      '<input class="f-input f-file" id="f-files" type="file" accept="image/*" multiple>' +
+      '<label class="file-zone" for="f-files"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择图片 · 可多选，选好自动压缩<input class="f-input f-file" id="f-files" type="file" accept="image/*" multiple></label>' +
       field('照片说明', 'f-photo-note', '留一句给这张照片（可选）') +
       '<div id="file-preview" class="file-preview"></div>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-photo">保存到本机</button></div></div>';
@@ -528,8 +527,7 @@
     return '<div class="studio-form glass"><h2>发一条说说</h2>' +
       area('这一刻想说什么', 'f-moment-text', '…', 5) +
       '<div class="f-row">' + field('心情', 'f-mood', '✨ 满足') + field('地点', 'f-place', '书桌前') + '</div>' +
-      '<label class="f-label" for="f-moment-img">配一张图（可选）</label>' +
-      '<input class="f-input f-file" id="f-moment-img" type="file" accept="image/*">' +
+      '<label class="file-zone" for="f-moment-img"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择配图 · 可选<input class="f-input f-file" id="f-moment-img" type="file" accept="image/*"></label>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-moment">保存到本机</button></div></div>';
   }
   function formChatter() {
