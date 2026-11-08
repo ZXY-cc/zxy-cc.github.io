@@ -1191,7 +1191,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 .settings-info p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--muted); }
 .quality-group { flex: 2 1 420px; display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .quality-item {
   position: relative; display: flex; flex-direction: column; gap: 6px;
   padding: 18px 16px 16px; text-align: left; cursor: pointer; font: inherit;
@@ -1588,6 +1588,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .desk-body[data-mode="split"] .desk-preview { border-left: none; border-top: 1px solid var(--glass-line); }
   .desk-title { font-size: 24px; }
   .desk-title-row { padding: 18px 20px 12px; flex-wrap: wrap; }
+  .quality-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ZB-MATH:START */
