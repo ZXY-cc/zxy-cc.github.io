@@ -359,13 +359,24 @@
   }
 
   /* ---------- 设置：画质档位 ----------
-     高 / 中 / 低 三档先记录偏好，具体的渲染差异留待后续版本开放。 */
+     高 = 站点原本的完整效果；中 / 低 按 QUALITY_SPEC 逐层减负。
+     根节点 data-quality 驱动 CSS（首屏由 index.html 里的内联脚本预置，避免闪烁），
+     qualityNow 供脚本判断是否需要跑逐帧光幕；切换即时生效，无需刷新。 */
   var QUALITY_KEY = 'zb-quality';
   var QUALITY_OPTS = [
-    { id: 'high', name: '高', desc: '完整呈现星空、流星与玻璃光效' },
-    { id: 'mid', name: '中', desc: '保留主要动效，减轻持续渲染' },
-    { id: 'low', name: '低', desc: '精简装饰，优先流畅与省电' }
+    { id: 'high', name: '高', desc: '完整效果：星空、花瓣、花朵爱心游走、全部流星与光幕、实时毛玻璃' },
+    { id: 'mid', name: '中', desc: '星点减半、花朵爱心静止；关闭鼠标光幕与卡片高光，保留主要动效' },
+    { id: 'low', name: '低', desc: '静态精简星空：关闭装饰、流星、流萤、光幕、毛玻璃与入场动画' }
   ];
+  var QUALITY_SPEC = [
+    ['星星 / 花瓣', '72 / 12', '36 / 6', '18 / 0'],
+    ['花朵与爱心', '缓慢游走旋转', '静止', '隐藏'],
+    ['流星', '常驻 3 + 快速 3', '各留 1 条', '关闭'],
+    ['流萤', '夜间 8 只', '夜间 4 只', '关闭'],
+    ['鼠标光幕 / 卡片高光', '开启', '关闭', '关闭'],
+    ['实时毛玻璃 / 入场动画', '开启', '开启', '关闭']
+  ];
+  var qualityNow = 'high';
   function readQuality() {
     var v = null;
     try { v = window.localStorage ? window.localStorage.getItem(QUALITY_KEY) : null; } catch (e) {}
@@ -375,9 +386,27 @@
   function saveQuality(v) {
     try { if (window.localStorage) window.localStorage.setItem(QUALITY_KEY, v); } catch (e) {}
   }
+  function applyQuality(v) {
+    qualityNow = v;
+    var root = document.documentElement;
+    if (root && root.dataset) {
+      if (v === 'high') delete root.dataset.quality;
+      else root.dataset.quality = v;
+    }
+    try { document.dispatchEvent(new CustomEvent('zb:quality', { detail: v })); } catch (e) {}
+  }
   function qualityName(v) {
     for (var i = 0; i < QUALITY_OPTS.length; i++) if (QUALITY_OPTS[i].id === v) return QUALITY_OPTS[i].name;
     return '高';
+  }
+  function qualitySpecHtml() {
+    var head = '<thead><tr><th scope="col">效果</th><th scope="col">高</th>' +
+      '<th scope="col">中</th><th scope="col">低</th></tr></thead>';
+    var body = '<tbody>' + QUALITY_SPEC.map(function (r) {
+      return '<tr><th scope="row">' + esc(r[0]) + '</th><td>' + esc(r[1]) +
+        '</td><td>' + esc(r[2]) + '</td><td>' + esc(r[3]) + '</td></tr>';
+    }).join('') + '</tbody>';
+    return '<div class="q-spec-wrap"><table class="q-spec">' + head + body + '</table></div>';
   }
   function renderSettings() {
     var cur = readQuality();
@@ -391,10 +420,11 @@
     return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
       '<div class="settings-block"><div class="settings-info">' +
-      '<h2>画质</h2><p>选择画面呈现的档位。偏好保存在本机浏览器里，不会上传到任何地方。</p></div>' +
+      '<h2>画质</h2><p>选择画面呈现的档位，切换后立即生效。偏好保存在本机浏览器里，不会上传到任何地方。</p></div>' +
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
+      qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 高 / 中 / 低 三档的具体效果将在后续版本开放，现在只记录你的选择。</p></section>';
+      '</b> · 高画质即站点原本的完整效果；中 / 低 依次减少装饰与实时渲染。</p></section>';
   }
 
   /* ---------- 全局搜索 ---------- */
@@ -625,7 +655,9 @@
       var warm = !puffy && i % 13 === 5;
       var still = !puffy && !warm;
       var s = document.createElement('span');
-      s.className = puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star is-still');
+      /* 按生成顺序标注档位：前 18 颗低画质也保留，前 36 颗中画质保留，其余仅高画质 */
+      var tier = i < 18 ? ' q-core' : (i < 36 ? ' q-mid' : ' q-high');
+      s.className = (puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star is-still')) + tier;
       var size = puffy ? (11 + rnd() * 10).toFixed(1) + 'px' : (1 + rnd() * 2.1).toFixed(1) + 'px';
       var dx = rnd() * 56 - 28;
       var dy = rnd() * 50 - 25;
@@ -659,7 +691,7 @@
         'rgba(244,186,212,.62)', 'rgba(206,224,250,.58)'];
       for (var j = 0; j < 12; j++) {
         var p = document.createElement('span');
-        p.className = 'petal';
+        p.className = 'petal' + (j < 6 ? ' q-core' : ' q-high');
         p.style.cssText = 'left:' + (rnd() * 96).toFixed(2) + '%;' +
           'top:' + (-8 - rnd() * 18).toFixed(1) + '%;' +
           '--size:' + (9 + rnd() * 9).toFixed(1) + 'px;' +
@@ -850,6 +882,7 @@
           if (quality) {
             var qv = quality.getAttribute('data-quality');
             saveQuality(qv);
+            applyQuality(qv);
             Array.prototype.forEach.call(app.querySelectorAll('[data-quality]'), function (btn) {
               var on = btn.getAttribute('data-quality') === qv;
               btn.classList.toggle('on', on);
@@ -954,6 +987,8 @@
         if (h && h === host && (!to || !h.contains || !h.contains(to))) { host = null; rect = null; }
       }, { passive: true });
       document.addEventListener('pointermove', function (e) {
+        /* 中 / 低 画质不再跑逐帧光幕与卡片高光 */
+        if (qualityNow !== 'high') return;
         px = e.clientX; py = e.clientY;
         if (busy) return;
         busy = true;
@@ -979,6 +1014,7 @@
     initLightbox();
   }
 
+  applyQuality(readQuality());
   initEffects();
   initSky();
   initTheme();

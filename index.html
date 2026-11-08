@@ -21,6 +21,8 @@
 <link rel="icon" type="image/png" sizes="64x64" href="assets/avatar-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/avatar-180.png">
 <link rel="stylesheet" href="assets/style.css">
+<!-- 画质偏好在首屏渲染前落到根节点，避免中/低画质闪一下完整特效 -->
+<script>try{var q=localStorage.getItem('zb-quality');if(q==='mid'||q==='low')document.documentElement.setAttribute('data-quality',q);}catch(e){}</script>
 <!-- JSONLD:START -->
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Blog","name":"纸上留白","url":"https://zxyblog.dpdns.org/","description":"一个关于算法、代码、建站与日常随想的纯静态个人博客","inLanguage":"zh-CN","blogPost":[{"@type":"BlogPosting","headline":"博客版本日志","datePublished":"2026-11-08","description":"每次更新都记在这里：改了什么、什么时候改的。","url":"https://zxyblog.dpdns.org/posts/blog-changelog.html","mainEntityOfPage":"https://zxyblog.dpdns.org/posts/blog-changelog.html"},{"@type":"BlogPosting","headline":"零成本搭一个自己的博客","datePublished":"2026-11-07","description":"域名、证书、托管这三件事各管什么，以及一条最省事的上线路径。","url":"https://zxyblog.dpdns.org/posts/free-blog.html","mainEntityOfPage":"https://zxyblog.dpdns.org/posts/free-blog.html"},{"@type":"BlogPosting","headline":"排序算法笔记：从冒泡到基数","datePublished":"2026-11-05","description":"把几种基础排序的性质放在一起对照，顺便留一份能直接编译的 C 实现。","url":"https://zxyblog.dpdns.org/posts/sorting-notes.html","mainEntityOfPage":"https://zxyblog.dpdns.org/posts/sorting-notes.html"},{"@type":"BlogPosting","headline":"为什么要写下来","datePublished":"2026-10-28","description":"脑子里的「我懂了」，和能让别人看懂的「我懂了」，中间隔着一次输出。","url":"https://zxyblog.dpdns.org/posts/why-write.html","mainEntityOfPage":"https://zxyblog.dpdns.org/posts/why-write.html"}]}</script>
 <!-- JSONLD:END -->
@@ -97,8 +99,9 @@
 <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
 <div class="wrap">
-  <!-- 最上面一栏：品牌 + 导航 + 主题切换 -->
+  <!-- 导航栏独占整行、通栏铺满；栏内内容仍收进定宽居中栏 -->
   <header class="site-head glass">
+   <div class="head-inner">
     <div class="head-bar">
       <div class="brand-wrap">
         <img class="avatar avatar-brand" src="assets/avatar.jpg" alt="站长头像">
@@ -118,9 +121,11 @@
       </nav>
       <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换为星夜模式" title="切换为星夜模式"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z" fill="currentColor"/></svg></button>
     </div>
+   </div>
   </header>
 
-  <!-- 第二栏：搜索独占整行 -->
+  <!-- 搜索与内容收进居中定宽栏，不再铺满整行 -->
+  <div class="shell">
   <label class="search-bar glass" for="search" role="search">
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 15.5 21 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
     <input id="search" type="search" placeholder="搜索文章、杂谈、说说、项目与相册" autocomplete="off" aria-label="全站搜索">
@@ -144,6 +149,7 @@
     <span class="uptime" id="uptime"></span>
     <span class="owner-door" id="owner-door" title="✦" aria-hidden="true">✦</span>
   </footer>
+  </div>
 </div>
 
 <button class="to-top" id="to-top" type="button" aria-label="回到顶部" title="回到顶部">
