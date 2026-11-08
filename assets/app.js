@@ -1017,9 +1017,9 @@
         var dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 2.5) return;
         var deg = (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(2);
-        var len = Math.max(24, Math.min(dist * 2.3, 150));
+        var len = Math.max(20, Math.min(dist * 2.2, 120));
         /* 慢速拖动时同一处会叠好几段，单段压暗，避免叠成一条死亮的实线 */
-        var op = Math.min(.96, .5 + dist / 70);
+        var op = Math.min(.85, .34 + dist / 110);
         var el = document.createElement('span');
         el.className = 'mouse-trail';
         el.setAttribute('aria-hidden', 'true');
@@ -1032,7 +1032,7 @@
         var anim = el.animate([
           { transform: 'rotate(' + deg + 'deg) scaleX(1)', opacity: op },
           { transform: 'rotate(' + deg + 'deg) scaleX(.2)', opacity: 0 }
-        ], { duration: 780 + Math.random() * 300, easing: 'cubic-bezier(.25,.7,.3,1)', fill: 'forwards' });
+        ], { duration: 560 + Math.random() * 260, easing: 'cubic-bezier(.24,.72,.3,1)', fill: 'forwards' });
         anim.addEventListener('finish', function () { dropTrail(el); });
         anim.addEventListener('cancel', function () { dropTrail(el); });
       }
