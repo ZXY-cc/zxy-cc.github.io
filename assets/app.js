@@ -371,17 +371,18 @@
      qualityNow 供脚本判断是否需要跑逐帧光幕；切换即时生效，无需刷新。 */
   var QUALITY_KEY = 'zb-quality';
   var QUALITY_OPTS = [
-    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上，再开启实时毛玻璃；以后新增的画质细节都会出现在这一档' },
+    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上开启实时毛玻璃，并把流星与花瓣加到两倍密度；以后新增的画质细节都会出现在这一档' },
     { id: 'high', name: '高', desc: '完整效果：星空、花瓣、花朵爱心游走、全部流星与光幕（默认档）' },
     { id: 'mid', name: '中', desc: '星点减半、花朵爱心静止；关闭鼠标光幕与卡片高光，保留主要动效' },
     { id: 'low', name: '低', desc: '静态精简星空：关闭装饰、流星、流萤、光幕与入场动画' }
   ];
   var QUALITY_SPEC = [
-    ['星星 / 花瓣', '72 / 12', '72 / 12', '36 / 6', '18 / 0'],
+    ['星星 / 花瓣', '72 / 24', '72 / 12', '36 / 6', '18 / 0'],
     ['花朵与爱心', '缓慢游走旋转', '缓慢游走旋转', '静止', '隐藏'],
-    ['流星', '常驻 3 + 快速 3', '常驻 3 + 快速 3', '各留 1 条', '关闭'],
+    ['流星', '常驻 6 + 快速 6', '常驻 3 + 快速 3', '各留 1 条', '关闭'],
     ['流萤', '夜间 8 只', '夜间 8 只', '夜间 4 只', '关闭'],
-    ['鼠标光幕 / 卡片高光', '开启', '开启', '关闭', '关闭'],
+    ['鼠标光幕 / 尾迹', '开启', '开启', '关闭', '关闭'],
+    ['卡片高光', '开启', '开启', '关闭', '关闭'],
     ['实时毛玻璃', '开启', '关闭', '关闭', '关闭'],
     ['入场动画', '开启', '开启', '开启', '关闭']
   ];
@@ -445,7 +446,7 @@
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 首次访问默认高画质；「极高」在其上额外开启实时毛玻璃，中 / 低 依次减少装饰与实时渲染。</p></section>';
+      '</b> · 首次访问默认高画质；「极高」在其上额外开启实时毛玻璃并加密流星与花瓣，中 / 低 依次减少装饰与实时渲染。</p></section>';
   }
 
   /* ---------- 全局搜索 ---------- */
@@ -713,9 +714,11 @@
     if (petalBox && petalBox.appendChild) {
       var fills = ['rgba(250,205,225,.72)', 'rgba(255,255,255,.80)',
         'rgba(244,186,212,.62)', 'rgba(206,224,250,.58)'];
-      for (var j = 0; j < 12; j++) {
+      /* 前 6 片低画质保留，其后 6 片高画质保留，最后 12 片只在极高画质出现（密度翻倍）。
+         位置沿用同一随机序列，因此高画质的前 12 片摆位与旧版逐像素一致。 */
+      for (var j = 0; j < 24; j++) {
         var p = document.createElement('span');
-        p.className = 'petal' + (j < 6 ? ' q-core' : ' q-high');
+        p.className = 'petal' + (j < 6 ? ' q-core' : (j < 12 ? ' q-high' : ' q-ultra'));
         p.style.cssText = 'left:' + (rnd() * 96).toFixed(2) + '%;' +
           'top:' + (-8 - rnd() * 18).toFixed(1) + '%;' +
           '--size:' + (9 + rnd() * 9).toFixed(1) + 'px;' +
@@ -1000,6 +1003,39 @@
     if (fine && !reduced()) {
       /* 性能：卡片范围只在 pointerover 时读一次布局，逐帧不再调用 elementFromPoint / getBoundingClientRect */
       var px = 0, py = 0, busy = false, host = null, rect = null;
+      /* 鼠标尾迹：把这一帧走过的位移画成一段蜜金流星尾 —— 头部固定在指针处最亮，
+         尾巴朝来路渐隐，随后以头部为原点收回并淡出。全程只动 transform / opacity，
+         节点数封顶 26，中 / 低画质与 reduced-motion 不会走到这里。 */
+      var trailX = 0, trailY = 0, trailOn = false, trailNodes = [];
+      function dropTrail(el) {
+        var i = trailNodes.indexOf(el);
+        if (i >= 0) trailNodes.splice(i, 1);
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }
+      function spawnTrail(x0, y0, x1, y1) {
+        var dx = x1 - x0, dy = y1 - y0;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 2.5) return;
+        var deg = (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(2);
+        var len = Math.max(16, Math.min(dist * 1.8, 96));
+        /* 慢速拖动时同一处会叠好几段，单段压暗，避免叠成一条死亮的实线 */
+        var op = Math.min(.9, .28 + dist / 110);
+        var el = document.createElement('span');
+        el.className = 'mouse-trail';
+        el.setAttribute('aria-hidden', 'true');
+        el.style.cssText = 'left:' + x1.toFixed(1) + 'px;top:' + y1.toFixed(1) + 'px;' +
+          '--tw:' + len.toFixed(1) + 'px;transform:rotate(' + deg + 'deg);';
+        document.body.appendChild(el);
+        trailNodes.push(el);
+        if (trailNodes.length > 26) dropTrail(trailNodes[0]);
+        if (typeof el.animate !== 'function') { dropTrail(el); return; }
+        var anim = el.animate([
+          { transform: 'rotate(' + deg + 'deg) scaleX(1)', opacity: op },
+          { transform: 'rotate(' + deg + 'deg) scaleX(.14)', opacity: 0 }
+        ], { duration: 420 + Math.random() * 220, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+        anim.addEventListener('finish', function () { dropTrail(el); });
+        anim.addEventListener('cancel', function () { dropTrail(el); });
+      }
       function cacheHost(t) {
         host = (t && t.closest) ? t.closest('.sheen') : null;
         rect = (host && host.getBoundingClientRect) ? host.getBoundingClientRect() : null;
@@ -1018,6 +1054,12 @@
         busy = true;
         (window.requestAnimationFrame || function (f) { window.setTimeout(f, 16); })(function () {
           if (glow && glow.style) glow.style.transform = 'translate3d(' + px + 'px,' + py + 'px,0)';
+          /* 位移攒够 4px 才落一段尾迹：慢速拖动也连续，快速划过则拉成长光带 */
+          if (!trailOn) { trailX = px; trailY = py; trailOn = true; }
+          else if ((px - trailX) * (px - trailX) + (py - trailY) * (py - trailY) >= 16) {
+            spawnTrail(trailX, trailY, px, py);
+            trailX = px; trailY = py;
+          }
           if (host && rect && host.style && host.style.setProperty) {
             host.style.setProperty('--mx', ((px - rect.left) / (rect.width || 1) * 100).toFixed(1) + '%');
             host.style.setProperty('--my', ((py - rect.top) / (rect.height || 1) * 100).toFixed(1) + '%');

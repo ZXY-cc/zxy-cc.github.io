@@ -312,6 +312,8 @@ body {
   animation: petal-fall var(--dur, 26s) linear var(--delay, 0s) infinite;
 }
 .petal svg { display: block; width: 100%; height: 100%; fill: var(--petal-fill, rgba(250, 205, 225, .72)); }
+/* 极高画质追加的后半段花瓣：默认不占位 */
+.petals .petal.q-ultra { display: none; }
 
 /* 少量模糊流星：头部在行进前方（左端 / 左下），光迹只留在走过的后方（右上） */
 .meteors { position: absolute; inset: 0; }
@@ -345,6 +347,13 @@ body {
 .meteor-a { top: 14%; left: 72%; --len: 180px; --angle: -26deg; --tx: -370px; --ty: 185px; --dur: 21s; --delay: 5s; --peak: .76; }
 .meteor-b { top: 40%; left: 90%; --len: 140px; --angle: -21deg; --tx: -300px; --ty: 135px; --dur: 29s; --delay: 14s; --peak: .56; }
 .meteor-c { top: 7%;  left: 46%; --len: 120px; --angle: -31deg; --tx: -280px; --ty: 175px; --dur: 37s; --delay: 24s; --peak: .44; }
+/* 极高的追加流星：轨迹更靠下、节拍与前三颗错开 */
+.meteor-d { top: 24%; left: 80%; --len: 165px; --angle: -23deg; --tx: -340px; --ty: 162px; --dur: 26s; --delay: 9s;  --peak: .62; }
+.meteor-e { top: 57%; left: 66%; --len: 132px; --angle: -29deg; --tx: -290px; --ty: 178px; --dur: 33s; --delay: 19s; --peak: .48; }
+.meteor-f { top: 70%; left: 93%; --len: 200px; --angle: -18deg; --tx: -420px; --ty: 138px; --dur: 41s; --delay: 31s; --peak: .56; }
+/* 只属于极高画质：默认不占位、不跑动画 */
+.meteors .meteor.q-ultra,
+.shoots .shoot.q-ultra { display: none; }
 
 /* ---------- 偶尔掠过的流星：从右上到左下，头部出屏后才熄灭 ----------
    光迹右端永远锚在头部（left:-tlen + width:tlen => 右端在 x=0），
@@ -388,6 +397,10 @@ body {
 .shoot-a { top: 10%; left: 84%; --sangle: 156deg; --tlen: 36vw; --sdist: 124vw; --scycle: 19s; --sdelay: -2s; --speak: .92; --shold: .66; }
 .shoot-b { top: 34%; left: 96%; --sangle: 150deg; --tlen: 32vw; --sdist: 122vw; --scycle: 27s; --sdelay: -9s; --speak: .76; --shold: .52; }
 .shoot-c { top: 4%;  left: 68%; --sangle: 160deg; --tlen: 28vw; --sdist: 108vw; --scycle: 34s; --sdelay: -5s; --speak: .62; --shold: .42; }
+/* 极高的追加快速流星：角度与周期各不相同，偶尔与前三条同时在天空划过 */
+.shoot-d { top: 22%; left: 92%; --sangle: 152deg; --tlen: 34vw; --sdist: 118vw; --scycle: 23s; --sdelay: -14s; --speak: .84; --shold: .58; }
+.shoot-e { top: 46%; left: 78%; --sangle: 158deg; --tlen: 30vw; --sdist: 112vw; --scycle: 31s; --sdelay: -21s; --speak: .70; --shold: .46; }
+.shoot-f { top: 14%; left: 98%; --sangle: 148deg; --tlen: 38vw; --sdist: 126vw; --scycle: 38s; --sdelay: -27s; --speak: .74; --shold: .50; }
 
 @keyframes shoot-head {
   0%, 43.9%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.8); }
@@ -1236,8 +1249,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* ---------- 画质档位：高 = 完整效果（默认档），极高 = 高 + 实时毛玻璃，中 / 低 逐层减负 ----------
    只作用于根节点带 data-quality 的情况，高画质（默认、无该属性）一行都不改。
    CSS 负责静态装饰与渲染开销，脚本负责跳过逐帧的光幕与卡片高光。 */
-/* 极高：在「高」之上独占实时毛玻璃；以后新增的画质细节都挂在这一档 */
+/* 极高：在「高」之上独占实时毛玻璃与更密的流星 / 花瓣；以后新增的画质细节都挂在这一档 */
 :root[data-quality="ultra"] { --glass-blur: blur(10px) saturate(128%); }
+:root[data-quality="ultra"] .meteors .meteor.q-ultra,
+:root[data-quality="ultra"] .shoots .shoot.q-ultra,
+:root[data-quality="ultra"] .petals .petal.q-ultra { display: block; }
 /* 中：星星 72→36、花瓣 12→6；常驻流星与快速流星各留 1、流萤留 4 */
 :root[data-quality="mid"] .stars .star.q-high { display: none; }
 :root[data-quality="mid"] .petals .petal.q-high { display: none; }
@@ -1251,9 +1267,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   animation: none !important;
   transform: rotate(var(--dir0, 0deg)) !important;
 }
-/* 中 / 低：取消跟随鼠标的光幕，以及鼠标停在卡片上时发出的高光 */
+/* 中 / 低：取消跟随鼠标的光幕与尾迹，以及鼠标停在卡片上时发出的高光 */
 :root[data-quality="mid"] .cursor-glow,
-:root[data-quality="low"] .cursor-glow { display: none !important; }
+:root[data-quality="mid"] .mouse-trail,
+:root[data-quality="low"] .cursor-glow,
+:root[data-quality="low"] .mouse-trail { display: none !important; }
 :root[data-quality="mid"] .sheen::after,
 :root[data-quality="low"] .sheen::after { display: none !important; }
 
@@ -1293,6 +1311,25 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .cursor-glow { position: fixed; left: 0; top: 0; width: 340px; height: 340px; margin: -170px 0 0 -170px;
   z-index: 0; pointer-events: none; border-radius: 50%; opacity: .32;
   background: radial-gradient(circle, var(--star-halo), transparent 70%); }
+
+/* ---------- 鼠标尾迹：指针划过的路径留下一道蜜金色流星尾 ----------
+   每帧取一段位移画一条短光带：右端（头部）锚在指针、最亮，向左（来路）渐隐，
+   与流星光迹同一套配色；随后以头部为原点收缩淡出，只动 transform / opacity。
+   容器自身 0 尺寸，transform-origin 落在头部，scale 只会把尾巴收回指针。 */
+.mouse-trail {
+  position: fixed; left: 0; top: 0; width: 0; height: 0;
+  z-index: 0; pointer-events: none; transform-origin: 0 0;
+  will-change: transform, opacity;
+}
+.mouse-trail::before {
+  content: ''; position: absolute; left: calc(-1 * var(--tw, 52px)); top: -1.5px;
+  width: var(--tw, 52px); height: 3px; border-radius: 999px;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(255, 228, 166, .10) 36%,
+    rgba(255, 236, 186, .30) 70%, rgba(255, 249, 226, .58) 100%);
+  box-shadow: 0 0 10px 2px rgba(255, 220, 152, .16);
+  filter: blur(1.1px);
+}
 .fireflies { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
 :root[data-theme="night"] .fireflies { opacity: 1; }
 .firefly { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--star-dot);
@@ -1442,6 +1479,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .stars .star:nth-child(n+37),
   .petals .petal:nth-child(n+7),
   .shoot-c, .meteor-c { display: none; }
+  /* 极高画质追加的流星与花瓣在窄屏同样减负（窄屏不追求满特效） */
+  .shoot.q-ultra, .meteor.q-ultra, .petal.q-ultra { display: none !important; }
 }
 
 /* 更窄的屏幕：继续收窄卡片内边距，保住正文有效行宽 */
@@ -1464,7 +1503,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cursor-glow { display: none; }
+  .cursor-glow, .mouse-trail { display: none; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
