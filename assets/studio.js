@@ -571,7 +571,7 @@
   function formPublish() {
     return '<div class="studio-form glass"><h2>发布上线</h2>' +
       '<p class="f-hint">静态博客没有服务器，所以「让所有访客看到」必须把数据文件写回 GitHub 仓库。<br>' +
-      '下面两种办法任选其一，都能让 https://zxyblog.dpdns.org 更新。</p>' +
+      '下面两种办法任选其一，都能让 https://zxy-blog.top 更新。</p>' +
       '<h3>办法一 · 导出文件交给助手</h3>' +
       '<p class="f-hint">下载 <code>site-data.js</code>，发给我，我用仓库部署密钥推送（不需要你给任何令牌）。</p>' +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="export-js">下载 site-data.js</button>' +
