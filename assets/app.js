@@ -1005,7 +1005,7 @@
       var px = 0, py = 0, busy = false, host = null, rect = null;
       /* 鼠标尾迹：把这一帧走过的位移画成一段蜜金流星尾 —— 头部固定在指针处最亮，
          尾巴朝来路渐隐，随后以头部为原点收回并淡出。全程只动 transform / opacity，
-         节点数封顶 26，中 / 低画质与 reduced-motion 不会走到这里。 */
+         节点数封顶 40，中 / 低画质与 reduced-motion 不会走到这里。 */
       var trailX = 0, trailY = 0, trailOn = false, trailNodes = [];
       function dropTrail(el) {
         var i = trailNodes.indexOf(el);
@@ -1017,9 +1017,10 @@
         var dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 2.5) return;
         var deg = (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(2);
-        var len = Math.max(20, Math.min(dist * 2.1, 128));
+        /* 长度至少盖住这一段的实际位移再多 16px：段与段永远衔接，快速划动也不会断线 */
+        var len = Math.min(Math.max(dist + 16, 20), 160);
         /* 慢速拖动时同一处会叠好几段，单段压暗，避免叠成一条死亮的实线 */
-        var op = Math.min(.92, .36 + dist / 105);
+        var op = Math.min(.55, .16 + dist / 160);
         var el = document.createElement('span');
         el.className = 'mouse-trail';
         el.setAttribute('aria-hidden', 'true');
@@ -1027,7 +1028,7 @@
           '--tw:' + len.toFixed(1) + 'px;transform:rotate(' + deg + 'deg);';
         document.body.appendChild(el);
         trailNodes.push(el);
-        if (trailNodes.length > 26) dropTrail(trailNodes[0]);
+        if (trailNodes.length > 40) dropTrail(trailNodes[0]);
         if (typeof el.animate !== 'function') { dropTrail(el); return; }
         var anim = el.animate([
           { transform: 'rotate(' + deg + 'deg) scaleX(1)', opacity: op },
@@ -1050,16 +1051,16 @@
         /* 中 / 低 画质不再跑逐帧光幕与卡片高光（极高与高一致） */
         if (qualityNow !== 'high' && qualityNow !== 'ultra') return;
         px = e.clientX; py = e.clientY;
+        /* 尾迹直接在事件里落段、不等 rAF：刷新后入场动画占住帧队列时也不会跳段断线 */
+        if (!trailOn) { trailX = px; trailY = py; trailOn = true; }
+        else if ((px - trailX) * (px - trailX) + (py - trailY) * (py - trailY) >= 9) {
+          spawnTrail(trailX, trailY, px, py);
+          trailX = px; trailY = py;
+        }
         if (busy) return;
         busy = true;
         (window.requestAnimationFrame || function (f) { window.setTimeout(f, 16); })(function () {
           if (glow && glow.style) glow.style.transform = 'translate3d(' + px + 'px,' + py + 'px,0)';
-          /* 位移攒够 3px 才落一段尾迹：慢速拖动也连续，快速划过则拉成长光带 */
-          if (!trailOn) { trailX = px; trailY = py; trailOn = true; }
-          else if ((px - trailX) * (px - trailX) + (py - trailY) * (py - trailY) >= 9) {
-            spawnTrail(trailX, trailY, px, py);
-            trailX = px; trailY = py;
-          }
           if (host && rect && host.style && host.style.setProperty) {
             host.style.setProperty('--mx', ((px - rect.left) / (rect.width || 1) * 100).toFixed(1) + '%');
             host.style.setProperty('--my', ((py - rect.top) / (rect.height || 1) * 100).toFixed(1) + '%');

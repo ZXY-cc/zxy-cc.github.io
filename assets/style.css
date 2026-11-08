@@ -1334,9 +1334,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   content: ''; position: absolute; left: calc(-1 * var(--tw, 52px)); top: -2px;
   width: var(--tw, 52px); height: 4px; border-radius: 999px;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(246, 198, 88, .16) 30%,
-    rgba(250, 208, 116, .52) 68%, rgba(255, 234, 168, .94) 100%);
-  box-shadow: 0 0 14px 3px rgba(240, 182, 74, .40);
+    transparent 0%, rgba(246, 198, 88, .10) 30%,
+    rgba(250, 208, 116, .30) 68%, rgba(255, 234, 168, .58) 100%);
+  box-shadow: 0 0 12px 2px rgba(240, 182, 74, .20);
   filter: blur(1.2px);
 }
 .fireflies { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
