@@ -774,7 +774,7 @@
     var door = t.closest('#owner-door');
     if (!panel && !door) return;
 
-    /* 写作工作台：工具栏插入、视图切换、标签 / 分类、公式速查 */
+    /* 写作工作台：工具栏插入、视图切换、标签 / 分类 */
     var mdBtn = t.closest('[data-md]');
     if (mdBtn) {
       var tool = MD_TOOLS[Number(mdBtn.getAttribute('data-md'))];
