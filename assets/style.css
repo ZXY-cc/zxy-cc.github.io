@@ -76,6 +76,10 @@
   --star-fade: rgba(255, 226, 166, .14);
   --star-glow: rgba(255, 208, 120, .55);
   --star-dot: rgba(255, 244, 214, .94);
+  /* 星爆用色：白天底色是浅蓝，奶油金几乎糊进背景，改用饱和一档的琥珀金 + 更深的光晕 */
+  --burst-fill: #f0b13f;
+  --burst-glow: rgba(226, 146, 26, .58);
+  --burst-mist: rgba(255, 176, 64, .30);
   --puffy-mark: url("data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'><path%20fill='%23f7d189'%20d='M%2044.3%2014.0%20Q%2050.0%206.0%2055.7%2014.0%20L%2061.1%2021.5%20Q%2065.9%2028.2%2073.7%2030.6%20L%2082.5%2033.4%20Q%2091.8%2036.4%2086.0%2044.3%20L%2080.5%2051.8%20Q%2075.7%2058.3%2075.7%2066.5%20L%2075.8%2075.8%20Q%2075.9%2085.6%2066.6%2082.5%20L%2057.8%2079.6%20Q%2050.0%2077.0%2042.2%2079.6%20L%2033.4%2082.5%20Q%2024.1%2085.6%2024.2%2075.8%20L%2024.3%2066.5%20Q%2024.3%2058.3%2019.5%2051.8%20L%2014.0%2044.3%20Q%208.2%2036.4%2017.5%2033.4%20L%2026.3%2030.6%20Q%2034.1%2028.2%2038.9%2021.5%20L%2044.3%2014.0%20Z'/></svg>");
 
   --radius: 20px;
@@ -151,6 +155,10 @@
   --star-fade: rgba(255, 228, 172, .13);
   --star-glow: rgba(255, 216, 138, .62);
   --star-dot: rgba(255, 248, 224, .94);
+  /* 星爆用色：夜空里更亮一档，靠冷暗底衬出蜜金 */
+  --burst-fill: rgba(255, 232, 176, .98);
+  --burst-glow: rgba(255, 217, 140, .72);
+  --burst-mist: rgba(255, 205, 128, .34);
 
   /* 细笔画的极淡暗描边：只托底，不改变字色观感 */
   --night-ink-halo: 0 1px 2px rgba(8, 16, 44, .60);
@@ -788,8 +796,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .star-burst { position: fixed; z-index: 60; width: 0; height: 0; pointer-events: none; }
 .star-burst span { position: absolute; left: 0; top: 0; display: block; will-change: transform, opacity; }
 .star-burst span svg { display: block; width: 100%; height: 100%;
-  fill: var(--star-soft); opacity: .95;
-  filter: drop-shadow(0 0 4px var(--star-glow)) drop-shadow(0 0 9px var(--star-mist)); }
+  fill: var(--burst-fill, var(--star-soft)); opacity: .97;
+  filter: drop-shadow(0 0 5px var(--burst-glow)) drop-shadow(0 0 12px var(--burst-mist)); }
 :root[data-theme="night"] .toc-item::before { opacity: .88; }
 :root[data-theme="night"] .post-item::before { opacity: .92; }
 :root[data-theme="night"] .tag,
@@ -1318,17 +1326,17 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
    容器自身 0 尺寸，transform-origin 落在头部，scale 只会把尾巴收回指针。 */
 .mouse-trail {
   position: fixed; left: 0; top: 0; width: 0; height: 0;
-  z-index: 0; pointer-events: none; transform-origin: 0 0;
+  z-index: 40; pointer-events: none; transform-origin: 0 0;
   will-change: transform, opacity;
 }
 .mouse-trail::before {
-  content: ''; position: absolute; left: calc(-1 * var(--tw, 52px)); top: -1.5px;
-  width: var(--tw, 52px); height: 3px; border-radius: 999px;
+  content: ''; position: absolute; left: calc(-1 * var(--tw, 52px)); top: -2px;
+  width: var(--tw, 52px); height: 4px; border-radius: 999px;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(255, 228, 166, .10) 36%,
-    rgba(255, 236, 186, .30) 70%, rgba(255, 249, 226, .58) 100%);
-  box-shadow: 0 0 10px 2px rgba(255, 220, 152, .16);
-  filter: blur(1.1px);
+    transparent 0%, rgba(246, 198, 88, .16) 30%,
+    rgba(250, 208, 116, .52) 68%, rgba(255, 234, 168, .94) 100%);
+  box-shadow: 0 0 14px 3px rgba(240, 182, 74, .40);
+  filter: blur(1.2px);
 }
 .fireflies { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
 :root[data-theme="night"] .fireflies { opacity: 1; }

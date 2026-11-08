@@ -1017,9 +1017,9 @@
         var dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 2.5) return;
         var deg = (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(2);
-        var len = Math.max(16, Math.min(dist * 1.8, 96));
+        var len = Math.max(20, Math.min(dist * 2.1, 128));
         /* 慢速拖动时同一处会叠好几段，单段压暗，避免叠成一条死亮的实线 */
-        var op = Math.min(.9, .28 + dist / 110);
+        var op = Math.min(.92, .36 + dist / 105);
         var el = document.createElement('span');
         el.className = 'mouse-trail';
         el.setAttribute('aria-hidden', 'true');
@@ -1032,7 +1032,7 @@
         var anim = el.animate([
           { transform: 'rotate(' + deg + 'deg) scaleX(1)', opacity: op },
           { transform: 'rotate(' + deg + 'deg) scaleX(.14)', opacity: 0 }
-        ], { duration: 420 + Math.random() * 220, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
+        ], { duration: 500 + Math.random() * 240, easing: 'cubic-bezier(.22,.72,.28,1)', fill: 'forwards' });
         anim.addEventListener('finish', function () { dropTrail(el); });
         anim.addEventListener('cancel', function () { dropTrail(el); });
       }
@@ -1054,9 +1054,9 @@
         busy = true;
         (window.requestAnimationFrame || function (f) { window.setTimeout(f, 16); })(function () {
           if (glow && glow.style) glow.style.transform = 'translate3d(' + px + 'px,' + py + 'px,0)';
-          /* 位移攒够 4px 才落一段尾迹：慢速拖动也连续，快速划过则拉成长光带 */
+          /* 位移攒够 3.6px 才落一段尾迹：慢速拖动也连续，快速划过则拉成长光带 */
           if (!trailOn) { trailX = px; trailY = py; trailOn = true; }
-          else if ((px - trailX) * (px - trailX) + (py - trailY) * (py - trailY) >= 16) {
+          else if ((px - trailX) * (px - trailX) + (py - trailY) * (py - trailY) >= 13) {
             spawnTrail(trailX, trailY, px, py);
             trailX = px; trailY = py;
           }
@@ -1087,7 +1087,7 @@
         if (readQuality() !== 'high' && readQuality() !== 'ultra') return;
         var x = e.clientX, y = e.clientY;
         if (typeof x !== 'number' || typeof y !== 'number') return;
-        var n = 9 + (Math.random() * 3 | 0);
+        var n = 11 + (Math.random() * 4 | 0);
         var box = document.createElement('div');
         box.setAttribute('class', 'star-burst');
         box.setAttribute('aria-hidden', 'true');
@@ -1096,7 +1096,7 @@
         var done = 0;
         function sweep() { done++; if (done >= n && box.parentNode) box.parentNode.removeChild(box); }
         for (var i = 0; i < n; i++) {
-          var size = 7 + Math.random() * 9;
+          var size = 9 + Math.random() * 10;
           var half = (size / 2).toFixed(1);
           var s = document.createElement('span');
           s.style.cssText = 'width:' + size.toFixed(1) + 'px;height:' + size.toFixed(1) +
@@ -1104,13 +1104,13 @@
           s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg>';
           box.appendChild(s);
           var ang = (Math.PI * 2 * i) / n + Math.random() * .55;
-          var dist = 34 + Math.random() * 54;
+          var dist = 46 + Math.random() * 70;
           var dx = Math.cos(ang) * dist;
-          var dy = Math.sin(ang) * dist - 14;
+          var dy = Math.sin(ang) * dist - 16;
           var anim = s.animate([
-            { transform: 'translate(0,0) scale(1)', opacity: .95 },
+            { transform: 'translate(0,0) scale(1)', opacity: .97 },
             { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(.18)', opacity: 0 }
-          ], { duration: 460 + Math.random() * 240, easing: 'cubic-bezier(.16,.84,.44,1)', fill: 'forwards' });
+          ], { duration: 520 + Math.random() * 260, easing: 'cubic-bezier(.16,.84,.44,1)', fill: 'forwards' });
           anim.addEventListener('finish', sweep);
           anim.addEventListener('cancel', sweep);
         }
