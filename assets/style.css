@@ -600,11 +600,18 @@ main { min-height: 320px; }
   border-image: linear-gradient(180deg, var(--accent), var(--accent-3)) 1;
 }
 .article h3 { font-size: 17px; font-weight: 650; margin: 28px 0 10px; }
-/* 卡片铺满屏宽后，正文仍保持约 42–46 字/行的舒适行宽；表格与代码可略宽 */
-.article > *:not(.article-body) { max-width: 46em; margin-left: auto; margin-right: auto; }
-.article .article-body > * { max-width: 46em; margin-left: auto; margin-right: auto; }
+/* 文章页：整篇收进一个统一栏，栏宽用 rem 固定，不随各块自身字号变化；
+   标题、署名、标签、目录、正文共享同一左右边界，观感匀称。 */
+.article-inner { width: 100%; max-width: 46rem; margin: 0 auto; }
+.article .article-inner > * { max-width: none; }
+.article .article-body > * { max-width: 100%; }
 .article .article-body > table,
-.article .article-body > pre { max-width: 68em; }
+.article .article-body > pre { width: 100%; max-width: 100%; }
+.article-byline { display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px 16px; margin-bottom: 20px; }
+.article-byline .article-author { margin-bottom: 0; }
+.article-date { font-size: 12.5px; color: var(--muted); letter-spacing: .4px;
+  font-variant-numeric: tabular-nums; }
 .article p { margin: 0 0 18px; font-size: 15.5px; line-height: 1.9; }
 .article ul, .article ol { padding-left: 22px; margin: 0 0 20px; }
 .article li { margin-bottom: 8px; }
@@ -722,6 +729,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .nav a,
 :root[data-theme="night"] .page-note,
 :root[data-theme="night"] .post-meta,
+:root[data-theme="night"] .article-author,
+:root[data-theme="night"] .article-date,
 :root[data-theme="night"] .post-summary,
 :root[data-theme="night"] .toc-title,
 :root[data-theme="night"] .tag-count,
@@ -793,8 +802,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 .profile-id { min-width: 0; }
 .profile-name {
-  margin: 0 0 6px; font-family: Georgia, "Songti SC", "STSong", "Noto Serif SC", "SimSun", serif;
-  font-size: 30px; font-weight: 600; letter-spacing: 1.2px; line-height: 1.25;
+  /* 站名与全站一致，用 body 的默认无衬线字体，不再单独套衬线体 */
+  margin: 0 0 6px; font-family: inherit;
+  font-size: 30px; font-weight: 650; letter-spacing: .8px; line-height: 1.3;
   color: var(--ink-strong);
 }
 .profile-bio { margin: 0; font-size: 14.5px; line-height: 1.95; color: var(--muted); letter-spacing: .2px; }
@@ -828,11 +838,27 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: 0 0 0 1px rgba(208,226,255,.40), 0 10px 30px rgba(8,16,44,.32); }
 :root[data-theme="night"] .p-link { color: var(--accent-text); }
 
-/* ---------- 通用页头与统计 ---------- */
-.page-head { margin: 24px 0 16px; }
+/* ---------- 通用页头与统计 ----------
+   全站每个分页统一用 .page-head：小标 → 大标题 → 副标题 → 一条化开的渐变分隔线，
+   首页与标签页的 .section-head 复用同一套字重与渐变竖条，观感一致。 */
+.page-head { position: relative; margin: 26px 0 20px; padding-bottom: 16px; }
+.page-head::after {
+  content: ''; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2) 38%, transparent 76%);
+  opacity: .4;
+}
 .page-kicker { font-size: 11px; letter-spacing: 2.6px; color: var(--accent-text); opacity: .9; margin-bottom: 7px; }
 .page-title { font-size: 27px; font-weight: 650; letter-spacing: .8px; color: var(--ink-strong); margin: 0; line-height: 1.4; }
 .page-sub { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.section-head {
+  display: flex; align-items: center; gap: 12px;
+  margin: 28px 0 2px; font-size: 19px; font-weight: 650;
+  letter-spacing: .6px; line-height: 1.5; color: var(--ink-strong);
+}
+.section-head::before {
+  content: ''; flex: 0 0 auto; width: 4px; height: 18px; border-radius: 4px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-3));
+}
 .stat-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
   border-radius: var(--radius); padding: 16px 10px; margin: 30px 0 8px; border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); }
@@ -1015,10 +1041,15 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .related a { font-size: 13px; color: var(--accent-text); padding: 5px 13px; border-radius: 999px;
   border: 1px solid var(--glass-line); }
 
-/* ---------- 创作台 ---------- */
+/* ---------- 创作台 ----------
+   全屏布局后把整块收进居中栏，避免表单在宽屏被拉得过长；
+   页头 / 标签条 / 表单三层用统一圆角与渐变竖条，和各分页观感一致。 */
+.studio-wrap { width: 100%; max-width: 56rem; margin: 0 auto; }
 .studio-lock { max-width: 480px; margin: 44px auto; padding: 34px 36px; text-align: center;
   border-radius: var(--radius-lg); border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); }
+.studio-lock .primary-btn { margin-top: 18px; }
+.studio-lock .f-label { text-align: left; }
 .lock-star { width: 46px; height: 46px; margin: 0 auto 14px; }
 .lock-star svg { width: 100%; height: 100%; fill: var(--star-soft);
   filter: drop-shadow(0 0 10px var(--star-glow)); }
@@ -1026,23 +1057,40 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .studio-lock p { font-size: 13.5px; color: var(--muted); line-height: 1.9; }
 .lock-foot { margin: 20px 0 0; font-size: 12px !important; color: var(--faint) !important; }
 .studio-head { display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  margin: 30px 0 18px; padding: 22px 26px; border-radius: var(--radius);
+  position: relative; margin: 26px 0 16px; padding: 20px 28px 22px; border-radius: var(--radius);
   border: 1px solid var(--glass-line); box-shadow: var(--glass-shadow), var(--glass-inner); }
-.studio-head h1 { margin: 0; font-size: 23px; font-weight: 650; color: var(--ink-strong); }
+.studio-head::after {
+  content: ''; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2) 38%, transparent 76%);
+  opacity: .4;
+}
+.studio-head h1 { margin: 0; font-size: 23px; font-weight: 650; color: var(--ink-strong); letter-spacing: .6px; }
 .studio-head p { margin: 5px 0 0; font-size: 12.5px; color: var(--muted); }
-.studio-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.studio-head .page-kicker { margin-bottom: 6px; }
+.studio-head .soft-btn { flex: 0 0 auto; }
+.studio-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px;
+  padding: 7px; border-radius: 999px; border: 1px solid var(--glass-line);
+  background: var(--glass-strong); }
 .stab { font: inherit; font-size: 12.5px; cursor: pointer; padding: 6px 15px; border-radius: 999px;
-  color: var(--muted); background: var(--glass-strong); border: 1px solid var(--glass-line); }
-.stab.on { color: var(--ink-strong); border-color: var(--accent); box-shadow: 0 0 16px var(--accent-soft); }
+  color: var(--muted); background: transparent; border: 1px solid transparent;
+  transition: color .25s ease, transform .25s ease, box-shadow .25s ease; }
+.stab:hover { color: var(--ink-strong); transform: translateY(-1px); }
+.stab.on { color: var(--ink-strong); background: var(--glass-sheen), var(--glass-strong);
+  border-color: var(--accent); box-shadow: 0 0 16px var(--accent-soft); }
 .studio-msg { min-height: 20px; font-size: 13px; color: var(--accent-text); margin: 0 0 12px; }
 .studio-msg.warn { color: var(--accent-3-text); }
-.studio-form { border-radius: var(--radius); padding: 26px 28px; margin-bottom: 40px;
+.studio-form { border-radius: var(--radius); padding: 26px 30px 30px; margin-bottom: 40px;
   border: 1px solid var(--glass-line); box-shadow: var(--glass-shadow), var(--glass-inner); }
-.studio-form h2 { margin: 0 0 6px; font-size: 19px; font-weight: 650; color: var(--ink-strong); }
-.studio-form h3 { margin: 24px 0 8px; font-size: 15px; color: var(--ink-strong); }
+.studio-form h2 { display: flex; align-items: center; gap: 11px;
+  margin: 0 0 8px; font-size: 19px; font-weight: 650; color: var(--ink-strong); letter-spacing: .4px; }
+.studio-form h2::before {
+  content: ''; flex: 0 0 auto; width: 4px; height: 17px; border-radius: 4px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-3));
+}
+.studio-form h3 { margin: 26px 0 8px; font-size: 15px; font-weight: 650; color: var(--ink-strong); }
 .f-hint { font-size: 12.5px; color: var(--muted); line-height: 1.85; margin: 0 0 18px; }
 .f-hint code { font-size: 12px; color: var(--accent-text); }
-.f-label { display: block; font-size: 12.5px; color: var(--muted); margin: 15px 0 6px; }
+.f-label { display: block; font-size: 12.5px; color: var(--muted); margin: 15px 0 6px; letter-spacing: .3px; }
 .f-input { display: block; width: 100%; font: inherit; font-size: 14px; color: var(--ink);
   background: var(--code-bg); border: 1px solid var(--glass-line); border-radius: 12px;
   padding: 9px 13px; outline: none; transition: border-color .25s ease, box-shadow .25s ease; }
@@ -1073,6 +1121,47 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .primary-btn { color: #1d2a56; }
 :root[data-theme="night"] .stab.on,
 :root[data-theme="night"] .filter.on { color: #ffffff; }
+
+/* ---------- 设置：画质档位 ----------
+   沿用 .glass 卡片，三档用一组等宽卡片单选；选中态用星标与渐变描边，
+   与标签、筛选胶囊的选中语言保持一致。 */
+.settings-card { padding: 26px 30px 24px; margin: 24px 0 40px; border-radius: var(--radius-lg); }
+.settings-block { display: flex; flex-wrap: wrap; gap: 24px 34px; align-items: flex-start; }
+.settings-info { flex: 1 1 240px; min-width: 0; }
+.settings-info h2 { display: flex; align-items: center; gap: 10px;
+  margin: 0 0 8px; font-size: 19px; font-weight: 650; color: var(--ink-strong); letter-spacing: .4px; }
+.settings-info h2::before {
+  content: ''; flex: 0 0 auto; width: 4px; height: 17px; border-radius: 4px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-3));
+}
+.settings-info p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--muted); }
+.quality-group { flex: 2 1 420px; display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.quality-item {
+  position: relative; display: flex; flex-direction: column; gap: 6px;
+  padding: 18px 16px 16px; text-align: left; cursor: pointer; font: inherit;
+  border-radius: var(--radius); border: 1px solid var(--glass-line);
+  background: var(--glass-sheen), var(--glass-strong);
+  box-shadow: var(--glass-inner);
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.quality-item:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(112, 138, 190, .18), var(--glass-inner); }
+.quality-item b { font-size: 21px; font-weight: 650; color: var(--ink-strong); line-height: 1.3; }
+.quality-item small { font-size: 11.5px; line-height: 1.7; color: var(--muted); }
+.quality-item.on { border-color: rgba(171, 139, 212, .72);
+  box-shadow: 0 0 0 1px rgba(171, 139, 212, .34), 0 12px 30px rgba(171, 139, 212, .18), var(--glass-inner); }
+.q-mark { position: absolute; right: 14px; top: 14px; width: 18px; height: 18px;
+  opacity: .28; transition: opacity .3s ease, transform .3s ease; }
+.q-mark svg { display: block; width: 100%; height: 100%; fill: var(--star-soft);
+  filter: drop-shadow(0 0 5px var(--star-glow)); }
+.quality-item.on .q-mark { opacity: .95; transform: rotate(-12deg) scale(1.08); }
+.settings-foot { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--glass-line);
+  font-size: 12px; line-height: 1.9; color: var(--muted); }
+.settings-foot b { color: var(--accent-text); font-weight: 650; }
+:root[data-theme="night"] .quality-item.on { border-color: rgba(226, 205, 251, .66); }
+:root[data-theme="night"] .settings-info p,
+:root[data-theme="night"] .quality-item small,
+:root[data-theme="night"] .settings-foot { text-shadow: var(--night-ink-halo); }
 
 /* ---------- 启动闪屏 / 光标柔光 / 流萤 ---------- */
 .splash { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;
@@ -1174,6 +1263,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .f-row { grid-template-columns: 1fr; }
   .studio-form { padding: 20px 18px; }
   .studio-head { flex-direction: column; align-items: flex-start; }
+  .studio-tabs { border-radius: var(--radius); }
+  .quality-group { grid-template-columns: 1fr; }
+  .settings-card { padding: 20px 18px; }
+  .settings-block { gap: 18px; }
   .cursor-glow { display: none; }
   .photo-tile img { height: 160px; }
 }

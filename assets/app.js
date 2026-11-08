@@ -72,8 +72,8 @@
     }).join('') + '</div>';
   }
   function metaHtml(p) {
-    return '<div class="post-meta"><time>' + esc(p.date) + '</time>' +
-      (p.reading ? '<span>' + esc(p.reading) + '</span>' : '') + '</div>';
+    /* 时间只保留到日期：创作时间的分钟与阅读时长都不再显示 */
+    return '<div class="post-meta"><time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>';
   }
   function pageHead(title, sub, kicker) {
     return '<div class="page-head reveal">' +
@@ -96,7 +96,7 @@
 
   /* ---------- 文章 ---------- */
   function renderList(posts, note) {
-    var head = note ? '<p class="page-note">' + esc(note) + '</p>' : '';
+    var head = note ? '<h2 class="section-head">' + esc(note) + '</h2>' : '';
     if (!posts.length) return head + '<p class="page-note">这里还没有文章。</p>';
     return head + '<div class="post-list">' + posts.map(function (p) {
       return '<article class="post-item reveal">' +
@@ -132,17 +132,18 @@
       related.map(function (x) {
         return '<a href="#/post/' + encodeURIComponent(x.slug) + '">' + esc(x.title) + '</a>';
       }).join('') + '</div>' : '';
-    return '<article class="article reveal">' +
-      '<div class="article-author">' + avatarImg('avatar avatar-sm') +
+    return '<article class="article reveal"><div class="article-inner">' +
+      '<div class="article-byline"><div class="article-author">' + avatarImg('avatar avatar-sm') +
       '<span>' + esc(CFG.author || SITE.author || '我') + '</span><i>·</i><span>' +
       wordsOf(p.body) + ' 字</span></div>' +
-      '<h1>' + esc(p.title) + '</h1>' + metaHtml(p) + tagsHtml(p.tags) +
+      '<time class="article-date">' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
+      '<h1>' + esc(p.title) + '</h1>' + tagsHtml(p.tags) +
       tocHtml(p.body) +
       '<div class="article-body">' + (p.body || '') + '</div>' +
       '<div class="article-actions"><button class="soft-btn" type="button" data-share="' +
       esc('#/post/' + p.slug) + '">复制文章链接</button>' +
       '<a class="soft-btn" href="#/">← 返回文章列表</a></div>' +
-      '</article>' + rel + nav;
+      '</div></article>' + rel + nav;
   }
   function renderTags() {
     var counts = {};
@@ -252,7 +253,7 @@
         return '<article class="moment glass reveal">' +
           '<div class="moment-head">' + avatarImg('avatar avatar-sm') +
           '<div><b>' + esc(CFG.author || SITE.author || '我') + '</b>' +
-          '<time>' + esc(m.date) + (m.time ? ' · ' + esc(m.time) : '') + '</time></div>' +
+          '<time>' + esc(String(m.date || '').slice(0, 10)) + '</time></div>' +
           (m.mood ? '<span class="mood">' + esc(m.mood) + '</span>' : '') + '</div>' +
           '<p class="moment-text">' + esc(m.text) + '</p>' + imgs +
           '<div class="moment-foot">' +
@@ -284,7 +285,7 @@
       '<div class="chatter-list">' + shown.map(function (c) {
         return '<article class="chatter-card glass reveal">' +
           '<div class="chatter-meta"><span class="x-badge">' + esc(c.mood || '碎片') + '</span>' +
-          '<time>' + esc(c.date) + ' ' + esc(c.time || '') + '</time></div>' +
+          '<time>' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
           '<a class="chatter-title" href="#/chatter/' + encodeURIComponent(c.id) + '">' + esc(c.title) + '</a>' +
           '<p>' + esc(c.summary) + '</p>' +
           '<div class="x-chips">' + (c.tags || []).map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</div>' +
@@ -293,11 +294,13 @@
   }
   function renderChatterDetail(c) {
     return '<a class="back-link reveal" href="#/chatter">← 返回杂谈</a>' +
-      '<article class="article reveal"><div class="article-author">' + avatarImg('avatar avatar-sm') +
-      '<span>' + esc(CFG.author || SITE.author || '我') + '</span><i>·</i><span>' + esc(c.mood || '') + '</span></div>' +
-      '<h1>' + esc(c.title) + '</h1><div class="post-meta"><time>' + esc(c.date) + ' ' + esc(c.time || '') +
-      '</time></div>' + tagsHtml(c.tags) +
-      '<div class="article-body">' + (c.body || '') + '</div></article>';
+      '<article class="article reveal"><div class="article-inner">' +
+      '<div class="article-byline"><div class="article-author">' + avatarImg('avatar avatar-sm') +
+      '<span>' + esc(CFG.author || SITE.author || '我') + '</span><i>·</i><span>' +
+      esc(c.mood || '杂谈') + '</span></div>' +
+      '<time class="article-date">' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
+      '<h1>' + esc(c.title) + '</h1>' + tagsHtml(c.tags) +
+      '<div class="article-body">' + (c.body || '') + '</div></div></article>';
   }
 
   /* ---------- 友链 ---------- */
@@ -353,6 +356,45 @@
       '<div><b>' + runningDays() + ' 天</b><span>已在线</span></div>' +
       '<div><b>' + POSTS.length + ' / ' + photoCount() + '</b><span>文章 / 照片</span></div>' +
       '<div><b>0</b><span>追踪脚本</span></div></div>' + changelogPreview();
+  }
+
+  /* ---------- 设置：画质档位 ----------
+     高 / 中 / 低 三档先记录偏好，具体的渲染差异留待后续版本开放。 */
+  var QUALITY_KEY = 'zb-quality';
+  var QUALITY_OPTS = [
+    { id: 'high', name: '高', desc: '完整呈现星空、流星与玻璃光效' },
+    { id: 'mid', name: '中', desc: '保留主要动效，减轻持续渲染' },
+    { id: 'low', name: '低', desc: '精简装饰，优先流畅与省电' }
+  ];
+  function readQuality() {
+    var v = null;
+    try { v = window.localStorage ? window.localStorage.getItem(QUALITY_KEY) : null; } catch (e) {}
+    for (var i = 0; i < QUALITY_OPTS.length; i++) if (QUALITY_OPTS[i].id === v) return v;
+    return 'high';
+  }
+  function saveQuality(v) {
+    try { if (window.localStorage) window.localStorage.setItem(QUALITY_KEY, v); } catch (e) {}
+  }
+  function qualityName(v) {
+    for (var i = 0; i < QUALITY_OPTS.length; i++) if (QUALITY_OPTS[i].id === v) return QUALITY_OPTS[i].name;
+    return '高';
+  }
+  function renderSettings() {
+    var cur = readQuality();
+    var opts = QUALITY_OPTS.map(function (o) {
+      var on = o.id === cur;
+      return '<button class="quality-item' + (on ? ' on' : '') + '" type="button" role="radio"' +
+        ' aria-checked="' + (on ? 'true' : 'false') + '" data-quality="' + o.id + '">' +
+        '<span class="q-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span>' +
+        '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
+    }).join('');
+    return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
+      '<section class="settings-card glass reveal" aria-label="站点设置">' +
+      '<div class="settings-block"><div class="settings-info">' +
+      '<h2>画质</h2><p>选择画面呈现的档位。偏好保存在本机浏览器里，不会上传到任何地方。</p></div>' +
+      '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
+      '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
+      '</b> · 高 / 中 / 低 三档的具体效果将在后续版本开放，现在只记录你的选择。</p></section>';
   }
 
   /* ---------- 全局搜索 ---------- */
@@ -551,6 +593,8 @@
       html = renderFriends(); active = 'friends'; sub = '友链';
     } else if (parts[0] === 'about') {
       html = renderAbout(); active = 'about'; sub = '关于';
+    } else if (parts[0] === 'settings') {
+      html = renderSettings(); active = 'settings'; sub = '设置';
     } else if (parts[0] === 'studio') {
       paint('', 'studio', '创作台');
       if (window.STUDIO && window.STUDIO.render) window.STUDIO.render(app);
@@ -800,6 +844,19 @@
             like.classList.toggle('on', !!likes[id]);
             var span = like.querySelector('span');
             if (span) span.textContent = String(Number(span.textContent) + (likes[id] ? 1 : -1));
+            return;
+          }
+          var quality = node.closest('[data-quality]');
+          if (quality) {
+            var qv = quality.getAttribute('data-quality');
+            saveQuality(qv);
+            Array.prototype.forEach.call(app.querySelectorAll('[data-quality]'), function (btn) {
+              var on = btn.getAttribute('data-quality') === qv;
+              btn.classList.toggle('on', on);
+              btn.setAttribute('aria-checked', on ? 'true' : 'false');
+            });
+            var qc = document.getElementById('quality-current');
+            if (qc) qc.textContent = qualityName(qv);
             return;
           }
           var order = node.closest('[data-morder]');

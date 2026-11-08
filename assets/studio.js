@@ -219,11 +219,6 @@
     function p(n) { return (n < 10 ? '0' : '') + n; }
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
-  function nowTime() {
-    var d = new Date();
-    function p(n) { return (n < 10 ? '0' : '') + n; }
-    return p(d.getHours()) + ':' + p(d.getMinutes());
-  }
   function uid(p) { return p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function val(id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
   function splitTags(s) { return s.split(/[,，、\s]+/).filter(Boolean); }
@@ -426,10 +421,9 @@
     if (!title) return say('请先写标题。', 'warn');
     if (!body) return say('正文还是空的。', 'warn');
     var html = htmlOfBody(body);
-    var chars = String(body).replace(/\s/g, '').length;
+    /* 时间统一只留日期，不再生成阅读时长字段 */
     var item = {
       slug: uid('p'), title: title, date: val('f-date') || today(),
-      reading: '约 ' + Math.max(1, Math.round(chars / 400)) + ' 分钟',
       tags: splitTags(val('f-tags')), summary: val('f-summary') || title, body: html
     };
     if (!upsert('posts', item)) return say('本机存储空间不足，请先到「发布上线」导出并清理。', 'warn');
@@ -440,7 +434,7 @@
     if (!text) return say('说点什么再保存吧。', 'warn');
     var src = state.momentImg || '';
     var item = {
-      id: uid('m'), date: today(), time: nowTime(), text: text,
+      id: uid('m'), date: today(), text: text,
       mood: val('f-mood') || '✨ 记录', place: val('f-place') || '',
       images: src ? [src] : [], likes: 0
     };
@@ -452,7 +446,7 @@
     var title = val('f-ch-title'), body = val('f-ch-body');
     if (!title || !body) return say('标题和正文都要填。', 'warn');
     var item = {
-      id: uid('c'), date: today(), time: nowTime(), title: title,
+      id: uid('c'), date: today(), title: title,
       summary: val('f-ch-summary') || title.slice(0, 24), tags: splitTags(val('f-ch-tags')),
       mood: val('f-ch-mood') || '🌸 平静', body: htmlOfBody(body)
     };

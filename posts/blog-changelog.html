@@ -42,7 +42,7 @@ a{color:var(--brand)}
 <p class="crumb"><a href="/">纸上留白</a> / 静态阅读版</p>
 <article>
 <h1>博客版本日志</h1>
-<p class="meta">2026-11-08 · 约 2 分钟 · 版本日志 / 站点</p>
+<p class="meta">2026-11-08 · 版本日志 / 站点</p>
 <div class="body"><h2>更新约定</h2><div class="note"><p><strong>一、只写做了什么。</strong> 「主要改动」列用 1~3 句说清改动本身，不写原理分析、根因、排查过程、实测数据与文件清单。</p><p><strong>二、控制在 100 字以内。</strong> 一条版本记一件事；改动多就合并成一段最终状态，不把八件事拆成八行。</p><p><strong>三、验收细节不进日志。</strong> 断言数、回归项、构建次数一律不写；日志只体现「改没改」。</p><p><strong>四、类别取自图例。</strong> 多标签用「 · 」连接，单元格只放纯文本，每行必须与表头列数一致。</p><p><strong>五、同类改动必须合并。</strong> 同一主题反复微调只算一次迭代，合并为一个版本号，后续版本号顺延。</p><p><strong>六、按阶段成表。</strong> 一个阶段 = 一个二级标题 + 一张表（各自重复表头）；新版本排在旧版本下方。</p><p><strong>七、双格式同步。</strong> 每次改完本日志（md），必须重新生成同名 HTML 镜像，并同步进站点文章与关于页预览。</p><p><strong>八、脱敏。</strong> 不写令牌、密钥、激活码、本机路径等私人信息，只写改动本身。</p></div><h2>类别图例</h2><table class="t-legend"><thead><tr><th>标签</th><th>含义</th></tr></thead><tbody>
 <tr><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span></td><td>从无到有的新页面、新能力或新入口</td></tr>
 <tr><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span></td><td>修复既有 bug 或异常表现</td></tr>
@@ -59,12 +59,14 @@ a{color:var(--brand)}
 <tr><td><span class="ver">v0.3.0</span></td><td>2026-11-07</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span></td><td>补齐项目、归档、照片墙、说说、杂谈、友链、关于、全局搜索与站长创作台</td></tr>
 <tr><td><span class="ver">v0.4.0</span></td><td>2026-11-07</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#3f8b80;background:#3f8b8014;border-color:#3f8b8038">🧹 清理</span></td><td>首页改版：导航上移、搜索独占整行、新增站长名片；取消背景小字弹幕</td></tr>
 <tr><td><span class="ver">v1.0.0</span></td><td>2026-11-08</td><td><span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span> <span class="chip" style="color:#4d7fa8;background:#4d7fa814;border-color:#4d7fa838">♿ 无障碍</span> <span class="chip" style="color:#6b6b8f;background:#6b6b8f14;border-color:#6b6b8f38">📄 文档</span></td><td>内容区铺满屏宽；修移动端导航裁切与强调字对比度；补静态兜底、分享元信息与分尺寸头像；新增本日志文章与关于页预览</td></tr>
+<tr><td><span class="ver">v1.1.0</span></td><td>2026-11-08</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span></td><td>文章页统一栏宽与时间只留日期、站名改默认字体；创作台与全站分页排版统一；导航新增设置页与高/中/低画质三档</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>❌ 未做</td><td>纯静态站暂不接入第三方服务，保持无追踪</td></tr>
 <tr><td>后端与统计</td><td>❌ 未做</td><td>内容以静态文件为准，不采集访问数据</td></tr>
 <tr><td>创作台发布</td><td>⚠️ 依赖用户</td><td>需要站长自行提供发布凭证，或把导出的数据文件交给助手推送</td></tr>
 <tr><td>搜索引擎收录</td><td>✅ 已支持</td><td>已补静态文章镜像、站点地图与结构化数据</td></tr>
-<tr><td>移动端导航</td><td>✅ 已支持</td><td>九个入口改为换行排布，不再横向裁切</td></tr>
+<tr><td>移动端导航</td><td>✅ 已支持</td><td>十个入口改为换行排布，不再横向裁切</td></tr>
+<tr><td>画质档位</td><td>⚠️ 占位</td><td>设置页已提供高 / 中 / 低三档选择，各档具体效果待后续实现</td></tr>
 </tbody></table><h2>附记</h2><h3>附一：双格式同步</h3><p>本日志的 Markdown 是唯一内容源。每次更新后生成同名 HTML 镜像，同时把内容写进站点文章《博客版本日志》与「关于」页的 HTML 预览，三处内容一致才算改完。</p><h3>附二：更新流程</h3><p>改 md → 生成 html 与前端数据 → 本地回归 → 推送上线。历史同类改动一律合并，只保留最终状态。</p></div>
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
