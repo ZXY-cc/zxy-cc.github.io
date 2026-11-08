@@ -368,14 +368,6 @@
     ['a/b', '\\frac{', '}{b}', '分式'], ['√', '\\sqrt{', '}', '根号'],
     ['∑', '\\sum_{i=1}^{n} ', '', '求和'], ['α', '\\alpha ', '', '希腊字母']
   ];
-  var TEX_SNIPPETS = [
-    ['\\frac{a}{b}', '分式'], ['\\sqrt{x}', '根号'], ['x^{2}', '上标'],
-    ['a_{i}', '下标'], ['\\sum_{i=1}^{n}', '求和'], ['\\int_0^1', '积分'],
-    ['\\lim_{x \\to 0}', '极限'], ['\\alpha \\beta \\gamma', '希腊字母'],
-    ['\\le \\ge \\ne \\approx', '关系符'], ['\\times \\cdot \\pm \\infty', '运算符'],
-    ['\\mathbb{R}', '数集'], ['\\text{文字}', '公式内文字'],
-    ['$$\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$$', '整行示例']
-  ];
   function toolHtml() {
     return MD_TOOLS.map(function (t, i) {
       return '<button class="md-tool" type="button" data-md="' + i + '" title="' + esc(t[3]) +
@@ -469,13 +461,7 @@
           '<div id="post-preview" class="desk-preview article-body"></div>' +
         '</div>' +
         '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · 自动保存在本机</span>' +
-          '<span id="word-count">0 字</span>' +
-          '<button class="mini-btn" type="button" data-act="tex-help">公式速查</button></div>' +
-        '<div id="tex-help" class="tex-help" hidden><b>常用 LaTeX · 点击插入</b>' +
-          '<div class="tex-list">' + TEX_SNIPPETS.map(function (t, n) {
-            return '<button type="button" data-tex="' + n + '" title="插入到正文">' +
-              '<code>' + esc(t[0]) + '</code><span>' + esc(t[1]) + '</span></button>';
-          }).join('') + '</div></div>' +
+          '<span id="word-count">0 字</span></div>' +
       '</section>' +
       '<aside class="desk-meta glass">' +
         '<div class="meta-head"><span>POST MODE</span><h2>属性设置</h2></div>' +
@@ -812,12 +798,6 @@
       writeDraft(true);
       return;
     }
-    var texBtn = t.closest('[data-tex]');
-    if (texBtn) {
-      var sn = TEX_SNIPPETS[Number(texBtn.getAttribute('data-tex'))];
-      if (sn) insertMd(sn[0], '', '');
-      return;
-    }
     var edit = t.closest('[data-edit]');
     if (edit) {
       var ep = edit.getAttribute('data-edit').split('::');
@@ -865,11 +845,6 @@
     if (a === 'cover-pick') {
       var cf = document.getElementById('f-cover-file');
       if (cf && cf.click) cf.click();
-      return;
-    }
-    if (a === 'tex-help') {
-      var th = document.getElementById('tex-help');
-      if (th) th.hidden = !th.hidden;
       return;
     }
     if (a === 'save-photo') return savePhoto();
