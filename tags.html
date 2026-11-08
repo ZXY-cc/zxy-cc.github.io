@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>标签 · 星梦Staream</title>
+<meta name="description" content="按标签浏览全部文章 —— 星梦Staream 的标签页面">
+<link rel="canonical" href="https://zxy-blog.top/tags.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="星梦Staream">
+<meta property="og:title" content="标签 · 星梦Staream">
+<meta property="og:description" content="按标签浏览全部文章">
+<meta property="og:url" content="https://zxy-blog.top/tags.html">
+<meta property="og:image" content="https://zxy-blog.top/assets/og-card.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="标签 · 星梦Staream">
+<meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 100%);color:#3a4668;
+  font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
+.mirror-head{max-width:1080px;margin:0 auto;padding:26px 24px 0;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline}
+.mirror-head .brand{font-weight:700;font-size:19px;color:#3f5c9c;text-decoration:none}
+.mirror-head a.mlink{color:#6b7ba0;text-decoration:none;font-size:13.5px}
+.mirror-head a.mlink:hover{color:#3f5c9c}
+.route-mirror{max-width:1080px;margin:0 auto;padding:18px 24px 60px}
+.route-mirror .page-head,.route-mirror .section-head{max-width:none}
+.mirror-foot{max-width:1080px;margin:0 auto;padding:0 24px 40px;color:#8a93ad;font-size:12.5px}
+.mirror-foot a{color:#3f5c9c}
+.reveal{opacity:1 !important;transform:none !important;transition:none !important}
+img{max-width:100%}
+</style>
+<style>
+/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+   build.mjs 会原样抽进 posts/*.html 的内联样式。 */
+.zb-math { font-family: "Cambria Math", "Times New Roman", Georgia, serif;
+  line-height: 1.55; color: var(--ink-strong, #39436a); }
+.zb-math-inline { display: inline; }
+.zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
+  text-align: center; font-size: 18px; border-radius: 14px;
+  border: 1px solid var(--glass-line, rgba(255, 255, 255, .72));
+  background: var(--code-bg, rgba(255, 255, 255, .30)); }
+.zb-var { font-style: italic; }
+.zb-digit, .zb-num, .zb-text, .zb-textchar, .zb-func, .zb-sym { font-style: normal; }
+.zb-op { margin: 0 .1em; }
+.zb-frac { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .18em; font-size: .92em; line-height: 1.2; }
+.zb-frac > .zb-num { display: block; padding: 0 .3em .08em; border-bottom: 1px solid currentColor; }
+.zb-frac > .zb-den { display: block; padding: .08em .3em 0; }
+.zb-binom .zb-frac > .zb-num { border-bottom: none; }
+.zb-sqrt { display: inline-flex; align-items: stretch; vertical-align: middle; margin: 0 .1em; }
+.zb-radical { font-size: 1.25em; line-height: 1; }
+.zb-radicand { border-top: 1px solid currentColor; padding: .06em .18em 0 .06em; }
+.zb-root-deg { font-size: .62em; align-self: flex-start; margin-right: -.25em; }
+.zb-script { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.zb-base { display: inline-flex; align-items: center; }
+.zb-scripts { display: inline-flex; flex-direction: column; justify-content: center;
+  font-size: .68em; line-height: 1.05; margin-left: .05em; }
+.zb-sup, .zb-sub { display: block; min-height: .7em; }
+.zb-bigop { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .16em; line-height: 1.05; }
+.zb-bigop > .zb-op { font-size: 1.7em; }
+.zb-bigop .zb-over, .zb-bigop .zb-under { font-size: .66em; }
+.zb-bb { font-weight: 700; }
+.zb-bold { font-weight: 700; }
+.zb-cal { font-family: "Segoe Script", "Brush Script MT", cursive; }
+.zb-quad { display: inline-block; width: 1em; }
+.zb-qquad { display: inline-block; width: 2em; }
+.zb-thinspace { display: inline-block; width: .17em; }
+.zb-nbsp { display: inline-block; width: .3em; }
+.zb-delim { font-size: 1.12em; }
+.zb-unknown { font-style: normal; color: #b0456b; }
+.zb-group { display: inline; }
+.zb-accent { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; }
+.zb-accent-mark { font-size: .7em; height: .55em; }
+.zb-accent-underline { flex-direction: column-reverse; }
+.zb-aligned { display: inline-flex; flex-direction: column; align-items: center; gap: .35em; }
+.zb-line, .zb-cell { display: inline-flex; }
+.zb-mtable { display: inline-flex; flex-direction: column; }
+.zb-mrow { display: inline-flex; }
+.zb-mcell { padding: .1em .4em; text-align: center; }
+.zb-matrix { display: inline-flex; align-items: center; vertical-align: middle; }
+.zb-matrix-pmatrix::before, .zb-matrix-pmatrix::after { font-size: 1.8em; }
+.zb-matrix-pmatrix::before { content: '('; }
+.zb-matrix-pmatrix::after { content: ')'; }
+.zb-matrix-bmatrix::before { content: '['; font-size: 1.8em; }
+.zb-matrix-bmatrix::after { content: ']'; font-size: 1.8em; }
+.zb-matrix-cases::before { content: '\7B'; font-size: 2em; }
+.zb-break { display: block; height: 0; }
+.zb-alignmark { display: inline-block; width: .5em; }
+.zb-task { margin-right: 7px; color: var(--accent-text, #3f5c9c); }
+.zb-task.done { color: var(--accent-3-text, #934268); }
+.zb-code .zb-lang { position: absolute; right: 12px; bottom: 7px; font-size: 10px;
+  letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
+:root[data-theme="night"] .zb-math { color: #e8f0ff; }
+:root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
+</style>
+</head>
+<body>
+<header class="mirror-head">
+  <a class="brand" href="/">星梦Staream</a>
+  <span><a class="mlink" href="projects.html">项目</a> · <a class="mlink" href="timeline.html">归档</a> · <a class="mlink" href="photowall.html">照片墙</a> · <a class="mlink" href="moments.html">说说</a> · <a class="mlink" href="chatter.html">杂谈</a> · <a class="mlink" href="friends.html">友链</a> · <a class="mlink" href="tags.html">标签</a> · <a class="mlink" href="about.html">关于</a></span>
+  <span><a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/free-blog.html">零成本搭一个自己的博客</a> · <a class="mlink" href="posts/sorting-notes.html">排序算法笔记：从冒泡到基数</a> · <a class="mlink" href="posts/why-write.html">为什么要写下来</a></span>
+</header>
+<main class="route-mirror">
+<div class="page-head reveal"><div class="page-kicker">TAGS</div><h1 class="page-title">标签</h1><p class="page-sub">把相近的文章放在一起</p></div><p class="page-note">共 7 个标签</p><div class="tag-cloud glass reveal"><a class="tag" href="#/tag/%E7%89%88%E6%9C%AC%E6%97%A5%E5%BF%97">版本日志<span class="tag-count">1</span></a><a class="tag" href="#/tag/%E7%AB%99%E7%82%B9">站点<span class="tag-count">1</span></a><a class="tag" href="#/tag/%E5%BB%BA%E7%AB%99">建站<span class="tag-count">1</span></a><a class="tag" href="#/tag/%E7%AC%94%E8%AE%B0">笔记<span class="tag-count">1</span></a><a class="tag" href="#/tag/%E7%AE%97%E6%B3%95">算法<span class="tag-count">1</span></a><a class="tag" href="#/tag/C">C<span class="tag-count">1</span></a><a class="tag" href="#/tag/%E9%9A%8F%E7%AC%94">随笔<span class="tag-count">1</span></a></div>
+</main>
+<footer class="mirror-foot">这是「星梦Staream」标签页的静态镜像，完整交互（搜索、特效、夜间模式）请
+<a href="/#/tags">在站点中打开 →</a></footer>
+</body>
+</html>

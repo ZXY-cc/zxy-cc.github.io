@@ -1,9 +1,11 @@
 /* 星梦Staream · 站长创作台
    静态站没有账号系统，因此「是不是我」由两层凭证判定：
-   1) 设备凭证：一次性激活码的 SHA-256 摘要写在源码里（明文不落盘），
-      校验通过后在本机写入带签名的 30 天会话；只有这台设备会看到创作台入口。
+   1) 设备凭证：创作台入口不再公开。持有 128 位密钥链接的设备首次访问 ?o=<密钥>
+      时通过 SHA-256 校验并写入本机 90 天签名标记；之后导航才会出现创作台入口，
+      其它设备的 #/studio 渲染为「页面不存在」，源码中只保留摘要（明码永不入库）。
    2) 发布凭证：真正把内容写上线时，用 GitHub 细粒度令牌，
-      由 GitHub 服务器确认「你确实是这个仓库的所有者」，前端说了不算。
+      由 GitHub 服务器确认「你确实是这个仓库的所有者」，前端说了不算；
+      令牌默认只在内存里存一次，不落本机存储。
    创作内容先存本机 localStorage，发布时整体重写 assets/site-data.js 推到仓库。 */
 
 (function () {
@@ -11,14 +13,15 @@
   if (!DATA) return;
 
   var SALT = 'paper-blank::owner::v1';
-  var OWNER_HASH = '43d3b638d5b09c7b2a85f9832027d4b931c1d110dd886fecd0d2e560e7f48e31';
+  var GATE_SALT = 'star-dream::owner-gate::v2';
+  var OWNER_HASH = '6808eb10040f5bd56dd8de543b3ef4a0e9b5b3e3635ccf65ed1e5aa703d41d47';
   var DEVICE_KEY = 'zb-owner-device';
   var LOCAL_KEY = 'zb-studio-local';
   var PAT_KEY = 'zb-gh-pat';
   var REPO = 'ZXY-cc/zxy-cc.github.io';
   var FILE = 'assets/site-data.js';
   var BRANCH = 'main';
-  var DAYS = 30;
+  var DAYS = 90;
   var KINDS = ['posts', 'moments', 'chatter', 'albums', 'projects', 'friends'];
   var DRAFT_KEY = 'zb-studio-draft';
   var CATS = ['随笔', '算法', '建站', '随想', '笔记', '其它'];
@@ -136,20 +139,41 @@
     mergeLocal();
   }
 
-  /* ---------- 判定：设备凭证 ---------- */
+  /* ---------- 判定：设备凭证 ----------
+     标记绑定门禁摘要：sig = sha256(OWNER_HASH + '::device::' + t)。
+     注意：本地标记只控制「是否显示创作台界面」，不含密钥本身；
+     真正的发布权限永远由 GitHub 细粒度令牌决定，伪造本机标记拿不到任何内容。 */
   function isOwner() {
     var m = null;
     try { m = JSON.parse(ls(DEVICE_KEY) || 'null'); } catch (e) { m = null; }
     if (!m || !m.t) return false;
     if (Date.now() - m.t > DAYS * 86400000 * 1000) return false;
-    return m.sig === sha256(SALT + '::device::' + m.t);
+    return m.sig === sha256(OWNER_HASH + '::device::' + m.t);
   }
   function grant() {
     var t = Date.now();
-    setLs(DEVICE_KEY, JSON.stringify({ t: t, sig: sha256(SALT + '::device::' + t) }));
+    setLs(DEVICE_KEY, JSON.stringify({ t: t, sig: sha256(OWNER_HASH + '::device::' + t) }));
   }
   function revoke() { delLs(DEVICE_KEY); }
-  function checkCode(code) { return sha256(SALT + String(code || '').trim()) === OWNER_HASH; }
+  function gateCheck(key) { return sha256(GATE_SALT + String(key || '').trim()) === OWNER_HASH; }
+  /* 密钥只可能通过 URL 参数送进来：校验通过即写本机 90 天标记，
+     随后立刻把地址栏清理成不含密钥的干净 URL。 */
+  function gateBoot() {
+    var q = null;
+    try { q = new URLSearchParams(String(window.location.search || '')); } catch (e) { q = null; }
+    if (!q || !q.has('o')) return false;
+    var key = q.get('o') || '';
+    if (gateCheck(key)) {
+      grant();
+      try {
+        window.history.replaceState(null, '',
+          String(window.location.pathname || '/') +
+          String(window.location.hash || ''));
+      } catch (e) {}
+      return true;
+    }
+    return false;
+  }
   function syncNav() {
     var nav = document.querySelector && document.querySelector('.nav');
     if (!nav || !nav.querySelector) return;
@@ -390,15 +414,12 @@
 
   /* ---------- 解锁页 ---------- */
   function lockHtml() {
-    return '<div class="studio-lock glass">' +
+    /* 非站长设备看到的和访问任何不存在的路径完全一样：没有激活码、没有创作台、没有任何提示 */
+    return '<div class="notfound glass">' +
       '<div class="lock-star"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></div>' +
-      '<h1>这扇门只给站长开</h1>' +
-      '<p>输入一次性激活码，把这台设备认作「我的设备」。之后每次打开网站都会自动识别，访客不会看到任何入口或提示。</p>' +
-      '<label class="f-label" for="f-code">激活码</label>' +
-      '<input class="f-input" id="f-code" type="password" autocomplete="off" placeholder="请输入激活码">' +
-      '<button class="primary-btn" type="button" data-act="unlock">识别设备</button>' +
-      '<div id="studio-msg" class="studio-msg"></div>' +
-      '<p class="lock-foot">写文章、发图片、发布上线都在这里完成。</p></div>';
+      '<h1>页面不存在</h1>' +
+      '<p>你要找的页面可能已被移动或删除。</p>' +
+      '<p><a class="soft-btn" href="#/">回到首页</a></p></div>';
   }
 
   /* ---------- 创作台外壳 ---------- */
@@ -580,7 +601,7 @@
       '<p class="f-hint">在 GitHub 生成一个 <b>细粒度令牌</b>，只授权 <code>ZXY-cc/zxy-cc.github.io</code> 的 Contents 读写。' +
       '令牌只保存在这台设备的浏览器里，只发往 api.github.com，不会写进任何导出文件。</p>' +
       field('GitHub 细粒度令牌', 'f-pat', 'github_pat_…', 'password') +
-      '<label class="f-check"><input type="checkbox" id="f-remember" checked> 在这台设备记住令牌</label>' +
+      '<label class="f-check"><input type="checkbox" id="f-remember"> 记住令牌到本机（可选；默认只保存在内存，刷新即弃）</label>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="publish">提交到仓库并发布</button></div>' +
       '<p class="f-hint">提交后 GitHub Pages 通常 1 分钟内完成构建；期间本站仍在显示旧内容，属正常现象。</p></div>';
   }
@@ -820,13 +841,7 @@
       return;
     }
 
-    if (t.closest('[data-act="unlock"]')) {
-      var code = val('f-code');
-      if (!checkCode(code)) return say('激活码不对。', 'warn');
-      grant(); syncNav(); render(document.getElementById('app'));
-      say('设备已识别，欢迎回来。');
-      return;
-    }
+    if (t.closest('[data-act="lock"]')) { revoke(); syncNav(); render(document.getElementById('app')); return; }
     var tab = t.closest('[data-tab]');
     if (tab) {
       state.tab = tab.getAttribute('data-tab');
@@ -939,11 +954,9 @@
     if (!door || !door.addEventListener) return;
     var taps = 0, timer = null;
     door.addEventListener('click', function () {
-      if (isOwner()) { location.hash = '#/studio'; return; }
-      taps++;
-      if (timer) window.clearTimeout(timer);
-      timer = window.setTimeout(function () { taps = 0; }, 1600);
-      if (taps >= 3) { taps = 0; location.hash = '#/studio'; }
+      /* 只有已授权设备才能通过小门进入创作台；其它设备点了没有任何反应 */
+      if (!isOwner()) return;
+      location.hash = '#/studio';
     });
   }
 
@@ -967,16 +980,19 @@
     }
   }
 
+  gateBoot();
+  mergeLocal();
+
   window.STUDIO = {
     render: render,
     isOwner: isOwner,
     _sha256: sha256,
     _salt: SALT,
+    _gateSalt: GATE_SALT,
     _hash: OWNER_HASH,
     _dataFile: dataFile,
     _mergeLocal: mergeLocal
   };
-  mergeLocal();
   syncNav();
   bindDoor();
   var appEl = document.getElementById('app');

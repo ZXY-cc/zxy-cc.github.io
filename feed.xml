@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>星梦Staream</title>
+  <subtitle>一个关于算法、代码、建站与日常随想的纯静态个人博客</subtitle>
+  <id>https://zxy-blog.top/</id>
+  <link rel="self" href="https://zxy-blog.top/feed.xml"/>
+  <link href="https://zxy-blog.top/"/>
+  <updated>2026-11-08T00:00:00Z</updated>
+  <author><name>星梦Staream</name></author>
+  <entry>
+    <title>博客版本日志</title>
+    <id>https://zxy-blog.top/posts/blog-changelog.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/blog-changelog.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/blog-changelog"/>
+    <updated>2026-11-08T00:00:00Z</updated>
+    <summary>每次更新都记在这里：改了什么、什么时候改的。</summary>
+  </entry>
+  <entry>
+    <title>零成本搭一个自己的博客</title>
+    <id>https://zxy-blog.top/posts/free-blog.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/free-blog.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/free-blog"/>
+    <updated>2026-11-07T00:00:00Z</updated>
+    <summary>域名、证书、托管这三件事各管什么，以及一条最省事的上线路径。</summary>
+  </entry>
+  <entry>
+    <title>排序算法笔记：从冒泡到基数</title>
+    <id>https://zxy-blog.top/posts/sorting-notes.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/sorting-notes.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/sorting-notes"/>
+    <updated>2026-11-05T00:00:00Z</updated>
+    <summary>把几种基础排序的性质放在一起对照，顺便留一份能直接编译的 C 实现。</summary>
+  </entry>
+  <entry>
+    <title>为什么要写下来</title>
+    <id>https://zxy-blog.top/posts/why-write.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/why-write.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/why-write"/>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>脑子里的「我懂了」，和能让别人看懂的「我懂了」，中间隔着一次输出。</summary>
+  </entry>
+</feed>

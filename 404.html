@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>页面不存在 · 星梦Staream</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#dceafb,#eae6fb 46%,#fdeef5);color:var(--ink);font:15.5px/1.9 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:36px 22px 70px}
+.crumb{font-size:13px;color:var(--muted);margin:0 0 18px}
+.crumb a{color:var(--brand);text-decoration:none}
+article{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;padding:32px 36px;box-shadow:0 10px 30px rgba(112,138,190,.10)}
+h1{font-size:27px;margin:0 0 8px;letter-spacing:.5px}
+.meta{color:var(--muted);font-size:13px;margin:0 0 26px}
+h2{font-size:22px;margin:34px 0 14px;padding-left:13px;border-left:3px solid var(--brand)}
+h3{font-size:17px;margin:24px 0 10px}
+p{margin:0 0 18px}
+strong{color:var(--ink)}
+code{background:#eef3ff;border-radius:5px;padding:1px 6px;font-size:13px}
+pre{background:#eef3ff;border-radius:10px;padding:16px;overflow:auto;font-size:13px;line-height:1.7}
+blockquote{margin:20px 0;padding:12px 18px;border-left:3px solid var(--brand);background:#eef3ff;border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:22px 0;font-size:14px;background:rgba(255,255,255,.5)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
+th{background:#eef3ff}
+ul,ol{padding-left:22px}
+a{color:var(--brand)}
+.back{margin:24px 0 0;font-size:14px}
+@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+
+/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+   build.mjs 会原样抽进 posts/*.html 的内联样式。 */
+.zb-math { font-family: "Cambria Math", "Times New Roman", Georgia, serif;
+  line-height: 1.55; color: var(--ink-strong, #39436a); }
+.zb-math-inline { display: inline; }
+.zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
+  text-align: center; font-size: 18px; border-radius: 14px;
+  border: 1px solid var(--glass-line, rgba(255, 255, 255, .72));
+  background: var(--code-bg, rgba(255, 255, 255, .30)); }
+.zb-var { font-style: italic; }
+.zb-digit, .zb-num, .zb-text, .zb-textchar, .zb-func, .zb-sym { font-style: normal; }
+.zb-op { margin: 0 .1em; }
+.zb-frac { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .18em; font-size: .92em; line-height: 1.2; }
+.zb-frac > .zb-num { display: block; padding: 0 .3em .08em; border-bottom: 1px solid currentColor; }
+.zb-frac > .zb-den { display: block; padding: .08em .3em 0; }
+.zb-binom .zb-frac > .zb-num { border-bottom: none; }
+.zb-sqrt { display: inline-flex; align-items: stretch; vertical-align: middle; margin: 0 .1em; }
+.zb-radical { font-size: 1.25em; line-height: 1; }
+.zb-radicand { border-top: 1px solid currentColor; padding: .06em .18em 0 .06em; }
+.zb-root-deg { font-size: .62em; align-self: flex-start; margin-right: -.25em; }
+.zb-script { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.zb-base { display: inline-flex; align-items: center; }
+.zb-scripts { display: inline-flex; flex-direction: column; justify-content: center;
+  font-size: .68em; line-height: 1.05; margin-left: .05em; }
+.zb-sup, .zb-sub { display: block; min-height: .7em; }
+.zb-bigop { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .16em; line-height: 1.05; }
+.zb-bigop > .zb-op { font-size: 1.7em; }
+.zb-bigop .zb-over, .zb-bigop .zb-under { font-size: .66em; }
+.zb-bb { font-weight: 700; }
+.zb-bold { font-weight: 700; }
+.zb-cal { font-family: "Segoe Script", "Brush Script MT", cursive; }
+.zb-quad { display: inline-block; width: 1em; }
+.zb-qquad { display: inline-block; width: 2em; }
+.zb-thinspace { display: inline-block; width: .17em; }
+.zb-nbsp { display: inline-block; width: .3em; }
+.zb-delim { font-size: 1.12em; }
+.zb-unknown { font-style: normal; color: #b0456b; }
+.zb-group { display: inline; }
+.zb-accent { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; }
+.zb-accent-mark { font-size: .7em; height: .55em; }
+.zb-accent-underline { flex-direction: column-reverse; }
+.zb-aligned { display: inline-flex; flex-direction: column; align-items: center; gap: .35em; }
+.zb-line, .zb-cell { display: inline-flex; }
+.zb-mtable { display: inline-flex; flex-direction: column; }
+.zb-mrow { display: inline-flex; }
+.zb-mcell { padding: .1em .4em; text-align: center; }
+.zb-matrix { display: inline-flex; align-items: center; vertical-align: middle; }
+.zb-matrix-pmatrix::before, .zb-matrix-pmatrix::after { font-size: 1.8em; }
+.zb-matrix-pmatrix::before { content: '('; }
+.zb-matrix-pmatrix::after { content: ')'; }
+.zb-matrix-bmatrix::before { content: '['; font-size: 1.8em; }
+.zb-matrix-bmatrix::after { content: ']'; font-size: 1.8em; }
+.zb-matrix-cases::before { content: '\7B'; font-size: 2em; }
+.zb-break { display: block; height: 0; }
+.zb-alignmark { display: inline-block; width: .5em; }
+.zb-task { margin-right: 7px; color: var(--accent-text, #3f5c9c); }
+.zb-task.done { color: var(--accent-3-text, #934268); }
+.zb-code .zb-lang { position: absolute; right: 12px; bottom: 7px; font-size: 10px;
+  letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
+:root[data-theme="night"] .zb-math { color: #e8f0ff; }
+:root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<article>
+<h1>页面不存在</h1>
+<p class="meta">404 · 你要找的页面可能已被移动或删除</p>
+<p>可以从下面的入口找回去：</p>
+<ul>
+  <li><a href="/">回到首页</a></li>
+  <li><a href="/#/photowall">照片墙</a> · <a href="/#/moments">说说</a> · <a href="/#/chatter">杂谈</a> · <a href="/#/friends">友链</a></li>
+  <li><a href="posts/blog-changelog.html">博客版本日志</a></li>
+  <li><a href="posts/free-blog.html">零成本搭一个自己的博客</a></li>
+  <li><a href="posts/sorting-notes.html">排序算法笔记：从冒泡到基数</a></li>
+  <li><a href="posts/why-write.html">为什么要写下来</a></li>
+</ul>
+<p>也欢迎直接在首页顶部的搜索框里搜关键词。</p>
+</article>
+</div>
+</body>
+</html>

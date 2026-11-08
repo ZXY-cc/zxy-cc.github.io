@@ -223,7 +223,7 @@
         var n = (a.photos || []).length;
         return '<a class="album-card glass sheen reveal" href="#/album/' + encodeURIComponent(a.id) + '">' +
           '<div class="album-cover"><img src="' + esc(a.cover || (a.photos[0] && a.photos[0].src) || avatarSrc()) +
-          '" alt="' + esc(a.title) + '" loading="lazy"><span class="album-count">' + n + ' 张</span></div>' +
+          '" alt="' + esc(a.title) + '" loading="lazy" decoding="async"><span class="album-count">' + n + ' 张</span></div>' +
           '<div class="album-info"><h2>' + esc(a.title) + '</h2><p>' + esc(a.desc) + '</p>' +
           '<time>' + esc(a.date) + '</time></div></a>';
       }).join('') + '</div>';
@@ -235,7 +235,7 @@
       pageHead(a.title, a.desc, 'ALBUM · ' + photos.length + ' 张') +
       '<div class="photo-grid">' + photos.map(function (p, i) {
         return '<button class="photo-tile glass sheen reveal" type="button" data-photo="' + i + '">' +
-          '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy">' +
+          '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy" decoding="async">' +
           '<span class="photo-cap"><b>' + esc(p.title || '') + '</b><i>' + esc(p.note || '') + '</i></span>' +
           '</button>';
       }).join('') + '</div>';
@@ -252,7 +252,7 @@
       '<button class="filter' + (momentOrder === 'old' ? ' on' : '') + '" type="button" data-morder="old">最早</button></div>' +
       '<div class="moment-list">' + list.map(function (m) {
         var imgs = (m.images || []).length ? '<div class="moment-imgs">' + m.images.map(function (src) {
-          return '<img src="' + esc(src) + '" alt="说说的配图" loading="lazy">';
+          return '<img src="' + esc(src) + '" alt="说说的配图" loading="lazy" decoding="async">';
         }).join('') + '</div>' : '';
         return '<article class="moment glass reveal">' +
           '<div class="moment-head">' + avatarImg('avatar avatar-sm') +
@@ -383,11 +383,23 @@
     ['实时毛玻璃 / 入场动画', '开启', '开启', '关闭']
   ];
   var qualityNow = 'high';
+  /* 用户没选过画质时，按设备能力自动降档：内存/核心极少直接给静态档，
+     与 index.html 首屏内联脚本保持同一套判断，避免首帧闪烁。 */
+  function autoQuality() {
+    var m = 8, c = 8;
+    try {
+      if (navigator.deviceMemory) m = navigator.deviceMemory;
+      if (navigator.hardwareConcurrency) c = navigator.hardwareConcurrency;
+    } catch (e) {}
+    if (m <= 2 || c <= 2) return 'low';
+    if (m <= 4 || c <= 4) return 'mid';
+    return 'high';
+  }
   function readQuality() {
     var v = null;
     try { v = window.localStorage ? window.localStorage.getItem(QUALITY_KEY) : null; } catch (e) {}
     for (var i = 0; i < QUALITY_OPTS.length; i++) if (QUALITY_OPTS[i].id === v) return v;
-    return 'high';
+    return autoQuality();
   }
   function saveQuality(v) {
     try { if (window.localStorage) window.localStorage.setItem(QUALITY_KEY, v); } catch (e) {}
