@@ -1330,13 +1330,22 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   will-change: transform, opacity;
 }
 .mouse-trail::before {
-  content: ''; position: absolute; left: calc(-1 * var(--tw, 52px)); top: -2px;
-  width: var(--tw, 52px); height: 4px; border-radius: 999px;
+  content: ''; position: absolute; left: calc(-1 * var(--tw, 60px)); top: -3.5px;
+  width: var(--tw, 60px); height: 7px; border-radius: 999px;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(246, 198, 88, .16) 30%,
-    rgba(250, 208, 116, .52) 68%, rgba(255, 234, 168, .94) 100%);
-  box-shadow: 0 0 14px 3px rgba(240, 182, 74, .40);
-  filter: blur(1.2px);
+    transparent 0%, rgba(246, 198, 88, .28) 30%,
+    rgba(250, 208, 116, .62) 66%, rgba(255, 226, 148, .90) 100%);
+  box-shadow: 0 0 18px 5px rgba(240, 182, 74, .52);
+  filter: blur(2px);
+}
+/* 亮芯：细而亮的一条压在宽雾上，读起来才是「发光的流星尾」而不是一条模糊的粗线 */
+.mouse-trail::after {
+  content: ''; position: absolute; left: calc(-1 * var(--tw, 60px)); top: -1.25px;
+  width: var(--tw, 60px); height: 2.5px; border-radius: 999px;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(255, 236, 180, .22) 34%,
+    rgba(255, 242, 198, .62) 70%, rgba(255, 250, 226, .96) 100%);
+  filter: blur(.8px);
 }
 .fireflies { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
 :root[data-theme="night"] .fireflies { opacity: 1; }
