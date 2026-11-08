@@ -11,7 +11,7 @@
   if (!DATA) return;
 
   var SALT = 'paper-blank::owner::v1';
-  var OWNER_HASH = 'b4f6cb0d29026eb71dbf6bb13a2ead3fdf9034bdc6fbf6c4954f334efe7c0ef3';
+  var OWNER_HASH = '43d3b638d5b09c7b2a85f9832027d4b931c1d110dd886fecd0d2e560e7f48e31';
   var DEVICE_KEY = 'zb-owner-device';
   var LOCAL_KEY = 'zb-studio-local';
   var PAT_KEY = 'zb-gh-pat';
