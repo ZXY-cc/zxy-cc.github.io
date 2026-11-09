@@ -155,7 +155,8 @@
     input.addEventListener && input.addEventListener('input', function () {
       if (counter) counter.textContent = String(String(input.value || '').length) + ' / 2000';
     });
-    /* 预览只重画预览框，不改输入内容；再点一次回到编辑态 */
+    /* 预览只重画预览框，不改输入内容；再点一次回到编辑态。
+       预览框尺寸完全取输入框当前渲染尺寸（含用户手动拖高），看起来只是语法转换 */
     if (mdBtn && preview) {
       mdBtn.addEventListener && mdBtn.addEventListener('click', function () {
         var toPreview = mdBtn.getAttribute('aria-pressed') !== 'true';
@@ -168,10 +169,12 @@
           if (!String(input.value || '').trim()) {
             preview.innerHTML = '<p class="zb-preview-empty">（还没有内容，回到编辑写几句吧）</p>';
           }
+          preview.style.height = input.offsetHeight + 'px';
           preview.hidden = false;
           input.hidden = true;
         } else {
           preview.hidden = true;
+          preview.style.height = '';
           input.hidden = false;
           try { input.focus(); } catch (e) {}
         }

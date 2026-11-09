@@ -45,10 +45,12 @@
   border-radius: 999px; transition: background .2s ease, border-color .2s ease; }
 .zb-composer-md:hover { border-color: rgba(85, 121, 196, .62); }
 .zb-composer-md[aria-pressed="true"] { background: rgba(85, 121, 196, .16); }
-.zb-composer-preview { box-sizing: border-box; min-height: 76px; margin: 0 0 0;
-  padding: 10px 14px; font-size: 13.5px; line-height: 1.8;
-  color: var(--ink, #39436a); overflow-wrap: anywhere;
-  border: 1px dashed rgba(120, 140, 190, .42); border-radius: 12px;
+/* 预览框外观与输入框完全一致（同边框 / 同内距 / 同字号行高），高度由脚本贴合输入框当前尺寸；
+   内容超出时框内滚动，和 textarea 行为一样，看起来只是语法转换 */
+.zb-composer-preview { box-sizing: border-box; margin: 0;
+  padding: 10px 12px; font-size: 13.5px; line-height: 1.8;
+  color: var(--ink, #39436a); overflow: auto; overflow-wrap: anywhere;
+  border: 1px solid rgba(120, 140, 190, .30); border-radius: 12px;
   background: rgba(255, 255, 255, .52); }
 .zb-composer-preview > :first-child { margin-top: 0; }
 .zb-composer-preview > :last-child { margin-bottom: 0; }
@@ -68,7 +70,8 @@
   border-radius: 10px; background: rgba(120, 140, 190, .14); }
 .zb-composer-preview pre code { padding: 0; background: none; font-size: 12.5px; }
 .zb-composer-preview a { color: var(--accent-text, #3f5c9c); }
-.zb-preview-empty { color: var(--muted, #525d84); }
+.zb-preview-empty { font-size: 13.5px; line-height: 1.8;
+  color: var(--muted, #525d84); opacity: .78; }
 .zb-composer-input { display: block; box-sizing: border-box; width: 100%; min-height: 76px;
   padding: 10px 12px; font: inherit; font-size: 13.5px; line-height: 1.8;
   color: var(--ink, #39436a); resize: vertical; outline: none;
@@ -171,7 +174,7 @@ button.interactions-btn { font-family: inherit; cursor: pointer; }
 :root[data-theme="night"] .zb-composer-md:hover { border-color: rgba(208, 226, 255, .52); }
 :root[data-theme="night"] .zb-composer-md[aria-pressed="true"] { background: rgba(120, 150, 220, .26); }
 :root[data-theme="night"] .zb-composer-preview { color: #f4f7ff;
-  background: rgba(24, 34, 76, .32); border-color: rgba(208, 226, 255, .3); }
+  background: rgba(24, 34, 76, .32); border-color: rgba(208, 226, 255, .26); }
 :root[data-theme="night"] .zb-composer-preview code { background: rgba(208, 226, 255, .14); }
 :root[data-theme="night"] .zb-composer-preview pre { background: rgba(16, 24, 56, .5); }
 :root[data-theme="night"] .zb-composer-preview blockquote { border-left-color: rgba(208, 226, 255, .44); }
