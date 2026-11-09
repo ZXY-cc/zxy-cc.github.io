@@ -1235,16 +1235,16 @@
             /* 晴天花瓣：先有一次明显的迸射（高初速 + 强阻力，约 0.2s 内迅速衰减），
                重力、横向摆动与慢速自旋从第一帧就一起作用，之后自然转为轻柔飘落并缓缓消散。 */
             var pang = Math.random() * Math.PI * 2;
-            var pv0 = 200 + Math.random() * 130;
+            var pv0 = 260 + Math.random() * 100;
             var pvx = Math.cos(pang) * pv0;
-            var pvy = Math.sin(pang) * pv0 * .55 - 26;
-            var pg = 190;
+            var pvy = Math.sin(pang) * pv0 * .4 - 12;
+            var pg = 230;
             var pvt = 44 + Math.random() * 20;
-            var pdragBurst = 9 + Math.random() * 3.5;
-            var pdrag = 2.4 + Math.random() * 1.3;
-            var pburst = .14 + Math.random() * .07;
-            var pswayA = 5 + Math.random() * 9;
-            var pswayW = 2.2 + Math.random() * 1.7;
+            var pdragBurst = 4 + Math.random() * 2;
+            var pdrag = 6 + Math.random() * 3;
+            var pburst = .15 + Math.random() * .05;
+            var pswayA = 3 + Math.random() * 4;
+            var pswayW = 1.2 + Math.random() * 1;
             var prot0 = Math.random() * 360;
             var protV = Math.random() * 130 - 65;
             var pdur = 820 + Math.random() * 240;
@@ -1255,11 +1255,18 @@
             var ppx = 0, ppy = 0;
             for (var k = 1; k <= psteps; k++) {
               var pt = k * pdt;
-              var pdragNow = pt < pburst ? pdragBurst : pdrag;
-              pvx += -pdragNow * pvx * pdt;
-              pvy += (pg - pdragNow * pvy) * pdt; if (pvy > pvt) pvy = pvt;
-              ppx += pvx * pdt;
-              ppy += pvy * pdt;
+              /* 子步 + 指数衰减解析步进：爆发段阻力大，显式欧拉会把初速吃掉甚至让速度反号 */
+              var psub = 6, psdt = pdt / psub;
+              for (var q = 0; q < psub; q++) {
+                var ptk = (k - 1) * pdt + q * psdt;
+                var pdragNow = ptk < pburst ? pdragBurst : pdrag;
+                var pdecay = Math.exp(-pdragNow * psdt);
+                pvx = pvx * pdecay;
+                pvy = pvy * pdecay + (pg / pdragNow) * (1 - pdecay);
+                if (pvy > pvt) pvy = pvt;
+                ppx += pvx * psdt;
+                ppy += pvy * psdt;
+              }
               /* 有界横向摆动：随时间渐入，让方向缓慢左右改变（弧线感），不做速度积分以免失控 */
               var psway = pswayA * Math.sin(pswayW * pt * Math.PI * 2) * Math.min(1, pt * 2.6);
               var ptx = ppx + psway;
