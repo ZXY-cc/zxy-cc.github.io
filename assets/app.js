@@ -1167,30 +1167,51 @@
         if (readQuality() !== 'high' && readQuality() !== 'ultra') return;
         var x = e.clientX, y = e.clientY;
         if (typeof x !== 'number' || typeof y !== 'number') return;
-        var n = 11 + (Math.random() * 4 | 0);
+        var night = !!(document.documentElement.dataset &&
+          document.documentElement.dataset.theme === 'night');
+        /* 晴天溅樱花粉花瓣（更轻柔），星夜保持金色星星 */
+        var n = night ? 11 + (Math.random() * 4 | 0) : 7 + (Math.random() * 3 | 0);
         var box = document.createElement('div');
-        box.setAttribute('class', 'star-burst');
+        box.setAttribute('class', night ? 'star-burst' : 'star-burst burst-petal');
         box.setAttribute('aria-hidden', 'true');
         box.style.cssText = 'left:' + x + 'px;top:' + y + 'px;';
         document.body.appendChild(box);
         var done = 0;
         function sweep() { done++; if (done >= n && box.parentNode) box.parentNode.removeChild(box); }
         for (var i = 0; i < n; i++) {
-          var size = 9 + Math.random() * 10;
-          var half = (size / 2).toFixed(1);
           var s = document.createElement('span');
-          s.style.cssText = 'width:' + size.toFixed(1) + 'px;height:' + size.toFixed(1) +
-            'px;margin:-' + half + 'px 0 0 -' + half + 'px;';
-          s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg>';
-          box.appendChild(s);
-          var ang = (Math.PI * 2 * i) / n + Math.random() * .55;
-          var dist = 46 + Math.random() * 70;
-          var dx = Math.cos(ang) * dist;
-          var dy = Math.sin(ang) * dist - 16;
-          var anim = s.animate([
-            { transform: 'translate(0,0) scale(1)', opacity: .97 },
-            { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(.18)', opacity: 0 }
-          ], { duration: 520 + Math.random() * 260, easing: 'cubic-bezier(.16,.84,.44,1)', fill: 'forwards' });
+          var anim;
+          if (night) {
+            var size = 9 + Math.random() * 10;
+            var half = (size / 2).toFixed(1);
+            s.style.cssText = 'width:' + size.toFixed(1) + 'px;height:' + size.toFixed(1) +
+              'px;margin:-' + half + 'px 0 0 -' + half + 'px;';
+            s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg>';
+            box.appendChild(s);
+            var ang = (Math.PI * 2 * i) / n + Math.random() * .55;
+            var dist = 46 + Math.random() * 70;
+            var dx = Math.cos(ang) * dist;
+            var dy = Math.sin(ang) * dist - 16;
+            anim = s.animate([
+              { transform: 'translate(0,0) scale(1)', opacity: .97 },
+              { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(.18)', opacity: 0 }
+            ], { duration: 520 + Math.random() * 260, easing: 'cubic-bezier(.16,.84,.44,1)', fill: 'forwards' });
+          } else {
+            var psize = 10 + Math.random() * 7;
+            var phalf = (psize / 2).toFixed(1);
+            s.style.cssText = 'width:' + psize.toFixed(1) + 'px;height:' + psize.toFixed(1) +
+              'px;margin:-' + phalf + 'px 0 0 -' + phalf + 'px;';
+            s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#petal"/></svg>';
+            box.appendChild(s);
+            var pang = (Math.PI * 2 * i) / n + Math.random() * .7;
+            var pdist = 26 + Math.random() * 34;
+            var pdy = Math.sin(pang) * pdist - 6;
+            var spin = (Math.random() * 44 - 22).toFixed(1);
+            anim = s.animate([
+              { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: .82 },
+              { transform: 'translate(' + (Math.cos(pang) * pdist).toFixed(1) + 'px,' + pdy.toFixed(1) + 'px) rotate(' + spin + 'deg) scale(.72)', opacity: 0 }
+            ], { duration: 760 + Math.random() * 300, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
+          }
           anim.addEventListener('finish', sweep);
           anim.addEventListener('cancel', sweep);
         }

@@ -838,6 +838,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .star-burst span svg { display: block; width: 100%; height: 100%;
   fill: var(--burst-fill, var(--star-soft)); opacity: .97;
   filter: drop-shadow(0 0 5px var(--burst-glow)) drop-shadow(0 0 12px var(--burst-mist)); }
+/* 晴天模式：星爆换成樱花粉花瓣，光晕换成柔和粉雾、整体更轻（飞散更近、更慢、更透） */
+.star-burst.burst-petal span svg {
+  fill: rgba(248, 178, 208, .88);
+  filter: drop-shadow(0 0 4px rgba(247, 160, 197, .40)) drop-shadow(0 0 9px rgba(250, 196, 222, .22)); }
 :root[data-theme="night"] .toc-item::before { opacity: .88; }
 :root[data-theme="night"] .post-item::before { opacity: .92; }
 :root[data-theme="night"] .tag,
