@@ -150,9 +150,35 @@
     if (!input || !btn) return;
     var counter = document.getElementById('zb-composer-count');
     var after = document.getElementById('zb-composer-after');
+    var mdBtn = document.getElementById('zb-composer-md');
+    var preview = document.getElementById('zb-composer-preview');
     input.addEventListener && input.addEventListener('input', function () {
       if (counter) counter.textContent = String(String(input.value || '').length) + ' / 2000';
     });
+    /* 预览只重画预览框，不改输入内容；再点一次回到编辑态 */
+    if (mdBtn && preview) {
+      mdBtn.addEventListener && mdBtn.addEventListener('click', function () {
+        var toPreview = mdBtn.getAttribute('aria-pressed') !== 'true';
+        if (toPreview) {
+          var raw = String(input.value || '').replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          preview.innerHTML = (A && typeof A.mdPreview === 'function')
+            ? A.mdPreview(input.value)
+            : raw.replace(/\n/g, '<br>');
+          if (!String(input.value || '').trim()) {
+            preview.innerHTML = '<p class="zb-preview-empty">（还没有内容，回到编辑写几句吧）</p>';
+          }
+          preview.hidden = false;
+          input.hidden = true;
+        } else {
+          preview.hidden = true;
+          input.hidden = false;
+          try { input.focus(); } catch (e) {}
+        }
+        mdBtn.setAttribute('aria-pressed', toPreview ? 'true' : 'false');
+        mdBtn.textContent = toPreview ? '回到编辑' : '预览 Markdown';
+      });
+    }
     btn.addEventListener && btn.addEventListener('click', function () {
       var text = String(input.value || '').trim();
       if (!text) { try { input.focus(); } catch (e) {} return; }

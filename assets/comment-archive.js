@@ -102,14 +102,73 @@
     };
   }
 
+  /* 发布前预览用的小型 Markdown 渲染：先整体转义再生成有限的几个标签，
+     不加载外部图片、不放行任何原文 HTML。最终展示以 GitHub 的渲染为准。 */
+  function mdInline(s) {
+    return s
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/gi, function (_, alt, u) {
+        return '<a href="' + u + '" target="_blank" rel="noopener nofollow">[图片] ' +
+          (alt || u) + '</a>';
+      })
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener nofollow">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+      .replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+      .replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  }
+  function mdPreview(src) {
+    var text = esc(String(src == null ? '' : src).replace(/\r\n?/g, '\n'));
+    var blocks = [];
+    text = text.replace(/```([^\n]*)\n([\s\S]*?)```/g, function (_, lang, code) {
+      blocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+      return '\n\u0000' + (blocks.length - 1) + '\u0000\n';
+    });
+    var out = [], para = [], listTag = '', inQuote = false;
+    function closePara() {
+      if (para.length) { out.push('<p>' + para.map(mdInline).join('<br>') + '</p>'); para = []; }
+    }
+    function closeList() { if (listTag) { out.push('</' + listTag + '>'); listTag = ''; } }
+    function closeQuote() { if (inQuote) { out.push('</blockquote>'); inQuote = false; } }
+    String(text).split('\n').forEach(function (line) {
+      var bk = line.match(/^\s*\u0000(\d+)\u0000\s*$/);
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      var q = line.match(/^&gt;\s?(.*)$/);
+      var ul = line.match(/^\s*[-*+]\s+(.*)$/);
+      var ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
+      if (bk) { closePara(); closeList(); closeQuote(); out.push(blocks[Number(bk[1])] || ''); }
+      else if (h) { closePara(); closeList(); closeQuote();
+        out.push('<h' + h[1].length + '>' + mdInline(h[2]) + '</h' + h[1].length + '>'); }
+      else if (q) { closePara(); closeList();
+        if (!inQuote) { out.push('<blockquote>'); inQuote = true; }
+        out.push('<p>' + mdInline(q[1]) + '</p>'); }
+      else if (ul) { closePara(); closeQuote();
+        if (listTag !== 'ul') { closeList(); out.push('<ul>'); listTag = 'ul'; }
+        out.push('<li>' + mdInline(ul[1]) + '</li>'); }
+      else if (ol) { closePara(); closeQuote();
+        if (listTag !== 'ol') { closeList(); out.push('<ol>'); listTag = 'ol'; }
+        out.push('<li>' + mdInline(ol[1]) + '</li>'); }
+      else if (/^\s*$/.test(line)) { closePara(); closeList(); closeQuote(); }
+      else { closeList(); closeQuote(); para.push(line); }
+    });
+    closePara(); closeList(); closeQuote();
+    return out.join('');
+  }
+
   /* 发布框：页面内直接写，最后一步交给 GitHub 登录确认；SPA 与静态阅读版同一份 HTML */
   function composerHtml() {
     return '<div class="zb-composer" id="zb-composer">' +
+      '<div class="zb-composer-label-row">' +
       '<label class="zb-composer-label" for="zb-composer-input">写下想说的话</label>' +
+      '<button class="zb-composer-md" type="button" id="zb-composer-md" aria-pressed="false" ' +
+      'title="支持 Markdown 语法：**加粗**、*斜体*、~~删除线~~、`代码`、[链接](url)、引用、列表等">预览 Markdown</button>' +
+      '</div>' +
       '<textarea class="zb-composer-input" id="zb-composer-input" rows="3" maxlength="2000" ' +
-      'placeholder="路过、读后感，或者只是打个招呼…"></textarea>' +
+      'placeholder="路过、读后感，或者只是打个招呼…（支持 Markdown 语法）"></textarea>' +
+      '<div class="zb-composer-preview" id="zb-composer-preview" hidden aria-live="polite"></div>' +
       '<div class="zb-composer-bar">' +
-      '<span class="zb-composer-tip">留言会公开保存在本站仓库 · 发布需 GitHub 账号</span>' +
+      '<span class="zb-composer-tip">支持 Markdown · 留言会公开保存在本站仓库 · 发布需 GitHub 账号</span>' +
       '<span class="zb-composer-count" id="zb-composer-count">0 / 2000</span>' +
       '<button class="interactions-btn primary" type="button" id="zb-composer-submit">发布留言</button>' +
       '</div>' +
@@ -204,7 +263,7 @@
   }
 
   return {
-    render: render, esc: esc, plain: plain, mdToText: mdToText,
+    render: render, esc: esc, plain: plain, mdToText: mdToText, mdPreview: mdPreview,
     plusOne: plusOne, actor: actor, approved: approved,
     issueToComment: issueToComment, replyToComment: replyToComment,
     makeData: makeData, composerHtml: composerHtml, emptyHtml: emptyHtml
