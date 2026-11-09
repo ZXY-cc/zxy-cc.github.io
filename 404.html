@@ -28,7 +28,12 @@ th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
 .back{margin:24px 0 0;font-size:14px}
-@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+.comments-card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.72);border-radius:24px;padding:22px 26px 26px;margin-top:34px;box-shadow:0 10px 30px rgba(112,138,190,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.comments-card h2{margin:0 0 6px;font-size:19px;color:var(--ink)}
+.comments-card .cnote{margin:0;color:var(--muted);font-size:13px;line-height:1.75}
+.comments-card .giscus{margin-top:16px;min-height:120px}
+html[data-theme="night"] .comments-card{background:rgba(24,34,76,.55);border-color:rgba(208,226,255,.22)}
+@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}.comments-card{padding:18px 16px 20px}}
 
 /* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */

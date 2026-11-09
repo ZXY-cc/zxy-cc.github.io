@@ -14,6 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-08">
+
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -37,7 +38,12 @@ th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
 .back{margin:24px 0 0;font-size:14px}
-@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+.comments-card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.72);border-radius:24px;padding:22px 26px 26px;margin-top:34px;box-shadow:0 10px 30px rgba(112,138,190,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.comments-card h2{margin:0 0 6px;font-size:19px;color:var(--ink)}
+.comments-card .cnote{margin:0;color:var(--muted);font-size:13px;line-height:1.75}
+.comments-card .giscus{margin-top:16px;min-height:120px}
+html[data-theme="night"] .comments-card{background:rgba(24,34,76,.55);border-color:rgba(208,226,255,.22)}
+@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}.comments-card{padding:18px 16px 20px}}
 
 /* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
@@ -156,7 +162,7 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v1.2.0</span></td><td>2026-11-08</td><td><span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span></td><td>画质三档按描述分配实际效果并附对照表；首页改导航通栏、搜索与内容收进居中定宽栏</td></tr>
 <tr><td><span class="ver">v1.3.0</span></td><td>2026-11-08</td><td><span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span> <span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span></td><td>站名改为「星梦Staream」；创作台重做为左侧 Markdown / LaTeX 编辑器与右侧属性栏，支持公式、代码块、表格、封面标签与草稿自动保存，前台文章和静态阅读版同步渲染</td></tr>
 <tr><td><span class="ver">v1.4.0</span></td><td>2026-11-08</td><td><span class="chip" style="color:#a0638f;background:#a0638f14;border-color:#a0638f38">🚀 上线</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>全站迁移到自有域名 zxy-blog.top：DNS 指向 GitHub Pages，站点地址、分享元信息、站点地图与静态阅读版同步换新域；并轮换站长激活码</td></tr>
-<tr><td><span class="ver">v1.5.0</span></td><td>2026-11-08</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span></td><td>按站点评审整改：八个分页生成静态镜像、新增 Atom 订阅与自定义 404 页、换 1200×630 分享站卡、图片补固定尺寸与解码优化、低端机自动降画质；创作台入口重做：密钥链接解锁本机 90 天授权，入口对其它设备完全隐藏，令牌默认只存内存；名片昵称与星标按钮改用导航栏同款主题渐变，创作台移除公式速查面板；主题切换按钮日夜换色、导航选中星标改衬于文字后、高画质点击处新增蜜金光星迸溅特效（无圆形光幕，发光贴合星形）；文件选择框隐藏原生按钮，改为整栏点击上传；画质新增「极高」档：实时毛玻璃改为极高独占，所有访客默认仍是高画质，四档选项在「画质」下同一行排布；极高档流星与花瓣密度翻倍，鼠标划过的路径留下流星尾迹般的蜜金光带（画在内容之上，单层细光带、淡而连续不断线），星爆在晴天模式改为溅出樱花粉花瓣（更轻柔：更少更近更慢更透），星夜保持奶油金星星；创作台工具栏补 H1 快捷按钮，表单字段统一包成完整格子，成对字段两列并排、行内不再留半行空白；文章代码块新增语法高亮（配色参考 Woodfish-Theme，日 / 夜两套可读色，低画质不上色，旧文章预渲染代码块构建时自动补上色）；设置页新增字体偏好：中文（默认）、英文（默认 / Consolas / JetBrains Maple Mono / JetBrains Mono，纯英文字体选中时页面中文回落到中文字体设置）与代码（默认 / Consolas / JetBrains Maple Mono，初始默认 Maple，代码内中文随所选字体的字形覆盖回落到中文字体设置），各选项列表统一「默认在前、其余按字典序」排列</td></tr>
+<tr><td><span class="ver">v1.5.0</span></td><td>2026-11-08</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span></td><td>按站点评审整改：八个分页生成静态镜像、新增 Atom 订阅与自定义 404 页、换 1200×630 分享站卡、图片补固定尺寸与解码优化、低端机自动降画质；创作台入口重做：密钥链接解锁本机 90 天授权，入口对其它设备完全隐藏，令牌默认只存内存；名片昵称与星标按钮改用导航栏同款主题渐变，创作台移除公式速查面板；主题切换按钮日夜换色、导航选中星标改衬于文字后、高画质点击处新增蜜金光星迸溅特效（无圆形光幕，发光贴合星形）；文件选择框隐藏原生按钮，改为整栏点击上传；画质新增「极高」档：实时毛玻璃改为极高独占，所有访客默认仍是高画质，四档选项在「画质」下同一行排布；极高档流星与花瓣密度翻倍，鼠标划过的路径留下流星尾迹般的蜜金光带（画在内容之上，单层细光带、淡而连续不断线），星爆在晴天模式改为溅出樱花粉花瓣（更轻柔：更少更近更慢更透），星夜保持奶油金星星；创作台工具栏补 H1 快捷按钮，表单字段统一包成完整格子，成对字段两列并排、行内不再留半行空白；文章代码块新增语法高亮（配色参考 Woodfish-Theme，日 / 夜两套可读色，低画质不上色，旧文章预渲染代码块构建时自动补上色）；设置页新增字体偏好：中文（默认）、英文（默认 / Consolas / JetBrains Maple Mono / JetBrains Mono，纯英文字体选中时页面中文回落到中文字体设置）与代码（默认 / Consolas / JetBrains Maple Mono，初始默认 Maple，代码内中文随所选字体的字形覆盖回落到中文字体设置），各选项列表统一「默认在前、其余按字典序」排列；网站默认英文字体改为 JetBrains Mono；文章页接入 giscus 评论区（GitHub Discussions 承载、玻璃拟态日夜主题、SPA 与静态阅读版共用同一条讨论，配置未完成时不渲染），并修复构建脚本重复追加 RSS 链接</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>❌ 未做</td><td>纯静态站暂不接入第三方服务，保持无追踪</td></tr>
 <tr><td>后端与统计</td><td>❌ 未做</td><td>内容以静态文件为准，不采集访问数据</td></tr>
@@ -173,7 +179,9 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td>创作台鉴权</td><td>✅ 已支持</td><td>128 位密钥链接解锁本机 90 天授权；发布权限始终由 GitHub 细粒度令牌决定</td></tr>
 </tbody></table><h2>附记</h2><h3>附一：双格式同步</h3><p>本日志的 Markdown 是唯一内容源。每次更新后生成同名 HTML 镜像，同时把内容写进站点文章《博客版本日志》与「关于」页的 HTML 预览，三处内容一致才算改完。</p><h3>附二：更新流程</h3><p>改 md → 生成 html 与前端数据 → 本地回归 → 推送上线。历史同类改动一律合并，只保留最终状态。</p></div>
 </article>
+
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
+
 </body>
 </html>

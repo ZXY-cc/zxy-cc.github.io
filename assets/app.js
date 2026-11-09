@@ -136,6 +136,21 @@
         return '<button class="toc-item" type="button" data-toc="' + i + '">' + esc(h) + '</button>';
       }).join('') + '</div></nav>';
   }
+  /* 文章评论区：由 GitHub Discussions 承载，玻璃卡片包裹 giscus iframe。
+     giscus 未配置完成时整块不渲染，站点外观不受影响。 */
+  function commentsHtml() {
+    if (!window.ZBGiscus || !window.ZBGiscus.ready()) return '';
+    return '<section class="comments-card glass reveal" aria-label="评论区">' +
+      '<div class="comments-head"><span class="comments-star" aria-hidden="true">' +
+      '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span><div>' +
+      '<h2>留言</h2><p>用 GitHub 账号登录即可评论、回复或添加表情回应；' +
+      '评论保存在 GitHub Discussions，无广告、无追踪。</p></div></div>' +
+      '<div class="giscus" id="giscus-thread"></div>' +
+      '<p class="comments-foot" id="giscus-fallback" hidden>评论没能加载？也可以' +
+      '<a href="' + esc(window.ZBGiscus.discussionsUrl) +
+      '" target="_blank" rel="noopener">直接到 GitHub Discussions 留言</a>。</p>' +
+      '</section>';
+  }
   function renderPost(p) {
     var idx = -1;
     POSTS.forEach(function (x, i) { if (x.slug === p.slug) idx = i; });
@@ -167,6 +182,7 @@
       '<div class="article-actions"><button class="soft-btn" type="button" data-share="' +
       esc('#/post/' + p.slug) + '">复制文章链接</button>' +
       '<a class="soft-btn" href="#/">← 返回文章列表</a></div>' +
+      commentsHtml() +
       '</div></article>' + rel + nav;
   }
   function renderTags() {
@@ -469,7 +485,7 @@
     return sortFontOpts(kind === 'cn' ? FONT_CN_OPTS : kind === 'code' ? FONT_CODE_OPTS : FONT_EN_OPTS);
   }
   function readFont(kind) {
-    var v = null, def = kind === 'code' ? 'maple' : 'default';
+    var v = null, def = kind === 'code' ? 'maple' : kind === 'en' ? 'jbmono' : 'default';
     try { v = window.localStorage ? window.localStorage.getItem('zb-font-' + kind) : null; } catch (e) {}
     var opts = fontOpts(kind);
     for (var i = 0; i < opts.length; i++) if (opts[i].id === v) return v;
@@ -518,7 +534,8 @@
     }).join('');
     var fontNote = '代码字体选 JetBrains Maple Mono 时，代码里的中文也用它' +
       '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。' +
-      '英文字体里的 JetBrains Mono 只有英文字形，选它时页面中文仍按「中文字体」显示；选项按字典序排列。';
+      '英文字体里的 JetBrains Mono 只有英文字形，选它时页面中文仍按「中文字体」显示；' +
+      '英文字体初始默认为 JetBrains Mono；选项按字典序排列。';
     return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
       '<div class="settings-block"><div class="settings-info">' +
@@ -693,6 +710,7 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     addLineNumbers();
+    if (window.ZBGiscus && window.ZBGiscus.mount) window.ZBGiscus.mount();
     observeReveal();
     measureScroll();
     updateScroll();
@@ -838,6 +856,7 @@
       if (t === 'night') root.dataset.theme = 'night';
       else delete root.dataset.theme;
     }
+    if (window.ZBGiscus && window.ZBGiscus.syncTheme) window.ZBGiscus.syncTheme();
     var btn = document.getElementById('theme-toggle');
     if (btn) {
       var night = t === 'night';

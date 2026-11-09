@@ -1,0 +1,11 @@
+{
+  "origins": [
+    "https://zxy-blog.top",
+    "https://www.zxy-blog.top",
+    "https://zxy-cc.github.io"
+  ],
+  "originsRegex": [
+    "^http://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$"
+  ],
+  "defaultCommentOrder": "newest"
+}

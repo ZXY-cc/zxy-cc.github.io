@@ -14,6 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
+
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -37,7 +38,12 @@ th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
 .back{margin:24px 0 0;font-size:14px}
-@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+.comments-card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.72);border-radius:24px;padding:22px 26px 26px;margin-top:34px;box-shadow:0 10px 30px rgba(112,138,190,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.comments-card h2{margin:0 0 6px;font-size:19px;color:var(--ink)}
+.comments-card .cnote{margin:0;color:var(--muted);font-size:13px;line-height:1.75}
+.comments-card .giscus{margin-top:16px;min-height:120px}
+html[data-theme="night"] .comments-card{background:rgba(24,34,76,.55);border-color:rgba(208,226,255,.22)}
+@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}.comments-card{padding:18px 16px 20px}}
 
 /* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
@@ -145,7 +151,9 @@ pre, pre > code, .article :not(pre) > code {
 方案 <span class="tk-cls">B</span>：用 www，只加一条 <span class="tk-cls">CNAME</span>
 <span class="tk-cls">CNAME</span>  www.<span class="tk-pr">you</span>.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  username.<span class="tk-pr">github</span>.<span class="tk-pr">io</span></code></pre><p>然后在仓库的 Pages 设置里填入对应的域名并保存。DNS 生效后勾选 <strong>Enforce HTTPS</strong>，证书最多需要一天左右签发完成，之后就是一条带小锁的正式地址。</p><h2>如果用 Cloudflare Pages</h2><p>子域名不必把 NS 迁到 Cloudflare，直接在 Pages 项目的 Custom domains 里发起添加，再去域名控制台按提示补一条 CNAME 指向 <code>xxx.pages.dev</code> 即可。注意顺序不能反：只在 DNS 里手写 CNAME、而不在 Pages 后台登记域名，会得到 522 错误。CF Pages 只提供 CNAME 目标，所以走 <code>www.you.dpdns.org</code> 这类子域最省事；只有绑裸域（apex）才必须把 NS 托管到 Cloudflare。</p><h2>几个值得记住的坑</h2><ul><li>根域不能放 CNAME。想直接用 <code>you.dpdns.org</code> 就得用 A 记录，CNAME 只能给 <code>www</code> 这类子域用。</li><li>委派模式选「外部名称服务器」时，得先在外部 DNS 建好区域、拿到 NS 主机名再提交注册；而 <code>dpdns.org</code> 是子域，Cloudflare 免费版只接受可注册根域作为区域，容易卡在这一步。</li><li>把 GitHub Pages 套在 Cloudflare 代理后面时，DNS 记录先设为「仅 DNS」（灰云），否则 Let's Encrypt 的验证容易失败；证书签发后再考虑开代理。</li><li>免费域名随时可能调整政策，重要内容要留有迁移方案：DNS 记录导出一份，随时能换到付费域名。</li><li>静态博客不需要构建工具。三个文件加一份文章数据，就能直接拖进托管平台。</li></ul><hr><p>写到这里，这个站本身也是这么搭起来的。剩下的问题只有一个：下一篇写什么。</p></div>
 </article>
+
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
+
 </body>
 </html>
