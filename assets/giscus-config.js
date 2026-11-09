@@ -11,7 +11,7 @@ window.ZB_GISCUS = {
   repo: 'ZXY-cc/zxy-cc.github.io',
   repoId: 'R_kgDOVmJRnA',
   category: 'Announcements',
-  categoryId: '',
+  categoryId: 'DIC_kwDOVmJRnM4DKts2',
   discussionsUrl: 'https://github.com/ZXY-cc/zxy-cc.github.io/discussions',
   themeDay: 'https://zxy-blog.top/assets/giscus-day.css',
   themeNight: 'https://zxy-blog.top/assets/giscus-night.css'
