@@ -136,27 +136,37 @@
         return '<button class="toc-item" type="button" data-toc="' + i + '">' + esc(h) + '</button>';
       }).join('') + '</div></nav>';
   }
-  /* 文章互动区：本站原生 DOM，直接铺在文章卡内；评论与点赞计数由自建 Waline 服务承载。
-     仓库里的留言归档与静态阅读版共用同一渲染器，服务未接入或掉线时由装载器直接显示，
-     不套第二层卡片、不留空白 iframe。 */
+  /* 文章互动区：留言写入端是本站仓库的 GitHub Issues，页面只渲染仓库内归档。
+     借鉴参考站：历史留言标为「只读保留」并留 GitHub 原链接；预览态不显示留言入口，
+     测试留言不会混进正式归档。归档数据异常时由装载器给出提示与重连按钮。 */
+  function issueEntry(slug) {
+    var I = window.ZBInteractions;
+    if (I && typeof I.newIssueUrl === 'function') return String(I.newIssueUrl(slug) || '');
+    return 'https://github.com/ZXY-cc/zxy-cc.github.io/issues/new?title=' +
+      encodeURIComponent('留言 | ' + slug);
+  }
+  function issueList() {
+    var I = window.ZBInteractions;
+    return (I && I.issuesUrl) || 'https://github.com/ZXY-cc/zxy-cc.github.io/issues';
+  }
   function interactionsHtml(p) {
     var I = window.ZBInteractions;
-    var discussions = (I && I.discussionsUrl) || 'https://github.com/ZXY-cc/zxy-cc.github.io/discussions';
-    var body = I && I.ready()
-      ? '<div id="waline-thread"></div>' +
-        '<p class="interactions-hint" id="interactions-hint" hidden>评论暂时连不上，也可以' +
-        '<a href="' + esc(discussions) + '" target="_blank" rel="noopener">到 GitHub Discussions 留言</a>。</p>'
-      : '<p class="interactions-pending">新版评论区正在接入，接入完成后这里会出现点赞、评论与回复。' +
-        '这期间也可以<a href="' + esc(discussions) +
-        '" target="_blank" rel="noopener">到 GitHub Discussions 留言</a>。</p>';
+    var preview = !!(I && I.previewMode && I.previewMode());
+    var actions = preview ? '' : '<div class="interactions-actions">' +
+      '<a class="interactions-btn primary" href="' + esc(issueEntry(p.slug)) +
+      '" target="_blank" rel="noopener nofollow">写留言 ↗</a>' +
+      '<a class="interactions-btn" href="' + esc(issueList()) +
+      '" target="_blank" rel="noopener nofollow">看全部留言 ↗</a></div>';
     var archive = (window.ZBArchive && window.ZB_COMMENTS && p)
       ? window.ZBArchive.render(window.ZB_COMMENTS, p.slug) : '';
     return '<section class="interactions reveal" aria-label="互动区">' +
       '<div class="interactions-head"><span class="interactions-star" aria-hidden="true">' +
       '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span><div>' +
-      '<h2>留言</h2><p>评论、回复与点赞计数保存在自己的评论服务里，无广告、无追踪；' +
-      '公开留言会同步存档到站点仓库，长期留存。</p></div></div>' +
-      body + archive + '</section>';
+      '<h2>留言</h2><p>留言发在本站仓库的 GitHub Issues，用 👍 点赞、在 Issue 下回复；' +
+      '公开留言会同步存档到这里，站长可随时关闭或删除；无广告、无追踪。</p></div></div>' +
+      actions +
+      '<p class="interactions-hint" id="interactions-hint" hidden></p>' +
+      archive + '</section>';
   }
   function renderPost(p) {
     var idx = -1;

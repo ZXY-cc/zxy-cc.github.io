@@ -760,7 +760,7 @@ pre > code {
 }
 .font-item select:focus { border-color: var(--accent); box-shadow: 0 0 16px var(--accent-soft); }
 @media (max-width: 640px) { .font-group { grid-template-columns: 1fr; } }
-/* 文章互动区的版式与 Waline 主题覆盖统一放在 assets/interactions.css，
+/* 文章互动区的版式统一放在 assets/interactions.css，
    SPA 与静态阅读版共用同一份，避免两处样式漂移。 */
 .copy-btn {
   position: absolute; right: 10px; top: 9px;

@@ -1,7 +1,6 @@
-/* 星梦Staream · 文章互动区（评论区 + 点赞计数）
- * 本站原生 DOM，直接铺在文章卡内，不再套第二层玻璃卡 / 跨域 iframe。
- * Waline 客户端样式在 vendor/waline.css，这里只做主题变量与版式覆盖，
- * SPA 与静态阅读版共用同一份文件。 */
+/* 星梦Staream · 文章互动区（留言入口 + 仓库留言存档）
+ * 本站原生 DOM，直接铺在文章卡内，不套第二层玻璃卡、不用跨域 iframe、
+ * 不加载任何第三方评论组件。SPA 与静态阅读版共用同一份文件。 */
 
 .interactions { margin: 42px 0 6px; padding: 26px 0 0; background: none;
   border: 0; border-top: 1px solid rgba(120, 140, 190, .28); border-radius: 0; box-shadow: none; }
@@ -11,17 +10,27 @@
   fill: var(--burst-fill, #f6e4b8); filter: drop-shadow(0 0 6px var(--burst-glow, rgba(246, 228, 184, .6))); }
 .interactions-head h2 { margin: 0 0 6px; font-size: 19px; letter-spacing: .4px; color: var(--ink, #39436a); }
 .interactions-head p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--muted, #525d84); }
-.interactions-pending { margin: 18px 0 0; padding: 18px 20px; font-size: 13px; line-height: 1.8;
-  color: var(--muted, #525d84); background: rgba(255, 255, 255, .34);
-  border: 1px dashed rgba(120, 140, 190, .38); border-radius: 16px; }
-.interactions-hint { margin: 14px 0 0; font-size: 12.5px; color: var(--muted, #525d84); }
 .interactions a { color: var(--accent-text, #3f5c9c); text-decoration: none;
   border-bottom: 1px dashed currentColor; }
-#waline-thread { margin-top: 10px; min-height: 120px; }
-/* hidden 必须压过下面组件的 display 规则，否则降级切换不生效 */
+/* hidden 必须压过下面的 display 规则，否则降级提示切不回来 */
 .interactions [hidden] { display: none !important; }
 
-/* 留言存档：仓库内纯 HTML 快照，服务停用时它是唯一且完整的一份 */
+/* 留言入口：跳到本站仓库预填好的 Issue；预览态不显示，测试留言不会混入正式归档 */
+.interactions-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 18px 0 0; }
+.interactions-btn { display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; font-size: 12.5px; line-height: 1.5; text-decoration: none;
+  color: var(--accent-text, #3f5c9c); border: 1px solid rgba(120, 140, 190, .34);
+  border-radius: 999px; background: rgba(255, 255, 255, .38);
+  transition: border-color .2s ease, background .2s ease; }
+.interactions-btn:hover { border-color: rgba(130, 98, 189, .58); background: rgba(255, 255, 255, .64); }
+.interactions-btn.primary { border-color: rgba(85, 121, 196, .58); }
+.interactions-btn.noop { border-style: dashed; }
+.interactions-hint { margin: 14px 0 0; font-size: 12.5px; color: var(--muted, #525d84); }
+.interactions-retry { margin-left: 6px; padding: 2px 8px; font-size: 12px;
+  color: var(--accent-text, #3f5c9c); background: none; cursor: pointer;
+  border: 1px solid rgba(120, 140, 190, .38); border-radius: 999px; }
+
+/* 留言存档：仓库内纯 HTML 快照，服务停用、换域名后它仍是完整可读的一份 */
 .zb-archive { margin: 22px 0 0; padding: 18px 20px 14px;
   border: 1px solid rgba(120, 140, 190, .28); border-radius: 16px;
   background: rgba(255, 255, 255, .30); }
@@ -38,107 +47,33 @@
 .zb-archive-nick { font-size: 13px; font-weight: 600; color: var(--ink, #39436a); }
 .zb-archive-meta time { font-size: 11.5px; color: var(--muted, #525d84); }
 .zb-archive-like { font-size: 11.5px; color: #b9688f; }
+.zb-archive-origin { font-size: 11.5px; }
 .zb-archive-text { margin: 0; font-size: 13.5px; line-height: 1.8; word-break: break-word;
   color: var(--ink, #39436a); }
 .zb-archive-replies { margin: 8px 0 0 16px; padding: 0 0 0 12px;
   border-left: 2px solid rgba(130, 98, 189, .28); }
 .zb-archive-replies .zb-archive-item { padding: 6px 0; border-bottom: 0; }
+.zb-archive-more { margin: 12px 0 0; }
+.zb-archive-more summary { display: inline-block; padding: 5px 12px; cursor: pointer;
+  font-size: 12px; color: var(--accent-text, #3f5c9c);
+  border: 1px dashed rgba(120, 140, 190, .38); border-radius: 999px; }
+.zb-archive-more .zb-archive-list { margin-top: 10px; }
 .zb-archive-note { margin: 12px 0 0; font-size: 11.5px; line-height: 1.7;
   color: var(--muted, #525d84); }
 .zb-archive a { color: var(--accent-text, #3f5c9c); }
 
-/* Waline 主题变量：跟随本站 ink / muted / 玻璃描边 */
-.interactions [data-waline] {
-  --waline-theme-color: #5579c4;
-  --waline-active-color: #8262bd;
-  --waline-color: var(--ink, #39436a);
-  --waline-dark-grey: var(--ink, #39436a);
-  --waline-light-grey: var(--muted, #525d84);
-  --waline-white: #ffffff;
-  --waline-bg-color: transparent;
-  --waline-bg-color-light: rgba(255, 255, 255, .46);
-  --waline-bg-color-hover: rgba(255, 255, 255, .72);
-  --waline-border-color: rgba(120, 140, 190, .26);
-  --waline-disable-bg-color: rgba(255, 255, 255, .40);
-  --waline-disable-color: var(--muted, #525d84);
-  --waline-info-bg-color: rgba(255, 255, 255, .38);
-  --waline-info-color: var(--muted, #525d84);
-  --waline-bq-color: rgba(238, 243, 255, .60);
-  --waline-code-bg-color: #282c34;
-  --waline-border: 1px solid rgba(120, 140, 190, .26);
-  --waline-font-size: 14.5px;
-  --waline-avatar-size: 2.75rem;
-  --waline-box-shadow: none;
-}
-.interactions [data-waline] p { color: var(--ink, #39436a); }
-.interactions .wl-panel { margin: .5em 0; border: 1px solid rgba(120, 140, 190, .26);
-  border-radius: 18px; background: rgba(255, 255, 255, .36); }
-.interactions .wl-panel:focus-within { border-color: rgba(130, 98, 189, .48); }
-.interactions .wl-editor { border-radius: 12px; }
-.interactions .wl-btn { border-radius: 999px; font-size: .82em; }
-.interactions .wl-btn.primary { border-color: transparent; color: #fff;
-  background: linear-gradient(120deg, #5579c4, #8262bd 55%, #bb6ba1); }
-.interactions .wl-card { border: 1px solid rgba(120, 140, 190, .22); border-radius: 16px;
-  background: rgba(255, 255, 255, .34); }
-.interactions .wl-avatar { border-color: rgba(120, 140, 190, .26); }
-.interactions .wl-input { border-radius: 10px; background: rgba(255, 255, 255, .28); }
-.interactions .wl-nick, .interactions .wl-time, .interactions .wl-meta { color: var(--muted, #525d84); }
-
-/* 点赞：单个反应 = 一枚樱粉心 + 计数，做成与主题一致的胶囊按钮 */
-.interactions .wl-reaction { margin: 0 0 16px; text-align: left; }
-.interactions .wl-reaction-title { margin: 0 0 10px; font-size: 13px; font-weight: 400;
-  color: var(--muted, #525d84); }
-.interactions .wl-reaction-list { display: flex; gap: 10px; justify-content: flex-start;
-  margin: 0; padding: 0; list-style: none; }
-.interactions .wl-reaction-item { display: inline-flex; align-items: center; gap: 8px;
-  padding: 7px 14px; border: 1px solid rgba(120, 140, 190, .30); border-radius: 999px;
-  background: rgba(255, 255, 255, .48); cursor: pointer; }
-.interactions .wl-reaction-item:hover { border-color: rgba(187, 107, 161, .62); }
-.interactions .wl-reaction-img { width: 16px; height: 16px; }
-.interactions .wl-reaction-votes { font-size: 13px; color: var(--ink, #39436a); }
-.interactions .wl-reaction-text { color: var(--muted, #525d84); font-size: 13px; }
-
 /* 星夜：只换互动区配色，不动白天 */
 :root[data-theme="night"] .interactions { border-top-color: rgba(208, 226, 255, .22); }
-:root[data-theme="night"] .interactions-pending { background: rgba(24, 34, 76, .24);
-  border-color: rgba(208, 226, 255, .30); }
-:root[data-theme="night"] .interactions [data-waline] {
-  --waline-theme-color: #dbe9ff;
-  --waline-active-color: #e2cdfb;
-  --waline-color: #f4f7ff;
-  --waline-dark-grey: #f4f7ff;
-  --waline-light-grey: #d4e1fc;
-  --waline-white: #16203f;
-  --waline-bg-color: transparent;
-  --waline-bg-color-light: rgba(255, 255, 255, .09);
-  --waline-bg-color-hover: rgba(255, 255, 255, .15);
-  --waline-border-color: rgba(208, 226, 255, .22);
-  --waline-disable-bg-color: rgba(255, 255, 255, .08);
-  --waline-disable-color: #d4e1fc;
-  --waline-info-bg-color: rgba(255, 255, 255, .08);
-  --waline-info-color: #d4e1fc;
-  --waline-bq-color: rgba(208, 226, 255, .10);
-  --waline-border: 1px solid rgba(208, 226, 255, .22);
-}
-:root[data-theme="night"] .interactions [data-waline] p { color: #f4f7ff; }
-:root[data-theme="night"] .interactions .wl-panel { background: rgba(24, 34, 76, .24);
-  border-color: rgba(208, 226, 255, .22); }
-:root[data-theme="night"] .interactions .wl-card { background: rgba(24, 34, 76, .22);
-  border-color: rgba(208, 226, 255, .20); }
-:root[data-theme="night"] .interactions .wl-input { background: rgba(255, 255, 255, .08); }
-:root[data-theme="night"] .interactions .wl-nick,
-:root[data-theme="night"] .interactions .wl-time,
-:root[data-theme="night"] .interactions .wl-meta { color: #d4e1fc; }
-:root[data-theme="night"] .interactions .wl-btn.primary { color: #16203f; }
-:root[data-theme="night"] .interactions .wl-reaction-item { background: rgba(24, 34, 76, .28);
+:root[data-theme="night"] .interactions-btn { background: rgba(24, 34, 76, .24);
   border-color: rgba(208, 226, 255, .28); }
-:root[data-theme="night"] .interactions .wl-reaction-votes { color: #f4f7ff; }
-:root[data-theme="night"] .interactions .wl-reaction-title,
-:root[data-theme="night"] .interactions .wl-reaction-text { color: #d4e1fc; }
+:root[data-theme="night"] .interactions-btn:hover { background: rgba(24, 34, 76, .40);
+  border-color: rgba(208, 226, 255, .48); }
+:root[data-theme="night"] .interactions-retry { border-color: rgba(208, 226, 255, .34); }
 :root[data-theme="night"] .zb-archive { background: rgba(24, 34, 76, .22);
   border-color: rgba(208, 226, 255, .22); }
 :root[data-theme="night"] .zb-archive-head { border-bottom-color: rgba(208, 226, 255, .22); }
 :root[data-theme="night"] .zb-archive-item { border-bottom-color: rgba(208, 226, 255, .14); }
+:root[data-theme="night"] .zb-archive-more summary { border-color: rgba(208, 226, 255, .30); }
 :root[data-theme="night"] .zb-archive-title,
 :root[data-theme="night"] .zb-archive-nick,
 :root[data-theme="night"] .zb-archive-text { color: #f4f7ff; }
@@ -148,5 +83,6 @@
 
 @media (max-width: 640px) {
   .interactions { margin-top: 30px; padding-top: 20px; }
-  .interactions-pending { padding: 14px 15px; }
+  .interactions-actions { gap: 8px; }
+  .zb-archive { padding: 14px 15px 12px; }
 }

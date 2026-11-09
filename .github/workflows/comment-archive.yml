@@ -1,11 +1,17 @@
 name: 留言归档同步
-# 每天把评论服务上的公开留言沉淀回仓库。服务地址未接入时直接跳过，不产生任何提交。
+# 访客在 GitHub Issues 留言 / 回复 / 点赞后即时同步，另有每日兜底与手动入口。
+# 只用到 GitHub 自带的 GITHUB_TOKEN，不需要任何外部服务、数据库或付费托管。
 on:
+  issues:
+    types: [opened, edited, reopened, closed, deleted, labeled, unlabeled]
+  issue_comment:
+    types: [created, edited, deleted]
   schedule:
     - cron: '20 3 * * *'
   workflow_dispatch:
 permissions:
   contents: write
+  issues: read
 concurrency:
   group: comment-archive
   cancel-in-progress: true
@@ -17,42 +23,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: 拉取公开留言并写回仓库
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const cfg = fs.readFileSync('assets/interactions-config.js', 'utf8');
-          const m = cfg.match(/serverURL:\s*'([^']*)'/);
-          const base = m && m[1];
-          if (!base || !/^https?:\/\//.test(base)) {
-            console.log('评论服务未接入，跳过归档');
-            process.exit(0);
-          }
-          (async () => {
-            const r = await fetch(new URL('/api/archive', base), { signal: AbortSignal.timeout(8000) });
-            if (!r.ok) throw new Error('归档接口 HTTP ' + r.status);
-            const a = await r.json();
-            if (!a || a.schema !== 1 || !a.posts ||
-                typeof a.posts !== 'object' || Array.isArray(a.posts)) {
-              throw new Error('归档接口返回格式不正确');
-            }
-            const data = { schema: 1, updatedAt: a.updatedAt || new Date().toISOString(), posts: a.posts };
-            fs.mkdirSync('data', { recursive: true });
-            fs.writeFileSync('data/comments.json', JSON.stringify(data, null, 2) + '\n');
-            fs.writeFileSync('assets/comments-data.js',
-              '/* 由 build.mjs 从 data/comments.json 生成，勿手改 */\n' +
-              'window.ZB_COMMENTS = ' + JSON.stringify(data).replace(/</g, '\\u003c') + ';\n');
-            console.log('留言归档已同步：' + Object.keys(data.posts).length + ' 篇文章');
-          })().catch((e) => { console.error(e); process.exit(1); });
-          NODE
+      - name: 同步 Issues 留言到仓库归档
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node .github/scripts/sync-issues.mjs
       - name: 有变化才提交
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/comments.json assets/comments-data.js
+          git add data/comments.json assets/comments-data.js posts/*.html
           if git diff --cached --quiet; then
-            echo "归档无变化"
+            echo "留言归档无变化"
           else
-            git commit -m "chore: 同步留言归档"
+            git commit -m "chore: 同步 GitHub Issues 留言归档"
             git push
           fi

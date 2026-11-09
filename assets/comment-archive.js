@@ -3,11 +3,12 @@
  * 构建时把归档烘焙进 posts/*.html，SPA 由 app.js 调用同一个 render()，
  * 两边不会版式分叉。输出一律经转义，只含纯文本与本站标签，不引任何外部资源。
  *
- * 数据格式（schema 1）：
- * { schema:1, updatedAt:"ISO", posts:{ "<slug>": {
- *     likes: 0,
- *     comments:[ { id, root, parent, nick, link, content, date, likes } ]
- * } } }
+ * 数据格式（schema 2）：
+ * { schema:2, source:"github-issues", repository, updatedAt, pageSize:20,
+ *   posts:{ "<slug>": { likes:0, comments:[
+ *     { id, root, parent, nick, link, content, date, likes, url }
+ *   ] } } }
+ * url 是 GitHub 原留言 / 原回复的永久链接，点赞数来自 GitHub 的 👍 反应。
  */
 (function (root, factory) {
   var api = factory();
@@ -32,21 +33,28 @@
       .replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim())
       .replace(/\n/g, '<br>');
   }
+  function safeUrl(v) {
+    return /^https?:\/\/[^\s]+$/i.test(v || '') ? esc(v) : '';
+  }
   function byDate(a, b) {
     return String(a.date || '').localeCompare(String(b.date || ''));
   }
   function item(c, inner) {
     var nick = esc(c.nick || '匿名');
-    var link = /^https?:\/\/[^\s]+$/i.test(c.link || '') ? esc(c.link) : '';
+    var link = safeUrl(c.link);
     var name = link
       ? '<a href="' + link + '" target="_blank" rel="noopener nofollow">' + nick + '</a>'
       : nick;
     var date = esc(String(c.date || '').slice(0, 10));
     var like = Number(c.likes || 0) > 0
       ? '<span class="zb-archive-like">♥ ' + Number(c.likes) + '</span>' : '';
+    var url = safeUrl(c.url);
+    var origin = url
+      ? '<a class="zb-archive-origin" href="' + url +
+        '" target="_blank" rel="noopener nofollow">原留言 ↗</a>' : '';
     return '<li class="zb-archive-item">' +
       '<div class="zb-archive-meta"><span class="zb-archive-nick">' + name + '</span>' +
-      (date ? '<time>' + date + '</time>' : '') + like + '</div>' +
+      (date ? '<time>' + date + '</time>' : '') + like + origin + '</div>' +
       '<div class="zb-archive-text">' + plain(c.content) + '</div>' +
       (inner || '') + '</li>';
   }
@@ -57,6 +65,7 @@
     var list = Array.isArray(post.comments) ? post.comments.slice() : [];
     var likes = Number(post.likes || 0);
     if (!list.length && !likes) return '';
+    var limit = Number(data && data.pageSize) > 0 ? Number(data.pageSize) : 20;
 
     var roots = [], replies = {}, rootIds = {};
     list.forEach(function (c) {
@@ -74,22 +83,32 @@
     Object.keys(replies).forEach(function (rid) { if (!rootIds[rid]) delete replies[rid]; });
     roots.sort(byDate);
 
-    var rows = roots.map(function (c) {
+    function row(c) {
       var kids = (replies[String(c.id)] || []).slice().sort(byDate);
       var inner = kids.length
         ? '<ul class="zb-archive-replies">' + kids.map(function (k) { return item(k); }).join('') + '</ul>'
         : '';
       return item(c, inner);
-    }).join('');
+    }
+    var shown = roots.slice(0, limit);
+    var rest = roots.slice(limit);
+    var rows = shown.map(row).join('');
+    /* <details> 是纯 HTML：静态阅读版不执行脚本也能展开更早的留言 */
+    var more = rest.length
+      ? '<details class="zb-archive-more"><summary>继续阅读（还有 ' + rest.length +
+        ' 条）</summary><ol class="zb-archive-list">' + rest.map(row).join('') +
+        '</ol></details>'
+      : '';
 
     var head = '<div class="zb-archive-head">' +
-      '<span class="zb-archive-title">留言存档</span>' +
+      '<span class="zb-archive-title">留言存档 · 只读保留</span>' +
       (list.length ? '<span class="zb-archive-count">' + list.length + ' 条</span>' : '') +
       (likes > 0 ? '<span class="zb-archive-total">♥ ' + likes + '</span>' : '') +
       '</div>';
     return '<div class="zb-archive" id="zb-archive">' + head +
-      (rows ? '<ol class="zb-archive-list">' + rows + '</ol>' : '') +
-      '<p class="zb-archive-note">这些留言已随站点仓库存档，评论服务停用或更换后依然保留。</p>' +
+      (rows ? '<ol class="zb-archive-list">' + rows + '</ol>' : '') + more +
+      '<p class="zb-archive-note">留言保存在本站仓库的 GitHub Issues，并随站点一起存档；' +
+      '关闭或删除的留言会在下次同步后移除。</p>' +
       '</div>';
   }
 
