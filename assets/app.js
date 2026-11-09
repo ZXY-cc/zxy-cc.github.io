@@ -137,8 +137,9 @@
       }).join('') + '</div></nav>';
   }
   /* 文章互动区：本站原生 DOM，直接铺在文章卡内；评论与点赞计数由自建 Waline 服务承载。
-     服务未接入时只显示一条接入中提示，不套第二层卡片、不留空白 iframe。 */
-  function interactionsHtml() {
+     仓库里的留言归档与静态阅读版共用同一渲染器，服务未接入或掉线时由装载器直接显示，
+     不套第二层卡片、不留空白 iframe。 */
+  function interactionsHtml(p) {
     var I = window.ZBInteractions;
     var discussions = (I && I.discussionsUrl) || 'https://github.com/ZXY-cc/zxy-cc.github.io/discussions';
     var body = I && I.ready()
@@ -148,12 +149,14 @@
       : '<p class="interactions-pending">新版评论区正在接入，接入完成后这里会出现点赞、评论与回复。' +
         '这期间也可以<a href="' + esc(discussions) +
         '" target="_blank" rel="noopener">到 GitHub Discussions 留言</a>。</p>';
+    var archive = (window.ZBArchive && window.ZB_COMMENTS && p)
+      ? window.ZBArchive.render(window.ZB_COMMENTS, p.slug) : '';
     return '<section class="interactions reveal" aria-label="互动区">' +
       '<div class="interactions-head"><span class="interactions-star" aria-hidden="true">' +
       '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span><div>' +
       '<h2>留言</h2><p>评论、回复与点赞计数保存在自己的评论服务里，无广告、无追踪；' +
-      '可以直接留言，也可以登录后在自己的档案里管理评论。</p></div></div>' +
-      body + '</section>';
+      '公开留言会同步存档到站点仓库，长期留存。</p></div></div>' +
+      body + archive + '</section>';
   }
   function renderPost(p) {
     var idx = -1;
@@ -186,7 +189,7 @@
       '<div class="article-actions"><button class="soft-btn" type="button" data-share="' +
       esc('#/post/' + p.slug) + '">复制文章链接</button>' +
       '<a class="soft-btn" href="#/">← 返回文章列表</a></div>' +
-      interactionsHtml() +
+      interactionsHtml(p) +
       '</div></article>' + rel + nav;
   }
   function renderTags() {

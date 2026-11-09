@@ -18,6 +18,34 @@
 .interactions a { color: var(--accent-text, #3f5c9c); text-decoration: none;
   border-bottom: 1px dashed currentColor; }
 #waline-thread { margin-top: 10px; min-height: 120px; }
+/* hidden 必须压过下面组件的 display 规则，否则降级切换不生效 */
+.interactions [hidden] { display: none !important; }
+
+/* 留言存档：仓库内纯 HTML 快照，服务停用时它是唯一且完整的一份 */
+.zb-archive { margin: 22px 0 0; padding: 18px 20px 14px;
+  border: 1px solid rgba(120, 140, 190, .28); border-radius: 16px;
+  background: rgba(255, 255, 255, .30); }
+.zb-archive-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px;
+  margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(120, 140, 190, .30); }
+.zb-archive-title { font-size: 13px; font-weight: 600; letter-spacing: .6px;
+  color: var(--ink, #39436a); }
+.zb-archive-count, .zb-archive-total { font-size: 12px; color: var(--muted, #525d84); }
+.zb-archive-total { color: #b9688f; }
+.zb-archive-list, .zb-archive-replies { margin: 0; padding: 0; list-style: none; }
+.zb-archive-item { padding: 10px 0 12px; border-bottom: 1px solid rgba(120, 140, 190, .16); }
+.zb-archive-item:last-child { border-bottom: 0; }
+.zb-archive-meta { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 0 0 6px; }
+.zb-archive-nick { font-size: 13px; font-weight: 600; color: var(--ink, #39436a); }
+.zb-archive-meta time { font-size: 11.5px; color: var(--muted, #525d84); }
+.zb-archive-like { font-size: 11.5px; color: #b9688f; }
+.zb-archive-text { margin: 0; font-size: 13.5px; line-height: 1.8; word-break: break-word;
+  color: var(--ink, #39436a); }
+.zb-archive-replies { margin: 8px 0 0 16px; padding: 0 0 0 12px;
+  border-left: 2px solid rgba(130, 98, 189, .28); }
+.zb-archive-replies .zb-archive-item { padding: 6px 0; border-bottom: 0; }
+.zb-archive-note { margin: 12px 0 0; font-size: 11.5px; line-height: 1.7;
+  color: var(--muted, #525d84); }
+.zb-archive a { color: var(--accent-text, #3f5c9c); }
 
 /* Waline 主题变量：跟随本站 ink / muted / 玻璃描边 */
 .interactions [data-waline] {
@@ -107,6 +135,16 @@
 :root[data-theme="night"] .interactions .wl-reaction-votes { color: #f4f7ff; }
 :root[data-theme="night"] .interactions .wl-reaction-title,
 :root[data-theme="night"] .interactions .wl-reaction-text { color: #d4e1fc; }
+:root[data-theme="night"] .zb-archive { background: rgba(24, 34, 76, .30);
+  border-color: rgba(208, 226, 255, .22); }
+:root[data-theme="night"] .zb-archive-head { border-bottom-color: rgba(208, 226, 255, .22); }
+:root[data-theme="night"] .zb-archive-item { border-bottom-color: rgba(208, 226, 255, .14); }
+:root[data-theme="night"] .zb-archive-title,
+:root[data-theme="night"] .zb-archive-nick,
+:root[data-theme="night"] .zb-archive-text { color: #f4f7ff; }
+:root[data-theme="night"] .zb-archive-count,
+:root[data-theme="night"] .zb-archive-meta time,
+:root[data-theme="night"] .zb-archive-note { color: #d4e1fc; }
 
 @media (max-width: 640px) {
   .interactions { margin-top: 30px; padding-top: 20px; }
