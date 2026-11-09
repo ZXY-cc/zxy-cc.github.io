@@ -94,6 +94,31 @@ img{max-width:100%}
   letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
 :root[data-theme="night"] .zb-math { color: #e8f0ff; }
 :root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
+/* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。
+   夜空直接用原版色值；晴空底色是雾白玻璃，同色相加深保证可读。
+   低画质不上色：全部 token 回退为正文颜色（只动 color，不需重渲染）。 */
+:root {
+  --syn-cm: #6d7fa8; --syn-st: #0d9e5a; --syn-kw: #9a7c17; --syn-ty: #0b98a3;
+  --syn-nu: #bf5a1d; --syn-cs: #bc3d16; --syn-fn: #1972c2; --syn-cls: #8a4ed6; --syn-pr: #b3541b;
+}
+:root[data-theme="night"] {
+  --syn-cm: #4a5e84; --syn-st: #3cec85; --syn-kw: #eacd61; --syn-ty: #22ecdb;
+  --syn-nu: #ff955c; --syn-cs: #e35535; --syn-fn: #69c3ff; --syn-cls: #b78aff; --syn-pr: #ff955c;
+}
+pre code .tk-cm { color: var(--syn-cm); font-style: italic; }
+pre code .tk-st { color: var(--syn-st); }
+pre code .tk-kw { color: var(--syn-kw); }
+pre code .tk-ty { color: var(--syn-ty); }
+pre code .tk-nu { color: var(--syn-nu); }
+pre code .tk-cs { color: var(--syn-cs); }
+pre code .tk-fn { color: var(--syn-fn); }
+pre code .tk-cls { color: var(--syn-cls); }
+pre code .tk-pr { color: var(--syn-pr); }
+:root[data-quality="low"] pre code span[class^="tk-"] { color: inherit; font-style: normal; }
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
+pre, pre > code, .article :not(pre) > code {
+  font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
+}
 </style>
 </head>
 <body>

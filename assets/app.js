@@ -16,6 +16,26 @@
     });
   }
   function decode(s) { try { return decodeURIComponent(s); } catch (e) { return s; } }
+  /* 旧文章的 body 是预渲染 HTML（无 Markdown 原文），里面的代码块没有高亮标记。
+     把每个 zb-code 的 <code> 原文取出（剥掉旧标记、还原实体）后用渲染引擎重新上色；
+     对已高亮的新渲染结果同样幂等。 */
+  function rehlHtml(html) {
+    var s = String(html || '');
+    if (s.indexOf('<pre') < 0 || !window.ZBMD) return s;
+    return s.replace(/<pre[^>]*>[\s\S]*?<\/pre>/g, function (blk) {
+      if (blk.indexOf('<code') < 0) return blk;
+      var lang = (blk.match(/data-lang="([^"]*)"/) || [])[1] ||
+        (blk.match(/class="zb-lang">([^<]*)</) || [])[1] || '';
+      return blk.replace(/<code[^>]*>[\s\S]*?<\/code>/, function (cm) {
+        var gt = cm.indexOf('>'), end = cm.lastIndexOf('</code>');
+        var raw = cm.slice(gt + 1, end).replace(/<[^>]+>/g, '')
+          .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+        if (!lang && /#include|#define\b/.test(raw)) lang = 'c';
+        return '<code>' + window.ZBMD.highlight(raw, lang) + '</code>';
+      });
+    });
+  }
   function avatarImg(cls) {
     return '<img class="' + (cls || 'avatar') + '" src="' + esc(CFG.avatar || 'assets/avatar.jpg') +
       '" alt="' + esc(CFG.author || SITE.author || '我') + '的头像">';
@@ -127,7 +147,7 @@
     }).slice(0, 2);
     /* 创作台写的文章保留 Markdown / LaTeX 原文，前台用同一套引擎渲染；
        早期文章只有 body（已是 HTML），直接沿用。 */
-    var body = (p.markdown && window.ZBMD) ? window.ZBMD.render(p.markdown) : (p.body || '');
+    var body = rehlHtml((p.markdown && window.ZBMD) ? window.ZBMD.render(p.markdown) : (p.body || ''));
     var nav = '<div class="post-nav reveal">' +
       (prev ? '<a class="pn" href="#/post/' + encodeURIComponent(prev.slug) + '"><span>← 较新</span>' + esc(prev.title) + '</a>' : '<span></span>') +
       (next ? '<a class="pn pn-right" href="#/post/' + encodeURIComponent(next.slug) + '"><span>较早 →</span>' + esc(next.title) + '</a>' : '<span></span>') +
@@ -305,7 +325,7 @@
       '<time class="article-date">' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
       '<h1>' + esc(c.title) + '</h1>' + tagsHtml(c.tags) +
       '<div class="article-body">' +
-      ((c.markdown && window.ZBMD) ? window.ZBMD.render(c.markdown) : (c.body || '')) +
+      rehlHtml((c.markdown && window.ZBMD) ? window.ZBMD.render(c.markdown) : (c.body || '')) +
       '</div></div></article>';
   }
 
@@ -384,6 +404,7 @@
     ['鼠标光幕 / 尾迹', '开启', '开启', '关闭', '关闭'],
     ['卡片高光', '开启', '开启', '关闭', '关闭'],
     ['实时毛玻璃', '开启', '关闭', '关闭', '关闭'],
+    ['代码高亮', 'Woodfish 配色', 'Woodfish 配色', 'Woodfish 配色', '不上色'],
     ['入场动画', '开启', '开启', '开启', '关闭']
   ];
   var qualityNow = 'high';
@@ -421,6 +442,53 @@
     for (var i = 0; i < QUALITY_OPTS.length; i++) if (QUALITY_OPTS[i].id === v) return QUALITY_OPTS[i].name;
     return '高';
   }
+  /* ---------- 设置：字体 ----------
+     三档偏好（中文 / 英文 / 代码）存本机，通过 data-font-* 属性即时生效；
+     代码字体初始默认 JetBrains Maple Mono。 */
+  var FONT_EN_OPTS = [
+    { id: 'default', name: '默认', label: '英文字体' },
+    { id: 'consolas', name: 'Consolas', label: '英文字体' },
+    { id: 'maple', name: 'JetBrains Maple Mono', label: '英文字体' }
+  ];
+  var FONT_CODE_OPTS = [
+    { id: 'default', name: '默认', label: '代码字体' },
+    { id: 'consolas', name: 'Consolas', label: '代码字体' },
+    { id: 'maple', name: 'JetBrains Maple Mono', label: '代码字体' }
+  ];
+  var FONT_CN_OPTS = [{ id: 'default', name: '默认', label: '中文字体' }];
+  function fontOpts(kind) {
+    return kind === 'cn' ? FONT_CN_OPTS : kind === 'code' ? FONT_CODE_OPTS : FONT_EN_OPTS;
+  }
+  function readFont(kind) {
+    var v = null, def = kind === 'code' ? 'maple' : 'default';
+    try { v = window.localStorage ? window.localStorage.getItem('zb-font-' + kind) : null; } catch (e) {}
+    var opts = fontOpts(kind);
+    for (var i = 0; i < opts.length; i++) if (opts[i].id === v) return v;
+    return def;
+  }
+  function saveFont(kind, v) {
+    try { if (window.localStorage) window.localStorage.setItem('zb-font-' + kind, v); } catch (e) {}
+  }
+  function applyFonts() {
+    var root = document.documentElement;
+    if (root && root.dataset) {
+      root.dataset.fontEn = readFont('en');
+      root.dataset.fontCn = readFont('cn');
+      root.dataset.fontCode = readFont('code');
+    }
+  }
+  function fontSelect(kind, opts, cur) {
+    return '<select data-font-sel="' + kind + '" aria-label="' + opts[0].label + '">' +
+      opts.map(function (o) {
+        return '<option value="' + o.id + '"' + (o.id === cur ? ' selected' : '') + '>' +
+          esc(o.name) + '</option>';
+      }).join('') + '</select>';
+  }
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    var k = t && t.getAttribute ? t.getAttribute('data-font-sel') : null;
+    if (k) { saveFont(k, t.value); applyFonts(); }
+  });
   function qualitySpecHtml() {
     var head = '<thead><tr><th scope="col">效果</th><th scope="col">极高</th>' +
       '<th scope="col">高</th><th scope="col">中</th><th scope="col">低</th></tr></thead>';
@@ -439,6 +507,8 @@
         '<span class="q-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span>' +
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
+    var fontNote = '代码字体选 JetBrains Maple Mono 时，代码里的中文也用它' +
+      '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。';
     return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
       '<div class="settings-block"><div class="settings-info">' +
@@ -446,7 +516,16 @@
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 首次访问默认高画质；「极高」在其上额外开启实时毛玻璃并加密流星与花瓣，中 / 低 依次减少装饰与实时渲染。</p></section>';
+      '</b> · 首次访问默认高画质；「极高」在其上额外开启实时毛玻璃并加密流星与花瓣，中 / 低 依次减少装饰与实时渲染。</p></section>' +
+      '<section class="settings-card glass reveal" aria-label="字体设置">' +
+      '<div class="settings-block"><div class="settings-info">' +
+      '<h2>字体</h2><p>设置网页的中英文字体与代码字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
+      '<div class="font-group">' +
+      '<label class="font-item">中文字体' + fontSelect('cn', FONT_CN_OPTS, readFont('cn')) + '</label>' +
+      '<label class="font-item">英文字体' + fontSelect('en', FONT_EN_OPTS, readFont('en')) + '</label>' +
+      '<label class="font-item">代码字体' + fontSelect('code', FONT_CODE_OPTS, readFont('code')) + '</label>' +
+      '</div>' +
+      '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>';
   }
 
   /* ---------- 全局搜索 ---------- */
@@ -1122,6 +1201,7 @@
   }
 
   applyQuality(readQuality());
+  applyFonts();
   initEffects();
   initSky();
   initTheme();

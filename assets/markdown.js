@@ -311,14 +311,75 @@
     return restore(s);
   }
 
+  /* ---------------- 语法高亮 ----------------
+     轻量零依赖分词：注释 / 字符串 / 数字 / 控制关键字 / 类型与修饰字 / 字面常量 /
+     函数名 / 类名 / 属性。颜色集中在 style.css 的 --syn-*（参考 Woodfish-Theme，
+     即 Woodfish Dark / Bearded Theme Arc）；低画质由 CSS 统一回退为正文色，无需重渲染。 */
+  var SYN_FAM_RE = {
+    js: /(\/\*[\s\S]*?\*\/|\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|(\b0[xX][0-9a-fA-F]+\b|\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|([A-Za-z_$][\w$]*)|(#\w+)/g,
+    py: /(#[^\n]*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b0[xX][0-9a-fA-F]+\b|\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|([A-Za-z_][\w]*)/g,
+    css: /(\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(#[0-9a-fA-F]{3,8}\b|\b\d+(?:\.\d+)?(?:px|em|rem|vh|vw|vmin|vmax|ms|s|deg|fr|%)?|#[0-9a-fA-F]{3,8})|([@a-zA-Z_][-\w]*)/g,
+    html: /(<!--[\s\S]*?-->)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(<\/?[a-zA-Z][\w-]*|\/>|>)|([a-zA-Z_][\w-]*)/g
+  };
+  SYN_FAM_RE.c = SYN_FAM_RE.js;   /* C 系与 JSON 和 JS 共用同一套分词正则，词表不同 */
+  var SYN_KW = {
+    js: ' if else for while do return switch case break continue try catch finally throw import export from as default await yield of in is instanceof new delete async ',
+    py: ' if elif else for while return switch case match import from as with try except finally raise lambda pass yield await assert in is not and or global nonlocal del ',
+    c: ' if else for while do return switch case break continue goto using namespace template ',
+    css: ' important and or not from to ',
+    html: ' ', json: ' '
+  };
+  var SYN_TY = {
+    js: ' var let const function class extends static get set ',
+    py: ' def class ',
+    c: ' int char float double long short void unsigned signed struct class enum union const static extern public private protected virtual inline explicit bool boolean string byte var dynamic new delete this abstract interface override final ',
+    css: ' ', html: ' ', json: ' '
+  };
+  var SYN_CS = ' true false null undefined None True False NULL nullptr nil this self super NaN Infinity ';
+  function highlightCode(code, lang) {
+    var l = String(lang || '').toLowerCase();
+    var fam = /^(py|python|sh|bash|shell|zsh|yaml|yml|ruby|rb|toml)$/.test(l) ? 'py'
+      : /^(css|scss|less)$/.test(l) ? 'css'
+      : /^(html|xml|svg|vue)$/.test(l) ? 'html'
+      : /^(c|cpp|c\+\+|h|hpp|java|cs|csharp|go|rust|rs|swift|kt|kotlin|php|dart|scala)$/.test(l) ? 'c'
+      : 'js'; /* js / ts / json / 未标注语言通用 */
+    var re = SYN_FAM_RE[fam];
+    var kw = ' ' + (SYN_KW[fam] || '') + ' ', ty = ' ' + (SYN_TY[fam] || '') + ' ', cs = SYN_CS;
+    var out = '', last = 0, m;
+    re.lastIndex = 0;
+    while ((m = re.exec(code))) {
+      if (m.index > last) out += esc(code.slice(last, m.index));
+      var cls = null;
+      if (m[1]) cls = 'tk-cm';
+      else if (m[2]) cls = (fam === 'json' && /^\s*:/.test(code.slice(re.lastIndex))) ? 'tk-pr' : 'tk-st';
+      else if (m[3]) cls = (fam === 'html') ? 'tk-fn' : 'tk-nu';
+      else if (m[4]) {
+        var w = m[4];
+        if (kw.indexOf(' ' + w + ' ') >= 0) cls = 'tk-kw';
+        else if (ty.indexOf(' ' + w + ' ') >= 0) cls = 'tk-ty';
+        else if (cs.indexOf(' ' + w + ' ') >= 0) cls = 'tk-cs';
+        else if (/^\s*\(/.test(code.slice(re.lastIndex))) cls = 'tk-fn';
+        else if (fam === 'css' && /^\s*:/.test(code.slice(re.lastIndex))) cls = 'tk-pr';
+        else if (code.charAt(m.index - 1) === '.') cls = 'tk-pr';
+        else if (/^[A-Z]/.test(w)) cls = 'tk-cls';
+      } else if (m[5]) cls = 'tk-kw';
+      if (cls) out += '<span class="' + cls + '">' + esc(m[0]) + '</span>';
+      else out += esc(m[0]);
+      last = re.lastIndex;
+    }
+    if (last < code.length) out += esc(code.slice(last));
+    return out;
+  }
+
   /* ---------------- 代码块 ---------------- */
   function codeHtml(lang, code) {
-    var lines = String(code).replace(/\n$/, '').split('\n');
+    var text = String(code).replace(/\n$/, '');
+    var lines = text.split('\n');
     var nums = lines.map(function (_, n) { return n + 1; }).join('\n');
     var tag = lang ? '<span class="zb-lang">' + esc(lang) + '</span>' : '';
     return '<pre class="zb-code"' + (lang ? ' data-lang="' + esc(lang) + '"' : '') + '>' +
       tag + '<span class="line-numbers" aria-hidden="true">' + nums + '</span>' +
-      '<code>' + esc(lines.join('\n')) + '</code>' +
+      '<code>' + highlightCode(text, lang) + '</code>' +
       '<button class="copy-btn" type="button">复制</button></pre>';
   }
 
@@ -475,5 +536,5 @@
       .replace(/\s+/g, ' ').trim();
   }
 
-  return { render: render, inline: inline, tex: texToHtml, plain: plain, version: '1.0.0' };
+  return { render: render, inline: inline, tex: texToHtml, plain: plain, highlight: highlightCode, version: '1.0.0' };
 });

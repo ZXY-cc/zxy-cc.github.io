@@ -68,6 +68,10 @@
   --code-ink: #4a5175;
   --code-line: rgba(120, 140, 190, .22);
 
+  /* 字体：中文栈默认；代码字体初始默认 JetBrains Maple Mono（自带中文字形，代码里的中文也走 Maple） */
+  --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-code: "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
+
   /* 蜜金：比奶油白更明确的黄色，但仍靠雾与柔光散开，不做硬色块 */
   --star: #f7d189;
   --star-soft: rgba(250, 214, 140, .90);
@@ -673,7 +677,7 @@ main { min-height: 320px; }
 
 .article :not(pre) > code {
   background: var(--accent-soft); padding: 2px 7px; border-radius: 6px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-code);
   font-size: 13px; color: var(--accent-text);
 }
 
@@ -707,14 +711,50 @@ pre {
   text-align: right; color: var(--faint);
   border-right: 1px solid var(--code-line);
   user-select: none; -webkit-user-select: none;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-code);
   font-size: 13px;
 }
 pre > code {
   flex: 1 1 auto; padding: 0 18px; white-space: pre;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-code);
   color: var(--code-ink); background: none;
 }
+
+/* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。
+   夜空直接用原版色值；晴空底色是雾白玻璃，同色相加深保证可读。
+   低画质不上色：全部 token 回退为正文颜色（只动 color，不需重渲染）。
+   这一段在 ZB-MATH 复用段内，静态文章镜像同步获得同样配色。 */
+
+/* 字体设置：设置页写入 data-font-en / data-font-cn / data-font-code。
+   代码字体选 JetBrains Maple Mono 时中文走 Maple 自带中文字形；
+   选 Consolas 或默认时，代码里的中文回落到「中文字体」的设置。 */
+:root[data-font-code="default"] {
+  --font-code: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", var(--font-cn), monospace;
+}
+:root[data-font-code="consolas"] {
+  --font-code: Consolas, "Liberation Mono", var(--font-cn), monospace;
+}
+:root[data-font-code="maple"] {
+  --font-code: "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
+}
+/* 英文字体：选了具体字体则放到栈最前（拉丁字形生效；自带中文的字体也会覆盖页面中文） */
+:root[data-font-en="consolas"] body {
+  font-family: Consolas, -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+}
+:root[data-font-en="maple"] body {
+  font-family: "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+}
+/* 设置页的字体选项 */
+.font-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 4px; }
+.font-item { display: block; font-size: 12.5px; color: var(--muted); }
+.font-item select {
+  display: block; width: 100%; margin-top: 7px; font: inherit; font-size: 13.5px;
+  color: var(--ink); background: var(--code-bg); border: 1px solid var(--glass-line);
+  border-radius: 12px; padding: 9px 13px; outline: none; cursor: pointer;
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+.font-item select:focus { border-color: var(--accent); box-shadow: 0 0 16px var(--accent-soft); }
+@media (max-width: 640px) { .font-group { grid-template-columns: 1fr; } }
 .copy-btn {
   position: absolute; right: 10px; top: 9px;
   padding: 3px 10px; border-radius: 999px; cursor: pointer;
@@ -1174,8 +1214,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: 0 0 14px rgba(171, 139, 212, .18), var(--glass-inner); }
 .file-zone svg { flex: 0 0 auto; width: 18px; height: 18px; fill: var(--star-soft);
   filter: drop-shadow(0 0 5px var(--star-glow)); }
-.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-/* 每个字段包成 .f-cell：在 .f-row 两列网格里格子才是完整字段（标签在上、输入框在下），
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }/* 每个字段包成 .f-cell：在 .f-row 两列网格里格子才是完整字段（标签在上、输入框在下），
    否则 label / input 各自成网格项，会排成「左标签右输入」的半行；上边距统一由格子承担 */
 .f-cell { display: block; min-width: 0; margin-top: 15px; }
 .f-cell .f-label { margin-top: 0; }
@@ -1707,4 +1746,29 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
 :root[data-theme="night"] .zb-math { color: #e8f0ff; }
 :root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
+/* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。
+   夜空直接用原版色值；晴空底色是雾白玻璃，同色相加深保证可读。
+   低画质不上色：全部 token 回退为正文颜色（只动 color，不需重渲染）。 */
+:root {
+  --syn-cm: #6d7fa8; --syn-st: #0d9e5a; --syn-kw: #9a7c17; --syn-ty: #0b98a3;
+  --syn-nu: #bf5a1d; --syn-cs: #bc3d16; --syn-fn: #1972c2; --syn-cls: #8a4ed6; --syn-pr: #b3541b;
+}
+:root[data-theme="night"] {
+  --syn-cm: #4a5e84; --syn-st: #3cec85; --syn-kw: #eacd61; --syn-ty: #22ecdb;
+  --syn-nu: #ff955c; --syn-cs: #e35535; --syn-fn: #69c3ff; --syn-cls: #b78aff; --syn-pr: #ff955c;
+}
+pre code .tk-cm { color: var(--syn-cm); font-style: italic; }
+pre code .tk-st { color: var(--syn-st); }
+pre code .tk-kw { color: var(--syn-kw); }
+pre code .tk-ty { color: var(--syn-ty); }
+pre code .tk-nu { color: var(--syn-nu); }
+pre code .tk-cs { color: var(--syn-cs); }
+pre code .tk-fn { color: var(--syn-fn); }
+pre code .tk-cls { color: var(--syn-cls); }
+pre code .tk-pr { color: var(--syn-pr); }
+:root[data-quality="low"] pre code span[class^="tk-"] { color: inherit; font-style: normal; }
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
+pre, pre > code, .article :not(pre) > code {
+  font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
+}
 /* ZB-MATH:END */

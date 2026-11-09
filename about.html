@@ -94,6 +94,31 @@ img{max-width:100%}
   letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
 :root[data-theme="night"] .zb-math { color: #e8f0ff; }
 :root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
+/* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。
+   夜空直接用原版色值；晴空底色是雾白玻璃，同色相加深保证可读。
+   低画质不上色：全部 token 回退为正文颜色（只动 color，不需重渲染）。 */
+:root {
+  --syn-cm: #6d7fa8; --syn-st: #0d9e5a; --syn-kw: #9a7c17; --syn-ty: #0b98a3;
+  --syn-nu: #bf5a1d; --syn-cs: #bc3d16; --syn-fn: #1972c2; --syn-cls: #8a4ed6; --syn-pr: #b3541b;
+}
+:root[data-theme="night"] {
+  --syn-cm: #4a5e84; --syn-st: #3cec85; --syn-kw: #eacd61; --syn-ty: #22ecdb;
+  --syn-nu: #ff955c; --syn-cs: #e35535; --syn-fn: #69c3ff; --syn-cls: #b78aff; --syn-pr: #ff955c;
+}
+pre code .tk-cm { color: var(--syn-cm); font-style: italic; }
+pre code .tk-st { color: var(--syn-st); }
+pre code .tk-kw { color: var(--syn-kw); }
+pre code .tk-ty { color: var(--syn-ty); }
+pre code .tk-nu { color: var(--syn-nu); }
+pre code .tk-cs { color: var(--syn-cs); }
+pre code .tk-fn { color: var(--syn-fn); }
+pre code .tk-cls { color: var(--syn-cls); }
+pre code .tk-pr { color: var(--syn-pr); }
+:root[data-quality="low"] pre code span[class^="tk-"] { color: inherit; font-style: normal; }
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
+pre, pre > code, .article :not(pre) > code {
+  font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
+}
 </style>
 </head>
 <body>
@@ -103,7 +128,7 @@ img{max-width:100%}
   <span><a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/free-blog.html">零成本搭一个自己的博客</a> · <a class="mlink" href="posts/sorting-notes.html">排序算法笔记：从冒泡到基数</a> · <a class="mlink" href="posts/why-write.html">为什么要写下来</a></span>
 </header>
 <main class="route-mirror">
-<div class="page-head reveal"><div class="page-kicker">ABOUT</div><h1 class="page-title">关于</h1><p class="page-sub">关于这个站，和写它的人</p></div><div class="about-card glass reveal"><div class="about-top"><img class="avatar avatar-lg" src="assets/avatar.jpg" alt="我的头像"><div><h2>我</h2><p>记录一些想法，和把它们弄明白的过程。</p></div></div><div class="about-intro"><p>喜欢把事情拆开看清楚，再慢慢写下来。算法、代码、还有一点没什么用的随想，都放在这里。</p><p>这个站是纯静态的：没有数据库、没有统计脚本、不追踪任何人。几份 HTML、CSS、JavaScript 加一张头像，就能一直开下去。</p></div><div class="x-chips about-skills"><span>算法</span><span>C / C++</span><span>Python</span><span>静态站点</span><span>水彩与星空</span><span>折腾</span></div><div class="about-social"><a href="https://github.com/ZXY-cc" target="_blank" rel="noopener noreferrer">GitHub<i>代码存放处</i></a><a href="#/timeline">归档<i>全部记录</i></a><a href="#/photowall">照片墙<i>抬头看到的颜色</i></a><a href="#/moments">说说<i>随手记的几句话</i></a><a href="#/friends">友链<i>常去的地方</i></a><a href="#/about">关于<i>关于这个站</i></a></div></div><div class="site-facts glass reveal"><div><b>2026-11-07</b><span>建站日期</span></div><div><b>2 天</b><span>已在线</span></div><div><b>4 / 6</b><span>文章 / 照片</span></div><div><b>0</b><span>追踪脚本</span></div></div><section class="changelog-preview glass reveal" aria-label="博客版本日志预览"><div class="cl-head"><div><p class="page-kicker">CHANGELOG</p><h2>博客版本日志</h2><p class="cl-sub">每次更新都会同步到这里。下方是同名 HTML 页面的实时预览，共 10 个版本，最后更新 2026-11-08（v1.5.0）。</p></div><div class="cl-actions"><a class="soft-btn" href="%E5%8D%9A%E5%AE%A2%E7%89%88%E6%9C%AC%E6%97%A5%E5%BF%97.html" target="_blank" rel="noopener noreferrer">打开完整版 ↗</a><a class="soft-btn" href="%E5%8D%9A%E5%AE%A2%E7%89%88%E6%9C%AC%E6%97%A5%E5%BF%97.md" target="_blank" rel="noopener noreferrer">Markdown 原文 ↗</a><a class="soft-btn" href="#/post/blog-changelog">阅读文章 →</a></div></div><iframe class="cl-frame" id="cl-frame" title="博客版本日志 HTML 预览" loading="lazy"></iframe></section>
+<div class="page-head reveal"><div class="page-kicker">ABOUT</div><h1 class="page-title">关于</h1><p class="page-sub">关于这个站，和写它的人</p></div><div class="about-card glass reveal"><div class="about-top"><img class="avatar avatar-lg" src="assets/avatar.jpg" alt="我的头像"><div><h2>我</h2><p>记录一些想法，和把它们弄明白的过程。</p></div></div><div class="about-intro"><p>喜欢把事情拆开看清楚，再慢慢写下来。算法、代码、还有一点没什么用的随想，都放在这里。</p><p>这个站是纯静态的：没有数据库、没有统计脚本、不追踪任何人。几份 HTML、CSS、JavaScript 加一张头像，就能一直开下去。</p></div><div class="x-chips about-skills"><span>算法</span><span>C / C++</span><span>Python</span><span>静态站点</span><span>水彩与星空</span><span>折腾</span></div><div class="about-social"><a href="https://github.com/ZXY-cc" target="_blank" rel="noopener noreferrer">GitHub<i>代码存放处</i></a><a href="#/timeline">归档<i>全部记录</i></a><a href="#/photowall">照片墙<i>抬头看到的颜色</i></a><a href="#/moments">说说<i>随手记的几句话</i></a><a href="#/friends">友链<i>常去的地方</i></a><a href="#/about">关于<i>关于这个站</i></a></div></div><div class="site-facts glass reveal"><div><b>2026-11-07</b><span>建站日期</span></div><div><b>3 天</b><span>已在线</span></div><div><b>4 / 6</b><span>文章 / 照片</span></div><div><b>0</b><span>追踪脚本</span></div></div><section class="changelog-preview glass reveal" aria-label="博客版本日志预览"><div class="cl-head"><div><p class="page-kicker">CHANGELOG</p><h2>博客版本日志</h2><p class="cl-sub">每次更新都会同步到这里。下方是同名 HTML 页面的实时预览，共 10 个版本，最后更新 2026-11-08（v1.5.0）。</p></div><div class="cl-actions"><a class="soft-btn" href="%E5%8D%9A%E5%AE%A2%E7%89%88%E6%9C%AC%E6%97%A5%E5%BF%97.html" target="_blank" rel="noopener noreferrer">打开完整版 ↗</a><a class="soft-btn" href="%E5%8D%9A%E5%AE%A2%E7%89%88%E6%9C%AC%E6%97%A5%E5%BF%97.md" target="_blank" rel="noopener noreferrer">Markdown 原文 ↗</a><a class="soft-btn" href="#/post/blog-changelog">阅读文章 →</a></div></div><iframe class="cl-frame" id="cl-frame" title="博客版本日志 HTML 预览" loading="lazy"></iframe></section>
 </main>
 <footer class="mirror-foot">这是「星梦Staream」关于页的静态镜像，完整交互（搜索、特效、夜间模式）请
 <a href="/#/about">在站点中打开 →</a></footer>
