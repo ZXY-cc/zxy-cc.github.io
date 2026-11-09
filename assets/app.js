@@ -1203,14 +1203,42 @@
               'px;margin:-' + phalf + 'px 0 0 -' + phalf + 'px;';
             s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#petal"/></svg>';
             box.appendChild(s);
-            var pang = (Math.PI * 2 * i) / n + Math.random() * .7;
-            var pdist = 26 + Math.random() * 34;
-            var pdy = Math.sin(pang) * pdist - 6;
-            var spin = (Math.random() * 44 - 22).toFixed(1);
-            anim = s.animate([
-              { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: .82 },
-              { transform: 'translate(' + (Math.cos(pang) * pdist).toFixed(1) + 'px,' + pdy.toFixed(1) + 'px) rotate(' + spin + 'deg) scale(.72)', opacity: 0 }
-            ], { duration: 760 + Math.random() * 300, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
+            /* 模拟真实花瓣：方向完全随机、初速被空气阻力衰减，重力缓缓把花瓣带向下并
+               趋近终端落速，途中叠加横向摆动与慢速自旋——方向是「缓慢改变」的弧线，
+               不是直线炸开；全程同一时长渐渐消散，表现轻柔感。 */
+            var pang = Math.random() * Math.PI * 2;
+            var pv0 = 30 + Math.random() * 46;
+            var pvx = Math.cos(pang) * pv0;
+            var pvy = Math.sin(pang) * pv0 * .5 - 12;
+            var pg = 190;
+            var pvt = 44 + Math.random() * 20;
+            var pdrag = 2.4 + Math.random() * 1.3;
+            var pswayA = 5 + Math.random() * 9;
+            var pswayW = 2.2 + Math.random() * 1.7;
+            var prot0 = Math.random() * 360;
+            var protV = Math.random() * 130 - 65;
+            var pdur = 820 + Math.random() * 240;
+            var psteps = 9;
+            var pdt = pdur / 1000 / psteps;
+            var frames = [{ transform: 'translate(0px,0px) rotate(' + prot0.toFixed(1) + 'deg) scale(1)', opacity: .82, easing: 'linear' }];
+            var ppx = 0, ppy = 0;
+            for (var k = 1; k <= psteps; k++) {
+              var pt = k * pdt;
+              pvx += -pdrag * pvx * pdt;
+              pvy += pg * pdt; if (pvy > pvt) pvy = pvt;
+              ppx += pvx * pdt;
+              ppy += pvy * pdt;
+              /* 有界横向摆动：随时间渐入，让方向缓慢左右改变（弧线感），不做速度积分以免失控 */
+              var psway = pswayA * Math.sin(pswayW * pt * Math.PI * 2) * Math.min(1, pt * 2.6);
+              var ptx = ppx + psway;
+              var fade = k < psteps * .45 ? .82 : Math.max(0, .82 * (1 - (k / psteps - .45) / .55));
+              frames.push({
+                transform: 'translate(' + ptx.toFixed(1) + 'px,' + ppy.toFixed(1) + 'px) rotate(' +
+                  (prot0 + protV * pt).toFixed(1) + 'deg) scale(' + (1 - .3 * (k / psteps)).toFixed(2) + ')',
+                opacity: Number(fade.toFixed(3)), easing: 'linear'
+              });
+            }
+            anim = s.animate(frames, { duration: pdur, fill: 'forwards' });
           }
           anim.addEventListener('finish', sweep);
           anim.addEventListener('cancel', sweep);
