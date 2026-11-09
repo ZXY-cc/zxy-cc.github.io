@@ -136,20 +136,24 @@
         return '<button class="toc-item" type="button" data-toc="' + i + '">' + esc(h) + '</button>';
       }).join('') + '</div></nav>';
   }
-  /* 文章评论区：由 GitHub Discussions 承载，玻璃卡片包裹 giscus iframe。
-     giscus 未配置完成时整块不渲染，站点外观不受影响。 */
-  function commentsHtml() {
-    if (!window.ZBGiscus || !window.ZBGiscus.ready()) return '';
-    return '<section class="comments-card reveal" aria-label="评论区">' +
-      '<div class="comments-head"><span class="comments-star" aria-hidden="true">' +
+  /* 文章互动区：本站原生 DOM，直接铺在文章卡内；评论与点赞计数由自建 Waline 服务承载。
+     服务未接入时只显示一条接入中提示，不套第二层卡片、不留空白 iframe。 */
+  function interactionsHtml() {
+    var I = window.ZBInteractions;
+    var discussions = (I && I.discussionsUrl) || 'https://github.com/ZXY-cc/zxy-cc.github.io/discussions';
+    var body = I && I.ready()
+      ? '<div id="waline-thread"></div>' +
+        '<p class="interactions-hint" id="interactions-hint" hidden>评论暂时连不上，也可以' +
+        '<a href="' + esc(discussions) + '" target="_blank" rel="noopener">到 GitHub Discussions 留言</a>。</p>'
+      : '<p class="interactions-pending">新版评论区正在接入，接入完成后这里会出现点赞、评论与回复。' +
+        '这期间也可以<a href="' + esc(discussions) +
+        '" target="_blank" rel="noopener">到 GitHub Discussions 留言</a>。</p>';
+    return '<section class="interactions reveal" aria-label="互动区">' +
+      '<div class="interactions-head"><span class="interactions-star" aria-hidden="true">' +
       '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span><div>' +
-      '<h2>留言</h2><p>用 GitHub 账号登录即可评论、回复或添加表情回应；' +
-      '评论保存在 GitHub Discussions，无广告、无追踪。</p></div></div>' +
-      '<div class="giscus" id="giscus-thread"></div>' +
-      '<p class="comments-foot" id="giscus-fallback" hidden>评论没能加载？也可以' +
-      '<a href="' + esc(window.ZBGiscus.discussionsUrl) +
-      '" target="_blank" rel="noopener">直接到 GitHub Discussions 留言</a>。</p>' +
-      '</section>';
+      '<h2>留言</h2><p>评论、回复与点赞计数保存在自己的评论服务里，无广告、无追踪；' +
+      '可以直接留言，也可以登录后在自己的档案里管理评论。</p></div></div>' +
+      body + '</section>';
   }
   function renderPost(p) {
     var idx = -1;
@@ -182,7 +186,7 @@
       '<div class="article-actions"><button class="soft-btn" type="button" data-share="' +
       esc('#/post/' + p.slug) + '">复制文章链接</button>' +
       '<a class="soft-btn" href="#/">← 返回文章列表</a></div>' +
-      commentsHtml() +
+      interactionsHtml() +
       '</div></article>' + rel + nav;
   }
   function renderTags() {
@@ -710,7 +714,7 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     addLineNumbers();
-    if (window.ZBGiscus && window.ZBGiscus.mount) window.ZBGiscus.mount();
+    if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     observeReveal();
     measureScroll();
     updateScroll();
@@ -856,7 +860,7 @@
       if (t === 'night') root.dataset.theme = 'night';
       else delete root.dataset.theme;
     }
-    if (window.ZBGiscus && window.ZBGiscus.syncTheme) window.ZBGiscus.syncTheme();
+    if (window.ZBInteractions && window.ZBInteractions.syncTheme) window.ZBInteractions.syncTheme();
     var btn = document.getElementById('theme-toggle');
     if (btn) {
       var night = t === 'night';

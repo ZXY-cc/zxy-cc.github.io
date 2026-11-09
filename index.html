@@ -6,7 +6,6 @@
 <title>星梦Staream</title>
 <meta name="description" content="星梦Staream：一个关于算法、代码、建站与日常随想的纯静态个人博客。">
 <meta name="theme-color" content="#dceafb">
-<meta name="giscus:backlink" content="https://zxy-blog.top/">
 <link rel="alternate" type="application/atom+xml" title="星梦Staream" href="https://zxy-blog.top/feed.xml">
 <link rel="canonical" href="https://zxy-blog.top/">
 <meta property="og:type" content="website">
@@ -23,6 +22,8 @@
 <link rel="icon" type="image/png" sizes="64x64" href="assets/avatar-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/avatar-180.png">
 <link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/vendor/waline.css">
+<link rel="stylesheet" href="assets/interactions.css">
 <!-- 画质偏好在首屏渲染前落到根节点，避免中/低画质闪一下完整特效 -->
 <script>try{var q=localStorage.getItem('zb-quality');if(q!=='ultra'&&q!=='high'&&q!=='mid'&&q!=='low'){var m=navigator.deviceMemory||8,c=navigator.hardwareConcurrency||8;q=(m<=2||c<=2)?'low':(m<=4||c<=4)?'mid':'high';}if(q==='mid'||q==='low')document.documentElement.setAttribute('data-quality',q);else if(q==='ultra')document.documentElement.setAttribute('data-quality','ultra');var fe=localStorage.getItem('zb-font-en'),fc=localStorage.getItem('zb-font-code');if(!fe)fe='jbmono';if(fe==='consolas'||fe==='maple'||fe==='jbmono'||fe==='default')document.documentElement.setAttribute('data-font-en',fe);if(fc==='consolas'||fc==='maple'||fc==='default')document.documentElement.setAttribute('data-font-code',fc);}catch(e){}</script>
 <!-- JSONLD:START -->
@@ -191,9 +192,9 @@
 <!-- Markdown + LaTeX 渲染：创作台预览、前台文章与杂谈共用 -->
 <script src="assets/markdown.js"></script>
 <script src="assets/studio.js"></script>
-<!-- 评论区：GitHub Discussions 承载的 giscus，配置与装载逻辑独立于站点主程序 -->
-<script src="assets/giscus-config.js"></script>
-<script src="assets/giscus.js"></script>
+<!-- 互动区：本站原生 DOM + 自建 Waline 服务，配置与装载逻辑独立于站点主程序 -->
+<script src="assets/interactions-config.js"></script>
+<script src="assets/interactions.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>
