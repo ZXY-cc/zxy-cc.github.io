@@ -88,20 +88,32 @@ main {
 main .pagination-loader-container{background-image:url(https://github.com/images/modules/pulls/progressive-disclosure-line.svg)}
 main .gsc-loading-image{background-image:url(https://github.githubassets.com/images/mona-loading-default.gif)}
 
-/* 玻璃拟态：透明画布 + 半透明圆角卡片 + 细雾边 + 柔光 */
+/* 参考站评论区框架：计数头 / 输入面板 / 评论卡片 / 回复层级，全部融入站点主题 */
 html,body,main{background:transparent!important}
-main .gsc-comment,
-main .gsc-comment-box{
-  background:var(--color-canvas-overlay);
-  border:1px solid var(--color-border-default);
-  border-radius:18px;
-  box-shadow:0 6px 22px rgba(112,138,190,.12);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)
-}
-main .gsc-header{border-bottom:1px solid var(--color-border-muted);padding-bottom:12px}
-main .gsc-timeline{gap:14px}
-main .gsc-social-reaction-summary-item,
-main .gsc-direct-reaction-buttons button{border-radius:999px!important}
+main{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","JetBrains Mono",sans-serif;line-height:1.75}
+main .gsc-main,main .gsc-comments,main .gsc-timeline{background:transparent!important;border:0!important;box-shadow:none!important}
+main .gsc-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 12px!important;margin:0 0 16px!important;border-bottom:1px solid var(--color-border-muted)!important}
+main .gsc-left-header{display:flex;align-items:center;gap:8px}
+main .gsc-comments-count{font-size:16px;font-weight:650;color:var(--color-fg-default)}
+main .gsc-header a,main .gsc-header small{font-size:12px;color:var(--color-fg-subtle)!important;text-decoration:none}
+main .gsc-comment-box{background:var(--color-canvas-overlay)!important;border:1px solid var(--color-border-default)!important;border-radius:16px!important;box-shadow:0 6px 22px rgba(24,34,76,.10);padding:14px 16px 12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+main .gsc-comment-box-tabs{background:var(--color-segmented-control-bg);border-radius:999px;padding:3px}
+main .gsc-comment-box-tabs button{border-radius:999px!important;border:0!important;font-size:13px}
+main .gsc-comment-box-textarea,main textarea,main .FormControl{background:var(--color-canvas-subtle)!important;border:1px solid var(--color-border-muted)!important;border-radius:12px!important;color:var(--color-fg-default);padding:12px 14px;min-height:96px;box-shadow:none!important}
+main .gsc-comment-box-textarea:focus,main textarea:focus{border-color:var(--color-accent-emphasis)!important;box-shadow:0 0 0 3px var(--color-accent-muted)!important;outline:none}
+main .gsc-comment-box-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+main .gsc-comment-box-markdown-hint,main .gsc-comment-box-md-toolbar{font-size:12px;color:var(--color-fg-subtle)}
+main .gsc-comment-box-buttons button,main .gsc-comment-box-buttons a,main button[type="submit"]{border-radius:10px!important;border:0!important;background:var(--color-btn-primary-bg)!important;color:var(--color-btn-primary-text)!important;font-weight:600;box-shadow:0 4px 14px rgba(130,98,189,.24)}
+main .gsc-comment-box-buttons button:hover,main .gsc-comment-box-buttons a:hover{background:var(--color-btn-primary-hover-bg)!important}
+main .gsc-timeline{display:flex;flex-direction:column;gap:14px}
+main .gsc-comment{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+main .gsc-comment-header{display:flex;align-items:center;gap:10px;background:transparent!important;border:0!important;padding:0 0 8px!important}
+main .gsc-comment-author-avatar img,main .gsc-comment-header img{border-radius:50%!important;width:44px;height:44px;box-shadow:0 2px 10px rgba(24,34,76,.12)}
+main .gsc-comment-author{font-weight:650;color:var(--color-fg-default)}
+main .gsc-comment-header time,main .gsc-comment-header span{font-size:12px;color:var(--color-fg-subtle)}
+main .gsc-comment-content{background:var(--color-canvas-overlay)!important;border:1px solid var(--color-border-muted)!important;border-radius:14px!important;padding:12px 16px;margin-left:54px;box-shadow:0 4px 16px rgba(24,34,76,.08)}
+main .gsc-replies{margin-left:54px;padding-left:14px;border-left:2px solid var(--color-border-muted)}
+main .gsc-social-reaction-summary-item,main .gsc-direct-reaction-buttons button{border-radius:999px!important;background:var(--color-canvas-subtle)!important}
 main .gsc-reactions-count{display:none}
-main textarea,main .FormControl{border-radius:12px}
+main .pagination-loader-container{background-image:none!important}
 main a{color:var(--color-accent-fg)}

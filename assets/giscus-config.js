@@ -5,13 +5,14 @@
  * 启用前置条件（在 GitHub 网页上操作一次）：
  *   1. 仓库 Settings → Features 勾选 Discussions；
  *   2. 安装 https://github.com/apps/giscus 并授权到本仓库。
- * 之后把「Announcements」分类的 category-id 填到下面即可；未填时评论区整块不渲染。
+ * 分类用 General（开放式讨论）：Announcements 仅维护者可建讨论，会让访客首条评论卡住。
+ * 未填 categoryId 时评论区整块不渲染。
  */
 window.ZB_GISCUS = {
   repo: 'ZXY-cc/zxy-cc.github.io',
   repoId: 'R_kgDOVmJRnA',
-  category: 'Announcements',
-  categoryId: 'DIC_kwDOVmJRnM4DKts2',
+  category: 'General',
+  categoryId: 'DIC_kwDOVmJRnM4DKts3',
   discussionsUrl: 'https://github.com/ZXY-cc/zxy-cc.github.io/discussions',
   themeDay: 'https://zxy-blog.top/assets/giscus-day.css',
   themeNight: 'https://zxy-blog.top/assets/giscus-night.css'

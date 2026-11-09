@@ -759,15 +759,17 @@ pre > code {
 }
 .font-item select:focus { border-color: var(--accent); box-shadow: 0 0 16px var(--accent-soft); }
 @media (max-width: 640px) { .font-group { grid-template-columns: 1fr; } }
-/* 文章评论区：外层玻璃卡片（iframe 内的玻璃主题由 giscus-day/night.css 提供） */
-.comments-card { margin: 42px 0 6px; padding: 22px 26px 26px; border-radius: var(--radius-lg); }
+/* 文章评论区：不再套第二层玻璃卡，直接铺在文章卡内、与正文一体；
+   iframe 内的计数头 / 输入面板 / 评论卡片由 giscus-day/night.css 复刻参考站框架 */
+.comments-card { margin: 42px 0 6px; padding: 26px 0 0; background: none; border: 0;
+  border-top: 1px solid var(--glass-line, rgba(120,140,190,.24)); border-radius: 0; box-shadow: none; }
 .comments-head { display: flex; align-items: flex-start; gap: 14px; }
 .comments-star { flex: 0 0 auto; width: 24px; height: 24px; margin-top: 4px; }
 .comments-star svg { width: 100%; height: 100%; fill: var(--burst-fill, var(--star-soft));
   filter: drop-shadow(0 0 6px var(--burst-glow)); }
 .comments-head h2 { margin: 0 0 6px; font-size: 19px; letter-spacing: .4px; }
 .comments-head p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--muted); }
-.comments-card .giscus { margin-top: 16px; min-height: 120px; }
+.comments-card .giscus { margin-top: 14px; min-height: 120px; }
 .comments-foot { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); }
 .comments-foot a { color: var(--accent-text); text-decoration: none;
   border-bottom: 1px dashed var(--accent-text); }

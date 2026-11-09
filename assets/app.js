@@ -140,7 +140,7 @@
      giscus 未配置完成时整块不渲染，站点外观不受影响。 */
   function commentsHtml() {
     if (!window.ZBGiscus || !window.ZBGiscus.ready()) return '';
-    return '<section class="comments-card glass reveal" aria-label="评论区">' +
+    return '<section class="comments-card reveal" aria-label="评论区">' +
       '<div class="comments-head"><span class="comments-star" aria-hidden="true">' +
       '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span><div>' +
       '<h2>留言</h2><p>用 GitHub 账号登录即可评论、回复或添加表情回应；' +
@@ -1232,16 +1232,17 @@
               'px;margin:-' + phalf + 'px 0 0 -' + phalf + 'px;';
             s.innerHTML = '<svg viewBox="0 0 100 100"><use href="#petal"/></svg>';
             box.appendChild(s);
-            /* 模拟真实花瓣：方向完全随机、初速被空气阻力衰减，重力缓缓把花瓣带向下并
-               趋近终端落速，途中叠加横向摆动与慢速自旋——方向是「缓慢改变」的弧线，
-               不是直线炸开；全程同一时长渐渐消散，表现轻柔感。 */
+            /* 晴天花瓣：先有一次明显的迸射（高初速 + 强阻力，约 0.2s 内迅速衰减），
+               重力、横向摆动与慢速自旋从第一帧就一起作用，之后自然转为轻柔飘落并缓缓消散。 */
             var pang = Math.random() * Math.PI * 2;
-            var pv0 = 30 + Math.random() * 46;
+            var pv0 = 200 + Math.random() * 130;
             var pvx = Math.cos(pang) * pv0;
-            var pvy = Math.sin(pang) * pv0 * .5 - 12;
+            var pvy = Math.sin(pang) * pv0 * .55 - 26;
             var pg = 190;
             var pvt = 44 + Math.random() * 20;
+            var pdragBurst = 9 + Math.random() * 3.5;
             var pdrag = 2.4 + Math.random() * 1.3;
+            var pburst = .14 + Math.random() * .07;
             var pswayA = 5 + Math.random() * 9;
             var pswayW = 2.2 + Math.random() * 1.7;
             var prot0 = Math.random() * 360;
@@ -1249,21 +1250,24 @@
             var pdur = 820 + Math.random() * 240;
             var psteps = 9;
             var pdt = pdur / 1000 / psteps;
-            var frames = [{ transform: 'translate(0px,0px) rotate(' + prot0.toFixed(1) + 'deg) scale(1)', opacity: .82, easing: 'linear' }];
+            var frames = [{ transform: 'translate(0px,0px) rotate(' + prot0.toFixed(1) +
+              'deg) scale(.7)', opacity: .42, easing: 'linear' }];
             var ppx = 0, ppy = 0;
             for (var k = 1; k <= psteps; k++) {
               var pt = k * pdt;
-              pvx += -pdrag * pvx * pdt;
-              pvy += pg * pdt; if (pvy > pvt) pvy = pvt;
+              var pdragNow = pt < pburst ? pdragBurst : pdrag;
+              pvx += -pdragNow * pvx * pdt;
+              pvy += (pg - pdragNow * pvy) * pdt; if (pvy > pvt) pvy = pvt;
               ppx += pvx * pdt;
               ppy += pvy * pdt;
               /* 有界横向摆动：随时间渐入，让方向缓慢左右改变（弧线感），不做速度积分以免失控 */
               var psway = pswayA * Math.sin(pswayW * pt * Math.PI * 2) * Math.min(1, pt * 2.6);
               var ptx = ppx + psway;
               var fade = k < psteps * .45 ? .82 : Math.max(0, .82 * (1 - (k / psteps - .45) / .55));
+              var pscale = k === 1 ? 1.02 : 1.02 - .32 * (k / psteps);
               frames.push({
                 transform: 'translate(' + ptx.toFixed(1) + 'px,' + ppy.toFixed(1) + 'px) rotate(' +
-                  (prot0 + protV * pt).toFixed(1) + 'deg) scale(' + (1 - .3 * (k / psteps)).toFixed(2) + ')',
+                  (prot0 + protV * pt).toFixed(1) + 'deg) scale(' + pscale.toFixed(2) + ')',
                 opacity: Number(fade.toFixed(3)), easing: 'linear'
               });
             }
