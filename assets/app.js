@@ -448,7 +448,8 @@
   var FONT_EN_OPTS = [
     { id: 'default', name: '默认', label: '英文字体' },
     { id: 'consolas', name: 'Consolas', label: '英文字体' },
-    { id: 'maple', name: 'JetBrains Maple Mono', label: '英文字体' }
+    { id: 'maple', name: 'JetBrains Maple Mono', label: '英文字体' },
+    { id: 'jbmono', name: 'JetBrains Mono', label: '英文字体' }
   ];
   var FONT_CODE_OPTS = [
     { id: 'default', name: '默认', label: '代码字体' },
@@ -456,8 +457,16 @@
     { id: 'maple', name: 'JetBrains Maple Mono', label: '代码字体' }
   ];
   var FONT_CN_OPTS = [{ id: 'default', name: '默认', label: '中文字体' }];
+  /* 所有字体选项列表统一排序：「默认」固定在最前，其余按名称字典序。
+     以后新增选项只要塞进数组就会自动落到正确位置。 */
+  function sortFontOpts(list) {
+    var head = list.filter(function (o) { return o.id === 'default'; });
+    var rest = list.filter(function (o) { return o.id !== 'default'; })
+      .sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+    return head.concat(rest);
+  }
   function fontOpts(kind) {
-    return kind === 'cn' ? FONT_CN_OPTS : kind === 'code' ? FONT_CODE_OPTS : FONT_EN_OPTS;
+    return sortFontOpts(kind === 'cn' ? FONT_CN_OPTS : kind === 'code' ? FONT_CODE_OPTS : FONT_EN_OPTS);
   }
   function readFont(kind) {
     var v = null, def = kind === 'code' ? 'maple' : 'default';
@@ -508,7 +517,8 @@
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
     var fontNote = '代码字体选 JetBrains Maple Mono 时，代码里的中文也用它' +
-      '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。';
+      '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。' +
+      '英文字体里的 JetBrains Mono 只有英文字形，选它时页面中文仍按「中文字体」显示；选项按字典序排列。';
     return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
       '<div class="settings-block"><div class="settings-info">' +

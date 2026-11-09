@@ -744,6 +744,10 @@ pre > code {
 :root[data-font-en="maple"] body {
   font-family: "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
 }
+/* JetBrains Mono 只有英文字形：拉丁字形生效，中文自然回落到 var(--font-cn) */
+:root[data-font-en="jbmono"] body {
+  font-family: "JetBrains Mono", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+}
 /* 设置页的字体选项 */
 .font-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 4px; }
 .font-item { display: block; font-size: 12.5px; color: var(--muted); }
