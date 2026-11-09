@@ -100,7 +100,7 @@
 
 /* 星夜：只换互动区配色，不动白天 */
 :root[data-theme="night"] .interactions { border-top-color: rgba(208, 226, 255, .22); }
-:root[data-theme="night"] .interactions-pending { background: rgba(24, 34, 76, .34);
+:root[data-theme="night"] .interactions-pending { background: rgba(24, 34, 76, .24);
   border-color: rgba(208, 226, 255, .30); }
 :root[data-theme="night"] .interactions [data-waline] {
   --waline-theme-color: #dbe9ff;
@@ -121,21 +121,21 @@
   --waline-border: 1px solid rgba(208, 226, 255, .22);
 }
 :root[data-theme="night"] .interactions [data-waline] p { color: #f4f7ff; }
-:root[data-theme="night"] .interactions .wl-panel { background: rgba(24, 34, 76, .34);
+:root[data-theme="night"] .interactions .wl-panel { background: rgba(24, 34, 76, .24);
   border-color: rgba(208, 226, 255, .22); }
-:root[data-theme="night"] .interactions .wl-card { background: rgba(24, 34, 76, .30);
+:root[data-theme="night"] .interactions .wl-card { background: rgba(24, 34, 76, .22);
   border-color: rgba(208, 226, 255, .20); }
 :root[data-theme="night"] .interactions .wl-input { background: rgba(255, 255, 255, .08); }
 :root[data-theme="night"] .interactions .wl-nick,
 :root[data-theme="night"] .interactions .wl-time,
 :root[data-theme="night"] .interactions .wl-meta { color: #d4e1fc; }
 :root[data-theme="night"] .interactions .wl-btn.primary { color: #16203f; }
-:root[data-theme="night"] .interactions .wl-reaction-item { background: rgba(24, 34, 76, .38);
+:root[data-theme="night"] .interactions .wl-reaction-item { background: rgba(24, 34, 76, .28);
   border-color: rgba(208, 226, 255, .28); }
 :root[data-theme="night"] .interactions .wl-reaction-votes { color: #f4f7ff; }
 :root[data-theme="night"] .interactions .wl-reaction-title,
 :root[data-theme="night"] .interactions .wl-reaction-text { color: #d4e1fc; }
-:root[data-theme="night"] .zb-archive { background: rgba(24, 34, 76, .30);
+:root[data-theme="night"] .zb-archive { background: rgba(24, 34, 76, .22);
   border-color: rgba(208, 226, 255, .22); }
 :root[data-theme="night"] .zb-archive-head { border-bottom-color: rgba(208, 226, 255, .22); }
 :root[data-theme="night"] .zb-archive-item { border-bottom-color: rgba(208, 226, 255, .14); }
