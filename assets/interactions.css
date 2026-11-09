@@ -1,4 +1,4 @@
-/* 星梦Staream · 文章互动区（留言入口 + 仓库留言存档）
+/* 星梦Staream · 文章互动区（页面内发布框 + 直接显示的留言列表）
  * 本站原生 DOM，直接铺在文章卡内，不套第二层玻璃卡、不用跨域 iframe、
  * 不加载任何第三方评论组件。SPA 与静态阅读版共用同一份文件。 */
 
@@ -29,6 +29,29 @@
 .interactions-retry { margin-left: 6px; padding: 2px 8px; font-size: 12px;
   color: var(--accent-text, #3f5c9c); background: none; cursor: pointer;
   border: 1px solid rgba(120, 140, 190, .38); border-radius: 999px; }
+
+/* 页面内发布框：写好内容后交给 GitHub 确认，评论区不再只是一条外链 */
+.zb-composer { margin: 20px 0 0; padding: 16px 18px 14px;
+  border: 1px solid rgba(120, 140, 190, .28); border-radius: 16px;
+  background: rgba(255, 255, 255, .30); }
+.zb-composer-label { display: block; margin: 0 0 8px; font-size: 12.5px;
+  font-weight: 600; letter-spacing: .4px; color: var(--ink, #39436a); }
+.zb-composer-input { display: block; box-sizing: border-box; width: 100%; min-height: 76px;
+  padding: 10px 12px; font: inherit; font-size: 13.5px; line-height: 1.8;
+  color: var(--ink, #39436a); resize: vertical; outline: none;
+  border: 1px solid rgba(120, 140, 190, .30); border-radius: 12px;
+  background: rgba(255, 255, 255, .52);
+  transition: border-color .2s ease, background .2s ease; }
+.zb-composer-input::placeholder { color: var(--muted, #525d84); opacity: .78; }
+.zb-composer-input:focus { border-color: rgba(85, 121, 196, .62);
+  background: rgba(255, 255, 255, .72); }
+.zb-composer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0 0; }
+.zb-composer-tip { flex: 1 1 200px; font-size: 11.5px; line-height: 1.6;
+  color: var(--muted, #525d84); }
+.zb-composer-count { font-size: 11.5px; color: var(--muted, #525d84); }
+button.interactions-btn { font-family: inherit; cursor: pointer; }
+.zb-composer-after { margin: 10px 0 0; font-size: 12px; line-height: 1.7;
+  color: var(--muted, #525d84); }
 
 /* 留言存档：仓库内纯 HTML 快照，服务停用、换域名后它仍是完整可读的一份 */
 .zb-archive { margin: 22px 0 0; padding: 18px 20px 14px;
@@ -62,6 +85,20 @@
   color: var(--muted, #525d84); }
 .zb-archive a { color: var(--accent-text, #3f5c9c); }
 
+/* 留言直接显示：空状态、实时读不到时的说明、降级为次要的外链 */
+.zb-slot { margin: 0; }
+.zb-live-note { margin: 10px 0 0; font-size: 11.5px; color: var(--muted, #525d84); }
+.zb-empty { text-align: center; padding: 26px 20px 24px; }
+.zb-empty-star { display: block; font-size: 24px; line-height: 1;
+  color: #d39ab6; filter: drop-shadow(0 0 8px rgba(211, 154, 182, .55)); }
+.zb-empty-title { margin: 10px 0 4px; font-size: 14px; font-weight: 600;
+  color: var(--ink, #39436a); }
+.zb-empty-note { margin: 0; font-size: 12px; line-height: 1.7;
+  color: var(--muted, #525d84); }
+.interactions-links { display: flex; flex-wrap: wrap; align-items: center;
+  gap: 8px; margin: 14px 0 0; font-size: 11.5px; color: var(--muted, #525d84); }
+.interactions-links a { color: var(--accent-text, #3f5c9c); }
+
 /* 星夜：只换互动区配色，不动白天 */
 :root[data-theme="night"] .interactions { border-top-color: rgba(208, 226, 255, .22); }
 :root[data-theme="night"] .interactions-btn { background: rgba(24, 34, 76, .24);
@@ -80,9 +117,26 @@
 :root[data-theme="night"] .zb-archive-count,
 :root[data-theme="night"] .zb-archive-meta time,
 :root[data-theme="night"] .zb-archive-note { color: #d4e1fc; }
+:root[data-theme="night"] .zb-composer { background: rgba(24, 34, 76, .22);
+  border-color: rgba(208, 226, 255, .22); }
+:root[data-theme="night"] .zb-composer-label,
+:root[data-theme="night"] .zb-empty-title { color: #f4f7ff; }
+:root[data-theme="night"] .zb-composer-input { color: #f4f7ff;
+  background: rgba(24, 34, 76, .32); border-color: rgba(208, 226, 255, .26); }
+:root[data-theme="night"] .zb-composer-input:focus { background: rgba(24, 34, 76, .46);
+  border-color: rgba(208, 226, 255, .48); }
+:root[data-theme="night"] .zb-composer-input::placeholder { color: #d4e1fc; opacity: .7; }
+:root[data-theme="night"] .zb-composer-tip,
+:root[data-theme="night"] .zb-composer-count,
+:root[data-theme="night"] .zb-composer-after,
+:root[data-theme="night"] .zb-live-note,
+:root[data-theme="night"] .zb-empty-note,
+:root[data-theme="night"] .interactions-links { color: #d4e1fc; }
 
 @media (max-width: 640px) {
   .interactions { margin-top: 30px; padding-top: 20px; }
   .interactions-actions { gap: 8px; }
   .zb-archive { padding: 14px 15px 12px; }
+  .zb-composer { padding: 13px 14px 12px; }
+  .zb-composer-tip { flex-basis: 100%; }
 }

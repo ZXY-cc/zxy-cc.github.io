@@ -1,8 +1,8 @@
 /* 星梦Staream · 留言归档同步（零依赖，Node 20+）
  * 用法：node .github/scripts/sync-issues.mjs
  *
- * 评论的唯一写入端是本站仓库的 GitHub Issues：访客在页面点「写留言」→ 打开预填标题的
- * 新建 Issue 页 → 登录后发布。本脚本把公开留言、回复与 GitHub 自带 👍 反应拉回来，
+ * 评论的唯一写入端是本站仓库的 GitHub Issues：访客在页面内输入框写好内容 →
+ * 打开预填好的新建 Issue 页 → 登录后发布。本脚本把公开留言、回复与 GitHub 自带 👍 反应拉回来，
  * 写成随仓库版本化的纯文本归档，并直接刷新每篇静态阅读版里的留言区块。
  *
  * 数据双份留存：GitHub Issues（可删/改/关/审核）+ 仓库 JSON 与静态 HTML（无 JS 可读）。
@@ -54,19 +54,9 @@ async function pages(base) {
   }
   return out;
 }
-/* 归档只留纯文本：十年后换渲染器、换域名、换服务，留言都还是能读的一段话 */
-function mdToText(s) {
-  return String(s == null ? '' : s)
-    .replace(/```[\s\S]*?```/g, (m) => m.replace(/```/g, ''))
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '[图片]')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
-    .replace(/^\s{0,3}>\s?/gm, '')
-    /* 只剥已知标签，不误伤正文里的 a < b > c 这类普通比较符 */
-    .replace(/<\/?(?:script|style|iframe|div|span|p|br|a|img|b|i|em|strong|code|pre|blockquote|ul|ol|li|h[1-6])\b[^>]*>/gi, '')
-    .replace(/[*_~`]/g, '')
-    .replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-}
+/* 归档只留纯文本：十年后换渲染器、换域名、换服务，留言都还是能读的一段话。
+   与浏览器实时层共用同一份转换规则，避免两端正文样式分叉 */
+const mdToText = ZBArchive.mdToText;
 function plusOne(x) {
   const n = x && x.reactions && Number(x.reactions['+1']);
   return Number.isFinite(n) ? n : 0;
@@ -153,7 +143,7 @@ for (const f of fs.readdirSync(postDir)) {
   let slug = '';
   try { slug = decodeURIComponent(f.slice(0, -5)); } catch (e) { continue; }
   const next = html.slice(0, a + BEGIN.length) + '\n' +
-    ZBArchive.render(data, slug) + '\n' + html.slice(b);
+    ZBArchive.render(data, slug, { empty: true, id: 'zb-archive' }) + '\n' + html.slice(b);
   if (next !== html) { fs.writeFileSync(p, next.replace(/\r\n/g, '\n'), 'utf8'); touched++; }
 }
 console.log('留言归档已同步：' + Object.keys(posts).length + ' 篇文章 / ' +

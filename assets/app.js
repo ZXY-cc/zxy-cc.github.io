@@ -136,9 +136,9 @@
         return '<button class="toc-item" type="button" data-toc="' + i + '">' + esc(h) + '</button>';
       }).join('') + '</div></nav>';
   }
-  /* 文章互动区：留言写入端是本站仓库的 GitHub Issues，页面只渲染仓库内归档。
-     借鉴参考站：历史留言标为「只读保留」并留 GitHub 原链接；预览态不显示留言入口，
-     测试留言不会混进正式归档。归档数据异常时由装载器给出提示与重连按钮。 */
+  /* 文章互动区：留言内容直接渲染在评论区里，页面内输入框写好内容后交给 GitHub 确认发布。
+     实时层读取公开 Issues 覆盖显示，读不到就沿用仓库归档；归档为空时给空状态，
+     而不是只剩一条外链。预览态隐藏输入框，测试留言不会混进正式归档。 */
   function issueEntry(slug) {
     var I = window.ZBInteractions;
     if (I && typeof I.newIssueUrl === 'function') return String(I.newIssueUrl(slug) || '');
@@ -151,22 +151,28 @@
   }
   function interactionsHtml(p) {
     var I = window.ZBInteractions;
+    var ZA = window.ZBArchive;
     var preview = !!(I && I.previewMode && I.previewMode());
-    var actions = preview ? '' : '<div class="interactions-actions">' +
-      '<a class="interactions-btn primary" href="' + esc(issueEntry(p.slug)) +
-      '" target="_blank" rel="noopener nofollow">写留言 ↗</a>' +
-      '<a class="interactions-btn" href="' + esc(issueList()) +
-      '" target="_blank" rel="noopener nofollow">看全部留言 ↗</a></div>';
-    var archive = (window.ZBArchive && window.ZB_COMMENTS && p)
-      ? window.ZBArchive.render(window.ZB_COMMENTS, p.slug) : '';
+    var composer = (!preview && ZA && ZA.composerHtml) ? ZA.composerHtml() : '';
+    var archive = (ZA && window.ZB_COMMENTS && p)
+      ? ZA.render(window.ZB_COMMENTS, p.slug, { empty: true, id: 'zb-archive' }) : '';
+    var links = preview ? '' : '<div class="interactions-links">' +
+      '<a href="' + esc(issueList()) + '" target="_blank" rel="noopener nofollow">留言仓库 ↗</a>' +
+      '<span aria-hidden="true">·</span>' +
+      '<a href="' + esc(issueEntry(p.slug)) + '" target="_blank" rel="noopener nofollow">在 GitHub 写 ↗</a>' +
+      '</div>';
     return '<section class="interactions reveal" aria-label="互动区">' +
       '<div class="interactions-head"><span class="interactions-star" aria-hidden="true">' +
       '<svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span><div>' +
-      '<h2>留言</h2><p>留言发在本站仓库的 GitHub Issues，用 👍 点赞、在 Issue 下回复；' +
-      '公开留言会同步存档到这里，站长可随时关闭或删除；无广告、无追踪。</p></div></div>' +
-      actions +
+      '<h2>留言</h2><p>留言直接显示在这里，写在页面上、用 GitHub 账号确认发布；' +
+      '👍 点赞、在 Issue 下回复，留言会长期存档到本站仓库；无广告、无追踪。</p></div></div>' +
+      composer +
+      '<div class="zb-slot" id="zb-slot"><div id="zb-live-host"></div>' +
+      archive +
+      '<p class="zb-live-note" id="zb-live-note" hidden>实时同步暂不可用 · 已显示站内存档</p>' +
+      '</div>' +
       '<p class="interactions-hint" id="interactions-hint" hidden></p>' +
-      archive + '</section>';
+      links + '</section>';
   }
   function renderPost(p) {
     var idx = -1;
@@ -728,6 +734,7 @@
     });
     addLineNumbers();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
+    if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
     observeReveal();
     measureScroll();
     updateScroll();
