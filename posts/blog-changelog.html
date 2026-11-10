@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-10">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.10.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.12.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -44,8 +44,25 @@ a{color:var(--brand)}
 
 /* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
-.zb-math { font-family: "Cambria Math", "Times New Roman", Georgia, serif;
+/* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
+   用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-roman.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-italic.woff2") format("woff2");
+  font-style: italic; font-weight: 400; font-display: swap;
+}
+.zb-math { font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
   line-height: 1.55; color: var(--ink-strong, #39436a); }
+/* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
+:root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
+  Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;
@@ -185,6 +202,8 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v3.8.1</span></td><td>2026-11-10</td><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span></td><td>修复友链单条删除误删整组、删文章后首页卡片残留；清空遗留的本机内容与草稿；编辑文章改为保存按钮；工具栏插入后视角不跳文末</td></tr>
 <tr><td><span class="ver">v3.9.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>创作台新增名片设置：上传或粘贴头像、修改首页名片签名；保存后本机立即生效，发布上线后对访客生效</td></tr>
 <tr><td><span class="ver">v3.10.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>首页最下方新增整站爱心点赞与首页匿名浏览数；站长与预览态不计入，每个会话只计一次</td></tr>
+<tr><td><span class="ver">v3.11.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#3f8b80;background:#3f8b8014;border-color:#3f8b8038">🧹 清理</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span></td><td>文章与首页的浏览次数归零并让读数立即刷新；设置页新增本机排除开关，站长设备与预览态一律不计入浏览</td></tr>
+<tr><td><span class="ver">v3.12.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>设置页新增 LaTeX 字体：默认与 Computer Modern 两档，初始为 Computer Modern；公式在文章、创作台预览与静态阅读版统一生效</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>✅ 已支持</td><td>留言直接显示在文章页，页面内写好内容后由 GitHub 确认发布；回复与 👍 点赞走仓库 Issues，网页后台可管理</td></tr>
 <tr><td>后端与统计</td><td>✅ 已支持</td><td>全站仍是静态文件，评论不依赖任何常驻服务或数据库；零费用、零运维，不采集访问数据</td></tr>
@@ -205,7 +224,8 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td>内容管理</td><td>✅ 已支持</td><td>文章、说说、杂谈可载回表单重编辑并保留原日期；全部条目可删除，已发布内容的改动要再次发布生效</td></tr>
 <tr><td>爱心点赞</td><td>✅ 已支持</td><td>文章、说说、杂谈统一爱心点赞，匿名免登录、每台设备计一次；总数走免费匿名计数接口并带缓存回落</td></tr>
 <tr><td>格式优化</td><td>✅ 已支持</td><td>文章、说说、杂谈表单可一键去掉多余空格与空行，代码块与公式原样保留，预览效果不变</td></tr>
-<tr><td>浏览量统计</td><td>✅ 已支持</td><td>文章页字数后显示匿名浏览数，首页卡片同时显示点赞与浏览数；站长本人与预览态不计入，每会话每篇计一次</td></tr>
+<tr><td>浏览量统计</td><td>✅ 已支持</td><td>文章页字数后显示匿名浏览数，首页卡片同时显示点赞与浏览数；站长设备、预览态与设置页手动排除的本机都不计入，每会话每篇计一次</td></tr>
+<tr><td>公式字体</td><td>✅ 已支持</td><td>设置页可选「默认」或「Computer Modern」，初始为 Computer Modern；随站点自带开源字体，文章、创作台预览与静态阅读版同步</td></tr>
 <tr><td>名片设置</td><td>✅ 已支持</td><td>创作台可更换首页名片头像与签名，保存后本机立即生效，发布上线后对访客生效</td></tr>
 <tr><td>首页互动</td><td>✅ 已支持</td><td>首页底部整站爱心点赞与首页匿名浏览数，站长与预览态不计入，每个会话只计一次</td></tr>
 </tbody></table><h2>附记</h2><h3>附一：双格式同步</h3><p>本日志的 Markdown 是唯一内容源。每次更新后生成同名 HTML 镜像，同时把内容写进站点文章《博客版本日志》与「关于」页的 HTML 预览，三处内容一致才算改完。</p><h3>附二：更新流程</h3><p>改 md → 生成 html 与前端数据 → 本地回归 → 推送上线。历史同类改动一律合并，只保留最终状态；重大架构变更另起大版本号，其余按主题分版。</p></div>
@@ -225,12 +245,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.10.0"></script>
-<script src="../assets/comment-archive.js?v=v3.10.0"></script>
-<script src="../assets/interactions-config.js?v=v3.10.0"></script>
-<script src="../assets/interactions.js?v=v3.10.0"></script>
-<script src="../assets/issues-live.js?v=v3.10.0"></script>
-<script src="../assets/likes.js?v=v3.10.0"></script>
+<script src="../assets/comments-data.js?v=v3.12.0"></script>
+<script src="../assets/comment-archive.js?v=v3.12.0"></script>
+<script src="../assets/interactions-config.js?v=v3.12.0"></script>
+<script src="../assets/interactions.js?v=v3.12.0"></script>
+<script src="../assets/issues-live.js?v=v3.12.0"></script>
+<script src="../assets/likes.js?v=v3.12.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>

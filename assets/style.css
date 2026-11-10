@@ -784,7 +784,7 @@ pre > code {
   font-family: "JetBrains Mono", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
 }
 /* 设置页的字体选项 */
-.font-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 4px; }
+.font-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 4px; }
 .font-item { display: block; font-size: 12.5px; color: var(--muted); }
 .font-item select {
   display: block; width: 100%; margin-top: 7px; font: inherit; font-size: 13.5px;
@@ -793,6 +793,11 @@ pre > code {
   transition: border-color .25s ease, box-shadow .25s ease;
 }
 .font-item select:focus { border-color: var(--accent); box-shadow: 0 0 16px var(--accent-soft); }
+/* 浏览统计：本机排除开关 */
+.no-count-item { display: inline-flex; align-items: center; gap: 10px; align-self: start;
+  font-size: 13.5px; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.no-count-item input { width: 17px; height: 17px; accent-color: var(--accent-3-text); cursor: pointer; }
+@media (max-width: 980px) { .font-group { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .font-group { grid-template-columns: 1fr; } }
 /* 文章互动区的版式统一放在 assets/interactions.css，
    SPA 与静态阅读版共用同一份，避免两处样式漂移。 */
@@ -1750,8 +1755,25 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* ZB-MATH:START */
 /* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
-.zb-math { font-family: "Cambria Math", "Times New Roman", Georgia, serif;
+/* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
+   用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-roman.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-italic.woff2") format("woff2");
+  font-style: italic; font-weight: 400; font-display: swap;
+}
+.zb-math { font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
   line-height: 1.55; color: var(--ink-strong, #39436a); }
+/* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
+:root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
+  Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;

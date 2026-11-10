@@ -16,7 +16,9 @@
   var API = 'https://abacus.jasoncameron.dev';
   var LIKE_KEY = 'zb-likes';
   var OWNER_KEY = 'zb-owner-device';
-  var CACHE_KEY = 'zb-count:v1:';
+  var NO_COUNT_KEY = 'zb-no-count';
+  /* 读数缓存升到 v2：浏览计数归零后，旧会话里的旧数字不会继续显示 */
+  var CACHE_KEY = 'zb-count:v2:';
   var VIEWED_KEY = 'zb-viewed:v1:';
   var TTL = 120000;
   var TIMEOUT = 5000;
@@ -46,10 +48,11 @@
       window.localStorage.setItem(LIKE_KEY, JSON.stringify(l));
     } catch (e) { /* 隐私模式记不住，不影响本次点亮 */ }
   }
-  /* 站长设备：优先问创作台；静态阅读版没有创作台脚本，就直接认本机标记。
-     这个判断只用于「不给自己刷浏览量」，不是安全边界。 */
+  /* 站长设备：设置页可显式排除本机，创作台解锁设备与预览态也一律不计入。
+     静态阅读版没有创作台脚本，就直接认本机标记。这个判断只用于「不给自己刷浏览量」，不是安全边界。 */
   function ownerDevice() {
     try {
+      if (window.localStorage && window.localStorage.getItem(NO_COUNT_KEY) === '1') return true;
       if (window.STUDIO && typeof window.STUDIO.isOwner === 'function' && window.STUDIO.isOwner()) return true;
       var m = JSON.parse(window.localStorage.getItem(OWNER_KEY) || 'null');
       return !!(m && m.t && Date.now() - m.t < 90 * 86400000 * 1000 &&
@@ -240,6 +243,6 @@
     liked: liked, getCount: getCount, hitCount: hitCount,
     getViews: getViews, countView: countView,
     getHomeViews: getHomeViews, countHomeView: countHomeView,
-    ownerDevice: ownerDevice
+    ownerDevice: ownerDevice, NO_COUNT_KEY: NO_COUNT_KEY
   };
 })();

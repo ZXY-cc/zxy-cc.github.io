@@ -527,8 +527,8 @@
     return '高';
   }
   /* ---------- 设置：字体 ----------
-     三档偏好（中文 / 英文 / 代码）存本机，通过 data-font-* 属性即时生效；
-     代码字体初始默认 JetBrains Maple Mono。 */
+     四档偏好（中文 / 英文 / 代码 / LaTeX）存本机，通过 data-font-* 属性即时生效；
+     代码字体初始默认 JetBrains Maple Mono，公式字体初始默认 Computer Modern。 */
   var FONT_EN_OPTS = [
     { id: 'default', name: '默认', label: '英文字体' },
     { id: 'consolas', name: 'Consolas', label: '英文字体' },
@@ -541,6 +541,10 @@
     { id: 'maple', name: 'JetBrains Maple Mono', label: '代码字体' }
   ];
   var FONT_CN_OPTS = [{ id: 'default', name: '默认', label: '中文字体' }];
+  var FONT_TEX_OPTS = [
+    { id: 'default', name: '默认', label: 'LaTeX 字体' },
+    { id: 'cm', name: 'Computer Modern', label: 'LaTeX 字体' }
+  ];
   /* 所有字体选项列表统一排序：「默认」固定在最前，其余按名称字典序。
      以后新增选项只要塞进数组就会自动落到正确位置。 */
   function sortFontOpts(list) {
@@ -550,10 +554,13 @@
     return head.concat(rest);
   }
   function fontOpts(kind) {
-    return sortFontOpts(kind === 'cn' ? FONT_CN_OPTS : kind === 'code' ? FONT_CODE_OPTS : FONT_EN_OPTS);
+    var list = kind === 'cn' ? FONT_CN_OPTS : kind === 'code' ? FONT_CODE_OPTS :
+      kind === 'tex' ? FONT_TEX_OPTS : FONT_EN_OPTS;
+    return sortFontOpts(list);
   }
   function readFont(kind) {
-    var v = null, def = kind === 'code' ? 'maple' : kind === 'en' ? 'jbmono' : 'default';
+    var v = null, def = kind === 'code' ? 'maple' : kind === 'en' ? 'jbmono' :
+      kind === 'tex' ? 'cm' : 'default';
     try { v = window.localStorage ? window.localStorage.getItem('zb-font-' + kind) : null; } catch (e) {}
     var opts = fontOpts(kind);
     for (var i = 0; i < opts.length; i++) if (opts[i].id === v) return v;
@@ -568,6 +575,7 @@
       root.dataset.fontEn = readFont('en');
       root.dataset.fontCn = readFont('cn');
       root.dataset.fontCode = readFont('code');
+      root.dataset.fontTex = readFont('tex');
     }
   }
   function fontSelect(kind, opts, cur) {
@@ -577,10 +585,22 @@
           esc(o.name) + '</option>';
       }).join('') + '</select>';
   }
+  /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
+  function noCountOn() {
+    try { return window.localStorage && window.localStorage.getItem('zb-no-count') === '1'; }
+    catch (e) { return false; }
+  }
   document.addEventListener('change', function (e) {
     var t = e.target;
     var k = t && t.getAttribute ? t.getAttribute('data-font-sel') : null;
-    if (k) { saveFont(k, t.value); applyFonts(); }
+    if (k) { saveFont(k, t.value); applyFonts(); return; }
+    if (t && t.getAttribute && t.getAttribute('data-no-count') !== null) {
+      try { window.localStorage.setItem('zb-no-count', t.checked ? '1' : '0'); } catch (err) {}
+      var note = document.getElementById('no-count-state');
+      if (note) note.textContent = t.checked ?
+        '已开启：这台设备浏览页面不会再增加浏览数。' :
+        '已关闭：这台设备按普通访客计入浏览数。';
+    }
   });
   function qualitySpecHtml() {
     var head = '<thead><tr><th scope="col">效果</th><th scope="col">极高</th>' +
@@ -603,7 +623,8 @@
     var fontNote = '代码字体选 JetBrains Maple Mono 时，代码里的中文也用它' +
       '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。' +
       '英文字体里的 JetBrains Mono 只有英文字形，选它时页面中文仍按「中文字体」显示；' +
-      '英文字体初始默认为 JetBrains Mono；选项按字典序排列。';
+      '英文字体初始默认为 JetBrains Mono；选项按字典序排列。' +
+      'LaTeX 字体只作用于公式：默认 Computer Modern（随站点自带的开源字体），选「默认」则改用系统数学字体。';
     return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
       '<div class="settings-block"><div class="settings-info">' +
@@ -614,13 +635,23 @@
       '</b> · 首次访问默认高画质；「极高」在其上额外开启实时毛玻璃并加密流星与花瓣，中 / 低 依次减少装饰与实时渲染。</p></section>' +
       '<section class="settings-card glass reveal" aria-label="字体设置">' +
       '<div class="settings-block"><div class="settings-info">' +
-      '<h2>字体</h2><p>设置网页的中英文字体与代码字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
+      '<h2>字体</h2><p>设置网页的中英文字体、代码字体与 LaTeX 公式字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
       '<div class="font-group">' +
       '<label class="font-item">中文字体' + fontSelect('cn', FONT_CN_OPTS, readFont('cn')) + '</label>' +
       '<label class="font-item">英文字体' + fontSelect('en', FONT_EN_OPTS, readFont('en')) + '</label>' +
       '<label class="font-item">代码字体' + fontSelect('code', FONT_CODE_OPTS, readFont('code')) + '</label>' +
+      '<label class="font-item">LaTeX 字体' + fontSelect('tex', FONT_TEX_OPTS, readFont('tex')) + '</label>' +
       '</div>' +
-      '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>';
+      '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>' +
+      '<section class="settings-card glass reveal" aria-label="浏览统计">' +
+      '<div class="settings-block"><div class="settings-info">' +
+      '<h2>浏览统计</h2><p>页面只记录匿名访客的浏览次数，不采集身份信息。解锁过创作台的设备与预览态自动不计入；其它设备可在这里手动排除自己。</p></div>' +
+      '<label class="no-count-item"><input type="checkbox" data-no-count' +
+      (noCountOn() ? ' checked' : '') + '><span>本机不计入浏览量</span></label></div>' +
+      '<p class="settings-foot" id="no-count-state">' +
+      esc(noCountOn() ? '已开启：这台设备浏览页面不会再增加浏览数。' :
+        '未开启：解锁过创作台的设备仍会自动排除，其它设备按普通访客计入。') +
+      '</p></section>';
   }
 
   /* ---------- 全局搜索 ---------- */

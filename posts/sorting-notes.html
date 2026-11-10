@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-05">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.10.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.12.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -44,8 +44,25 @@ a{color:var(--brand)}
 
 /* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
-.zb-math { font-family: "Cambria Math", "Times New Roman", Georgia, serif;
+/* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
+   用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-roman.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-italic.woff2") format("woff2");
+  font-style: italic; font-weight: 400; font-display: swap;
+}
+.zb-math { font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
   line-height: 1.55; color: var(--ink-strong, #39436a); }
+/* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
+:root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
+  Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;
@@ -179,12 +196,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/sorting-notes">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.10.0"></script>
-<script src="../assets/comment-archive.js?v=v3.10.0"></script>
-<script src="../assets/interactions-config.js?v=v3.10.0"></script>
-<script src="../assets/interactions.js?v=v3.10.0"></script>
-<script src="../assets/issues-live.js?v=v3.10.0"></script>
-<script src="../assets/likes.js?v=v3.10.0"></script>
+<script src="../assets/comments-data.js?v=v3.12.0"></script>
+<script src="../assets/comment-archive.js?v=v3.12.0"></script>
+<script src="../assets/interactions-config.js?v=v3.12.0"></script>
+<script src="../assets/interactions.js?v=v3.12.0"></script>
+<script src="../assets/issues-live.js?v=v3.12.0"></script>
+<script src="../assets/likes.js?v=v3.12.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("sorting-notes");
 window.ZBLive && window.ZBLive.mount("sorting-notes");
 window.ZBLikes && window.ZBLikes.mount();</script>
