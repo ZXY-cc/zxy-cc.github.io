@@ -12,7 +12,9 @@
 (function () {
   'use strict';
   var NS_LIKE = 'zxy-blog-heart';
-  var NS_VIEW = 'zxy-blog-views';
+  /* 浏览计数归零：匿名键无法在服务端重置（管理接口要 admin key），
+     因此换一段全新命名空间，所有文章与首页的浏览数都从 0 重新累计。 */
+  var NS_VIEW = 'zxy-blog-views2';
   var API = 'https://abacus.jasoncameron.dev';
   var LIKE_KEY = 'zb-likes';
   var OWNER_KEY = 'zb-owner-device';
