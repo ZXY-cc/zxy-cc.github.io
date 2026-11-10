@@ -18,6 +18,8 @@
   var DEVICE_KEY = 'zb-owner-device';
   var LOCAL_KEY = 'zb-studio-local';
   var DEAD_KEY = 'zb-studio-dead';
+  var SITE_KEY = 'zb-studio-site';
+  var RESET_KEY = 'zb-studio-reset';
   var PAT_KEY = 'zb-gh-pat';
   var REPO = 'ZXY-cc/zxy-cc.github.io';
   var FILE = 'assets/site-data.js';
@@ -97,6 +99,50 @@
     return b;
   }
   function keyOf(x, k) { return k === 'posts' ? (x.slug || '') : (x.id || ''); }
+  /* 老数据文件里部分条目（尤其友链）没有 id：keyOf 会全返回空串，
+     删除一条就会把同组全部过滤掉。这里按内容生成一个稳定的短 id，
+     保证每条可单独编辑 / 删除；新发布的数据文件会带着 id 一起写回。 */
+  function stableId(kind, x, i) {
+    var src = [x.url, x.name, x.title, x.text, x.desc].filter(Boolean).join('|') || String(i);
+    var h = 2166136261;
+    for (var j = 0; j < src.length; j++) {
+      h ^= src.charCodeAt(j);
+      h = (h * 16777619) >>> 0;
+    }
+    return (kind === 'friends' ? 'fr-' : kind.slice(0, 2) + '-') + h.toString(36);
+  }
+  function ensureIds() {
+    KINDS.forEach(function (k) {
+      (DATA[k] || []).forEach(function (x, i) {
+        if (k === 'posts') { if (!x.slug) x.slug = 'p-' + stableId(k, x, i).slice(3); return; }
+        if (!x.id) x.id = stableId(k, x, i);
+      });
+    });
+  }
+  /* 一次性清理：站点数据文件里带 studioReset 标记，站长设备第一次读到新标记时
+     清掉上一次遗留的本机内容与草稿（本机 localStorage 无法从仓库直接删）。
+     墓碑 DEAD_KEY 保留，已删除的线上内容不会因此复活。 */
+  function applyContentReset() {
+    var marker = String(DATA.studioReset || '');
+    if (!marker || ls(RESET_KEY) === marker) return;
+    delLs(LOCAL_KEY);
+    delLs(DRAFT_KEY);
+    setLs(RESET_KEY, marker);
+  }
+  /* 名片设置（头像 / 签名）也存本机，刷新后覆盖到共享的 DATA.site 上，
+     发布上线时随 dataFile() 写进站点数据文件，对全部访客生效。 */
+  function applySiteLocal() {
+    if (!DATA.site || typeof DATA.site !== 'object') DATA.site = {};
+    var s = null;
+    try { s = JSON.parse(ls(SITE_KEY) || 'null'); } catch (e) { s = null; }
+    if (!s || typeof s !== 'object') return;
+    if (s.avatar) DATA.site.avatar = String(s.avatar);
+    if (typeof s.bio === 'string') DATA.site.bio = s.bio;
+  }
+  ensureIds();
+  /* 线上数据文件里原本的头像与签名，供「恢复」用（本机覆盖层生效之前先存一份） */
+  var RAW_SITE = JSON.parse(JSON.stringify(DATA.site || {}));
+  applySiteLocal();
   /* 内置内容快照：每次合并都先回到线上版本，再叠加本机条目，
      这样删除本机条目不会把 site-data.js 里的原有内容一起抹掉。 */
   var BUILTIN = {};
@@ -137,6 +183,10 @@
       seen[id] = true;
       return true;
     }) };
+    /* 通知前台重算文章集合：删掉的文章不用等刷新就从首页消失 */
+    try {
+      document.dispatchEvent(new CustomEvent('zb:studio-data'));
+    } catch (e) {}
   }
   function upsert(kind, item) {
     var local = readLocal();
@@ -403,25 +453,28 @@
     var ta = document.getElementById('f-body');
     if (!ta) return;
     var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
-    /* 标题类工具插到当前行的行首，光标停在标记之后 */
+    /* 先记下点击前的视角：改 value / 重新聚焦 / 移动光标都会让浏览器把长文滚到末尾 */
+    var top = ta.scrollTop || 0;
+    var pageY = window.pageYOffset ||
+      (document.documentElement && document.documentElement.scrollTop) || 0;
+    var caret;
     if (atLineStart) {
+      /* 标题类工具插到当前行的行首，光标停在标记之后 */
       var ls = v.lastIndexOf('\n', s - 1) + 1;
       ta.value = v.slice(0, ls) + before + v.slice(ls);
-      ta.focus();
-      if (ta.setSelectionRange) {
-        var c = s + before.length;
-        ta.setSelectionRange(c, c);
-      }
-      syncFromForm(); refreshPreview(); scheduleSave();
-      return;
+      caret = s + before.length;
+    } else {
+      var sel = v.slice(s, e) || placeholder || '';
+      ta.value = v.slice(0, s) + before + sel + (after || '') + v.slice(e);
+      caret = s + before.length + sel.length;
     }
-    var sel = v.slice(s, e) || placeholder || '';
-    ta.value = v.slice(0, s) + before + sel + (after || '') + v.slice(e);
-    ta.focus();
+    try { ta.focus({ preventScroll: true }); }
+    catch (err) { try { ta.focus(); } catch (e2) {} }
     if (ta.setSelectionRange) {
-      var caret = s + before.length + sel.length;
-      ta.setSelectionRange(caret, caret);
+      try { ta.setSelectionRange(caret, caret); } catch (err2) {}
     }
+    try { ta.scrollTop = top; } catch (err3) {}
+    try { if (window.scrollTo) window.scrollTo(0, pageY); } catch (err4) {}
     syncFromForm(); refreshPreview(); scheduleSave();
   }
   /* 格式优化：把当前表单的正文交给 ZBMD.tidy 去多余空格与空行。
@@ -496,7 +549,8 @@
      带 ?published 强制整页导航，并给站点数据文件换一个会话内版本号绕开缓存。 */
   function goHome(confirmed) {
     delLs(DRAFT_KEY);
-    if (confirmed) delLs(LOCAL_KEY);
+    /* 名片设置已随站点数据文件发布，本机覆盖层可以撤掉，避免以后另一台设备改了不生效 */
+    if (confirmed) { delLs(LOCAL_KEY); delLs(SITE_KEY); }
     state.draft = null;
     state.editing = null;
     state.files = [];
@@ -526,7 +580,8 @@
   function tabHtml() {
     var tabs = [
       ['post', '写文章'], ['photo', '发图片'], ['moment', '发说说'], ['chatter', '发杂谈'],
-      ['project', '项目'], ['friend', '友链'], ['manage', '内容管理'], ['publish', '发布上线']
+      ['project', '项目'], ['friend', '友链'], ['site', '名片设置'],
+      ['manage', '内容管理'], ['publish', '发布上线']
     ];
     return '<div class="studio-tabs">' + tabs.map(function (t) {
       return '<button class="stab' + (state.tab === t[0] ? ' on' : '') + '" type="button" data-tab="' +
@@ -548,9 +603,11 @@
      右侧窄栏放封面 / 标签 / 分类 / 摘要 / 日期与发布动作。 */
   function formPost() {
     var d = state.draft || readDraft();
+    var editing = !!(state.editing && state.editing.kind === 'posts');
     var modes = [['write', '写作'], ['split', '并排'], ['preview', '预览']];
     return '<div class="studio-desk" id="studio-desk">' +
       '<section class="desk-editor glass">' +
+        editingBanner('文章', 'posts') +
         '<div class="desk-title-row">' +
           '<input id="f-title" class="desk-title" type="text" placeholder="文章大标题…" ' +
             'value="' + esc(d.title) + '" aria-label="文章标题">' +
@@ -611,7 +668,8 @@
           '<div class="meta-status">最近落盘：<b id="meta-saved">' + esc(d.savedAt || '尚未落盘') + '</b></div>' +
           '<div class="meta-actions">' +
             '<button class="soft-btn" type="button" data-act="draft-save">存为草稿</button>' +
-            '<button class="primary-btn" type="button" data-act="publish-post">正式发布</button>' +
+            '<button class="primary-btn" type="button" data-act="publish-post">' +
+            (editing ? '保存修改' : '正式发布') + '</button>' +
           '</div>' +
           '<p class="meta-hint">发布先写入本机内容；要让访客看到，请到「发布上线」导出或一键提交。</p>' +
         '</div>' +
@@ -635,14 +693,15 @@
       '<div id="file-preview" class="file-preview"></div>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-photo">保存到本机</button></div></div>';
   }
-  /* 编辑中的条目在表单顶部给一条提示与退出按钮，保存按钮同步改字 */
-  function editingBanner(kindLabel) {
-    if (!state.editing) return '';
+  /* 编辑中的条目在表单顶部给一条提示与退出按钮，保存按钮同步改字；
+     只认当前表单对应的类型，避免编辑文章时切到说说页出现错误提示 */
+  function editingBanner(kindLabel, kind) {
+    if (!state.editing || (kind && state.editing.kind !== kind)) return '';
     return '<div class="edit-banner"><b>正在编辑这条' + kindLabel + '</b>' +
       '<button class="mini-btn" type="button" data-act="cancel-edit">退出编辑</button></div>';
   }
   function formMoment() {
-    return '<div class="studio-form glass"><h2>发一条说说</h2>' + editingBanner('说说') +
+    return '<div class="studio-form glass"><h2>发一条说说</h2>' + editingBanner('说说', 'moments') +
       area('这一刻想说什么', 'f-moment-text', '…', 5) +
       '<div class="f-row">' + field('心情', 'f-mood', '✨ 满足') + field('地点', 'f-place', '书桌前') + '</div>' +
       '<label class="file-zone" for="f-moment-img"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择配图 · 可选<input class="f-input f-file" id="f-moment-img" type="file" accept="image/*"></label>' +
@@ -652,7 +711,7 @@
       (state.editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formChatter() {
-    return '<div class="studio-form glass"><h2>写一则杂谈</h2>' + editingBanner('杂谈') +
+    return '<div class="studio-form glass"><h2>写一则杂谈</h2>' + editingBanner('杂谈', 'chatter') +
       field('标题', 'f-ch-title', '比文章短一点的标题') +
       field('摘要', 'f-ch-summary', '一句话') +
       '<div class="f-row">' + field('标签（逗号分隔）', 'f-ch-tags', '随笔, 建站') + field('心情', 'f-ch-mood', '🌸 平静') + '</div>' +
@@ -673,6 +732,28 @@
       field('名称', 'f-fr-name', '站点名') + area('描述', 'f-fr-desc', '一句话介绍', 3) +
       '<div class="f-row">' + field('地址', 'f-fr-url', 'https://…') + field('首字母标记', 'f-fr-initial', 'GH') + '</div>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-friend">保存到本机</button></div></div>';
+  }
+  /* 名片设置：改的是首页名片的头像与名字下面的签名。
+     头像可上传（压到 320px 后转 data URL）或直接填图片地址；
+     保存后立刻覆盖共享的 DATA.site，首页与导航头像即时换新。 */
+  function formSite() {
+    var s = DATA.site || {};
+    return '<div class="studio-form glass"><h2>名片设置</h2>' +
+      '<p class="f-hint">这里改的是首页上方名片的头像，以及名字下面的那行签名。' +
+      '先保存在这台设备，到「发布上线」提交后才会对所有访客生效。</p>' +
+      '<div class="site-avatar-row">' +
+        '<div class="site-avatar-box">' +
+          '<img id="site-avatar-preview" src="' + esc(s.avatar || 'assets/avatar.jpg') +
+          '" alt="当前名片头像"></div>' +
+        '<label class="file-zone" for="f-site-avatar-file">' +
+          '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>' +
+          '点击更换头像 · 自动压到 320px' +
+          '<input class="f-input f-file" id="f-site-avatar-file" type="file" accept="image/*"></label>' +
+      '</div>' +
+      field('头像地址（也可以直接粘贴图片 URL）', 'f-site-avatar', 'assets/avatar.jpg') +
+      area('签名（首页名片名字下面的文字）', 'f-site-bio', '写一句想放在这里的话…', 3) +
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-site">保存名片</button>' +
+      '<button class="soft-btn" type="button" data-act="site-reset">恢复当前线上头像与签名</button></div></div>';
   }
   /* 内容管理：列出全部内容（线上数据 + 本机 + posts.js 基础文章），
      文章 / 说说 / 杂谈可载回表单重编辑，全部条目可删除；
@@ -723,8 +804,8 @@
       '<p class="f-hint">文章、说说、杂谈可以载回对应表单重新编辑；全部条目都能删除。' +
       '改动先保存在本机——要让访客看到新内容或删除生效，请到「发布上线」提交；已发布内容删除后可在仓库提交历史找回。</p>' +
       '<div class="manage-list">' + (rows.length ? rows.join('') : '<p class="page-note">还没有任何内容。</p>') + '</div>' +
-      '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清理本机副本，避免浏览器存储被图片占满。</p>' +
-      '<div class="f-actions"><button class="soft-btn" type="button" data-act="clear-local">清理本机副本</button></div></div>';
+      '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清空本机副本与草稿，避免浏览器存储被图片占满。</p>' +
+      '<div class="f-actions"><button class="soft-btn" type="button" data-act="clear-local">清空本机内容与草稿</button></div></div>';
   }
   function formPublish() {
     return '<div class="studio-form glass"><h2>发布上线</h2>' +
@@ -745,7 +826,8 @@
   function formHtml() {
     return {
       post: formPost, photo: formPhoto, moment: formMoment, chatter: formChatter,
-      project: formProject, friend: formFriend, manage: formManage, publish: formPublish
+      project: formProject, friend: formFriend, site: formSite,
+      manage: formManage, publish: formPublish
     }[state.tab]();
   }
   function studioHtml() {
@@ -788,14 +870,26 @@
     if (!d.markdown) return say('正文还是空的。', 'warn');
     writeDraft(true);
     if (asDraft) return say('草稿已保存到本机，下次打开创作台会继续这一篇。');
+    var editing = (state.editing && state.editing.kind === 'posts') ? state.editing : null;
     var item = {
-      slug: d.slug || uid('p'), title: d.title, date: d.date || today(),
+      /* 重编辑保留原来的 slug / 日期，避免生成一篇新文章 */
+      slug: editing ? editing.id : (d.slug || uid('p')), title: d.title,
+      date: editing ? (findItem('posts', editing.id) || {}).date || d.date : (d.date || today()),
       tags: d.tags.slice(), category: d.category || '', cover: d.cover || '',
       summary: d.summary || (window.ZBMD ? window.ZBMD.plain(d.markdown).slice(0, 90) : '') || d.title,
       markdown: d.markdown, body: mdRender(d.markdown),
       format: 'markdown', status: 'published'
     };
     if (!upsert('posts', item)) return say('本机存储空间不足，请先到「发布上线」导出并清理。', 'warn');
+    if (editing) {
+      /* 编辑已有文章：按钮是「保存修改」，存完留在写作台，不跳首页也不清空本机内容 */
+      state.editing = null;
+      state.draft = blankDraft();
+      delLs(DRAFT_KEY);
+      render(document.getElementById('app'));
+      say('文章已保存修改；要让访客看到，请到「发布上线」提交。');
+      return;
+    }
     d.slug = item.slug; d.status = 'published';
     writeDraft(true);
     /* 正式发布即离开写作台：草稿清空、整页回首页（本机内容保留，访客可见需再发布上线） */
@@ -854,6 +948,34 @@
     item.id = uid('fr');
     if (!upsert('friends', item)) return say('保存失败。', 'warn');
     reloadSoon('友链已保存');
+  }
+  /* 前台与创作台共享同一个 DATA.site 对象，改完通知页面把导航头像一起换掉 */
+  function notifySite() {
+    try { document.dispatchEvent(new CustomEvent('zb:site-change')); } catch (e) {}
+  }
+  function saveSite() {
+    var avatar = val('f-site-avatar') || RAW_SITE.avatar || 'assets/avatar.jpg';
+    var bioEl = document.getElementById('f-site-bio');
+    var bio = bioEl ? String(bioEl.value || '') : '';
+    if (!DATA.site || typeof DATA.site !== 'object') DATA.site = {};
+    DATA.site.avatar = avatar;
+    DATA.site.bio = bio;
+    if (!setLs(SITE_KEY, JSON.stringify({ avatar: avatar, bio: bio }))) {
+      return say('本机存储空间不足，换一张小一点的头像再试。', 'warn');
+    }
+    notifySite();
+    say('名片已保存：首页头像与签名立即更新；到「发布上线」后对所有访客生效。');
+  }
+  function resetSite() {
+    delLs(SITE_KEY);
+    DATA.site.avatar = RAW_SITE.avatar || 'assets/avatar.jpg';
+    DATA.site.bio = RAW_SITE.bio || '';
+    notifySite();
+    setText('f-site-avatar', DATA.site.avatar);
+    setText('f-site-bio', DATA.site.bio);
+    var img = document.getElementById('site-avatar-preview');
+    if (img) img.src = DATA.site.avatar;
+    say('已恢复站点数据文件里的头像与签名。');
   }
   function savePhoto() {
     if (!state.files.length) return say('还没有选图片。', 'warn');
@@ -997,12 +1119,12 @@
         d.summary = target.summary || ''; d.category = target.category || '随笔';
         d.date = target.date || today(); d.status = target.status || 'published';
         state.draft = d;
-        state.editing = null;
+        state.editing = { kind: 'posts', id: target.slug };
         state.tab = 'post';
         /* 先重绘出写作表单，再落盘，避免旧页面的空表单把刚载入的标题覆盖掉 */
         render(document.getElementById('app'));
         writeDraft(true);
-        say('已载入这篇文章，可以继续编辑 Markdown 与公式。');
+        say('已载入这篇文章，改完点「保存修改」。');
       } else if (ep[0] === 'moments') {
         state.editing = { kind: 'moments', id: target.id };
         state.momentImg = '';
@@ -1058,8 +1180,10 @@
     var a = act.getAttribute('data-act');
     if (a === 'lock') { revoke(); syncNav(); render(document.getElementById('app')); return; }
     if (a === 'cancel-edit') {
+      var wasPost = !!(state.editing && state.editing.kind === 'posts');
       state.editing = null;
       state.momentImg = '';
+      if (wasPost) { state.draft = blankDraft(); delLs(DRAFT_KEY); }
       render(document.getElementById('app'));
       say('已退出编辑，表单已清空。');
       return;
@@ -1077,13 +1201,19 @@
     if (a === 'save-chatter') return saveChatter();
     if (a === 'save-project') return saveProject();
     if (a === 'save-friend') return saveFriend();
+    if (a === 'save-site') return saveSite();
+    if (a === 'site-reset') return resetSite();
     if (a === 'preview-post') { setMode('preview'); return; }
     if (a === 'export-js') return download('site-data.js', dataFile());
     if (a === 'export-json') return download('studio-backup.json', JSON.stringify(DATA, null, 2));
     if (a === 'publish') return publish();
     if (a === 'clear-local') {
-      delLs(LOCAL_KEY);
-      say('本机副本已清理；线上已发布的内容不受影响。刷新后以线上文件为准。');
+      if (!window.confirm('清空保存在这台设备上的全部本机内容与草稿？已发布上线的内容不受影响。')) return;
+      delLs(LOCAL_KEY); delLs(DRAFT_KEY);
+      state.draft = blankDraft(); state.editing = null; state.momentImg = '';
+      mergeLocal();
+      render(document.getElementById('app'));
+      say('本机内容与草稿已清空；已发布上线的内容不受影响。');
       return;
     }
   }
@@ -1117,6 +1247,14 @@
         renderCover(); writeDraft(true);
       }, 900, .72);
     }
+    if (t.id === 'f-site-avatar-file' && t.files && t.files.length) {
+      compress(t.files[0], function (src) {
+        if (!src) return say('图片读取失败。', 'warn');
+        setText('f-site-avatar', src);
+        var img = document.getElementById('site-avatar-preview');
+        if (img) img.src = src;
+      }, 320, .82);
+    }
     if (t.id === 'f-album') {
       var nb = document.getElementById('new-album-box');
       if (nb) nb.style.display = t.value === '__new__' ? '' : 'none';
@@ -1132,6 +1270,9 @@
       scheduleSave();
     } else if (t.id === 'f-cover') {
       renderCover(); scheduleSave();
+    } else if (t.id === 'f-site-avatar') {
+      var img = document.getElementById('site-avatar-preview');
+      if (img) img.src = t.value;
     } else if (t.id === 'f-category' || t.id === 'f-date') {
       scheduleSave();
     }
@@ -1174,6 +1315,10 @@
     var pat = ls(PAT_KEY);
     var f = document.getElementById('f-pat');
     if (pat && f) f.value = pat;
+    if (isOwner() && state.tab === 'site') {
+      setText('f-site-avatar', (DATA.site || {}).avatar || 'assets/avatar.jpg');
+      setText('f-site-bio', (DATA.site || {}).bio || '');
+    }
     if (isDesk) {
       renderTagPills(); renderTagHistory(); renderCover();
       syncFromForm(); setMode(state.mode); paintSaveLabel();
@@ -1181,6 +1326,7 @@
   }
 
   gateBoot();
+  applyContentReset();
   mergeLocal();
 
   window.STUDIO = {

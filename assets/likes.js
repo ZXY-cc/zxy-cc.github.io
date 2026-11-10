@@ -4,8 +4,9 @@
  * /hit/<ns>/<key> 点一次 +1，无需登录、CORS 全开、限速 30 次/10 秒/IP。
  * 点赞：本机 localStorage（zb-likes）记「已赞」，一台设备只计一次。
  * 浏览：只数匿名访客——带创作台设备标记（站长本人）与 ?preview=1 都不计数；
- *       每个浏览器会话、每篇文章只 +1 次，避免刷新刷屏；countView 由
- *       文章页的 [data-view-post] 触发，首页卡片只读不写。
+ *       每个浏览器会话、每篇文章（以及整站首页）只 +1 次，避免刷新刷屏；
+ *       countView 由文章页的 [data-view-post] 触发，整站首页由
+ *       [data-view-home] 触发，首页文章卡片的 [data-view] 只读不写。
  * 读数带 sessionStorage 缓存（120 秒）；接口不可用时回落为数据基础数
  * （字段 likes）+ 本机状态，爱心与浏览显示都不因接口掉线而失效。 */
 (function () {
@@ -108,21 +109,32 @@
   }
   function getCount(kind, id) { return readCount(NS_LIKE, kind, id); }
   function hitCount(kind, id) { return bumpCount(NS_LIKE, kind, id); }
-  function getViews(slug) { return readCount(NS_VIEW, 'post', slug); }
+  /* 浏览量键位：文章 post-<slug>，整站首页 site-home。
+     文章的会话标记沿用旧格式，首页单独用一段新标记，互不干扰。 */
+  var VIEW_KIND_POST = 'post';
+  var HOME_KIND = 'site', HOME_ID = 'home';
+  function viewMark(kind, id) {
+    return VIEWED_KEY + (kind === VIEW_KIND_POST ? id : kind + '-' + id);
+  }
+  function getViewCount(kind, id) { return readCount(NS_VIEW, kind, id); }
   /* 一次匿名浏览：站长 / 预览态 / 本会话已计过 → 只读取数不再 +1 */
-  function countView(slug) {
-    if (!slug) return Promise.resolve(null);
-    var mark = VIEWED_KEY + slug;
-    if (ownerDevice() || previewMode()) return getViews(slug);
+  function countViewOnce(kind, id) {
+    if (!id) return Promise.resolve(null);
+    var mark = viewMark(kind, id);
+    if (ownerDevice() || previewMode()) return getViewCount(kind, id);
     try {
       var s = window.sessionStorage;
       if (s) {
-        if (s.getItem(mark)) return getViews(slug);
+        if (s.getItem(mark)) return getViewCount(kind, id);
         s.setItem(mark, '1');
       }
     } catch (e) { /* 记不住就按每次打开计一次 */ }
-    return bumpCount(NS_VIEW, 'post', slug).catch(function () { return null; });
+    return bumpCount(NS_VIEW, kind, id).catch(function () { return null; });
   }
+  function getViews(slug) { return getViewCount(VIEW_KIND_POST, slug); }
+  function countView(slug) { return countViewOnce(VIEW_KIND_POST, slug); }
+  function getHomeViews() { return getViewCount(HOME_KIND, HOME_ID); }
+  function countHomeView() { return countViewOnce(HOME_KIND, HOME_ID); }
 
   /* 按钮结构：与说说页原有的爱心完全同款（灰 → 粉，点击放大） */
   function html(kind, id, base, extra) {
@@ -204,6 +216,16 @@
         slots[s].forEach(function (el) { el.textContent = String(n); });
       }).catch(function () { /* 保留占位 0 */ });
     });
+    /* 首页底部：整站首页的匿名浏览数，与文章同样每会话只 +1 */
+    var homeSlots = root.querySelectorAll('[data-view-home]');
+    if (homeSlots && homeSlots.length) {
+      var hp;
+      try { hp = countHomeView(); } catch (e) { hp = Promise.resolve(null); }
+      Promise.resolve(hp).then(function (n) {
+        if (typeof n !== 'number') return;
+        Array.prototype.forEach.call(homeSlots, function (el) { el.textContent = String(n); });
+      }).catch(function () { /* 保留占位 0 */ });
+    }
   }
   function mount() {
     var root = document.getElementById('app') || document.body;
@@ -216,6 +238,8 @@
   window.ZBLikes = {
     html: html, mount: mount, onLike: onLike,
     liked: liked, getCount: getCount, hitCount: hitCount,
-    getViews: getViews, countView: countView, ownerDevice: ownerDevice
+    getViews: getViews, countView: countView,
+    getHomeViews: getHomeViews, countHomeView: countHomeView,
+    ownerDevice: ownerDevice
   };
 })();

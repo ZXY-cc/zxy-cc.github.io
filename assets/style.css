@@ -625,6 +625,21 @@ main { min-height: 320px; }
 .post-stat .stat-heart { stroke-width: 6; }
 .post-stat .stat-eye { stroke-width: 1.8; }
 .article-views { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* 首页最下方：整站爱心点赞与首页匿名浏览数 */
+.home-foot { margin: 34px 0 8px; }
+.home-foot-inner { display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px 22px; padding: 18px 24px;
+  border-radius: var(--radius-lg); border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.home-foot-text { display: flex; flex-direction: column; gap: 3px; }
+.home-foot-text b { font-size: 15px; font-weight: 650; color: var(--ink-strong); }
+.home-foot-text span, .home-views { font-size: 12.5px; color: var(--muted); }
+.home-foot-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.home-views { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.home-views svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.like-home { font-size: 13px; padding: 6px 12px; border: 1px solid var(--glass-line);
+  background: var(--glass-sheen), var(--glass-strong); }
 
 .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
 .tag {
@@ -845,6 +860,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .post-summary,
 :root[data-theme="night"] .post-stat,
 :root[data-theme="night"] .article-views,
+:root[data-theme="night"] .home-foot-text span,
+:root[data-theme="night"] .home-views,
 :root[data-theme="night"] .toc-title,
 :root[data-theme="night"] .tag-count,
 :root[data-theme="night"] .site-foot,
@@ -1262,6 +1279,13 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .studio-preview h3 { font-size: 13px; color: var(--muted); }
 .file-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--muted); }
 .file-preview img { width: 92px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--glass-line); }
+/* 名片设置：头像预览 + 整栏上传区 */
+.site-avatar-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 16px; }
+.site-avatar-row .file-zone { flex: 1 1 240px; }
+.site-avatar-box { flex: 0 0 auto; padding: 3px; border-radius: 20px;
+  background: linear-gradient(140deg, #93b6f0, #b79ae2 52%, #f0aecf); }
+.site-avatar-box img { display: block; width: 76px; height: 76px; border-radius: 17px;
+  object-fit: cover; border: 2px solid rgba(255,255,255,.78); }
 .manage-list { display: grid; gap: 8px; margin: 16px 0; }
 .manage-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 12px;
   border: 1px solid var(--glass-line); font-size: 13px; }

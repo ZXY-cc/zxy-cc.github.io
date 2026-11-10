@@ -58,28 +58,40 @@
 
   /* posts.js 是只读的原始文章；site-data.js 的 posts 是站长发布的新文章；
      创作台未发布的本机内容由 studio.js 合并进同一个数组，这里统一去重排序。 */
-  var POSTS = (window.POSTS || []).slice();
-  (DATA.posts || []).forEach(function (p) {
-    for (var i = 0; i < POSTS.length; i++) {
-      if (POSTS[i].slug === p.slug) { POSTS[i] = p; return; }
+  function buildPosts() {
+    var out = (window.POSTS || []).slice();
+    (DATA.posts || []).forEach(function (p) {
+      for (var i = 0; i < out.length; i++) {
+        if (out[i].slug === p.slug) { out[i] = p; return; }
+      }
+      out.push(p);
+    });
+    /* 版本日志文章由构建脚本从 博客版本日志.md 生成，posts.js 保持逐字节不动 */
+    if (window.CHANGELOG_POST && window.CHANGELOG_POST.slug) {
+      var cp = window.CHANGELOG_POST, hitCp = false;
+      for (var ci = 0; ci < out.length; ci++) {
+        if (out[ci].slug === cp.slug) { out[ci] = cp; hitCp = true; break; }
+      }
+      if (!hitCp) out.push(cp);
     }
-    POSTS.push(p);
-  });
-  /* 版本日志文章由构建脚本从 博客版本日志.md 生成，posts.js 保持逐字节不动 */
-  if (window.CHANGELOG_POST && window.CHANGELOG_POST.slug) {
-    var cp = window.CHANGELOG_POST, hitCp = false;
-    for (var ci = 0; ci < POSTS.length; ci++) {
-      if (POSTS[ci].slug === cp.slug) { POSTS[ci] = cp; hitCp = true; break; }
+    out.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    /* 创作台删除的基础文章以 site-data.js 的 deleted.posts 下发，这里统一过滤
+       （要在版本日志文章合并之后再过滤，changelog 文章同样可删） */
+    var DEAD_POSTS = (DATA.deleted && DATA.deleted.posts) || [];
+    if (DEAD_POSTS.length) {
+      out = out.filter(function (p) { return DEAD_POSTS.indexOf(p.slug) < 0; });
     }
-    if (!hitCp) POSTS.push(cp);
+    return out;
   }
-  POSTS.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
-  /* 创作台删除的基础文章以 site-data.js 的 deleted.posts 下发，这里统一过滤
-     （要在版本日志文章合并之后再过滤，changelog 文章同样可删） */
-  var DEAD_POSTS = (DATA.deleted && DATA.deleted.posts) || [];
-  if (DEAD_POSTS.length) {
-    POSTS = POSTS.filter(function (p) { return DEAD_POSTS.indexOf(p.slug) < 0; });
+  var POSTS = buildPosts();
+  /* 创作台在本机删文章只改了共享的 DATA，POSTS 是启动时的数组。
+     收到数据变更事件或每次路由时就地重建，首页卡片无需刷新网页即消失。 */
+  function syncPosts() {
+    var next = buildPosts();
+    POSTS.length = 0;
+    for (var i = 0; i < next.length; i++) POSTS.push(next[i]);
   }
+  document.addEventListener('zb:studio-data', syncPosts);
 
   /* 站名统一取扩展数据层的 displayName；posts.js 只读作文章源，不再提供显示名 */
   var TITLE = CFG.displayName || '星梦Staream';
@@ -104,6 +116,13 @@
     '© ' + (SITE.since || new Date().getFullYear()) + ' ' + (CFG.author || SITE.author || '');
   var footNote = document.getElementById('foot-note');
   if (footNote) footNote.textContent = CFG.footerNote || '纯静态 · 无追踪 · 无依赖';
+  /* 导航头像与首页名片共用同一份站点数据；创作台改名后即时同步 */
+  function syncBrandAvatar() {
+    var el = document.querySelector && document.querySelector('.avatar-brand');
+    if (el) el.src = CFG.avatar || 'assets/avatar.jpg';
+  }
+  syncBrandAvatar();
+  document.addEventListener('zb:site-change', syncBrandAvatar);
 
   /* ---------- 公共片段 ---------- */
   function tagsHtml(tags) {
@@ -688,8 +707,21 @@
         return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
+  /* 首页最下方：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
+  function homeFootHtml() {
+    return '<section class="home-foot reveal" aria-label="站点互动">' +
+      '<div class="home-foot-inner glass">' +
+      '<div class="home-foot-text"><b>喜欢这片星空吗？</b>' +
+      '<span>点一下爱心，让我知道有人来过。</span></div>' +
+      '<div class="home-foot-actions">' +
+      (window.ZBLikes ? window.ZBLikes.html('site', 'home', 0, 'like-home') : '') +
+      '<span class="home-views" title="首页匿名浏览次数，不含站长本人">' + EYE_SVG +
+      '<span data-view-home>0</span> 次浏览</span>' +
+      '</div></div></section>';
+  }
   function renderHome() {
-    return profileCard() + renderList(query ? [] : POSTS, query ? '' : '最近的记录');
+    return profileCard() + renderList(query ? [] : POSTS, query ? '' : '最近的记录') +
+      (query ? '' : homeFootHtml());
   }
 
   /* ---------- 行号 ---------- */
@@ -768,6 +800,8 @@
     window.scrollTo(0, 0);
   }
   function route() {
+    /* 每次导航都重算文章集合：创作台删除后回首页立即生效 */
+    syncPosts();
     var raw = location.hash.replace(/^#\/?/, '');
     var parts = raw.split('/').filter(Boolean).map(decode);
     var html, active = 'home', sub = '';

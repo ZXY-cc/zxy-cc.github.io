@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-10">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.8.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.10.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -182,6 +182,9 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v3.6.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>Markdown 新增蓝粉渐变竖线：井号后加竖线给标题加线，或用竖线区块包住任意内容；工具栏可插入，文章、创作台预览与静态阅读版同步</td></tr>
 <tr><td><span class="ver">v3.7.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span></td><td>创作台新增格式优化按钮：去掉多余空格与空行，代码块、公式与行内代码原样保留，整理前后预览效果一致</td></tr>
 <tr><td><span class="ver">v3.8.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>文章页字数后显示匿名浏览量（不计站长本人），首页文章卡片同时标注点赞数与浏览数；匿名计数带缓存与回落</td></tr>
+<tr><td><span class="ver">v3.8.1</span></td><td>2026-11-10</td><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span></td><td>修复友链单条删除误删整组、删文章后首页卡片残留；清空遗留的本机内容与草稿；编辑文章改为保存按钮；工具栏插入后视角不跳文末</td></tr>
+<tr><td><span class="ver">v3.9.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>创作台新增名片设置：上传或粘贴头像、修改首页名片签名；保存后本机立即生效，发布上线后对访客生效</td></tr>
+<tr><td><span class="ver">v3.10.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>首页最下方新增整站爱心点赞与首页匿名浏览数；站长与预览态不计入，每个会话只计一次</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>✅ 已支持</td><td>留言直接显示在文章页，页面内写好内容后由 GitHub 确认发布；回复与 👍 点赞走仓库 Issues，网页后台可管理</td></tr>
 <tr><td>后端与统计</td><td>✅ 已支持</td><td>全站仍是静态文件，评论不依赖任何常驻服务或数据库；零费用、零运维，不采集访问数据</td></tr>
@@ -203,6 +206,8 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td>爱心点赞</td><td>✅ 已支持</td><td>文章、说说、杂谈统一爱心点赞，匿名免登录、每台设备计一次；总数走免费匿名计数接口并带缓存回落</td></tr>
 <tr><td>格式优化</td><td>✅ 已支持</td><td>文章、说说、杂谈表单可一键去掉多余空格与空行，代码块与公式原样保留，预览效果不变</td></tr>
 <tr><td>浏览量统计</td><td>✅ 已支持</td><td>文章页字数后显示匿名浏览数，首页卡片同时显示点赞与浏览数；站长本人与预览态不计入，每会话每篇计一次</td></tr>
+<tr><td>名片设置</td><td>✅ 已支持</td><td>创作台可更换首页名片头像与签名，保存后本机立即生效，发布上线后对访客生效</td></tr>
+<tr><td>首页互动</td><td>✅ 已支持</td><td>首页底部整站爱心点赞与首页匿名浏览数，站长与预览态不计入，每个会话只计一次</td></tr>
 </tbody></table><h2>附记</h2><h3>附一：双格式同步</h3><p>本日志的 Markdown 是唯一内容源。每次更新后生成同名 HTML 镜像，同时把内容写进站点文章《博客版本日志》与「关于」页的 HTML 预览，三处内容一致才算改完。</p><h3>附二：更新流程</h3><p>改 md → 生成 html 与前端数据 → 本地回归 → 推送上线。历史同类改动一律合并，只保留最终状态；重大架构变更另起大版本号，其余按主题分版。</p></div>
 <section class="interactions" aria-label="互动区">
 <div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
@@ -220,12 +225,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.8.0"></script>
-<script src="../assets/comment-archive.js?v=v3.8.0"></script>
-<script src="../assets/interactions-config.js?v=v3.8.0"></script>
-<script src="../assets/interactions.js?v=v3.8.0"></script>
-<script src="../assets/issues-live.js?v=v3.8.0"></script>
-<script src="../assets/likes.js?v=v3.8.0"></script>
+<script src="../assets/comments-data.js?v=v3.10.0"></script>
+<script src="../assets/comment-archive.js?v=v3.10.0"></script>
+<script src="../assets/interactions-config.js?v=v3.10.0"></script>
+<script src="../assets/interactions.js?v=v3.10.0"></script>
+<script src="../assets/issues-live.js?v=v3.10.0"></script>
+<script src="../assets/likes.js?v=v3.10.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>

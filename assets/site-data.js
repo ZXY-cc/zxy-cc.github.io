@@ -5,6 +5,7 @@
 
 window.STUDIO_DATA = {
   "version": 1,
+  "studioReset": "2026-11-10-a",
   "site": {
     "avatar": "assets/avatar.jpg",
     "author": "我",
@@ -157,6 +158,7 @@ window.STUDIO_DATA = {
   ],
   "friends": [
     {
+      "id": "fr-oiwiki",
       "name": "OI Wiki",
       "desc": "算法与竞赛知识的公共笔记，写排序那篇时翻了很多次。",
       "url": "https://oi-wiki.org/",
@@ -164,6 +166,7 @@ window.STUDIO_DATA = {
       "initial": "OI"
     },
     {
+      "id": "fr-mdn",
       "name": "MDN Web Docs",
       "desc": "前端查询手册，CSS 和浏览器行为基本以这里为准。",
       "url": "https://developer.mozilla.org/",
@@ -171,6 +174,7 @@ window.STUDIO_DATA = {
       "initial": "MD"
     },
     {
+      "id": "fr-arxiv",
       "name": "arXiv",
       "desc": "论文预印本，偶尔来这里看看别人把问题写成了什么样。",
       "url": "https://arxiv.org/",
@@ -178,6 +182,7 @@ window.STUDIO_DATA = {
       "initial": "aX"
     },
     {
+      "id": "fr-github",
       "name": "GitHub",
       "desc": "代码与站点都放在这里，也是这个博客的托管方。",
       "url": "https://github.com/ZXY-cc",
