@@ -33,18 +33,11 @@
       .replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim())
       .replace(/\n/g, '<br>');
   }
-  /* GitHub Issue / 回复的正文是 Markdown，两端共用同一套转纯文本规则 */
-  function mdToText(s) {
-    return String(s == null ? '' : s)
-      .replace(/```[\s\S]*?```/g, (m) => m.replace(/```/g, ''))
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, '[图片]')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-      .replace(/^\s{0,3}#{1,6}\s+/gm, '')
-      .replace(/^\s{0,3}>\s?/gm, '')
-      /* 只剥已知标签，不误伤正文里的 a < b > c 这类普通比较符 */
-      .replace(/<\/?(?:script|style|iframe|div|span|p|br|a|img|b|i|em|strong|code|pre|blockquote|ul|ol|li|h[1-6])\b[^>]*>/gi, '')
-      .replace(/[*_~`]/g, '')
-      .replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  /* 留言正文保留 Markdown 原文：Markdown 本身就是可读的纯文本，十年后没有渲染器
+     也读得懂；显示端统一用 mdPreview 渲染（先转义再生成有限标签），
+     与发布预览、GitHub Issue 页同一套语法 */
+  function mdRaw(s) {
+    return String(s == null ? '' : s).replace(/\r\n?/g, '\n').trim();
   }
   function safeUrl(v) {
     return /^https?:\/\/[^\s]+$/i.test(v || '') ? esc(v) : '';
@@ -72,7 +65,7 @@
     return {
       id: 'i' + it.number, root: '', parent: '',
       nick: who.nick, link: who.link,
-      content: (md || mdToText)(it.body),
+      content: (md || mdRaw)(it.body),
       date: String(it.created_at || '').slice(0, 10),
       likes: plusOne(it), url: String(it.html_url || '')
     };
@@ -82,7 +75,7 @@
     return {
       id: 'c' + c.id, root: rootId, parent: rootId,
       nick: who.nick, link: who.link,
-      content: (md || mdToText)(c.body),
+      content: (md || mdRaw)(c.body),
       date: String(c.created_at || '').slice(0, 10),
       likes: plusOne(c), url: String(c.html_url || '')
     };
@@ -199,7 +192,7 @@
     return '<li class="zb-archive-item">' +
       '<div class="zb-archive-meta"><span class="zb-archive-nick">' + name + '</span>' +
       (date ? '<time>' + date + '</time>' : '') + like + origin + '</div>' +
-      '<div class="zb-archive-text">' + plain(c.content) + '</div>' +
+      '<div class="zb-archive-text">' + mdPreview(c.content) + '</div>' +
       (inner || '') + '</li>';
   }
 
@@ -263,7 +256,7 @@
   }
 
   return {
-    render: render, esc: esc, plain: plain, mdToText: mdToText, mdPreview: mdPreview,
+    render: render, esc: esc, plain: plain, mdRaw: mdRaw, mdPreview: mdPreview,
     plusOne: plusOne, actor: actor, approved: approved,
     issueToComment: issueToComment, replyToComment: replyToComment,
     makeData: makeData, composerHtml: composerHtml, emptyHtml: emptyHtml

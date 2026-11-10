@@ -8,8 +8,8 @@
 .interactions-star { flex: 0 0 auto; width: 24px; height: 24px; margin-top: 4px; }
 .interactions-star svg { width: 100%; height: 100%;
   fill: var(--burst-fill, #f6e4b8); filter: drop-shadow(0 0 6px var(--burst-glow, rgba(246, 228, 184, .6))); }
-.interactions-head h2 { margin: 0 0 6px; font-size: 19px; letter-spacing: .4px; color: var(--ink, #39436a); }
-.interactions-head p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--muted, #525d84); }
+.interactions .interactions-head h2 { margin: 0 0 6px; font-size: 19px; letter-spacing: .4px; color: var(--ink, #39436a); }
+.interactions .interactions-head p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--muted, #525d84); }
 .interactions a { color: var(--accent-text, #3f5c9c); text-decoration: none;
   border-bottom: 1px dashed currentColor; }
 /* hidden 必须压过下面的 display 规则，否则降级提示切不回来 */
@@ -25,7 +25,7 @@
 .interactions-btn:hover { border-color: rgba(130, 98, 189, .58); background: rgba(255, 255, 255, .64); }
 .interactions-btn.primary { border-color: rgba(85, 121, 196, .58); }
 .interactions-btn.noop { border-style: dashed; }
-.interactions-hint { margin: 14px 0 0; font-size: 12.5px; color: var(--muted, #525d84); }
+.interactions .interactions-hint { margin: 14px 0 0; font-size: 12.5px; color: var(--muted, #525d84); }
 .interactions-retry { margin-left: 6px; padding: 2px 8px; font-size: 12px;
   color: var(--accent-text, #3f5c9c); background: none; cursor: pointer;
   border: 1px solid rgba(120, 140, 190, .38); border-radius: 999px; }
@@ -52,25 +52,45 @@
   color: var(--ink, #39436a); overflow: auto; overflow-wrap: anywhere;
   border: 1px solid rgba(120, 140, 190, .30); border-radius: 12px;
   background: rgba(255, 255, 255, .52); }
-.zb-composer-preview > :first-child { margin-top: 0; }
-.zb-composer-preview > :last-child { margin-bottom: 0; }
-.zb-composer-preview p { margin: 0 0 8px; }
-.zb-composer-preview h1, .zb-composer-preview h2, .zb-composer-preview h3,
-.zb-composer-preview h4, .zb-composer-preview h5, .zb-composer-preview h6 {
+/* 预览与留言正文共用同一套 Markdown 排版。SPA 里互动区位于 .article 内，
+   全站 .article p / .article h2… 特异性 (0,1,1) 会顶掉这里的单类选择器
+   （预览提示字曾被顶成 15.5px，placeholder 却是 13.5px）——
+   一律加 .interactions 前缀压回去；静态阅读版同样有 .interactions 容器，两端通用 */
+.interactions .zb-composer-preview > :first-child,
+.interactions .zb-archive-text > :first-child { margin-top: 0; }
+.interactions .zb-composer-preview > :last-child,
+.interactions .zb-archive-text > :last-child { margin-bottom: 0; }
+.interactions .zb-composer-preview p,
+.interactions .zb-archive-text p { margin: 0 0 8px; font-size: inherit; line-height: inherit; }
+.interactions .zb-composer-preview h1, .interactions .zb-composer-preview h2,
+.interactions .zb-composer-preview h3, .interactions .zb-composer-preview h4,
+.interactions .zb-composer-preview h5, .interactions .zb-composer-preview h6,
+.interactions .zb-archive-text h1, .interactions .zb-archive-text h2,
+.interactions .zb-archive-text h3, .interactions .zb-archive-text h4,
+.interactions .zb-archive-text h5, .interactions .zb-archive-text h6 {
   margin: 10px 0 6px; font-size: 1.1em; line-height: 1.5; }
-.zb-composer-preview ul, .zb-composer-preview ol { margin: 0 0 8px; padding-left: 1.5em; }
-.zb-composer-preview li { margin: 0 0 3px; }
-.zb-composer-preview blockquote { margin: 0 0 8px; padding: 2px 12px;
+.interactions .zb-composer-preview ul, .interactions .zb-composer-preview ol,
+.interactions .zb-archive-text ul, .interactions .zb-archive-text ol {
+  margin: 0 0 8px; padding-left: 1.5em; }
+.interactions .zb-composer-preview li, .interactions .zb-archive-text li { margin: 0 0 3px; }
+.interactions .zb-composer-preview blockquote, .interactions .zb-archive-text blockquote {
+  margin: 0 0 8px; padding: 2px 12px;
   border-left: 3px solid rgba(120, 140, 190, .5); color: var(--muted, #525d84); }
-.zb-composer-preview blockquote p { margin: 0 0 4px; }
-.zb-composer-preview code { font-family: var(--font-code, ui-monospace, monospace);
+.interactions .zb-composer-preview blockquote p,
+.interactions .zb-archive-text blockquote p { margin: 0 0 4px; }
+.interactions .zb-composer-preview code, .interactions .zb-archive-text code {
+  font-family: var(--font-code, ui-monospace, monospace);
   font-size: .92em; padding: 1px 5px; border-radius: 5px;
   background: rgba(120, 140, 190, .16); }
-.zb-composer-preview pre { margin: 0 0 8px; padding: 10px 12px; overflow: auto;
+.interactions .zb-composer-preview pre, .interactions .zb-archive-text pre {
+  margin: 0 0 8px; padding: 10px 12px; overflow: auto;
   border-radius: 10px; background: rgba(120, 140, 190, .14); }
-.zb-composer-preview pre code { padding: 0; background: none; font-size: 12.5px; }
-.zb-composer-preview a { color: var(--accent-text, #3f5c9c); }
-.zb-preview-empty { font-size: 13.5px; line-height: 1.8;
+.interactions .zb-composer-preview pre code, .interactions .zb-archive-text pre code {
+  padding: 0; background: none; font-size: 12.5px; }
+.interactions .zb-composer-preview a, .interactions .zb-archive-text a {
+  color: var(--accent-text, #3f5c9c); }
+/* 空内容提示字与输入框占位字完全同款：13.5px / 1.8 / 同色同透明度 */
+.interactions .zb-preview-empty { font-size: 13.5px; line-height: 1.8;
   color: var(--muted, #525d84); opacity: .78; }
 .zb-composer-input { display: block; box-sizing: border-box; width: 100%; min-height: 76px;
   padding: 10px 12px; font: inherit; font-size: 13.5px; line-height: 1.8;
@@ -86,7 +106,7 @@
   color: var(--muted, #525d84); }
 .zb-composer-count { font-size: 11.5px; color: var(--muted, #525d84); }
 button.interactions-btn { font-family: inherit; cursor: pointer; }
-.zb-composer-after { margin: 10px 0 0; font-size: 12px; line-height: 1.7;
+.interactions .zb-composer-after { margin: 10px 0 0; font-size: 12px; line-height: 1.7;
   color: var(--muted, #525d84); }
 
 /* 留言存档：仓库内纯 HTML 快照，服务停用、换域名后它仍是完整可读的一份 */
@@ -117,19 +137,19 @@ button.interactions-btn { font-family: inherit; cursor: pointer; }
   font-size: 12px; color: var(--accent-text, #3f5c9c);
   border: 1px dashed rgba(120, 140, 190, .38); border-radius: 999px; }
 .zb-archive-more .zb-archive-list { margin-top: 10px; }
-.zb-archive-note { margin: 12px 0 0; font-size: 11.5px; line-height: 1.7;
+.interactions .zb-archive-note { margin: 12px 0 0; font-size: 11.5px; line-height: 1.7;
   color: var(--muted, #525d84); }
 .zb-archive a { color: var(--accent-text, #3f5c9c); }
 
 /* 留言直接显示：空状态、实时读不到时的说明、降级为次要的外链 */
+.interactions .zb-live-note { margin: 10px 0 0; font-size: 11.5px; color: var(--muted, #525d84); }
 .zb-slot { margin: 0; }
-.zb-live-note { margin: 10px 0 0; font-size: 11.5px; color: var(--muted, #525d84); }
 .zb-empty { text-align: center; padding: 26px 20px 24px; }
 .zb-empty-star { display: block; font-size: 24px; line-height: 1;
   color: #d39ab6; filter: drop-shadow(0 0 8px rgba(211, 154, 182, .55)); }
-.zb-empty-title { margin: 10px 0 4px; font-size: 14px; font-weight: 600;
+.interactions .zb-empty-title { margin: 10px 0 4px; font-size: 14px; font-weight: 600;
   color: var(--ink, #39436a); }
-.zb-empty-note { margin: 0; font-size: 12px; line-height: 1.7;
+.interactions .zb-empty-note { margin: 0; font-size: 12px; line-height: 1.7;
   color: var(--muted, #525d84); }
 .interactions-links { display: flex; flex-wrap: wrap; align-items: center;
   gap: 8px; margin: 14px 0 0; font-size: 11.5px; color: var(--muted, #525d84); }
@@ -175,10 +195,14 @@ button.interactions-btn { font-family: inherit; cursor: pointer; }
 :root[data-theme="night"] .zb-composer-md[aria-pressed="true"] { background: rgba(120, 150, 220, .26); }
 :root[data-theme="night"] .zb-composer-preview { color: #f4f7ff;
   background: rgba(24, 34, 76, .32); border-color: rgba(208, 226, 255, .26); }
-:root[data-theme="night"] .zb-composer-preview code { background: rgba(208, 226, 255, .14); }
-:root[data-theme="night"] .zb-composer-preview pre { background: rgba(16, 24, 56, .5); }
-:root[data-theme="night"] .zb-composer-preview blockquote { border-left-color: rgba(208, 226, 255, .44); }
-:root[data-theme="night"] .zb-composer-preview a { color: #bcd2fa; }
+:root[data-theme="night"] .zb-composer-preview code,
+:root[data-theme="night"] .zb-archive-text code { background: rgba(208, 226, 255, .14); }
+:root[data-theme="night"] .zb-composer-preview pre,
+:root[data-theme="night"] .zb-archive-text pre { background: rgba(16, 24, 56, .5); }
+:root[data-theme="night"] .zb-composer-preview blockquote,
+:root[data-theme="night"] .zb-archive-text blockquote { border-left-color: rgba(208, 226, 255, .44); }
+:root[data-theme="night"] .zb-composer-preview a,
+:root[data-theme="night"] .zb-archive-text a { color: #bcd2fa; }
 
 @media (max-width: 640px) {
   .interactions { margin-top: 30px; padding-top: 20px; }

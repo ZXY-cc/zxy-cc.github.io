@@ -2,7 +2,7 @@
   "schema": 2,
   "source": "github-issues",
   "repository": "ZXY-cc/zxy-cc.github.io",
-  "updatedAt": "2026-11-09T15:25:37.120Z",
+  "updatedAt": "2026-11-10T05:41:27.457Z",
   "pageSize": 20,
   "posts": {
     "why-write": {
@@ -25,7 +25,7 @@
           "parent": "",
           "nick": "ZXY-cc",
           "link": "https://github.com/ZXY-cc",
-          "content": "Markdown测试\n 测试",
+          "content": "#### Markdown测试\n* **测试**",
           "date": "2026-11-09",
           "likes": 0,
           "url": "https://github.com/ZXY-cc/zxy-cc.github.io/issues/4"

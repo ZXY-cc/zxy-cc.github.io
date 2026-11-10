@@ -54,9 +54,9 @@ async function pages(base) {
   }
   return out;
 }
-/* 归档只留纯文本：十年后换渲染器、换域名、换服务，留言都还是能读的一段话。
-   与浏览器实时层共用同一份转换规则，避免两端正文样式分叉 */
-const mdToText = ZBArchive.mdToText;
+/* 归档保留留言的 Markdown 原文：Markdown 本身就是可读纯文本，十年后换渲染器、
+   换域名、换服务也读得懂；显示端与浏览器实时层共用同一份 mdPreview 渲染规则 */
+const mdRaw = ZBArchive.mdRaw;
 function plusOne(x) {
   const n = x && x.reactions && Number(x.reactions['+1']);
   return Number.isFinite(n) ? n : 0;
@@ -95,7 +95,7 @@ for (const it of issues) {
   entry.comments.push({
     id: rootId, root: '', parent: '',
     nick: who.nick, link: who.link,
-    content: mdToText(it.body), date: String(it.created_at || '').slice(0, 10),
+    content: mdRaw(it.body), date: String(it.created_at || '').slice(0, 10),
     likes: plusOne(it), url: it.html_url || ''
   });
   const replies = await pages('/repos/' + REPO + '/issues/' + it.number + '/comments');
@@ -106,7 +106,7 @@ for (const it of issues) {
     entry.comments.push({
       id: 'c' + c.id, root: rootId, parent: rootId,
       nick: u.nick, link: u.link,
-      content: mdToText(c.body), date: String(c.created_at || '').slice(0, 10),
+      content: mdRaw(c.body), date: String(c.created_at || '').slice(0, 10),
       likes: likes, url: c.html_url || ''
     });
   }

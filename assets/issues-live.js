@@ -61,18 +61,18 @@
     var rows = [];
     (Array.isArray(issues) ? issues : []).forEach(function (it) {
       if (!mine(it, slug) || !A.approved(it, o.approvalLabel)) return;
-      var c = A.issueToComment(it, A.mdToText);
+      var c = A.issueToComment(it);
       rows.push(c);
       var kids = replies && replies[String(it.number)];
       if (Array.isArray(kids)) kids.forEach(function (k) {
-        rows.push(A.replyToComment(k, c.id, A.mdToText));
+        rows.push(A.replyToComment(k, c.id));
       });
     });
     rows.sort(function (a, b) { return String(a.date || '').localeCompare(String(b.date || '')); });
     return A.makeData(slug, rows, o);
   }
 
-  function cacheKey(slug) { return 'zb-live:v2:' + slug; }
+  function cacheKey(slug) { return 'zb-live:v3:' + slug; }
   function cacheGet(slug) {
     try {
       var s = window.sessionStorage;
