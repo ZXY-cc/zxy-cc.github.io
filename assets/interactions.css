@@ -62,13 +62,18 @@
 .interactions .zb-archive-text > :last-child { margin-bottom: 0; }
 .interactions .zb-composer-preview p,
 .interactions .zb-archive-text p { margin: 0 0 8px; font-size: inherit; line-height: inherit; }
+/* 标题：显式重置文章标题装饰——SPA 里 .article h2 的渐变竖条 border-image、
+   padding-left、650 字重会泄漏进预览与留言的 <h2>（用户看到「## 标题」左边多一条竖线），
+   (0,3,1) 稳压 (0,1,1)，两端（SPA / 静态镜像）通用 */
 .interactions .zb-composer-preview h1, .interactions .zb-composer-preview h2,
 .interactions .zb-composer-preview h3, .interactions .zb-composer-preview h4,
 .interactions .zb-composer-preview h5, .interactions .zb-composer-preview h6,
 .interactions .zb-archive-text h1, .interactions .zb-archive-text h2,
 .interactions .zb-archive-text h3, .interactions .zb-archive-text h4,
 .interactions .zb-archive-text h5, .interactions .zb-archive-text h6 {
-  margin: 10px 0 6px; font-size: 1.1em; line-height: 1.5; }
+  margin: 10px 0 6px; font-size: 1.1em; line-height: 1.5;
+  padding: 0; border: none; border-image: none; background: none;
+  font-weight: 600; color: var(--ink, #39436a); }
 .interactions .zb-composer-preview ul, .interactions .zb-composer-preview ol,
 .interactions .zb-archive-text ul, .interactions .zb-archive-text ol {
   margin: 0 0 8px; padding-left: 1.5em; }
@@ -78,15 +83,22 @@
   border-left: 3px solid rgba(120, 140, 190, .5); color: var(--muted, #525d84); }
 .interactions .zb-composer-preview blockquote p,
 .interactions .zb-archive-text blockquote p { margin: 0 0 4px; }
+/* 行内代码与文章正文行内代码完全同款：设置页选的代码字体（--font-code）、
+   13px、accent-soft 底、accent-text 色——评论区里看到的就是文章里那个样子 */
 .interactions .zb-composer-preview code, .interactions .zb-archive-text code {
-  font-family: var(--font-code, ui-monospace, monospace);
-  font-size: .92em; padding: 1px 5px; border-radius: 5px;
-  background: rgba(120, 140, 190, .16); }
+  font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN",
+    "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas,
+    "Liberation Mono", monospace);
+  font-size: 13px; padding: 2px 7px; border-radius: 6px;
+  background: var(--accent-soft, rgba(120, 140, 190, .16));
+  color: var(--accent-text, #3f5c9c); }
 .interactions .zb-composer-preview pre, .interactions .zb-archive-text pre {
   margin: 0 0 8px; padding: 10px 12px; overflow: auto;
-  border-radius: 10px; background: rgba(120, 140, 190, .14); }
+  border-radius: 10px; background: rgba(120, 140, 190, .14);
+  color: var(--ink, #39436a); }
 .interactions .zb-composer-preview pre code, .interactions .zb-archive-text pre code {
-  padding: 0; background: none; font-size: 12.5px; }
+  padding: 0; background: none; font-size: 12.5px;
+  color: inherit; }
 .interactions .zb-composer-preview a, .interactions .zb-archive-text a {
   color: var(--accent-text, #3f5c9c); }
 /* 空内容提示字与输入框占位字完全同款：13.5px / 1.8 / 同色同透明度 */
@@ -195,8 +207,7 @@ button.interactions-btn { font-family: inherit; cursor: pointer; }
 :root[data-theme="night"] .zb-composer-md[aria-pressed="true"] { background: rgba(120, 150, 220, .26); }
 :root[data-theme="night"] .zb-composer-preview { color: #f4f7ff;
   background: rgba(24, 34, 76, .32); border-color: rgba(208, 226, 255, .26); }
-:root[data-theme="night"] .zb-composer-preview code,
-:root[data-theme="night"] .zb-archive-text code { background: rgba(208, 226, 255, .14); }
+/* 行内代码底色随主题走 --accent-soft（夜间变量自适应），不再单独硬编码 */
 :root[data-theme="night"] .zb-composer-preview pre,
 :root[data-theme="night"] .zb-archive-text pre { background: rgba(16, 24, 56, .5); }
 :root[data-theme="night"] .zb-composer-preview blockquote,
