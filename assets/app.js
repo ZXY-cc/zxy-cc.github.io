@@ -60,6 +60,12 @@
     if (!hitCp) POSTS.push(cp);
   }
   POSTS.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+  /* 创作台删除的基础文章以 site-data.js 的 deleted.posts 下发，这里统一过滤
+     （要在版本日志文章合并之后再过滤，changelog 文章同样可删） */
+  var DEAD_POSTS = (DATA.deleted && DATA.deleted.posts) || [];
+  if (DEAD_POSTS.length) {
+    POSTS = POSTS.filter(function (p) { return DEAD_POSTS.indexOf(p.slug) < 0; });
+  }
 
   /* 站名统一取扩展数据层的 displayName；posts.js 只读作文章源，不再提供显示名 */
   var TITLE = CFG.displayName || '星梦Staream';
@@ -202,7 +208,9 @@
       '<h1>' + esc(p.title) + '</h1>' + tagsHtml(p.tags) +
       tocHtml(body) +
       '<div class="article-body">' + body + '</div>' +
-      '<div class="article-actions"><button class="soft-btn" type="button" data-share="' +
+      '<div class="article-actions">' +
+      (window.ZBLikes ? window.ZBLikes.html('post', p.slug, p.likes) : '') +
+      '<button class="soft-btn" type="button" data-share="' +
       esc('#/post/' + p.slug) + '">复制文章链接</button>' +
       '<a class="soft-btn" href="#/">← 返回文章列表</a></div>' +
       interactionsHtml(p) +
@@ -304,7 +312,7 @@
   function renderMoments() {
     var list = arr('moments');
     if (momentOrder === 'old') list.reverse();
-    var likes = readLikes();
+    var L = window.ZBLikes;
     return pageHead('说说', '在正文之外，捕捉一些瞬间的温度', 'MOMENTS') +
       '<div class="sort-row reveal"><span>' + list.length + ' 条动态</span>' +
       '<button class="filter' + (momentOrder === 'new' ? ' on' : '') + '" type="button" data-morder="new">最新</button>' +
@@ -321,15 +329,9 @@
           '<p class="moment-text">' + esc(m.text) + '</p>' + imgs +
           '<div class="moment-foot">' +
           (m.place ? '<span class="place">' + esc(m.place) + '</span>' : '<span></span>') +
-          '<button class="like' + (likes[m.id] ? ' on' : '') + '" type="button" data-like="' + esc(m.id) + '">' +
-          '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#soft-heart"/></svg>' +
-          '<span>' + ((m.likes || 0) + (likes[m.id] ? 1 : 0)) + '</span></button></div>' +
+          (L ? L.html('moment', m.id, m.likes) : '') + '</div>' +
           '</article>';
       }).join('') + '</div>';
-  }
-  function readLikes() {
-    try { return JSON.parse(window.localStorage.getItem('zb-likes') || '{}') || {}; }
-    catch (e) { return {}; }
   }
 
   /* ---------- 杂谈 ---------- */
@@ -344,6 +346,7 @@
           '" type="button" data-cfilter="' + esc(t) + '">' + esc(t) + '</button>';
       }).join('') + '</div>';
     var shown = chatterTag ? list.filter(function (c) { return (c.tags || []).indexOf(chatterTag) >= 0; }) : list;
+    var L = window.ZBLikes;
     return pageHead('杂谈', '比文章短一点，比说说长一点', 'CHATTER') + filters +
       '<div class="chatter-list">' + shown.map(function (c) {
         return '<article class="chatter-card glass reveal">' +
@@ -352,6 +355,8 @@
           '<a class="chatter-title" href="#/chatter/' + encodeURIComponent(c.id) + '">' + esc(c.title) + '</a>' +
           '<p>' + esc(c.summary) + '</p>' +
           '<div class="x-chips">' + (c.tags || []).map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</div>' +
+          '<div class="chatter-foot">' +
+          (L ? L.html('chatter', c.id, c.likes) : '<span></span>') + '</div>' +
           '</article>';
       }).join('') + '</div>';
   }
@@ -365,7 +370,11 @@
       '<h1>' + esc(c.title) + '</h1>' + tagsHtml(c.tags) +
       '<div class="article-body">' +
       rehlHtml((c.markdown && window.ZBMD) ? window.ZBMD.render(c.markdown) : (c.body || '')) +
-      '</div></div></article>';
+      '</div>' +
+      '<div class="article-actions">' +
+      (window.ZBLikes ? window.ZBLikes.html('chatter', c.id, c.likes) : '') +
+      '<a class="soft-btn" href="#/chatter">← 返回杂谈</a></div>' +
+      '</div></article>';
   }
 
   /* ---------- 友链 ---------- */
@@ -733,6 +742,7 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     addLineNumbers();
+    if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
     observeReveal();
@@ -1027,14 +1037,8 @@
           var photo = node.closest('[data-photo]');
           if (photo) { lbShow(Number(photo.getAttribute('data-photo'))); return; }
           var like = node.closest('[data-like]');
-          if (like) {
-            var id = like.getAttribute('data-like');
-            var likes = readLikes();
-            likes[id] = !likes[id];
-            try { window.localStorage.setItem('zb-likes', JSON.stringify(likes)); } catch (err) {}
-            like.classList.toggle('on', !!likes[id]);
-            var span = like.querySelector('span');
-            if (span) span.textContent = String(Number(span.textContent) + (likes[id] ? 1 : -1));
+          if (like && window.ZBLikes) {
+            window.ZBLikes.onLike(like);
             return;
           }
           var quality = node.closest('[data-quality]');

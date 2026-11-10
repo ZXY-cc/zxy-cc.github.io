@@ -17,6 +17,7 @@
   var OWNER_HASH = '6808eb10040f5bd56dd8de543b3ef4a0e9b5b3e3635ccf65ed1e5aa703d41d47';
   var DEVICE_KEY = 'zb-owner-device';
   var LOCAL_KEY = 'zb-studio-local';
+  var DEAD_KEY = 'zb-studio-dead';
   var PAT_KEY = 'zb-gh-pat';
   var REPO = 'ZXY-cc/zxy-cc.github.io';
   var FILE = 'assets/site-data.js';
@@ -25,7 +26,7 @@
   var KINDS = ['posts', 'moments', 'chatter', 'albums', 'projects', 'friends'];
   var DRAFT_KEY = 'zb-studio-draft';
   var CATS = ['随笔', '算法', '建站', '随想', '笔记', '其它'];
-  var state = { tab: 'post', msg: '', busy: false, files: [], mode: 'write', draft: null, saveTimer: null };
+  var state = { tab: 'post', msg: '', busy: false, files: [], mode: 'write', draft: null, saveTimer: null, editing: null };
 
   /* ---------- 同步 SHA-256（不依赖 Web Crypto，http / file 下同样可用） ---------- */
   var K = [
@@ -103,8 +104,13 @@
     BUILTIN[k] = JSON.parse(JSON.stringify(
       Object.prototype.toString.call(DATA[k]) === '[object Array]' ? DATA[k] : []));
   });
+  /* 线上数据文件自带的 deleted.posts（其它设备上删除基础文章后发布的）也要认 */
+  var BUILTIN_DEAD = JSON.parse(JSON.stringify(
+    DATA.deleted && Object.prototype.toString.call(DATA.deleted.posts) === '[object Array]'
+      ? { posts: DATA.deleted.posts } : { posts: [] }));
   function mergeLocal() {
     var local = readLocal();
+    var dead = readDead();
     KINDS.forEach(function (k) {
       var base = JSON.parse(JSON.stringify(BUILTIN[k]));
       local[k].forEach(function (item) {
@@ -116,8 +122,21 @@
         }
         if (!found) base.push(item);
       });
-      DATA[k] = base;
+      /* 墓碑清理：条目已不在基础快照里（发布删除后 / 本机草稿）就不再保留 */
+      dead[k] = dead[k].filter(function (id) {
+        return inBuiltin(k, id) || (k === 'posts' && inBasePosts(id));
+      });
+      DATA[k] = base.filter(function (x) { return dead[k].indexOf(keyOf(x, k)) < 0; });
     });
+    setLs(DEAD_KEY, JSON.stringify(dead));
+    /* posts.js 基础文章的删除走 site-data.js 里的 deleted.posts，前台据此过滤；
+       本机墓碑与线上数据文件里的墓碑取并集 */
+    var seen = {};
+    DATA.deleted = { posts: BUILTIN_DEAD.posts.concat(dead.posts).filter(function (id) {
+      if (seen[id]) return false;
+      seen[id] = true;
+      return true;
+    }) };
   }
   function upsert(kind, item) {
     var local = readLocal();
@@ -128,11 +147,50 @@
       return x;
     });
     if (!replaced) local[kind].push(item);
+    /* 重新保存 = 撤销删除（墓碑只在「删除后未再保存」期间生效） */
+    if (deadHas(kind, id)) deadRemove(kind, id);
     if (!setLs(LOCAL_KEY, JSON.stringify(local))) return false;
     mergeLocal();
     return true;
   }
+  /* ---------- 删除墓碑 ----------
+     已发布内容（站点数据快照 / posts.js 基础文章）删除时记一条墓碑：
+     本机先隐藏，发布上线后从数据文件里移除（posts.js 基础文章则以
+     deleted.posts 列表随 site-data.js 下发，前台按 slug 过滤）。
+     未发布过的本机草稿删除即消失，不留墓碑。 */
+  function blankDead() {
+    var o = {};
+    KINDS.forEach(function (k) { o[k] = []; });
+    return o;
+  }
+  function readDead() {
+    var o = null, b = blankDead();
+    try { o = JSON.parse(ls(DEAD_KEY) || 'null'); } catch (e) { o = null; }
+    if (o) KINDS.forEach(function (k) {
+      if (Object.prototype.toString.call(o[k]) === '[object Array]') b[k] = o[k];
+    });
+    return b;
+  }
+  function deadHas(kind, id) { return readDead()[kind].indexOf(id) >= 0; }
+  function deadRemove(kind, id) {
+    var d = readDead();
+    d[kind] = d[kind].filter(function (x) { return x !== id; });
+    setLs(DEAD_KEY, JSON.stringify(d));
+  }
+  function inBuiltin(kind, id) {
+    return (BUILTIN[kind] || []).some(function (x) { return keyOf(x, kind) === id; });
+  }
+  function inBasePosts(id) {
+    return (window.POSTS || []).some(function (p) { return p.slug === id; });
+  }
   function remove(kind, id) {
+    /* 已发布内容记墓碑（本机隐藏 + 发布时从数据文件移除）；
+       未发布过的本机草稿直接消失 */
+    if (inBuiltin(kind, id) || (kind === 'posts' && inBasePosts(id))) {
+      var d = readDead();
+      if (d[kind].indexOf(id) < 0) d[kind].push(id);
+      setLs(DEAD_KEY, JSON.stringify(d));
+    }
     var local = readLocal();
     local[kind] = local[kind].filter(function (x) { return keyOf(x, kind) !== id; });
     setLs(LOCAL_KEY, JSON.stringify(local));
@@ -223,6 +281,7 @@
   }
   function uid(p) { return p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function val(id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
+  function setText(id, v) { var e = document.getElementById(id); if (e) e.value = String(v == null ? '' : v); }
   function splitTags(s) { return s.split(/[,，、\s]+/).filter(Boolean); }
 
   /* ---------- 写文章工作台：草稿、工具栏与属性 ---------- */
@@ -525,20 +584,29 @@
       '<div id="file-preview" class="file-preview"></div>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-photo">保存到本机</button></div></div>';
   }
+  /* 编辑中的条目在表单顶部给一条提示与退出按钮，保存按钮同步改字 */
+  function editingBanner(kindLabel) {
+    if (!state.editing) return '';
+    return '<div class="edit-banner"><b>正在编辑这条' + kindLabel + '</b>' +
+      '<button class="mini-btn" type="button" data-act="cancel-edit">退出编辑</button></div>';
+  }
   function formMoment() {
-    return '<div class="studio-form glass"><h2>发一条说说</h2>' +
+    return '<div class="studio-form glass"><h2>发一条说说</h2>' + editingBanner('说说') +
       area('这一刻想说什么', 'f-moment-text', '…', 5) +
       '<div class="f-row">' + field('心情', 'f-mood', '✨ 满足') + field('地点', 'f-place', '书桌前') + '</div>' +
       '<label class="file-zone" for="f-moment-img"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择配图 · 可选<input class="f-input f-file" id="f-moment-img" type="file" accept="image/*"></label>' +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-moment">保存到本机</button></div></div>';
+      '<div id="moment-img-preview" class="file-preview"></div>' +
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-moment">' +
+      (state.editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formChatter() {
-    return '<div class="studio-form glass"><h2>写一则杂谈</h2>' +
+    return '<div class="studio-form glass"><h2>写一则杂谈</h2>' + editingBanner('杂谈') +
       field('标题', 'f-ch-title', '比文章短一点的标题') +
       field('摘要', 'f-ch-summary', '一句话') +
       '<div class="f-row">' + field('标签（逗号分隔）', 'f-ch-tags', '随笔, 建站') + field('心情', 'f-ch-mood', '🌸 平静') + '</div>' +
       area('正文', 'f-ch-body', '想到哪写到哪…', 10) +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-chatter">保存到本机</button></div></div>';
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-chatter">' +
+      (state.editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formProject() {
     return '<div class="studio-form glass"><h2>添加一个项目</h2>' +
@@ -553,25 +621,50 @@
       '<div class="f-row">' + field('地址', 'f-fr-url', 'https://…') + field('首字母标记', 'f-fr-initial', 'GH') + '</div>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-friend">保存到本机</button></div></div>';
   }
+  /* 内容管理：列出全部内容（线上数据 + 本机 + posts.js 基础文章），
+     文章 / 说说 / 杂谈可载回表单重编辑，全部条目可删除；
+     已发布内容的删除要再次「发布上线」才对访客生效。 */
+  function allPosts() {
+    /* DATA.posts（站点数据层）优先覆盖 posts.js 同 slug 条目 */
+    var out = (window.POSTS || []).slice();
+    (DATA.posts || []).forEach(function (p) {
+      var hit = false;
+      for (var i = 0; i < out.length; i++) {
+        if (out[i].slug === p.slug) { out[i] = p; hit = true; break; }
+      }
+      if (!hit) out.push(p);
+    });
+    return out;
+  }
+  function findItem(kind, id) {
+    if (kind === 'posts') return allPosts().filter(function (x) { return x.slug === id; })[0] || null;
+    return (DATA[kind] || []).filter(function (x) { return keyOf(x, kind) === id; })[0] || null;
+  }
   function formManage() {
     var local = readLocal();
     var labels = { posts: '文章', moments: '说说', chatter: '杂谈', albums: '相册', projects: '项目', friends: '友链' };
     var rows = [];
     KINDS.forEach(function (k) {
-      local[k].forEach(function (x) {
+      var list = k === 'posts' ? allPosts() : (DATA[k] || []);
+      list.forEach(function (x) {
+        var id = keyOf(x, k);
         var name = k === 'posts' ? x.title : (x.title || x.name || (x.text || '').slice(0, 22));
+        var src = local[k].some(function (y) { return keyOf(y, k) === id; }) ? '本机'
+          : (window.POSTS || []).some(function (p) { return p.slug === id; }) ? '基础' : '线上';
         rows.push('<div class="manage-row"><span class="mr-kind">' + labels[k] + '</span>' +
-          '<b>' + esc(name) + '</b><span class="mr-id">' + esc(keyOf(x, k)) + '</span>' +
-          (k === 'posts' ? '<button class="mini-btn" type="button" data-edit="' +
-            esc(k + '::' + keyOf(x, k)) + '">编辑</button>' : '') +
-          '<button class="mini-btn" type="button" data-del="' + esc(k + '::' + keyOf(x, k)) + '">删除</button></div>');
+          '<b>' + esc(name || '(未命名)') + '</b><span class="mr-src">' + src + '</span>' +
+          '<span class="mr-id">' + esc(id) + '</span>' +
+          (k === 'posts' || k === 'moments' || k === 'chatter'
+            ? '<button class="mini-btn" type="button" data-edit="' + esc(k + '::' + id) + '">编辑</button>' : '') +
+          '<button class="mini-btn" type="button" data-del="' + esc(k + '::' + id) + '">删除</button></div>');
       });
     });
     var size = 0;
     try { size = (ls(LOCAL_KEY) || '').length; } catch (e) {}
     return '<div class="studio-form glass"><h2>内容管理</h2>' +
-      '<p class="f-hint">这里只列「保存在本机、还没清理」的条目；已经发布上线的内容同样在这里，删除只会移除本机副本与当前页面显示，不会自动改动线上文件。</p>' +
-      '<div class="manage-list">' + (rows.length ? rows.join('') : '<p class="page-note">本机还没有新增内容。</p>') + '</div>' +
+      '<p class="f-hint">文章、说说、杂谈可以载回对应表单重新编辑；全部条目都能删除。' +
+      '改动先保存在本机——要让访客看到新内容或删除生效，请到「发布上线」提交；已发布内容删除后可在仓库提交历史找回。</p>' +
+      '<div class="manage-list">' + (rows.length ? rows.join('') : '<p class="page-note">还没有任何内容。</p>') + '</div>' +
       '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清理本机副本，避免浏览器存储被图片占满。</p>' +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="clear-local">清理本机副本</button></div></div>';
   }
@@ -653,25 +746,34 @@
     var text = val('f-moment-text');
     if (!text) return say('说点什么再保存吧。', 'warn');
     var src = state.momentImg || '';
+    var old = (state.editing && state.editing.kind === 'moments')
+      ? findItem('moments', state.editing.id) : null;
     var item = {
-      id: uid('m'), date: today(), text: text,
+      id: old ? old.id : uid('m'), date: old ? old.date : today(), text: text,
       mood: val('f-mood') || '✨ 记录', place: val('f-place') || '',
-      images: src ? [src] : [], likes: 0
+      /* 重编辑保留原有配图；选了新图才整组替换 */
+      images: (old && old.images && old.images.length && !src) ? old.images.slice() : (src ? [src] : []),
+      likes: old ? (old.likes || 0) : 0
     };
     if (!upsert('moments', item)) return say('本机存储空间不足，请先发布并清理。', 'warn');
     state.momentImg = '';
-    reloadSoon('说说已保存');
+    state.editing = null;
+    reloadSoon(old ? '说说已更新' : '说说已保存');
   }
   function saveChatter() {
     var title = val('f-ch-title'), body = val('f-ch-body');
     if (!title || !body) return say('标题和正文都要填。', 'warn');
+    var old = (state.editing && state.editing.kind === 'chatter')
+      ? findItem('chatter', state.editing.id) : null;
     var item = {
-      id: uid('c'), date: today(), title: title,
+      id: old ? old.id : uid('c'), date: old ? old.date : today(), title: title,
       summary: val('f-ch-summary') || title.slice(0, 24), tags: splitTags(val('f-ch-tags')),
-      mood: val('f-ch-mood') || '🌸 平静', body: htmlOfBody(body)
+      mood: val('f-ch-mood') || '🌸 平静',
+      markdown: body, body: htmlOfBody(body), format: 'markdown'
     };
     if (!upsert('chatter', item)) return say('本机存储空间不足，请先发布并清理。', 'warn');
-    reloadSoon('杂谈已保存');
+    state.editing = null;
+    reloadSoon(old ? '杂谈已更新' : '杂谈已保存');
   }
   function saveProject() {
     var name = val('f-pj-name');
@@ -801,10 +903,9 @@
     var edit = t.closest('[data-edit]');
     if (edit) {
       var ep = edit.getAttribute('data-edit').split('::');
-      var target = (DATA[ep[0]] || []).filter(function (x) {
-        return keyOf(x, ep[0]) === ep[1];
-      })[0];
-      if (target) {
+      var target = findItem(ep[0], ep[1]);
+      if (!target) return;
+      if (ep[0] === 'posts') {
         var d = blankDraft();
         d.slug = target.slug || ''; d.title = target.title || '';
         d.markdown = target.markdown || htmlToMd(target.body);
@@ -812,11 +913,37 @@
         d.summary = target.summary || ''; d.category = target.category || '随笔';
         d.date = target.date || today(); d.status = target.status || 'published';
         state.draft = d;
+        state.editing = null;
         state.tab = 'post';
         /* 先重绘出写作表单，再落盘，避免旧页面的空表单把刚载入的标题覆盖掉 */
         render(document.getElementById('app'));
         writeDraft(true);
         say('已载入这篇文章，可以继续编辑 Markdown 与公式。');
+      } else if (ep[0] === 'moments') {
+        state.editing = { kind: 'moments', id: target.id };
+        state.momentImg = '';
+        state.tab = 'moment';
+        render(document.getElementById('app'));
+        setText('f-moment-text', target.text);
+        setText('f-mood', target.mood);
+        setText('f-place', target.place);
+        var mp = document.getElementById('moment-img-preview');
+        if (mp && target.images && target.images.length) {
+          mp.innerHTML = target.images.map(function (s) {
+            return '<img src="' + esc(s) + '" alt="说说现有配图">';
+          }).join('');
+        }
+        say('已载入这条说说，改完点「保存修改」。');
+      } else if (ep[0] === 'chatter') {
+        state.editing = { kind: 'chatter', id: target.id };
+        state.tab = 'chatter';
+        render(document.getElementById('app'));
+        setText('f-ch-title', target.title);
+        setText('f-ch-summary', target.summary);
+        setText('f-ch-tags', (target.tags || []).join(', '));
+        setText('f-ch-mood', target.mood);
+        setText('f-ch-body', target.markdown || htmlToMd(target.body));
+        say('已载入这则杂谈，改完点「保存修改」。');
       }
       return;
     }
@@ -831,15 +958,28 @@
     var del = t.closest('[data-del]');
     if (del) {
       var parts = del.getAttribute('data-del').split('::');
+      var name = '';
+      var victim = findItem(parts[0], parts[1]);
+      if (victim) name = victim.title || victim.name || (victim.text || '').slice(0, 18);
+      if (!window.confirm('确定删除「' + (name || parts[1]) + '」吗？' +
+        '已发布的内容要再次「发布上线」才对访客生效。')) return;
       remove(parts[0], parts[1]);
+      if (state.editing && state.editing.kind === parts[0] && state.editing.id === parts[1]) state.editing = null;
       render(document.getElementById('app'));
-      say('已删除本机条目。');
+      say('已删除本机条目；已发布的内容需「发布上线」后对访客生效。');
       return;
     }
     var act = t.closest('[data-act]');
     if (!act) return;
     var a = act.getAttribute('data-act');
     if (a === 'lock') { revoke(); syncNav(); render(document.getElementById('app')); return; }
+    if (a === 'cancel-edit') {
+      state.editing = null;
+      state.momentImg = '';
+      render(document.getElementById('app'));
+      say('已退出编辑，表单已清空。');
+      return;
+    }
     if (a === 'draft-save') return savePost(true);
     if (a === 'publish-post') return savePost(false);
     if (a === 'cover-pick') {

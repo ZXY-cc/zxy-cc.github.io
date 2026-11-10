@@ -643,11 +643,11 @@ main { min-height: 320px; }
 }
 .article h1 { font-size: 28px; font-weight: 650; line-height: 1.4; margin: 0 0 14px; color: var(--ink-strong); letter-spacing: .5px; }
 .article .post-meta { margin-bottom: 26px; }
+/* 文章正文标题不再带左侧装饰竖条：Markdown 标题在评论预览、创作台预览与
+   正文页保持同一个干净样子（用户要求全站去掉竖线），层级靠字号与字重区分 */
 .article h2 {
   font-size: 22px; font-weight: 650; margin: 40px 0 16px;
-  padding-left: 14px; color: var(--ink-strong);
-  border-left: 3px solid transparent;
-  border-image: linear-gradient(180deg, var(--accent), var(--accent-3)) 1;
+  color: var(--ink-strong);
 }
 .article h3 { font-size: 17px; font-weight: 650; margin: 28px 0 10px; }
 /* 文章页：整篇收进一个统一栏，栏宽用 rem 固定，不随各块自身字号变化；
@@ -1082,6 +1082,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .chatter-card { border-radius: var(--radius); padding: 20px 24px; border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); transition: transform .35s ease; }
 .chatter-card:hover { transform: translateY(-4px); }
+.chatter-foot { display: flex; align-items: center; justify-content: flex-end; margin-top: 12px; }
 .chatter-meta { display: flex; align-items: center; gap: 12px; }
 .chatter-meta time { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .chatter-title { display: block; margin: 12px 0 7px; font-size: 18px; font-weight: 650; color: var(--ink-strong); }
@@ -1245,9 +1246,17 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   border: 1px solid var(--glass-line); font-size: 13px; }
 .manage-row b { color: var(--ink-strong); font-weight: 600; }
 .mr-kind { font-size: 11px; color: var(--accent-text); min-width: 32px; }
+.mr-src { flex: 0 0 auto; font-size: 10.5px; color: var(--muted);
+  border: 1px solid var(--glass-line); border-radius: 999px; padding: 1px 8px; }
 .mr-id { font-size: 11px; color: var(--faint); margin-left: auto; }
 .mini-btn { font: inherit; font-size: 11.5px; cursor: pointer; color: var(--accent-3-text);
   background: none; border: 1px solid var(--glass-line); border-radius: 999px; padding: 3px 11px; }
+/* 编辑中的条目：表单顶部提示条 */
+.edit-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 0 0 14px; padding: 9px 14px; border-radius: 12px; font-size: 12.5px;
+  color: var(--accent-text); background: var(--accent-soft);
+  border: 1px dashed rgba(120, 140, 190, .4); }
+.edit-banner b { font-weight: 600; }
 :root[data-theme="night"] .primary-btn { color: #1d2a56; }
 :root[data-theme="night"] .stab.on,
 :root[data-theme="night"] .filter.on { color: #ffffff; }
@@ -1613,8 +1622,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .desk-body[data-mode="split"] .desk-preview { border-left: 1px solid var(--glass-line); }
 .desk-preview > :first-child { margin-top: 0; }
 .desk-preview h1 { font-size: 25px; margin: 22px 0 14px; color: var(--ink-strong); }
-.desk-preview h2 { font-size: 21px; margin: 30px 0 13px; padding-left: 12px; color: var(--ink-strong);
-  border-left: 3px solid var(--accent); }
+.desk-preview h2 { font-size: 21px; margin: 30px 0 13px; color: var(--ink-strong); }
 .desk-preview h3 { font-size: 17px; margin: 24px 0 10px; color: var(--ink-strong); }
 .desk-preview p { margin: 0 0 16px; font-size: 15px; line-height: 1.9; }
 .desk-preview ul, .desk-preview ol { padding-left: 22px; margin: 0 0 18px; }
