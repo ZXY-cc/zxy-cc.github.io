@@ -625,21 +625,20 @@ main { min-height: 320px; }
 .post-stat .stat-heart { stroke-width: 6; }
 .post-stat .stat-eye { stroke-width: 1.8; }
 .article-views { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-/* 首页最下方：整站爱心点赞与首页匿名浏览数 */
-.home-foot { margin: 34px 0 8px; }
-.home-foot-inner { display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 14px 22px; padding: 18px 24px;
-  border-radius: var(--radius-lg); border: 1px solid var(--glass-line);
-  box-shadow: var(--glass-shadow), var(--glass-inner);
+/* 首页名片右上角：整站爱心点赞与首页匿名浏览数 */
+.card-corner-stats { display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+  padding: 4px 11px 4px 6px; border-radius: 999px;
+  border: 1px solid var(--glass-line);
+  background: var(--glass-sheen), var(--glass-strong);
+  box-shadow: var(--glass-inner);
   -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
-.home-foot-text { display: flex; flex-direction: column; gap: 3px; }
-.home-foot-text b { font-size: 15px; font-weight: 650; color: var(--ink-strong); }
-.home-foot-text span, .home-views { font-size: 12.5px; color: var(--muted); }
-.home-foot-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.home-views { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+/* .profile-card > * 会把直接子元素改成 relative，这里用更高特异性钉回卡片右上角 */
+.profile-card > .card-corner-stats { position: absolute; top: 18px; right: 22px; z-index: 2; }
+.home-views { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px;
+  color: var(--muted); font-variant-numeric: tabular-nums; }
 .home-views svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
-.like-home { font-size: 13px; padding: 6px 12px; border: 1px solid var(--glass-line);
-  background: var(--glass-sheen), var(--glass-strong); }
+.like-home { font-size: 13px; padding: 3px 6px; border: 0; background: none; }
 
 .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
 .tag {
@@ -865,7 +864,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .post-summary,
 :root[data-theme="night"] .post-stat,
 :root[data-theme="night"] .article-views,
-:root[data-theme="night"] .home-foot-text span,
+:root[data-theme="night"] .card-corner-stats,
 :root[data-theme="night"] .home-views,
 :root[data-theme="night"] .toc-title,
 :root[data-theme="night"] .tag-count,
@@ -1551,6 +1550,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* ---------- 名片响应式 ---------- */
 @media (max-width: 640px) {
   .profile-card { padding: 24px 20px 22px; border-radius: 22px; }
+  .profile-card > .card-corner-stats { top: 14px; right: 14px; gap: 6px; padding: 3px 9px 3px 5px; }
+  .card-corner-stats .home-views { font-size: 11.5px; }
+  .card-corner-stats .like-home { font-size: 12px; }
   .profile-top { flex-direction: column; align-items: flex-start; gap: 14px; }
   .profile-avatar { width: 82px; height: 82px; border-radius: 19px; }
   .profile-avatar-wrap { border-radius: 22px; }

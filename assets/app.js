@@ -729,6 +729,7 @@
       [photoCount(), '照片', '#/photowall']
     ];
     return '<section class="profile-card glass sheen reveal" aria-label="站长名片">' +
+      cardCornerHtml() +
       '<div class="profile-top"><span class="profile-avatar-wrap">' +
       avatarImg('avatar profile-avatar') + '</span>' +
       '<div class="profile-id"><h1 class="profile-name">' + esc(name) + '</h1>' +
@@ -738,21 +739,16 @@
         return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
-  /* 首页最下方：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
-  function homeFootHtml() {
-    return '<section class="home-foot reveal" aria-label="站点互动">' +
-      '<div class="home-foot-inner glass">' +
-      '<div class="home-foot-text"><b>喜欢这片星空吗？</b>' +
-      '<span>点一下爱心，让我知道有人来过。</span></div>' +
-      '<div class="home-foot-actions">' +
+  /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
+  function cardCornerHtml() {
+    return '<div class="card-corner-stats" aria-label="站点互动" title="点一下爱心，让我知道有人来过">' +
       (window.ZBLikes ? window.ZBLikes.html('site', 'home', 0, 'like-home') : '') +
       '<span class="home-views" title="首页匿名浏览次数，不含站长本人">' + EYE_SVG +
       '<span data-view-home>0</span> 次浏览</span>' +
-      '</div></div></section>';
+      '</div>';
   }
   function renderHome() {
-    return profileCard() + renderList(query ? [] : POSTS, query ? '' : '最近的记录') +
-      (query ? '' : homeFootHtml());
+    return profileCard() + renderList(query ? [] : POSTS, query ? '' : '最近的记录');
   }
 
   /* ---------- 行号 ---------- */
