@@ -41,6 +41,20 @@
       '" alt="' + esc(CFG.author || SITE.author || '我') + '的头像">';
   }
   function avatarSrc() { return esc(CFG.avatar || 'assets/avatar.jpg'); }
+  /* 首页卡片上的只读统计：心形用页面里的图形精灵，眼睛用内联路径 */
+  var HEART_SVG = '<svg class="stat-heart" viewBox="0 0 100 100" aria-hidden="true">' +
+    '<use href="#soft-heart"/></svg>';
+  var EYE_SVG = '<svg class="stat-eye" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>' +
+    '<circle cx="12" cy="12" r="2.7"/></svg>';
+  function postStatsHtml(p) {
+    var slug = esc(p.slug);
+    return '<div class="post-stats" aria-label="互动数据">' +
+      '<span class="post-stat" title="点赞数">' + HEART_SVG +
+      '<span data-like-stat="post:' + slug + '">0</span></span>' +
+      '<span class="post-stat" title="浏览次数（不含站长）">' + EYE_SVG +
+      '<span data-view="' + slug + '">0</span></span></div>';
+  }
 
   /* posts.js 是只读的原始文章；site-data.js 的 posts 是站长发布的新文章；
      创作台未发布的本机内容由 studio.js 合并进同一个数组，这里统一去重排序。 */
@@ -130,7 +144,7 @@
         metaHtml(p) +
         '<a class="post-title" href="#/post/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a>' +
         '<p class="post-summary">' + esc(p.summary) + '</p>' +
-        tagsHtml(p.tags) + '</article>';
+        tagsHtml(p.tags) + postStatsHtml(p) + '</article>';
     }).join('') + '</div>';
   }
   function tocHtml(body) {
@@ -203,7 +217,10 @@
     return '<article class="article reveal"><div class="article-inner">' +
       '<div class="article-byline"><div class="article-author">' + avatarImg('avatar avatar-sm') +
       '<span>' + esc(CFG.author || SITE.author || '我') + '</span><i>·</i><span>' +
-      wordsOf(body) + ' 字</span></div>' +
+      wordsOf(body) + ' 字</span>' +
+      '<i>·</i><span class="article-views" data-view-post="' + esc(p.slug) +
+      '" title="匿名浏览次数，不含站长本人"><span data-view="' + esc(p.slug) +
+      '">0</span> 次浏览</span></div>' +
       '<time class="article-date">' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
       '<h1>' + esc(p.title) + '</h1>' + tagsHtml(p.tags) +
       tocHtml(body) +

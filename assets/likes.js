@@ -1,17 +1,22 @@
-/* 星梦Staream · 爱心点赞（零依赖）
- * 纯静态站没有数据库，全局点赞数走免费匿名计数接口 Abacus
+/* 星梦Staream · 爱心点赞 + 文章浏览量（零依赖）
+ * 纯静态站没有数据库，全局计数走免费匿名接口 Abacus
  * （https://abacus.jasoncameron.dev）：/get/<ns>/<key> 读总数、
  * /hit/<ns>/<key> 点一次 +1，无需登录、CORS 全开、限速 30 次/10 秒/IP。
- * 「已赞」记在本机 localStorage（zb-likes），一台设备只计一次；
- * 接口读数带 sessionStorage 缓存（120 秒），接口不可用时回落为
- * 数据基础数（字段 likes）+ 本机状态，爱心功能不因接口掉线而失效。
- * 点赞是单向的：点了就亮，与「每台设备只计一次」的计数口径一致。 */
+ * 点赞：本机 localStorage（zb-likes）记「已赞」，一台设备只计一次。
+ * 浏览：只数匿名访客——带创作台设备标记（站长本人）与 ?preview=1 都不计数；
+ *       每个浏览器会话、每篇文章只 +1 次，避免刷新刷屏；countView 由
+ *       文章页的 [data-view-post] 触发，首页卡片只读不写。
+ * 读数带 sessionStorage 缓存（120 秒）；接口不可用时回落为数据基础数
+ * （字段 likes）+ 本机状态，爱心与浏览显示都不因接口掉线而失效。 */
 (function () {
   'use strict';
-  var NS = 'zxy-blog-heart';
+  var NS_LIKE = 'zxy-blog-heart';
+  var NS_VIEW = 'zxy-blog-views';
   var API = 'https://abacus.jasoncameron.dev';
   var LIKE_KEY = 'zb-likes';
-  var CACHE_KEY = 'zb-like:v1:';
+  var OWNER_KEY = 'zb-owner-device';
+  var CACHE_KEY = 'zb-count:v1:';
+  var VIEWED_KEY = 'zb-viewed:v1:';
   var TTL = 120000;
   var TIMEOUT = 5000;
 
@@ -20,8 +25,7 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
-  /* Abacus key 只允许 [A-Za-z0-9_-.]：连字符分隔（kind 前缀 + 条目 id，
-     两者本身都不含连字符歧义冲突） */
+  /* Abacus key 只允许 [A-Za-z0-9_-.]：连字符分隔（kind 前缀 + 条目 id） */
   function counterKey(kind, id) {
     var raw = String(kind) + '-' + String(id);
     return /^[A-Za-z0-9_\-.]{3,64}$/.test(raw) ? raw : '';
@@ -40,6 +44,19 @@
       l[kind + ':' + id] = 1;
       window.localStorage.setItem(LIKE_KEY, JSON.stringify(l));
     } catch (e) { /* 隐私模式记不住，不影响本次点亮 */ }
+  }
+  /* 站长设备：优先问创作台；静态阅读版没有创作台脚本，就直接认本机标记。
+     这个判断只用于「不给自己刷浏览量」，不是安全边界。 */
+  function ownerDevice() {
+    try {
+      if (window.STUDIO && typeof window.STUDIO.isOwner === 'function' && window.STUDIO.isOwner()) return true;
+      var m = JSON.parse(window.localStorage.getItem(OWNER_KEY) || 'null');
+      return !!(m && m.t && Date.now() - m.t < 90 * 86400000 * 1000 &&
+        /^[a-f0-9]{64}$/.test(m.sig || ''));
+    } catch (e) { return false; }
+  }
+  function previewMode() {
+    return /(?:^|[?&])preview=1(?:&|$)/.test(String(window.location && window.location.search || ''));
   }
   function cacheGet(k) {
     try {
@@ -76,17 +93,35 @@
       throw e;
     });
   }
-  function getCount(kind, id) {
+  function cacheKey(ns, k) { return ns + ':' + k; }
+  function readCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
-    var c = cacheGet(k);
+    var ck = cacheKey(ns, k), c = cacheGet(ck);
     if (c != null) return Promise.resolve(c);
-    return fetchJson(API + '/get/' + NS + '/' + k).then(function (n) { cacheSet(k, n); return n; });
+    return fetchJson(API + '/get/' + ns + '/' + k).then(function (n) { cacheSet(ck, n); return n; });
   }
-  function hitCount(kind, id) {
+  function bumpCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
-    return fetchJson(API + '/hit/' + NS + '/' + k).then(function (n) { cacheSet(k, n); return n; });
+    return fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) { cacheSet(cacheKey(ns, k), n); return n; });
+  }
+  function getCount(kind, id) { return readCount(NS_LIKE, kind, id); }
+  function hitCount(kind, id) { return bumpCount(NS_LIKE, kind, id); }
+  function getViews(slug) { return readCount(NS_VIEW, 'post', slug); }
+  /* 一次匿名浏览：站长 / 预览态 / 本会话已计过 → 只读取数不再 +1 */
+  function countView(slug) {
+    if (!slug) return Promise.resolve(null);
+    var mark = VIEWED_KEY + slug;
+    if (ownerDevice() || previewMode()) return getViews(slug);
+    try {
+      var s = window.sessionStorage;
+      if (s) {
+        if (s.getItem(mark)) return getViews(slug);
+        s.setItem(mark, '1');
+      }
+    } catch (e) { /* 记不住就按每次打开计一次 */ }
+    return bumpCount(NS_VIEW, 'post', slug).catch(function () { return null; });
   }
 
   /* 按钮结构：与说说页原有的爱心完全同款（灰 → 粉，点击放大） */
@@ -102,7 +137,6 @@
       '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#soft-heart"/></svg>' +
       '<span>' + n + '</span></button>';
   }
-
   function setCount(btn, n) {
     var span = btn.querySelector('span');
     if (span && typeof n === 'number') span.textContent = String(n);
@@ -122,10 +156,8 @@
   /* 每次渲染后补拉真实总数（带缓存；接口挂了就停在回落值）。
      服务器有数时以它为准（本机已赞过的话服务器数里已经含这一次）；
      服务器为 0 而本机亮着时保留 1，接口失败时用「基础数 + 本机状态」回落。 */
-  function mount() {
-    var app = document.getElementById('app');
-    if (!app || !app.querySelectorAll) return;
-    var btns = app.querySelectorAll('[data-like]');
+  function mountLikes(root) {
+    var btns = root.querySelectorAll('[data-like]');
     Array.prototype.forEach.call(btns, function (btn) {
       if (btn.getAttribute('data-like-done')) return;
       btn.setAttribute('data-like-done', '1');
@@ -142,9 +174,48 @@
       }).catch(function () { /* 保留回落值 */ });
     });
   }
+  /* 首页卡片上的只读点赞数 */
+  function mountStats(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('[data-like-stat]'), function (el) {
+      var v = String(el.getAttribute('data-like-stat') || '').split(':');
+      if (v.length < 2) return;
+      getCount(v[0], v.slice(1).join(':')).then(function (n) {
+        if (typeof n === 'number') el.textContent = String(n);
+      }).catch(function () { /* 保留占位 0 */ });
+    });
+  }
+  /* 浏览数：所有 [data-view] 显示槽统一填数，文章页的 [data-view-post] 触发计数 */
+  function mountViews(root) {
+    var slots = {}, hits = {};
+    Array.prototype.forEach.call(root.querySelectorAll('[data-view]'), function (el) {
+      var s = el.getAttribute('data-view');
+      if (s) (slots[s] = slots[s] || []).push(el);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-view-post]'), function (el) {
+      var s = el.getAttribute('data-view-post');
+      if (s) hits[s] = true;
+    });
+    Object.keys(slots).forEach(function (s) {
+      var p;
+      try { p = hits[s] ? countView(s) : getViews(s); }
+      catch (e) { p = Promise.resolve(null); }
+      Promise.resolve(p).then(function (n) {
+        if (typeof n !== 'number') return;
+        slots[s].forEach(function (el) { el.textContent = String(n); });
+      }).catch(function () { /* 保留占位 0 */ });
+    });
+  }
+  function mount() {
+    var root = document.getElementById('app') || document.body;
+    if (!root || !root.querySelectorAll) return;
+    mountLikes(root);
+    mountStats(root);
+    mountViews(root);
+  }
 
   window.ZBLikes = {
     html: html, mount: mount, onLike: onLike,
-    liked: liked, getCount: getCount, hitCount: hitCount
+    liked: liked, getCount: getCount, hitCount: hitCount,
+    getViews: getViews, countView: countView, ownerDevice: ownerDevice
   };
 })();

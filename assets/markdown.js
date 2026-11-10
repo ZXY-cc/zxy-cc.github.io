@@ -420,6 +420,21 @@
 
       if (isStash(trim)) { flush(); out.push(restore(trim)); i++; continue; }
 
+      /* 蓝→粉渐变竖线区块：:::vl … ::: ，内部照常按 Markdown 渲染。
+         嵌套 render 会重置占位符表，返回后把外层表与序号还原。 */
+      if (/^ {0,3}:::vl[ \t]*$/.test(ln)) {
+        flush();
+        var vbuf = [];
+        i++;
+        while (i < lines.length && !/^ {0,3}:::[ \t]*$/.test(lines[i])) { vbuf.push(lines[i]); i++; }
+        if (i < lines.length) i++;
+        var keepStore = store, keepSeq = seq;
+        var vlInner = render(vbuf.join('\n'));
+        store = keepStore; seq = keepSeq;
+        out.push('<div class="zb-vl">' + vlInner + '</div>');
+        continue;
+      }
+
       /* 围栏代码块 */
       var f = fenceInfo(ln);
       if (f) {
@@ -457,14 +472,15 @@
       /* 分隔线 */
       if (/^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(ln)) { flush(); out.push('<hr>'); i++; continue; }
 
-      /* 标题 */
-      var hd = ln.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
+      /* 标题；井号后紧跟 | 就给这个标题加一条蓝→粉渐变竖线（.zb-vl） */
+      var hd = ln.match(/^ {0,3}(#{1,6})(\|?)\s+(.+?)\s*#*\s*$/);
       if (hd) {
         flush();
         var lev = Math.min(6, hd[1].length);
-        var txt = inline(hd[2]);
-        var slug = 'h-' + String(hd[2]).toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').slice(0, 40);
-        out.push('<h' + lev + ' id="' + esc(slug) + '">' + txt + '</h' + lev + '>');
+        var txt = inline(hd[3]);
+        var slug = 'h-' + String(hd[3]).toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').slice(0, 40);
+        out.push('<h' + lev + (hd[2] ? ' class="zb-vl"' : '') +
+          ' id="' + esc(slug) + '">' + txt + '</h' + lev + '>');
         i++; continue;
       }
 
@@ -528,13 +544,60 @@
     return restore(out.join('\n'));
   }
 
+  /* ---------------- 格式优化 ----------------
+     只删「渲染时本来就被忽略」的空白：行首行尾空格、连续空行、正文里多余的
+     连续半角空格。围栏代码块与 $$ 公式整段原样保留，反引号行内代码与 $…$
+     行内公式里的空格也不动，所以整理前后预览效果一致。 */
+  function tidy(src) {
+    var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
+    var lines = text.split('\n');
+    var out = [], fence = null, math = false, blank = 0;
+    function collapse(s) {
+      return s.replace(/(`[^`\n]*`|\$[^$\n]+\$)|( {2,})/g, function (m, keep) {
+        return keep || ' ';
+      });
+    }
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i], f = fenceInfo(ln);
+      if (fence) {
+        out.push(ln);
+        if (fenceClose(ln, fence.ch, fence.n)) fence = null;
+        blank = 0; continue;
+      }
+      if (f) { fence = f; out.push(ln); blank = 0; continue; }
+      if (math) {
+        out.push(ln);
+        if (ln.indexOf('$$') >= 0) math = false;
+        blank = 0; continue;
+      }
+      if (/^ {0,3}\$\$/.test(ln)) {
+        out.push(ln.replace(/[ \t\u3000]+$/, ''));
+        if (!/^\s*\$\$(.+)\$\$\s*$/.test(ln)) math = true;
+        blank = 0; continue;
+      }
+      var t = collapse(ln.replace(/\t/g, '  ')
+        .replace(/^[ \u3000]+/, '')
+        .replace(/[ \u3000]+$/, ''));
+      if (!t) {
+        blank++;
+        if (blank <= 1) out.push('');
+        continue;
+      }
+      blank = 0;
+      out.push(t);
+    }
+    return out.join('\n').replace(/^\n+/, '').replace(/\n+$/, '');
+  }
+
   function plain(src) {
     return String(src == null ? '' : src)
       .replace(/```[\s\S]*?```/g, ' ')
       .replace(/\$\$[\s\S]*?\$\$/g, ' ')
+      .replace(/^:::(?:vl)?[ \t]*$/gm, ' ')
       .replace(/[#>*_~`|$\[\]()!-]/g, ' ')
       .replace(/\s+/g, ' ').trim();
   }
 
-  return { render: render, inline: inline, tex: texToHtml, plain: plain, highlight: highlightCode, version: '1.0.0' };
+  return { render: render, inline: inline, tex: texToHtml, plain: plain,
+           tidy: tidy, highlight: highlightCode, version: '1.1.0' };
 });

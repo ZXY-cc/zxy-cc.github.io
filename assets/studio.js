@@ -219,18 +219,17 @@
   function gateBoot() {
     var q = null;
     try { q = new URLSearchParams(String(window.location.search || '')); } catch (e) { q = null; }
-    if (!q || !q.has('o')) return false;
-    var key = q.get('o') || '';
-    if (gateCheck(key)) {
-      grant();
+    var key = q ? (q.get('o') || '') : '';
+    var unlocked = !!(q && q.has('o') && gateCheck(key));
+    if (unlocked) grant();
+    /* 密钥与「发布完成」的临时参数都不留在地址栏；后者只用来触发一次整页刷新 */
+    if (q && (q.has('o') || q.has('published'))) {
       try {
         window.history.replaceState(null, '',
-          String(window.location.pathname || '/') +
-          String(window.location.hash || ''));
+          String(window.location.pathname || '/') + String(window.location.hash || ''));
       } catch (e) {}
-      return true;
     }
-    return false;
+    return unlocked;
   }
   function syncNav() {
     var nav = document.querySelector && document.querySelector('.nav');
@@ -400,10 +399,22 @@
     state.draft = d;
     renderTagPills(); renderTagHistory(); writeDraft(true);
   }
-  function insertMd(before, after, placeholder) {
+  function insertMd(before, after, placeholder, atLineStart) {
     var ta = document.getElementById('f-body');
     if (!ta) return;
     var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+    /* 标题类工具插到当前行的行首，光标停在标记之后 */
+    if (atLineStart) {
+      var ls = v.lastIndexOf('\n', s - 1) + 1;
+      ta.value = v.slice(0, ls) + before + v.slice(ls);
+      ta.focus();
+      if (ta.setSelectionRange) {
+        var c = s + before.length;
+        ta.setSelectionRange(c, c);
+      }
+      syncFromForm(); refreshPreview(); scheduleSave();
+      return;
+    }
     var sel = v.slice(s, e) || placeholder || '';
     ta.value = v.slice(0, s) + before + sel + (after || '') + v.slice(e);
     ta.focus();
@@ -413,9 +424,26 @@
     }
     syncFromForm(); refreshPreview(); scheduleSave();
   }
+  /* 格式优化：把当前表单的正文交给 ZBMD.tidy 去多余空格与空行。
+     代码块、公式与行内代码原样保留，整理前后预览一致；写作台顺手落盘草稿。 */
+  function tidyForm() {
+    var ids = ['f-body', 'f-ch-body', 'f-moment-text'], ta = null;
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el) { ta = el; break; }
+    }
+    if (!ta || !window.ZBMD || !window.ZBMD.tidy) return say('当前没有可整理的正文。', 'warn');
+    var before = ta.value, after = window.ZBMD.tidy(before);
+    if (after === before) return say('格式已经很整齐，没有多余空格或空行。');
+    ta.value = after;
+    if (ta.id === 'f-body') { syncFromForm(); refreshPreview(); writeDraft(true); }
+    say('格式已整理：去掉 ' + (before.length - after.length) + ' 个多余字符，预览效果不变。');
+  }
   /* 工具栏：前面是 Markdown，后面是 LaTeX；点击往光标处插入对应源码 */
   var MD_TOOLS = [
     ['H1', '# ', '', '一级标题'], ['H2', '## ', '', '二级标题'], ['H3', '### ', '', '三级标题'],
+    ['▌', '##| ', '', '蓝粉渐变竖线标题（##| 标题）', true],
+    ['▌▌', '\n:::vl\n', '\n:::\n', '蓝粉渐变竖线区块（:::vl … :::）'],
     ['B', '**', '**', '加粗'], ['I', '*', '*', '斜体'], ['S', '~~', '~~', '删除线'],
     ['`', '`', '`', '行内代码'], ['{ }', '\n```c\n', '\n```\n', '代码块'],
     ['❝', '> ', '', '引用'], ['•', '- ', '', '无序列表'], ['1.', '1. ', '', '有序列表'],
@@ -461,6 +489,27 @@
   function reloadSoon(msg) {
     say(msg + ' · 正在刷新…');
     window.setTimeout(function () { location.reload(); }, 700);
+  }
+  /* 发布完成：清空创作台内容并整页回到首页。
+     confirmed 为真（站点数据文件已确认更新）才清理本机副本，构建未完成时
+     先留着，避免首页短暂看不到刚发布的内容；草稿与编辑态一律清空。
+     带 ?published 强制整页导航，并给站点数据文件换一个会话内版本号绕开缓存。 */
+  function goHome(confirmed) {
+    delLs(DRAFT_KEY);
+    if (confirmed) delLs(LOCAL_KEY);
+    state.draft = null;
+    state.editing = null;
+    state.files = [];
+    state.momentImg = '';
+    try {
+      if (window.sessionStorage) window.sessionStorage.setItem('zb-data-v', String(Date.now()));
+    } catch (e) {}
+    var base = String(window.location.pathname || '/');
+    window.location.replace(base + '?published=' + Date.now());
+  }
+  function homeSoon(confirmed, msg) {
+    say(msg);
+    window.setTimeout(function () { goHome(confirmed); }, 1100);
   }
 
   /* ---------- 解锁页 ---------- */
@@ -514,6 +563,8 @@
               (state.mode === m[0] ? 'true' : 'false') + '" class="' +
               (state.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>';
           }).join('') + '</div>' +
+          '<button class="md-tool tidy-btn" type="button" data-act="tidy" ' +
+            'title="去掉多余空格与空行，预览效果不变">✦ 格式优化</button>' +
         '</div>' +
         '<div class="desk-body" id="desk-body" data-mode="' + state.mode + '">' +
           '<textarea id="f-body" class="desk-textarea" spellcheck="false" ' +
@@ -521,7 +572,7 @@
             esc(d.markdown) + '</textarea>' +
           '<div id="post-preview" class="desk-preview article-body"></div>' +
         '</div>' +
-        '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · 自动保存在本机</span>' +
+        '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · ##| 标题 或 :::vl 区块可加蓝粉渐变竖线 · 自动保存在本机</span>' +
           '<span id="word-count">0 字</span></div>' +
       '</section>' +
       '<aside class="desk-meta glass">' +
@@ -596,7 +647,8 @@
       '<div class="f-row">' + field('心情', 'f-mood', '✨ 满足') + field('地点', 'f-place', '书桌前') + '</div>' +
       '<label class="file-zone" for="f-moment-img"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择配图 · 可选<input class="f-input f-file" id="f-moment-img" type="file" accept="image/*"></label>' +
       '<div id="moment-img-preview" class="file-preview"></div>' +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-moment">' +
+      '<div class="f-actions"><button class="soft-btn" type="button" data-act="tidy">✦ 格式优化</button>' +
+      '<button class="primary-btn" type="button" data-act="save-moment">' +
       (state.editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formChatter() {
@@ -605,7 +657,8 @@
       field('摘要', 'f-ch-summary', '一句话') +
       '<div class="f-row">' + field('标签（逗号分隔）', 'f-ch-tags', '随笔, 建站') + field('心情', 'f-ch-mood', '🌸 平静') + '</div>' +
       area('正文', 'f-ch-body', '想到哪写到哪…', 10) +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-chatter">' +
+      '<div class="f-actions"><button class="soft-btn" type="button" data-act="tidy">✦ 格式优化</button>' +
+      '<button class="primary-btn" type="button" data-act="save-chatter">' +
       (state.editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formProject() {
@@ -625,7 +678,10 @@
      文章 / 说说 / 杂谈可载回表单重编辑，全部条目可删除；
      已发布内容的删除要再次「发布上线」才对访客生效。 */
   function allPosts() {
-    /* DATA.posts（站点数据层）优先覆盖 posts.js 同 slug 条目 */
+    /* DATA.posts（站点数据层）优先覆盖 posts.js 同 slug 条目；
+       最后按 deleted.posts 过滤：本机墓碑（readDead）与线上文件自带的
+       墓碑（BUILTIN_DEAD）都已由 mergeLocal 汇总进 DATA.deleted.posts，
+       这里不过滤的话，被删除的 posts.js 基础文章会在内容管理里反复复活。 */
     var out = (window.POSTS || []).slice();
     (DATA.posts || []).forEach(function (p) {
       var hit = false;
@@ -634,6 +690,8 @@
       }
       if (!hit) out.push(p);
     });
+    var dead = (DATA.deleted && DATA.deleted.posts) || [];
+    if (dead.length) out = out.filter(function (p) { return dead.indexOf(p.slug) < 0; });
     return out;
   }
   function findItem(kind, id) {
@@ -740,7 +798,8 @@
     if (!upsert('posts', item)) return say('本机存储空间不足，请先到「发布上线」导出并清理。', 'warn');
     d.slug = item.slug; d.status = 'published';
     writeDraft(true);
-    reloadSoon('文章已发布到本机内容');
+    /* 正式发布即离开写作台：草稿清空、整页回首页（本机内容保留，访客可见需再发布上线） */
+    homeSoon(false, '文章已发布 · 正在回到首页…');
   }
   function saveMoment() {
     var text = val('f-moment-text');
@@ -860,7 +919,32 @@
       })
       .then(function () {
         state.busy = false;
-        say('已提交到 GitHub，Pages 构建完成后全网可见（通常 1 分钟内）。');
+        /* 提交成功后不立刻跳走：轮询站点数据文件，等 Pages 真的换上新内容
+           再清本机副本并回首页，避免浏览器缓存把刚发布的内容挡在门外。 */
+        var expected = dataFile().replace(/\r\n/g, '\n');
+        var tries = 0;
+        function checkLive() {
+          tries++;
+          var f = window.fetch;
+          if (!f) return homeSoon(false, '已提交到仓库，正在回到首页…');
+          var req;
+          try {
+            req = f.call(window, 'assets/site-data.js?t=' + Date.now(), { cache: 'no-store' });
+          } catch (e) { return homeSoon(false, '已提交到仓库，正在回到首页…'); }
+          req.then(function (r) { return r.ok ? r.text() : ''; }, function () { return ''; })
+            .then(function (txt) {
+              if (String(txt).replace(/\r\n/g, '\n') === expected) {
+                homeSoon(true, '站点已更新 · 创作台内容已清空，正在回到首页…');
+              } else if (tries >= 20) {
+                homeSoon(false, '已提交到仓库，构建稍慢；稍后刷新首页即可看到，正在回到首页…');
+              } else {
+                say('已提交到仓库，等待站点构建…（' + tries + '/20）');
+                window.setTimeout(checkLive, 4000);
+              }
+            }, function () { homeSoon(false, '已提交到仓库，正在回到首页…'); });
+        }
+        say('已提交到仓库，等待站点构建…');
+        window.setTimeout(checkLive, 2000);
       })
       .catch(function (e) {
         state.busy = false;
@@ -880,7 +964,7 @@
     var mdBtn = t.closest('[data-md]');
     if (mdBtn) {
       var tool = MD_TOOLS[Number(mdBtn.getAttribute('data-md'))];
-      if (tool) insertMd(tool[1], tool[2], '');
+      if (tool) insertMd(tool[1], tool[2], '', tool[4]);
       return;
     }
     var modeBtn = t.closest('[data-mode-btn]');
@@ -980,6 +1064,7 @@
       say('已退出编辑，表单已清空。');
       return;
     }
+    if (a === 'tidy') return tidyForm();
     if (a === 'draft-save') return savePost(true);
     if (a === 'publish-post') return savePost(false);
     if (a === 'cover-pick') {

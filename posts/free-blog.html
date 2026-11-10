@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.5.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.8.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -25,7 +25,9 @@ body{margin:0;background:linear-gradient(160deg,#dceafb,#eae6fb 46%,#fdeef5);col
 article{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;padding:32px 36px;box-shadow:0 10px 30px rgba(112,138,190,.10)}
 h1{font-size:27px;margin:0 0 8px;letter-spacing:.5px}
 .meta{color:var(--muted);font-size:13px;margin:0 0 26px}
-h2{font-size:22px;margin:34px 0 14px;padding-left:13px;border-left:3px solid var(--brand)}
+h2{font-size:22px;margin:34px 0 14px}
+.zb-vl{border-left:3px solid transparent;border-image:linear-gradient(180deg,#7897dc,#ab8bd4,#e096bd) 1;padding-left:13px}
+.zb-vl>:first-child{margin-top:0}.zb-vl>:last-child{margin-bottom:0}
 h3{font-size:17px;margin:24px 0 10px}
 p{margin:0 0 18px}
 strong{color:var(--ink)}
@@ -136,7 +138,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>零成本搭一个自己的博客</h1>
-<p class="meta">2026-11-07 · 建站 / 笔记</p>
+<p class="meta" data-view-post="free-blog">2026-11-07 · 建站 / 笔记 · <span class="mirror-views"><span data-view="free-blog">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>想拥有一个自己的博客，其实只需要解决三个问题：别人怎么找到你、内容放在哪、以及浏览器地址栏里那把小锁。这三件事分别对应域名、托管和证书，彼此独立，可以分开选。</p><h2>三条信息，三层链路</h2><table><thead><tr><th>环节</th><th>可选服务</th><th>要做的事</th></tr></thead><tbody><tr><td>免费域名</td><td>dpdns.org</td><td>申请一个 you.dpdns.org</td></tr><tr><td>解析与证书</td><td>Cloudflare / 平台自带</td><td>加解析记录，勾强制 HTTPS</td></tr><tr><td>网站托管</td><td>GitHub Pages / Cloudflare Pages</td><td>上传静态文件</td></tr></tbody></table><p>dpdns.org 来自 DigitalPlat FreeDomain，是一个免费二级域名服务。注册后你会拿到形如 <code>you.dpdns.org</code> 的地址，并且拥有完整的 DNS 控制权，可以自己添加 A、CNAME、TXT 记录，也可以把 NS 委派给 Cloudflare。每个账号的免费名额有限，长期闲置或违规会被回收，所以它适合练手和个人站点，不适合承载重要业务。</p><blockquote><p>一个常见误解：以为要单独去申请一张免费证书。其实不用。GitHub Pages 通过 Let's Encrypt 自动签发，Cloudflare Pages 用 Universal SSL，两者都会自动续期，你要做的只是把 DNS 指对，然后勾选强制 HTTPS。</p></blockquote><h2>最省事的一条路径</h2><ol><li>在 DigitalPlat 控制台注册域名，委派模式选「DigitalPlat DNS」（默认且标了推荐），解析记录就在这个面板里加，先不必迁到 Cloudflare。</li><li>把博客文件推到 GitHub 仓库，在 Settings → Pages 里选择从 main 分支根目录部署。此时已经能用 <code>username.github.io</code> 访问了。</li><li>回到域名控制台添加解析记录。注意 <code>you.dpdns.org</code> 是这个区域的根，标准 DNS 不允许在根上放 CNAME：</li></ol><pre><code>方案 <span class="tk-cls">A</span>：不带 www，给根域加 <span class="tk-nu">4</span> 条 <span class="tk-cls">A</span> 记录
 <span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">108.153</span>
 <span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">109.153</span>
@@ -161,12 +163,14 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.5.0"></script>
-<script src="../assets/comment-archive.js?v=v3.5.0"></script>
-<script src="../assets/interactions-config.js?v=v3.5.0"></script>
-<script src="../assets/interactions.js?v=v3.5.0"></script>
-<script src="../assets/issues-live.js?v=v3.5.0"></script>
+<script src="../assets/comments-data.js?v=v3.8.0"></script>
+<script src="../assets/comment-archive.js?v=v3.8.0"></script>
+<script src="../assets/interactions-config.js?v=v3.8.0"></script>
+<script src="../assets/interactions.js?v=v3.8.0"></script>
+<script src="../assets/issues-live.js?v=v3.8.0"></script>
+<script src="../assets/likes.js?v=v3.8.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
-window.ZBLive && window.ZBLive.mount("free-blog");</script>
+window.ZBLive && window.ZBLive.mount("free-blog");
+window.ZBLikes && window.ZBLikes.mount();</script>
 </body>
 </html>

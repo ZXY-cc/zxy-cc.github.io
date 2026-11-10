@@ -616,6 +616,15 @@ main { min-height: 320px; }
 .post-title { display: block; margin: 9px 0 9px; font-size: 20px; font-weight: 650; line-height: 1.45; color: var(--ink-strong); }
 .post-title:hover { color: var(--accent-text); }
 .post-summary { margin: 0; color: var(--muted); font-size: 14.5px; }
+/* 首页卡片只读统计：爱心数与匿名浏览数 */
+.post-stats { display: flex; align-items: center; gap: 16px; margin-top: 14px;
+  padding-top: 12px; border-top: 1px solid var(--glass-line); }
+.post-stat { display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+  color: var(--muted); font-variant-numeric: tabular-nums; }
+.post-stat svg { width: 15px; height: 15px; fill: none; stroke: currentColor; }
+.post-stat .stat-heart { stroke-width: 6; }
+.post-stat .stat-eye { stroke-width: 1.8; }
+.article-views { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
 .tag {
@@ -650,6 +659,16 @@ main { min-height: 320px; }
   color: var(--ink-strong);
 }
 .article h3 { font-size: 17px; font-weight: 650; margin: 28px 0 10px; }
+/* Markdown 里的渐变竖线：##| 标题 或 :::vl 区块。用主题变量写渐变，
+   日夜自动换色；只有作者显式写了标记才出现，普通标题保持干净。 */
+.article-body .zb-vl, .desk-preview .zb-vl {
+  border-left: 3px solid transparent;
+  border-image: linear-gradient(180deg, var(--accent), var(--accent-2), var(--accent-3)) 1;
+  padding-left: 14px;
+}
+.article-body > .zb-vl, .desk-preview > .zb-vl { margin: 22px 0; }
+.article-body > .zb-vl > :first-child, .desk-preview > .zb-vl > :first-child { margin-top: 0; }
+.article-body > .zb-vl > :last-child, .desk-preview > .zb-vl > :last-child { margin-bottom: 0; }
 /* 文章页：整篇收进一个统一栏，栏宽用 rem 固定，不随各块自身字号变化；
    标题、署名、标签、目录、正文共享同一左右边界，观感匀称。 */
 .article-inner { width: 100%; max-width: 46rem; margin: 0 auto; }
@@ -824,6 +843,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .article-author,
 :root[data-theme="night"] .article-date,
 :root[data-theme="night"] .post-summary,
+:root[data-theme="night"] .post-stat,
+:root[data-theme="night"] .article-views,
 :root[data-theme="night"] .toc-title,
 :root[data-theme="night"] .tag-count,
 :root[data-theme="night"] .site-foot,
@@ -1605,6 +1626,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .md-tool:hover { color: var(--ink-strong); background: var(--glass-sheen), var(--glass-strong);
   border-color: var(--glass-line); }
 .md-tool:active { transform: translateY(1px); }
+.tidy-btn { flex: 0 0 auto; border-color: var(--glass-line); color: var(--accent-text); white-space: nowrap; }
 .mode-switch { display: flex; gap: 2px; flex: 0 0 auto; padding: 3px; border-radius: 999px;
   background: var(--code-bg); border: 1px solid var(--glass-line); }
 .mode-switch button { font: inherit; font-size: 11.5px; cursor: pointer; padding: 4px 11px;

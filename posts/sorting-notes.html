@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-05">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.5.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.8.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -25,7 +25,9 @@ body{margin:0;background:linear-gradient(160deg,#dceafb,#eae6fb 46%,#fdeef5);col
 article{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;padding:32px 36px;box-shadow:0 10px 30px rgba(112,138,190,.10)}
 h1{font-size:27px;margin:0 0 8px;letter-spacing:.5px}
 .meta{color:var(--muted);font-size:13px;margin:0 0 26px}
-h2{font-size:22px;margin:34px 0 14px;padding-left:13px;border-left:3px solid var(--brand)}
+h2{font-size:22px;margin:34px 0 14px}
+.zb-vl{border-left:3px solid transparent;border-image:linear-gradient(180deg,#7897dc,#ab8bd4,#e096bd) 1;padding-left:13px}
+.zb-vl>:first-child{margin-top:0}.zb-vl>:last-child{margin-bottom:0}
 h3{font-size:17px;margin:24px 0 10px}
 p{margin:0 0 18px}
 strong{color:var(--ink)}
@@ -136,7 +138,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>排序算法笔记：从冒泡到基数</h1>
-<p class="meta">2026-11-05 · 算法 / C</p>
+<p class="meta" data-view-post="sorting-notes">2026-11-05 · 算法 / C · <span class="mirror-views"><span data-view="sorting-notes">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>排序算法大概是所有人最早接触的一组算法。它们的思路差别很大，但放在一起对照时，最容易记住的反而不是代码，而是「什么时候该用哪一个」。</p><h2>性质对照</h2><table><thead><tr><th>算法</th><th>平均时间</th><th>最坏时间</th><th>空间</th><th>稳定性</th></tr></thead><tbody><tr><td>冒泡排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>稳定</td></tr><tr><td>插入排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>稳定</td></tr><tr><td>选择排序</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>不稳定</td></tr><tr><td>计数排序</td><td>O(n + w)</td><td>O(n + w)</td><td>O(w)</td><td>稳定</td></tr><tr><td>基数排序</td><td>O(d(n + k))</td><td>O(d(n + k))</td><td>O(n + k)</td><td>稳定</td></tr></tbody></table><p>表中 <code>n</code> 是元素个数，<code>w</code> 是值域大小，<code>k</code> 是每一位可能的取值数，<code>d</code> 是位数。前三种基于比较，逃脱不了 <code>O(n log n)</code> 的下界；后两种不比较元素大小，用空间换时间，在特定条件下能做得更快。</p><h2>冒泡排序的 C 实现</h2><p>相邻元素两两比较，把较大的一路交换到末尾。加一个「本轮是否发生过交换」的标志，可以在已经有序时提前结束。</p><pre><code><span class="tk-kw">#include</span> &lt;stdio.<span class="tk-pr">h</span>&gt;
 
 <span class="tk-ty">void</span> <span class="tk-fn">bubble_sort</span>(<span class="tk-ty">int</span> a[], <span class="tk-ty">int</span> n) {
@@ -177,12 +179,14 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/sorting-notes">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.5.0"></script>
-<script src="../assets/comment-archive.js?v=v3.5.0"></script>
-<script src="../assets/interactions-config.js?v=v3.5.0"></script>
-<script src="../assets/interactions.js?v=v3.5.0"></script>
-<script src="../assets/issues-live.js?v=v3.5.0"></script>
+<script src="../assets/comments-data.js?v=v3.8.0"></script>
+<script src="../assets/comment-archive.js?v=v3.8.0"></script>
+<script src="../assets/interactions-config.js?v=v3.8.0"></script>
+<script src="../assets/interactions.js?v=v3.8.0"></script>
+<script src="../assets/issues-live.js?v=v3.8.0"></script>
+<script src="../assets/likes.js?v=v3.8.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("sorting-notes");
-window.ZBLive && window.ZBLive.mount("sorting-notes");</script>
+window.ZBLive && window.ZBLive.mount("sorting-notes");
+window.ZBLikes && window.ZBLikes.mount();</script>
 </body>
 </html>
