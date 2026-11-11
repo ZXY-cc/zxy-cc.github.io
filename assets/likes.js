@@ -118,6 +118,14 @@
      文章的会话标记沿用旧格式，首页单独用一段新标记，互不干扰。 */
   var VIEW_KIND_POST = 'post';
   var HOME_KIND = 'site', HOME_ID = 'home';
+  /* 首页浏览键随 DATA.site.homeViewsVer 轮换：创作台「清空首页浏览量」把版本 +1，
+     访客端改读 site-home-vN 新键（Abacus 匿名键无法在服务端清零，只能换键归零）；
+     点赞键 site-home 不轮换，爱心数据不受影响。 */
+  function homeCounterId() {
+    var v = 1, site = (window.STUDIO_DATA && window.STUDIO_DATA.site) || null;
+    if (site && Number(site.homeViewsVer) >= 1) v = Math.floor(Number(site.homeViewsVer));
+    return v <= 1 ? HOME_ID : 'home-v' + v;
+  }
   function viewMark(kind, id) {
     return VIEWED_KEY + (kind === VIEW_KIND_POST ? id : kind + '-' + id);
   }
@@ -138,8 +146,8 @@
   }
   function getViews(slug) { return getViewCount(VIEW_KIND_POST, slug); }
   function countView(slug) { return countViewOnce(VIEW_KIND_POST, slug); }
-  function getHomeViews() { return getViewCount(HOME_KIND, HOME_ID); }
-  function countHomeView() { return countViewOnce(HOME_KIND, HOME_ID); }
+  function getHomeViews() { return getViewCount(HOME_KIND, homeCounterId()); }
+  function countHomeView() { return countViewOnce(HOME_KIND, homeCounterId()); }
 
   /* 按钮结构：与说说页原有的爱心完全同款（灰 → 粉，点击放大） */
   function html(kind, id, base, extra) {

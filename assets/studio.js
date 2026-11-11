@@ -150,6 +150,7 @@
     if (typeof s.intro === 'string') DATA.site.intro = s.intro;
     if (Object.prototype.toString.call(s.skills) === '[object Array]') DATA.site.skills = s.skills;
     if (Object.prototype.toString.call(s.social) === '[object Array]') DATA.site.social = s.social;
+    if (Number(s.homeViewsVer) >= 1) DATA.site.homeViewsVer = Math.floor(Number(s.homeViewsVer));
   }
   ensureIds();
   /* 线上数据文件里原本的头像与签名，供「恢复」用（本机覆盖层生效之前先存一份） */
@@ -346,6 +347,12 @@
   function val(id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
   function setText(id, v) { var e = document.getElementById(id); if (e) e.value = String(v == null ? '' : v); }
   function splitTags(s) { return s.split(/[,，、\s]+/).filter(Boolean); }
+  /* 自动摘要截断：超过 n 字时以「……」结尾，省略号计入总长 */
+  function clipSummary(s, n) {
+    s = String(s || '').trim();
+    if (s.length <= n) return s;
+    return s.slice(0, Math.max(1, n - 2)).replace(/[\s,，.。;；:：、!！?？'”’"]+$/, '') + '……';
+  }
 
   /* ---------- 写文章工作台：草稿、工具栏与属性 ---------- */
   function blankDraft() {
@@ -810,7 +817,8 @@
       field('头像地址（也可以直接粘贴图片 URL）', 'f-site-avatar', 'assets/avatar.jpg') +
       area('签名（首页名片名字下面的文字）', 'f-site-bio', '写一句想放在这里的话…', 3) +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-site">保存名片</button>' +
-      '<button class="soft-btn" type="button" data-act="site-reset">恢复当前线上头像与签名</button></div></div>';
+      '<button class="soft-btn" type="button" data-act="site-reset">恢复当前线上头像与签名</button>' +
+      '<button class="soft-btn" type="button" data-act="clear-home-views">清空首页浏览量</button></div></div>';
   }
   /* 内容管理：列出全部内容（线上数据 + 本机 + posts.js 基础文章），
      文章 / 说说 / 杂谈可载回表单重编辑，全部条目可删除；
@@ -949,7 +957,7 @@
       slug: editing ? editing.id : (d.slug || uid('p')), title: d.title,
       date: editing ? (findItem('posts', editing.id) || {}).date || d.date : (d.date || today()),
       tags: d.tags.slice(), category: d.category || '', cover: d.cover || '',
-      summary: d.summary || (window.ZBMD ? window.ZBMD.plain(d.markdown).slice(0, 90) : '') || d.title,
+      summary: d.summary || clipSummary(window.ZBMD ? window.ZBMD.plain(d.markdown) : '', 90) || d.title,
       markdown: d.markdown, body: mdRender(d.markdown),
       format: 'markdown', status: 'published'
     };
@@ -993,7 +1001,7 @@
       ? findItem('chatter', state.editing.id) : null;
     var item = {
       id: old ? old.id : uid('c'), date: old ? old.date : today(), title: title,
-      summary: val('f-ch-summary') || title.slice(0, 24), tags: splitTags(val('f-ch-tags')),
+      summary: val('f-ch-summary') || clipSummary(title, 24), tags: splitTags(val('f-ch-tags')),
       mood: val('f-ch-mood') || '🌸 平静',
       markdown: body, body: htmlOfBody(body), format: 'markdown'
     };
@@ -1032,7 +1040,8 @@
     return setLs(SITE_KEY, JSON.stringify({
       avatar: DATA.site.avatar, bio: DATA.site.bio,
       tagline: DATA.site.tagline, intro: DATA.site.intro,
-      skills: DATA.site.skills, social: DATA.site.social
+      skills: DATA.site.skills, social: DATA.site.social,
+      homeViewsVer: DATA.site.homeViewsVer
     }));
   }
   /* 把关于页表单当前值写回 DATA.site（不落盘不通知，供增删入口行前暂存） */
@@ -1102,6 +1111,18 @@
     if (img) img.src = DATA.site.avatar;
     queueSync();
     say('已恢复站点数据文件里的头像与签名，并已自动同步到网站。');
+  }
+  /* 清空首页浏览量：Abacus 匿名键没有服务端清零入口，改用键位版本轮换——
+     homeViewsVer 加一后，访客端改读 site-home-vN 新键，旧计数自然不再出现，
+     并随站点数据自动同步，对所有设备的访客生效。 */
+  function clearHomeViews() {
+    if (!DATA.site || typeof DATA.site !== 'object') DATA.site = {};
+    if (!window.confirm('确定清空首页浏览量吗？所有访客名片上的浏览数都会从零重新统计。')) return;
+    DATA.site.homeViewsVer = (Number(DATA.site.homeViewsVer) || 1) + 1;
+    persistSiteLocal();
+    queueSync();
+    notifySite();
+    say('首页浏览量已清零：浏览键已轮换到新版本，自动同步落地后对所有访客生效。');
   }
   function savePhoto() {
     if (!state.files.length) return say('还没有选图片。', 'warn');
@@ -1472,6 +1493,7 @@
       return;
     }
     if (a === 'site-reset') return resetSite();
+    if (a === 'clear-home-views') return clearHomeViews();
     if (a === 'preview-post') { setMode('preview'); return; }
     if (a === 'export-js') return download('site-data.js', dataFile());
     if (a === 'export-json') return download('studio-backup.json', JSON.stringify(DATA, null, 2));
