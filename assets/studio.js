@@ -5,8 +5,9 @@
       其它设备的 #/studio 渲染为「页面不存在」，源码中只保留摘要（明码永不入库）。
    2) 发布凭证：真正把内容写上线时，用 GitHub 细粒度令牌，
       由 GitHub 服务器确认「你确实是这个仓库的所有者」，前端说了不算；
-      令牌默认只在内存里存一次，不落本机存储。
-   创作内容先存本机 localStorage，发布时整体重写 assets/site-data.js 推到仓库。 */
+      开启自动同步时令牌保存在这台设备，关闭则只存在内存里。
+   创作内容先存本机 localStorage，每次新增 / 修改 / 删除后自动整体重写
+   assets/site-data.js 推到仓库，其它设备刷新即可读到最新状态。 */
 
 (function () {
   var DATA = window.STUDIO_DATA;
@@ -21,6 +22,8 @@
   var SITE_KEY = 'zb-studio-site';
   var RESET_KEY = 'zb-studio-reset';
   var PAT_KEY = 'zb-gh-pat';
+  var AUTO_KEY = 'zb-studio-autosync';
+  var PENDING_KEY = 'zb-studio-pending';
   var REPO = 'ZXY-cc/zxy-cc.github.io';
   var FILE = 'assets/site-data.js';
   var BRANCH = 'main';
@@ -28,7 +31,9 @@
   var KINDS = ['posts', 'moments', 'chatter', 'albums', 'projects', 'friends'];
   var DRAFT_KEY = 'zb-studio-draft';
   var CATS = ['随笔', '算法', '建站', '随想', '笔记', '其它'];
-  var state = { tab: 'post', msg: '', busy: false, files: [], mode: 'write', draft: null, saveTimer: null, editing: null };
+  var state = { tab: 'post', msg: '', busy: false, files: [], mode: 'write', draft: null, saveTimer: null, editing: null, pat: '' };
+  /* 自动同步队列：改动先落本机，防抖合并后串行写仓库；失败保留本机内容并重试 */
+  var sync = { timer: null, running: false, dirty: false, fails: 0, status: '', warn: true };
 
   /* ---------- 同步 SHA-256（不依赖 Web Crypto，http / file 下同样可用） ---------- */
   var K = [
@@ -201,6 +206,7 @@
     if (deadHas(kind, id)) deadRemove(kind, id);
     if (!setLs(LOCAL_KEY, JSON.stringify(local))) return false;
     mergeLocal();
+    queueSync();
     return true;
   }
   /* ---------- 删除墓碑 ----------
@@ -245,6 +251,7 @@
     local[kind] = local[kind].filter(function (x) { return keyOf(x, kind) !== id; });
     setLs(LOCAL_KEY, JSON.stringify(local));
     mergeLocal();
+    queueSync();
   }
 
   /* ---------- 判定：设备凭证 ----------
@@ -548,6 +555,23 @@
      先留着，避免首页短暂看不到刚发布的内容；草稿与编辑态一律清空。
      带 ?published 强制整页导航，并给站点数据文件换一个会话内版本号绕开缓存。 */
   function goHome(confirmed) {
+    /* 还有改动没写回仓库时先等同步落地，别让整页导航把请求掐断（最多等 10 秒） */
+    if (!state.goHomeWaiting && autoEnabled() && syncToken() &&
+        (sync.timer || sync.dirty || sync.running)) {
+      state.goHomeWaiting = true;
+      if (sync.timer) { window.clearTimeout(sync.timer); sync.timer = null; runSync(); }
+      var waited = 0;
+      (function waitSync() {
+        if ((sync.dirty || sync.running) && waited < 20) {
+          waited++;
+          window.setTimeout(waitSync, 500);
+        } else {
+          state.goHomeWaiting = false;
+          goHome(confirmed);
+        }
+      })();
+      return;
+    }
     delLs(DRAFT_KEY);
     /* 名片设置已随站点数据文件发布，本机覆盖层可以撤掉，避免以后另一台设备改了不生效 */
     if (confirmed) { delLs(LOCAL_KEY); delLs(SITE_KEY); }
@@ -581,7 +605,7 @@
     var tabs = [
       ['post', '写文章'], ['photo', '发图片'], ['moment', '发说说'], ['chatter', '发杂谈'],
       ['project', '项目'], ['friend', '友链'], ['site', '名片设置'],
-      ['manage', '内容管理'], ['publish', '发布上线']
+      ['manage', '内容管理'], ['publish', '发布 / 同步']
     ];
     return '<div class="studio-tabs">' + tabs.map(function (t) {
       return '<button class="stab' + (state.tab === t[0] ? ' on' : '') + '" type="button" data-tab="' +
@@ -671,7 +695,7 @@
             '<button class="primary-btn" type="button" data-act="publish-post">' +
             (editing ? '保存修改' : '正式发布') + '</button>' +
           '</div>' +
-          '<p class="meta-hint">发布先写入本机内容；要让访客看到，请到「发布上线」导出或一键提交。</p>' +
+          '<p class="meta-hint">发布先写入本机内容，开启自动同步后会立即写进网站；存为草稿只留在本机。</p>' +
         '</div>' +
       '</aside></div>';
   }
@@ -740,7 +764,7 @@
     var s = DATA.site || {};
     return '<div class="studio-form glass"><h2>名片设置</h2>' +
       '<p class="f-hint">这里改的是首页上方名片的头像，以及名字下面的那行签名。' +
-      '先保存在这台设备，到「发布上线」提交后才会对所有访客生效。</p>' +
+      '先保存在这台设备，开启自动同步后会立即写进网站，对所有访客生效。</p>' +
       '<div class="site-avatar-row">' +
         '<div class="site-avatar-box">' +
           '<img id="site-avatar-preview" src="' + esc(s.avatar || 'assets/avatar.jpg') +
@@ -802,26 +826,36 @@
     try { size = (ls(LOCAL_KEY) || '').length; } catch (e) {}
     return '<div class="studio-form glass"><h2>内容管理</h2>' +
       '<p class="f-hint">文章、说说、杂谈可以载回对应表单重新编辑；全部条目都能删除。' +
-      '改动先保存在本机——要让访客看到新内容或删除生效，请到「发布上线」提交；已发布内容删除后可在仓库提交历史找回。</p>' +
+      '改动先保存在本机，开启自动同步后立即写进网站，访客看到的就是最新状态；已发布内容删除后可在仓库提交历史找回。</p>' +
       '<div class="manage-list">' + (rows.length ? rows.join('') : '<p class="page-note">还没有任何内容。</p>') + '</div>' +
       '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清空本机副本与草稿，避免浏览器存储被图片占满。</p>' +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="clear-local">清空本机内容与草稿</button></div></div>';
   }
   function formPublish() {
-    return '<div class="studio-form glass"><h2>发布上线</h2>' +
-      '<p class="f-hint">静态博客没有服务器，所以「让所有访客看到」必须把数据文件写回 GitHub 仓库。<br>' +
-      '下面两种办法任选其一，都能让 https://zxy-blog.top 更新。</p>' +
-      '<h3>办法一 · 导出文件交给助手</h3>' +
-      '<p class="f-hint">下载 <code>site-data.js</code>，发给我，我用仓库部署密钥推送（不需要你给任何令牌）。</p>' +
-      '<div class="f-actions"><button class="soft-btn" type="button" data-act="export-js">下载 site-data.js</button>' +
-      '<button class="soft-btn" type="button" data-act="export-json">下载备份 JSON</button></div>' +
-      '<h3>办法二 · 自己一键发布</h3>' +
+    var auto = autoEnabled(), has = !!syncToken();
+    return '<div class="studio-form glass"><h2>发布上线 / 自动同步</h2>' +
+      '<p class="f-hint">静态博客没有服务器，「让所有访客看到」必须把数据文件写回 GitHub 仓库。' +
+      '<b>开启自动同步后，文章、项目、照片、说说、友链、杂谈与名片的每次新增、修改、删除都会自动写进网站</b>，' +
+      '其它设备刷新 https://zxy-blog.top 即可看到最新状态。</p>' +
+      '<p class="f-hint" id="sync-state">' + esc(sync.status ||
+        (has ? (auto ? '自动同步已开启：本机改动会自动写进网站。' : '自动同步已关闭：改动只保存在这台设备。')
+             : '尚未配置发布凭证：改动只保存在这台设备。')) + '</p>' +
+      '<h3>办法一 · 一次配置，之后全自动（推荐）</h3>' +
       '<p class="f-hint">在 GitHub 生成一个 <b>细粒度令牌</b>，只授权 <code>ZXY-cc/zxy-cc.github.io</code> 的 Contents 读写。' +
       '令牌只保存在这台设备的浏览器里，只发往 api.github.com，不会写进任何导出文件。</p>' +
       field('GitHub 细粒度令牌', 'f-pat', 'github_pat_…', 'password') +
-      '<label class="f-check"><input type="checkbox" id="f-remember"> 记住令牌到本机（可选；默认只保存在内存，刷新即弃）</label>' +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="publish">提交到仓库并发布</button></div>' +
-      '<p class="f-hint">提交后 GitHub Pages 通常 1 分钟内完成构建；期间本站仍在显示旧内容，属正常现象。</p></div>';
+      '<label class="f-check"><input type="checkbox" id="f-autosync"' + (auto ? ' checked' : '') +
+      '> 自动同步每次改动到网站</label>' +
+      '<label class="f-check"><input type="checkbox" id="f-remember"' + (has ? ' checked' : '') +
+      '> 在这台设备记住令牌（自动同步必需）</label>' +
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="publish">保存设置并发布当前内容</button>' +
+      '<button class="soft-btn" type="button" data-act="sync-now">立即同步当前内容</button>' +
+      '<button class="soft-btn" type="button" data-act="sync-off">关闭自动同步并清除令牌</button></div>' +
+      '<h3>办法二 · 导出文件交给助手</h3>' +
+      '<p class="f-hint">不想在浏览器里放令牌时，下载 <code>site-data.js</code> 发给我，我用仓库部署密钥推送。</p>' +
+      '<div class="f-actions"><button class="soft-btn" type="button" data-act="export-js">下载 site-data.js</button>' +
+      '<button class="soft-btn" type="button" data-act="export-json">下载备份 JSON</button></div>' +
+      '<p class="f-hint">提交后 GitHub Pages 通常 1 分钟内完成构建；站点数据地址每 10 秒轮换，访客不会读到旧缓存。</p></div>';
   }
   function formHtml() {
     return {
@@ -833,7 +867,9 @@
   function studioHtml() {
     return '<div class="studio-wrap' + (state.tab === 'post' ? ' is-desk' : '') + '" id="studio-panel">' +
       '<div class="studio-head glass"><div><div class="page-kicker">OWNER STUDIO</div>' +
-      '<h1>创作台</h1><p>这台设备已识别为站长的设备 · 内容先存本机，发布后才对所有访客可见。</p></div>' +
+      '<h1>创作台</h1><p>这台设备已识别为站长的设备 · ' +
+      '<span id="sync-badge" class="sync-badge' + (sync.warn ? ' warn' : '') + '">' +
+      (sync.warn ? '待同步' : '自动同步') + '</span> · 每次改动自动写进网站，其它设备刷新即可看到最新状态。</p></div>' +
       '<button class="soft-btn" type="button" data-act="lock">退出站长模式</button></div>' +
       tabHtml() + '<div id="studio-msg" class="studio-msg">' + esc(state.msg) + '</div>' +
       formHtml() + '</div>';
@@ -887,12 +923,12 @@
       state.draft = blankDraft();
       delLs(DRAFT_KEY);
       render(document.getElementById('app'));
-      say('文章已保存修改；要让访客看到，请到「发布上线」提交。');
+      say('文章已保存修改，并已自动同步到网站。');
       return;
     }
     d.slug = item.slug; d.status = 'published';
     writeDraft(true);
-    /* 正式发布即离开写作台：草稿清空、整页回首页（本机内容保留，访客可见需再发布上线） */
+    /* 正式发布即离开写作台：草稿清空、整页回首页（自动同步会先把改动写回仓库） */
     homeSoon(false, '文章已发布 · 正在回到首页…');
   }
   function saveMoment() {
@@ -964,7 +1000,8 @@
       return say('本机存储空间不足，换一张小一点的头像再试。', 'warn');
     }
     notifySite();
-    say('名片已保存：首页头像与签名立即更新；到「发布上线」后对所有访客生效。');
+    queueSync();
+    say('名片已保存：首页头像与签名立即更新，并已自动同步到网站。');
   }
   function resetSite() {
     delLs(SITE_KEY);
@@ -975,7 +1012,8 @@
     setText('f-site-bio', DATA.site.bio);
     var img = document.getElementById('site-avatar-preview');
     if (img) img.src = DATA.site.avatar;
-    say('已恢复站点数据文件里的头像与签名。');
+    queueSync();
+    say('已恢复站点数据文件里的头像与签名，并已自动同步到网站。');
   }
   function savePhoto() {
     if (!state.files.length) return say('还没有选图片。', 'warn');
@@ -1002,60 +1040,182 @@
     reloadSoon('已加入 ' + album.photos.length + ' 张照片');
   }
 
-  /* ---------- 一键发布 ---------- */
+  /* ---------- 发布上线 / 自动同步 ----------
+     每次新增、修改、删除内容后，把整份站点数据写回仓库的 assets/site-data.js，
+     其它设备刷新就能看到最新状态。写权限仍由 GitHub 细粒度令牌决定；
+     改动始终先落本机，网络失败保留本机内容并自动重试，不会丢数据。 */
   function b64utf8(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
-  function publish() {
-    if (state.busy) return;
-    var pat = val('f-pat') || ls(PAT_KEY) || '';
-    if (!pat) return say('先填入 GitHub 细粒度令牌，或者用「办法一」导出文件发给我。', 'warn');
-    var remember = document.getElementById('f-remember');
-    if (remember && remember.checked) setLs(PAT_KEY, pat);
-    else delLs(PAT_KEY);
-    state.busy = true;
-    say('正在提交到仓库…');
+  function ghFetch(url, opts) {
+    var f = window.fetch;
+    if (!f) return Promise.reject(new Error('当前浏览器不支持 fetch'));
+    return f.call(window, url, opts);
+  }
+  function pushData(payload, pat, message) {
     var url = 'https://api.github.com/repos/' + REPO + '/contents/' + FILE;
     var headers = {
       'Accept': 'application/vnd.github+json',
       'Authorization': 'Bearer ' + pat,
       'Content-Type': 'application/json'
     };
-    fetch(url + '?ref=' + BRANCH, { method: 'GET', headers: headers })
+    return ghFetch(url + '?ref=' + BRANCH, { method: 'GET', headers: headers })
       .then(function (r) {
         if (!r.ok) throw new Error('读取仓库失败（HTTP ' + r.status + '），请检查令牌权限。');
         return r.json();
       })
       .then(function (d) {
-        return fetch(url, {
+        return ghFetch(url, {
           method: 'PUT', headers: headers,
           body: JSON.stringify({
-            message: 'content: publish from owner studio ' + today(),
-            content: b64utf8(dataFile()), sha: d.sha, branch: BRANCH
+            message: message || ('content: publish from owner studio ' + today()),
+            content: b64utf8(payload), sha: d.sha, branch: BRANCH
           })
         });
       })
       .then(function (r) {
         if (!r.ok) throw new Error('提交失败（HTTP ' + r.status + '），请检查令牌是否有 Contents 写权限。');
         return r.json();
+      });
+  }
+  function autoEnabled() { return ls(AUTO_KEY) !== '0'; }
+  function syncToken() { return String(state.pat || ls(PAT_KEY) || '').trim(); }
+  function markPending() { setLs(PENDING_KEY, '1'); }
+  function stamp() {
+    try { return new Date().toTimeString().slice(0, 5); } catch (e) { return ''; }
+  }
+  function syncStatus(msg, warn) {
+    sync.status = String(msg || '');
+    sync.warn = !!warn;
+    var box = document.getElementById('sync-state');
+    if (box) box.textContent = sync.status;
+    var badge = document.getElementById('sync-badge');
+    if (badge) {
+      badge.textContent = sync.warn ? '待同步' : '自动同步';
+      badge.className = 'sync-badge' + (sync.warn ? ' warn' : '');
+    }
+  }
+  function queueSync() {
+    if (!isOwner()) return;
+    if (!autoEnabled()) { syncStatus('自动同步已关闭：改动只保存在这台设备', true); return; }
+    if (!syncToken()) { syncStatus('待同步：本机已保存，到「发布上线」填一次令牌即可自动同步', true); return; }
+    markPending();
+    sync.dirty = true;
+    if (sync.timer) window.clearTimeout(sync.timer);
+    sync.timer = window.setTimeout(runSync, 1200);
+    syncStatus('改动已保存，正在同步到网站…');
+  }
+  /* 发布成功且 Pages 换上新文件后，把内置快照刷新成刚发布的内容再清本机副本：
+     以后任何设备（含这台）合并或清空都不会把旧内容带回来。 */
+  function refreshBuiltin() {
+    KINDS.forEach(function (k) {
+      BUILTIN[k] = JSON.parse(JSON.stringify(DATA[k] || []));
+    });
+    BUILTIN_DEAD.posts = ((DATA.deleted && DATA.deleted.posts) || []).slice();
+    if (DATA.site) { RAW_SITE.avatar = DATA.site.avatar; RAW_SITE.bio = DATA.site.bio; }
+  }
+  function waitLive(payload) {
+    var tries = 0;
+    function check() {
+      tries++;
+      ghFetch('assets/site-data.js?t=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.text() : ''; }, function () { return ''; })
+        .then(function (txt) {
+          if (String(txt).replace(/\r\n/g, '\n') === payload) {
+            if (!sync.dirty && !sync.running &&
+                dataFile().replace(/\r\n/g, '\n') === payload) {
+              refreshBuiltin();
+              delLs(LOCAL_KEY); delLs(SITE_KEY); delLs(PENDING_KEY);
+              try {
+                if (window.sessionStorage) window.sessionStorage.setItem('zb-data-v', String(Date.now()));
+              } catch (e) {}
+            }
+            syncStatus('已同步到网站 · 所有访客可见 · ' + stamp());
+          } else if (tries < 20) {
+            window.setTimeout(check, 4000);
+          } else {
+            syncStatus('已提交到仓库，站点构建稍慢；稍后刷新即可看到最新内容');
+          }
+        }, function () { syncStatus('已提交到仓库，站点构建中…'); });
+    }
+    window.setTimeout(check, 2000);
+  }
+  function runSync() {
+    if (sync.running || !sync.dirty) return;
+    var payload = dataFile().replace(/\r\n/g, '\n');
+    var pat = syncToken();
+    if (!pat) { syncStatus('待同步：本机已保存，到「发布上线」填一次令牌即可自动同步', true); return; }
+    sync.dirty = false;
+    sync.running = true;
+    pushData(payload, pat, 'content: auto sync from owner studio ' + today())
+      .then(function () {
+        sync.running = false;
+        sync.fails = 0;
+        syncStatus('已提交到仓库，等待站点构建…');
+        waitLive(payload);
+        if (sync.dirty) window.setTimeout(runSync, 400);
       })
+      .catch(function (e) {
+        sync.running = false;
+        sync.fails++;
+        var why = String((e && e.message) || e);
+        if (sync.fails <= 3) {
+          sync.dirty = true;
+          syncStatus('同步失败（' + why + '），' + (sync.fails * 10) + ' 秒后自动重试', true);
+          window.setTimeout(runSync, sync.fails * 10000);
+        } else {
+          syncStatus('同步失败：' + why + '；改动仍安全保存在本机，可到「发布上线」重试', true);
+        }
+      });
+  }
+  function syncNow() {
+    if (!syncToken()) return say('先在「发布上线」填入令牌并勾选记住，或点「保存设置并发布当前内容」。', 'warn');
+    sync.fails = 0;
+    markPending();
+    sync.dirty = true;
+    if (sync.timer) window.clearTimeout(sync.timer);
+    say('正在同步当前内容到网站…');
+    runSync();
+  }
+  function syncOff() {
+    setLs(AUTO_KEY, '0');
+    delLs(PAT_KEY);
+    state.pat = '';
+    syncStatus('自动同步已关闭，令牌已从本机移除', true);
+    render(document.getElementById('app'));
+    say('自动同步已关闭；改动仍会保存在这台设备。');
+  }
+  function publish() {
+    if (state.busy || sync.running) return;
+    var pat = val('f-pat') || ls(PAT_KEY) || state.pat || '';
+    if (!pat) return say('先填入 GitHub 细粒度令牌，或者用「办法二」导出文件发给我。', 'warn');
+    state.pat = pat;
+    var autoBox = document.getElementById('f-autosync');
+    var remember = document.getElementById('f-remember');
+    var wantAuto = autoBox ? autoBox.checked : autoEnabled();
+    setLs(AUTO_KEY, wantAuto ? '1' : '0');
+    if (wantAuto || (remember && remember.checked)) setLs(PAT_KEY, pat);
+    else delLs(PAT_KEY);
+    sync.fails = 0;
+    if (sync.timer) window.clearTimeout(sync.timer);
+    sync.dirty = false;
+    state.busy = true;
+    say('正在提交到仓库…');
+    syncStatus('正在同步到网站…');
+    var payload = dataFile().replace(/\r\n/g, '\n');
+    pushData(payload, pat, 'content: publish from owner studio ' + today())
       .then(function () {
         state.busy = false;
-        /* 提交成功后不立刻跳走：轮询站点数据文件，等 Pages 真的换上新内容
-           再清本机副本并回首页，避免浏览器缓存把刚发布的内容挡在门外。 */
-        var expected = dataFile().replace(/\r\n/g, '\n');
+        delLs(PENDING_KEY);
+        syncStatus('已提交到仓库，等待站点构建…');
+        /* 提交成功后不立刻跳走：等 Pages 真的换上新内容再清本机副本并回首页 */
         var tries = 0;
         function checkLive() {
           tries++;
-          var f = window.fetch;
-          if (!f) return homeSoon(false, '已提交到仓库，正在回到首页…');
-          var req;
-          try {
-            req = f.call(window, 'assets/site-data.js?t=' + Date.now(), { cache: 'no-store' });
-          } catch (e) { return homeSoon(false, '已提交到仓库，正在回到首页…'); }
-          req.then(function (r) { return r.ok ? r.text() : ''; }, function () { return ''; })
+          ghFetch('assets/site-data.js?t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.text() : ''; }, function () { return ''; })
             .then(function (txt) {
-              if (String(txt).replace(/\r\n/g, '\n') === expected) {
+              if (String(txt).replace(/\r\n/g, '\n') === payload) {
                 homeSoon(true, '站点已更新 · 创作台内容已清空，正在回到首页…');
               } else if (tries >= 20) {
                 homeSoon(false, '已提交到仓库，构建稍慢；稍后刷新首页即可看到，正在回到首页…');
@@ -1070,7 +1230,9 @@
       })
       .catch(function (e) {
         state.busy = false;
-        say(String(e.message || e), 'warn');
+        var why = String((e && e.message) || e);
+        say(why, 'warn');
+        syncStatus('同步失败：' + why, true);
       });
   }
 
@@ -1167,12 +1329,11 @@
       var name = '';
       var victim = findItem(parts[0], parts[1]);
       if (victim) name = victim.title || victim.name || (victim.text || '').slice(0, 18);
-      if (!window.confirm('确定删除「' + (name || parts[1]) + '」吗？' +
-        '已发布的内容要再次「发布上线」才对访客生效。')) return;
+      if (!window.confirm('确定删除「' + (name || parts[1]) + '」吗？删除也会自动同步到网站。')) return;
       remove(parts[0], parts[1]);
       if (state.editing && state.editing.kind === parts[0] && state.editing.id === parts[1]) state.editing = null;
       render(document.getElementById('app'));
-      say('已删除本机条目；已发布的内容需「发布上线」后对访客生效。');
+      say('已删除并自动同步到网站；已发布内容可在仓库提交历史找回。');
       return;
     }
     var act = t.closest('[data-act]');
@@ -1206,6 +1367,8 @@
     if (a === 'preview-post') { setMode('preview'); return; }
     if (a === 'export-js') return download('site-data.js', dataFile());
     if (a === 'export-json') return download('studio-backup.json', JSON.stringify(DATA, null, 2));
+    if (a === 'sync-now') return syncNow();
+    if (a === 'sync-off') return syncOff();
     if (a === 'publish') return publish();
     if (a === 'clear-local') {
       if (!window.confirm('清空保存在这台设备上的全部本机内容与草稿？已发布上线的内容不受影响。')) return;
@@ -1329,6 +1492,27 @@
   applyContentReset();
   mergeLocal();
 
+  /* 自动同步状态：没配置令牌就明确标「待同步」；有令牌且本机留有未发布改动时，
+     一打开创作台就补一次同步（上次离线 / 失败的改动不会一直停在这台设备）。 */
+  if (!autoEnabled() || !syncToken()) {
+    syncStatus('尚未配置自动同步：改动只保存在这台设备，到「发布上线」配置一次即可。', true);
+  } else {
+    syncStatus('自动同步已开启：每次改动都会写进网站。');
+    var hasLocal = !!ls(SITE_KEY);
+    if (!hasLocal) {
+      var bootLocal = readLocal(), bootDead = readDead();
+      KINDS.forEach(function (k) {
+        if ((bootLocal[k] || []).length || (bootDead[k] || []).length) hasLocal = true;
+      });
+    }
+    if (hasLocal || ls(PENDING_KEY) === '1') {
+      markPending();
+      sync.dirty = true;
+      sync.timer = window.setTimeout(runSync, 1500);
+      syncStatus('检测到本机有未同步的改动，正在补同步…');
+    }
+  }
+
   window.STUDIO = {
     render: render,
     isOwner: isOwner,
@@ -1337,7 +1521,8 @@
     _gateSalt: GATE_SALT,
     _hash: OWNER_HASH,
     _dataFile: dataFile,
-    _mergeLocal: mergeLocal
+    _mergeLocal: mergeLocal,
+    _syncNow: syncNow
   };
   syncNav();
   bindDoor();

@@ -158,6 +158,17 @@
     var span = btn.querySelector('span');
     if (span && typeof n === 'number') span.textContent = String(n);
   }
+  /* 只读统计位（首页卡片、文章页署名行的点赞数）：与爱心按钮共用同一个总数 */
+  function statSlots(kind, id) {
+    var all = document.querySelectorAll ? document.querySelectorAll('[data-like-stat]') : [];
+    return Array.prototype.filter.call(all, function (el) {
+      return el.getAttribute('data-like-stat') === kind + ':' + id;
+    });
+  }
+  function setStat(kind, id, n) {
+    if (typeof n !== 'number') return;
+    statSlots(kind, id).forEach(function (el) { el.textContent = String(n); });
+  }
   /* 点击：本机只赞一次；先本机点亮 +1，再请求 /hit 以服务器返回为准 */
   function onLike(btn) {
     var kind = btn.getAttribute('data-like-kind') || 'moment';
@@ -167,8 +178,12 @@
     btn.classList.add('on');
     btn.setAttribute('aria-pressed', 'true');
     btn.setAttribute('title', '已点赞，谢谢你喜欢');
-    setCount(btn, Number((btn.querySelector('span') || {}).textContent || 0) + 1);
-    hitCount(kind, id).then(function (n) { setCount(btn, n); }).catch(function () { /* 保留本机 +1 */ });
+    var n = Number((btn.querySelector('span') || {}).textContent || 0) + 1;
+    setCount(btn, n);
+    setStat(kind, id, n);
+    hitCount(kind, id).then(function (v) {
+      setCount(btn, v); setStat(kind, id, v);
+    }).catch(function () { /* 保留本机 +1 */ });
   }
   /* 每次渲染后补拉真实总数（带缓存；接口挂了就停在回落值）。
      服务器有数时以它为准（本机已赞过的话服务器数里已经含这一次）；
@@ -184,20 +199,20 @@
       var span = btn.querySelector('span');
       var fallback = base + (liked(kind, id) ? 1 : 0);
       getCount(kind, id).then(function (n) {
-        if (!span) return;
-        if (n > 0) span.textContent = String(n);
-        else if (fallback > 0) span.textContent = String(fallback);
-        else span.textContent = '0';
+        var real = n > 0 ? n : fallback;
+        if (span) span.textContent = String(real);
+        setStat(kind, id, real);
       }).catch(function () { /* 保留回落值 */ });
     });
   }
-  /* 首页卡片上的只读点赞数 */
+  /* 首页卡片与文章页署名行上的只读点赞数 */
   function mountStats(root) {
     Array.prototype.forEach.call(root.querySelectorAll('[data-like-stat]'), function (el) {
       var v = String(el.getAttribute('data-like-stat') || '').split(':');
       if (v.length < 2) return;
-      getCount(v[0], v.slice(1).join(':')).then(function (n) {
-        if (typeof n === 'number') el.textContent = String(n);
+      var kind = v[0], id = v.slice(1).join(':');
+      getCount(kind, id).then(function (n) {
+        if (typeof n === 'number') el.textContent = String(n > 0 ? n : (liked(kind, id) ? 1 : 0));
       }).catch(function () { /* 保留占位 0 */ });
     });
   }

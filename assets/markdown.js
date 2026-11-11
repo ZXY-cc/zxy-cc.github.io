@@ -287,6 +287,12 @@
     /* 先用占位符锁住代码、转义美元与公式，避免后续规则互相吃掉 */
     s = s.replace(/\\\$/g, function () { return stash('$'); });
     s = s.replace(/`([^`\n]+)`/g, function (_m, c) { return stash('<code>' + esc(c) + '</code>'); });
+    /* 表格单元格与正文里也常写 $$…$$（飞书导出的 Markdown 全是双美元）。
+       独占一行的 $$ 块级公式由 render() 提前消费，这里只处理同一行内的成对双美元，
+       同样交给公式引擎排版，字体才会是 Computer Modern 而不是正文默认字体。 */
+    s = s.replace(/\$\$([^$\n]+?)\$\$/g, function (_m, tex) {
+      return stash(mathHtml(tex, false));
+    });
     s = s.replace(/(^|[^$])\$(?!\$)([^$\n]+?)\$(?!\$)/g, function (_m, pre, tex) {
       return pre + stash(mathHtml(tex, false));
     });
@@ -386,7 +392,12 @@
   /* ---------------- 块级 Markdown ---------------- */
   function cellsOf(line) {
     var t = line.trim().replace(/^\|/, '').replace(/\|$/, '');
-    return t.split('|').map(function (c) { return c.trim(); });
+    /* 公式里的 |（\left|、|x| 之类）不是表格分隔符：先把公式 / 行内代码
+       整段里的竖线换成私有占位符，切完单元格再还原，避免把 $$|x|$$ 拆成两格 */
+    t = t.replace(/\$\$[^$\n]+\$\$|\$[^$\n]+\$|`[^`\n]*`/g, function (m) {
+      return m.replace(/\|/g, '\u0002');
+    });
+    return t.split('|').map(function (c) { return c.trim().replace(/\u0002/g, '|'); });
   }
   function tableAlign(cells) {
     return cells.map(function (c) {
@@ -553,7 +564,8 @@
     var lines = text.split('\n');
     var out = [], fence = null, math = false, blank = 0;
     function collapse(s) {
-      return s.replace(/(`[^`\n]*`|\$[^$\n]+\$)|( {2,})/g, function (m, keep) {
+      /* 双美元行内公式也要整段保护：表格行里的 $$O(n^2)$$ 不会被压掉空格 */
+      return s.replace(/(`[^`\n]*`|\$\$[^$\n]+\$\$|\$[^$\n]+\$)|( {2,})/g, function (m, keep) {
         return keep || ' ';
       });
     }
@@ -599,5 +611,5 @@
   }
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, version: '1.1.0' };
+           tidy: tidy, highlight: highlightCode, version: '1.1.1' };
 });

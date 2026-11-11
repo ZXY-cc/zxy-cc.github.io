@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="友链 · 星梦Staream">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
-<link rel="stylesheet" href="assets/style.css?v=v3.13.0">
+<link rel="stylesheet" href="assets/style.css?v=v3.16.0">
 <style>
 body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 100%);color:#3a4668;
   font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
@@ -52,6 +52,20 @@ img{max-width:100%}
 /* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
 :root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
   Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
+/* 表格单元格里的公式（含 $$…$$ 写法）显式钉住同一套字体栈：
+   单元格有自己的小字号与通用排版，不能让公式回落到正文默认字体。 */
+th .zb-math, td .zb-math, .zb-mcell .zb-math {
+  font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  font-size: 1.08em;
+}
+:root[data-font-tex="default"] th .zb-math,
+:root[data-font-tex="default"] td .zb-math,
+:root[data-font-tex="default"] .zb-mcell .zb-math {
+  font-family: "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+}
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;

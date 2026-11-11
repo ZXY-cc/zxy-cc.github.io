@@ -13,8 +13,8 @@
 <meta property="og:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
-<meta property="article:published_time" content="2026-11-10">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.13.0">
+<meta property="article:published_time" content="2026-11-11">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.16.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -63,6 +63,20 @@ a{color:var(--brand)}
 /* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
 :root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
   Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
+/* 表格单元格里的公式（含 $$…$$ 写法）显式钉住同一套字体栈：
+   单元格有自己的小字号与通用排版，不能让公式回落到正文默认字体。 */
+th .zb-math, td .zb-math, .zb-mcell .zb-math {
+  font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  font-size: 1.08em;
+}
+:root[data-font-tex="default"] th .zb-math,
+:root[data-font-tex="default"] td .zb-math,
+:root[data-font-tex="default"] .zb-mcell .zb-math {
+  font-family: "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+}
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;
@@ -155,7 +169,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>博客版本日志</h1>
-<p class="meta" data-view-post="blog-changelog">2026-11-10 · 版本日志 / 站点 · <span class="mirror-views"><span data-view="blog-changelog">0</span> 次浏览（不含站长）</span></p>
+<p class="meta" data-view-post="blog-changelog">2026-11-11 · 版本日志 / 站点 · <span class="mirror-likes"><span data-like-stat="post:blog-changelog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="blog-changelog">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><h2>更新约定</h2><div class="note"><p><strong>一、只写做了什么。</strong> 「主要改动」列用 1~3 句说清改动本身，不写原理分析、根因、排查过程、实测数据与文件清单。</p><p><strong>二、控制在 100 字以内。</strong> 一条版本记一件事；改动多就合并成一段最终状态，不把八件事拆成八行。</p><p><strong>三、验收细节不进日志。</strong> 断言数、回归项、构建次数一律不写；日志只体现「改没改」。</p><p><strong>四、类别取自图例。</strong> 多标签用「 · 」连接，单元格只放纯文本，每行必须与表头列数一致。</p><p><strong>五、同类改动必须合并。</strong> 同一主题反复微调只算一次迭代，合并为一个版本号，后续版本号顺延。</p><p><strong>六、按阶段成表。</strong> 一个阶段 = 一个二级标题 + 一张表（各自重复表头）；新版本排在旧版本下方。</p><p><strong>七、双格式同步。</strong> 每次改完本日志（md），必须重新生成同名 HTML 镜像，并同步进站点文章与关于页预览。</p><p><strong>八、脱敏。</strong> 不写令牌、密钥、激活码、本机路径等私人信息，只写改动本身。</p><p><strong>九、按主题分版。</strong> 一条版本只记同一主题的最终状态；其它功能更新或架构级大更新另起版本号，不往旧版本里续写。</p></div><h2>类别图例</h2><table class="t-legend"><thead><tr><th>标签</th><th>含义</th></tr></thead><tbody>
 <tr><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span></td><td>从无到有的新页面、新能力或新入口</td></tr>
 <tr><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span></td><td>修复既有 bug 或异常表现</td></tr>
@@ -205,13 +219,16 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v3.11.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#3f8b80;background:#3f8b8014;border-color:#3f8b8038">🧹 清理</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span></td><td>文章与首页的浏览次数归零并让读数立即刷新；设置页新增本机排除开关，站长设备与预览态一律不计入浏览</td></tr>
 <tr><td><span class="ver">v3.12.1</span></td><td>2026-11-10</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>设置页新增 LaTeX 字体：默认与 Computer Modern 两档，初始为 Computer Modern；公式在文章、创作台预览与静态阅读版统一生效</td></tr>
 <tr><td><span class="ver">v3.13.0</span></td><td>2026-11-10</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>首页整站爱心点赞与匿名浏览数移到名片右上角，底部互动条移除；主样式表随版本更新缓存地址</td></tr>
+<tr><td><span class="ver">v3.14.0</span></td><td>2026-11-11</td><td><span class="chip" style="color:#a0638f;background:#a0638f14;border-color:#a0638f38">🚀 上线</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>创作台改为每次改动自动同步：新增、修改、删除与名片设置都写回仓库，站点数据地址轮换绕开访客缓存，静态镜像由工作流自动重建</td></tr>
+<tr><td><span class="ver">v3.15.0</span></td><td>2026-11-11</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>文章页署名行在字数与浏览数之间新增点赞数，静态阅读版同步显示；点赞后按钮与署名行数字一起更新</td></tr>
+<tr><td><span class="ver">v3.16.0</span></td><td>2026-11-11</td><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>表格单元格里的双美元公式改为真正渲染，字体随设置为 Computer Modern；表格切分不再拆断含竖线的公式，格式优化不改预览</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>✅ 已支持</td><td>留言直接显示在文章页，页面内写好内容后由 GitHub 确认发布；回复与 👍 点赞走仓库 Issues，网页后台可管理</td></tr>
 <tr><td>后端与统计</td><td>✅ 已支持</td><td>全站仍是静态文件，评论不依赖任何常驻服务或数据库；零费用、零运维，不采集访问数据</td></tr>
 <tr><td>评论托管</td><td>✅ 不需要</td><td>只用 GitHub Pages、Issues 与 Actions；页面按需匿名读取公开留言，读不到仍有仓库归档兜底</td></tr>
 <tr><td>留言长期留存</td><td>✅ 已支持</td><td>公开留言与点赞沉淀为仓库内 JSON 归档并烘焙进静态文章页；关闭或删除的留言下次同步后移除，可导出、可人工删改</td></tr>
 <tr><td>页面内发布</td><td>✅ 已支持</td><td>输入框预填正文后打开新建 Issue 页，GitHub 登录确认提交；预览态不显示写入入口</td></tr>
-<tr><td>创作台发布</td><td>⚠️ 依赖用户</td><td>需要站长自行提供发布凭证，或把导出的数据文件交给助手推送；发布完成后自动回首页并清空创作台内容</td></tr>
+<tr><td>创作台发布</td><td>✅ 已支持</td><td>一次配置发布凭证后，每次新增、修改、删除自动写回仓库；也可导出数据文件交给助手推送；网络失败会重试且内容不丢</td></tr>
 <tr><td>搜索引擎收录</td><td>✅ 已支持</td><td>已补静态文章镜像、站点地图与结构化数据</td></tr>
 <tr><td>移动端导航</td><td>✅ 已支持</td><td>十个入口改为换行排布，不再横向裁切</td></tr>
 <tr><td>画质档位</td><td>✅ 已支持</td><td>极高 / 高 / 中 / 低 四档，极高独占实时毛玻璃并加密流星与花瓣；切换即时生效</td></tr>
@@ -222,11 +239,11 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td>分页静态镜像</td><td>✅ 已支持</td><td>项目、归档、照片墙、说说、杂谈、友链、标签、关于均可被搜索收录与分享出正确卡片</td></tr>
 <tr><td>订阅与 404</td><td>✅ 已支持</td><td>feed.xml（Atom）与主题化 404 页上线，首页可自动发现订阅源</td></tr>
 <tr><td>创作台鉴权</td><td>✅ 已支持</td><td>128 位密钥链接解锁本机 90 天授权；发布权限始终由 GitHub 细粒度令牌决定</td></tr>
-<tr><td>内容管理</td><td>✅ 已支持</td><td>文章、说说、杂谈可载回表单重编辑并保留原日期；全部条目可删除，已发布内容的改动要再次发布生效</td></tr>
-<tr><td>爱心点赞</td><td>✅ 已支持</td><td>文章、说说、杂谈统一爱心点赞，匿名免登录、每台设备计一次；总数走免费匿名计数接口并带缓存回落</td></tr>
+<tr><td>内容管理</td><td>✅ 已支持</td><td>文章、说说、杂谈可载回表单重编辑并保留原日期；全部条目可删除，改动自动同步到网站</td></tr>
+<tr><td>爱心点赞</td><td>✅ 已支持</td><td>文章、说说、杂谈统一爱心点赞，匿名免登录、每台设备计一次；文章页署名行与静态阅读版也显示总数，接口带缓存回落</td></tr>
 <tr><td>格式优化</td><td>✅ 已支持</td><td>文章、说说、杂谈表单可一键去掉多余空格与空行，代码块与公式原样保留，预览效果不变</td></tr>
 <tr><td>浏览量统计</td><td>✅ 已支持</td><td>文章页字数后显示匿名浏览数，首页卡片同时显示点赞与浏览数；站长设备、预览态与设置页手动排除的本机都不计入，每会话每篇计一次</td></tr>
-<tr><td>公式字体</td><td>✅ 已支持</td><td>设置页可选「默认」或「Computer Modern」，初始为 Computer Modern；随站点自带开源字体，文章、创作台预览与静态阅读版同步</td></tr>
+<tr><td>公式字体</td><td>✅ 已支持</td><td>设置页可选「默认」或「Computer Modern」，初始为 Computer Modern；自带开源字体，正文、表格单元格、创作台预览与静态阅读版同步</td></tr>
 <tr><td>名片设置</td><td>✅ 已支持</td><td>创作台可更换首页名片头像与签名，保存后本机立即生效，发布上线后对访客生效</td></tr>
 <tr><td>首页互动</td><td>✅ 已支持</td><td>首页名片右上角显示整站爱心点赞与首页匿名浏览数，站长与预览态不计入，每个会话只计一次</td></tr>
 </tbody></table><h2>附记</h2><h3>附一：双格式同步</h3><p>本日志的 Markdown 是唯一内容源。每次更新后生成同名 HTML 镜像，同时把内容写进站点文章《博客版本日志》与「关于」页的 HTML 预览，三处内容一致才算改完。</p><h3>附二：更新流程</h3><p>改 md → 生成 html 与前端数据 → 本地回归 → 推送上线。历史同类改动一律合并，只保留最终状态；重大架构变更另起大版本号，其余按主题分版。</p></div>
@@ -246,12 +263,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.13.0"></script>
-<script src="../assets/comment-archive.js?v=v3.13.0"></script>
-<script src="../assets/interactions-config.js?v=v3.13.0"></script>
-<script src="../assets/interactions.js?v=v3.13.0"></script>
-<script src="../assets/issues-live.js?v=v3.13.0"></script>
-<script src="../assets/likes.js?v=v3.13.0"></script>
+<script src="../assets/comments-data.js?v=v3.16.0"></script>
+<script src="../assets/comment-archive.js?v=v3.16.0"></script>
+<script src="../assets/interactions-config.js?v=v3.16.0"></script>
+<script src="../assets/interactions.js?v=v3.16.0"></script>
+<script src="../assets/issues-live.js?v=v3.16.0"></script>
+<script src="../assets/likes.js?v=v3.16.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>

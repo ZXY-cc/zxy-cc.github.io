@@ -625,6 +625,8 @@ main { min-height: 320px; }
 .post-stat .stat-heart { stroke-width: 6; }
 .post-stat .stat-eye { stroke-width: 1.8; }
 .article-views { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* 文章页署名行：字数 · 点赞数 · 浏览数三连，数字等宽不跳动 */
+.article-likes { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 /* 首页名片右上角：整站爱心点赞与首页匿名浏览数 */
 .card-corner-stats { display: inline-flex; align-items: center; gap: 8px;
   font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
@@ -864,6 +866,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .post-summary,
 :root[data-theme="night"] .post-stat,
 :root[data-theme="night"] .article-views,
+:root[data-theme="night"] .article-likes,
 :root[data-theme="night"] .card-corner-stats,
 :root[data-theme="night"] .home-views,
 :root[data-theme="night"] .toc-title,
@@ -1226,6 +1229,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .studio-head p { margin: 5px 0 0; font-size: 12.5px; color: var(--muted); }
 .studio-head .page-kicker { margin-bottom: 6px; }
 .studio-head .soft-btn { flex: 0 0 auto; }
+/* 自动同步状态徽标：绿蓝为已开启、粉红为待同步，创作台任意页都能看到 */
+.sync-badge { display: inline-block; padding: 2px 10px; border-radius: 999px;
+  font-size: 11.5px; letter-spacing: .3px; color: var(--accent-text);
+  background: var(--accent-soft); border: 1px solid var(--glass-line); }
+.sync-badge.warn { color: var(--accent-3-text); background: rgba(240, 158, 190, .18); }
 .studio-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px;
   padding: 7px; border-radius: 999px; border: 1px solid var(--glass-line);
   background: var(--glass-strong); }
@@ -1776,6 +1784,20 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
 :root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
   Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
+/* 表格单元格里的公式（含 $$…$$ 写法）显式钉住同一套字体栈：
+   单元格有自己的小字号与通用排版，不能让公式回落到正文默认字体。 */
+th .zb-math, td .zb-math, .zb-mcell .zb-math {
+  font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  font-size: 1.08em;
+}
+:root[data-font-tex="default"] th .zb-math,
+:root[data-font-tex="default"] td .zb-math,
+:root[data-font-tex="default"] .zb-mcell .zb-math {
+  font-family: "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+}
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;

@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.13.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.16.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -63,6 +63,20 @@ a{color:var(--brand)}
 /* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
 :root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
   Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
+/* 表格单元格里的公式（含 $$…$$ 写法）显式钉住同一套字体栈：
+   单元格有自己的小字号与通用排版，不能让公式回落到正文默认字体。 */
+th .zb-math, td .zb-math, .zb-mcell .zb-math {
+  font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  font-size: 1.08em;
+}
+:root[data-font-tex="default"] th .zb-math,
+:root[data-font-tex="default"] td .zb-math,
+:root[data-font-tex="default"] .zb-mcell .zb-math {
+  font-family: "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+}
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;
@@ -155,7 +169,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>零成本搭一个自己的博客</h1>
-<p class="meta" data-view-post="free-blog">2026-11-07 · 建站 / 笔记 · <span class="mirror-views"><span data-view="free-blog">0</span> 次浏览（不含站长）</span></p>
+<p class="meta" data-view-post="free-blog">2026-11-07 · 建站 / 笔记 · <span class="mirror-likes"><span data-like-stat="post:free-blog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="free-blog">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>想拥有一个自己的博客，其实只需要解决三个问题：别人怎么找到你、内容放在哪、以及浏览器地址栏里那把小锁。这三件事分别对应域名、托管和证书，彼此独立，可以分开选。</p><h2>三条信息，三层链路</h2><table><thead><tr><th>环节</th><th>可选服务</th><th>要做的事</th></tr></thead><tbody><tr><td>免费域名</td><td>dpdns.org</td><td>申请一个 you.dpdns.org</td></tr><tr><td>解析与证书</td><td>Cloudflare / 平台自带</td><td>加解析记录，勾强制 HTTPS</td></tr><tr><td>网站托管</td><td>GitHub Pages / Cloudflare Pages</td><td>上传静态文件</td></tr></tbody></table><p>dpdns.org 来自 DigitalPlat FreeDomain，是一个免费二级域名服务。注册后你会拿到形如 <code>you.dpdns.org</code> 的地址，并且拥有完整的 DNS 控制权，可以自己添加 A、CNAME、TXT 记录，也可以把 NS 委派给 Cloudflare。每个账号的免费名额有限，长期闲置或违规会被回收，所以它适合练手和个人站点，不适合承载重要业务。</p><blockquote><p>一个常见误解：以为要单独去申请一张免费证书。其实不用。GitHub Pages 通过 Let's Encrypt 自动签发，Cloudflare Pages 用 Universal SSL，两者都会自动续期，你要做的只是把 DNS 指对，然后勾选强制 HTTPS。</p></blockquote><h2>最省事的一条路径</h2><ol><li>在 DigitalPlat 控制台注册域名，委派模式选「DigitalPlat DNS」（默认且标了推荐），解析记录就在这个面板里加，先不必迁到 Cloudflare。</li><li>把博客文件推到 GitHub 仓库，在 Settings → Pages 里选择从 main 分支根目录部署。此时已经能用 <code>username.github.io</code> 访问了。</li><li>回到域名控制台添加解析记录。注意 <code>you.dpdns.org</code> 是这个区域的根，标准 DNS 不允许在根上放 CNAME：</li></ol><pre><code>方案 <span class="tk-cls">A</span>：不带 www，给根域加 <span class="tk-nu">4</span> 条 <span class="tk-cls">A</span> 记录
 <span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">108.153</span>
 <span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">109.153</span>
@@ -180,12 +194,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.13.0"></script>
-<script src="../assets/comment-archive.js?v=v3.13.0"></script>
-<script src="../assets/interactions-config.js?v=v3.13.0"></script>
-<script src="../assets/interactions.js?v=v3.13.0"></script>
-<script src="../assets/issues-live.js?v=v3.13.0"></script>
-<script src="../assets/likes.js?v=v3.13.0"></script>
+<script src="../assets/comments-data.js?v=v3.16.0"></script>
+<script src="../assets/comment-archive.js?v=v3.16.0"></script>
+<script src="../assets/interactions-config.js?v=v3.16.0"></script>
+<script src="../assets/interactions.js?v=v3.16.0"></script>
+<script src="../assets/issues-live.js?v=v3.16.0"></script>
+<script src="../assets/likes.js?v=v3.16.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
 window.ZBLive && window.ZBLive.mount("free-blog");
 window.ZBLikes && window.ZBLikes.mount();</script>

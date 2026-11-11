@@ -1,0 +1,44 @@
+name: 内容发布后重建静态镜像
+# 创作台把 assets/site-data.js 写回仓库后，重算友链 / 项目 / 照片 / 说说 / 归档、
+# 静态文章页、站点地图与订阅源，保证直接打开镜像页的访客也看到最新状态。
+# 构建脚本与本地 blog/scripts/build.mjs 逐字节相同，靠 ZB_ROOT 指定站点根目录。
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/site-data.js'
+      - 'assets/posts.js'
+      - '博客版本日志.md'
+      - '.github/scripts/build.mjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: content-rebuild
+  cancel-in-progress: false
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 重建静态镜像与站点数据
+        env:
+          ZB_ROOT: ${{ github.workspace }}
+        run: node .github/scripts/build.mjs
+      - name: 有变化才提交
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "静态镜像已是最新"
+            exit 0
+          fi
+          git commit -m "chore: 内容发布后重建静态镜像"
+          git pull --rebase origin main
+          git push origin HEAD:main

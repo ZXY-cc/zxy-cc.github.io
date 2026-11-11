@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="归档 · 星梦Staream">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
-<link rel="stylesheet" href="assets/style.css?v=v3.13.0">
+<link rel="stylesheet" href="assets/style.css?v=v3.16.0">
 <style>
 body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 100%);color:#3a4668;
   font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
@@ -52,6 +52,20 @@ img{max-width:100%}
 /* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
 :root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
   Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
+/* 表格单元格里的公式（含 $$…$$ 写法）显式钉住同一套字体栈：
+   单元格有自己的小字号与通用排版，不能让公式回落到正文默认字体。 */
+th .zb-math, td .zb-math, .zb-mcell .zb-math {
+  font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  font-size: 1.08em;
+}
+:root[data-font-tex="default"] th .zb-math,
+:root[data-font-tex="default"] td .zb-math,
+:root[data-font-tex="default"] .zb-mcell .zb-math {
+  font-family: "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+}
 .zb-math-inline { display: inline; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;
@@ -145,7 +159,7 @@ pre, pre > code, .article :not(pre) > code {
   <span><a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/free-blog.html">零成本搭一个自己的博客</a> · <a class="mlink" href="posts/sorting-notes.html">排序算法笔记：从冒泡到基数</a> · <a class="mlink" href="posts/why-write.html">为什么要写下来</a></span>
 </header>
 <main class="route-mirror">
-<div class="page-head reveal"><div class="page-kicker">ARCHIVE</div><h1 class="page-title">归档</h1><p class="page-sub">总计 4 篇文章，按时间排好</p></div><div class="stat-bar glass reveal"><div class="stat-cell"><b>4</b><span>篇文章</span></div><div class="stat-cell"><b>3</b><span>则杂谈</span></div><div class="stat-cell"><b>4</b><span>条说说</span></div><div class="stat-cell"><b>6</b><span>张照片</span></div><div class="stat-cell"><b>4</b><span>天在线</span></div></div><div class="filter-row reveal"><button class="filter on" type="button" data-tfilter="">全部</button><button class="filter" type="button" data-tfilter="版本日志">版本日志 <i>1</i></button><button class="filter" type="button" data-tfilter="站点">站点 <i>1</i></button><button class="filter" type="button" data-tfilter="建站">建站 <i>1</i></button><button class="filter" type="button" data-tfilter="笔记">笔记 <i>1</i></button><button class="filter" type="button" data-tfilter="算法">算法 <i>1</i></button><button class="filter" type="button" data-tfilter="C">C <i>1</i></button><button class="filter" type="button" data-tfilter="随笔">随笔 <i>1</i></button></div><div class="timeline"><section class="tl-group reveal"><div class="tl-month"><b>2026-11</b><span>3 篇</span></div><div class="tl-items"><a class="tl-item glass" href="#/post/blog-changelog"><time>2026-11-10</time><b>博客版本日志</b><span>#版本日志 #站点</span></a><a class="tl-item glass" href="#/post/free-blog"><time>2026-11-07</time><b>零成本搭一个自己的博客</b><span>#建站 #笔记</span></a><a class="tl-item glass" href="#/post/sorting-notes"><time>2026-11-05</time><b>排序算法笔记：从冒泡到基数</b><span>#算法 #C</span></a></div></section><section class="tl-group reveal"><div class="tl-month"><b>2026-10</b><span>1 篇</span></div><div class="tl-items"><a class="tl-item glass" href="#/post/why-write"><time>2026-10-28</time><b>为什么要写下来</b><span>#随笔</span></a></div></section></div>
+<div class="page-head reveal"><div class="page-kicker">ARCHIVE</div><h1 class="page-title">归档</h1><p class="page-sub">总计 4 篇文章，按时间排好</p></div><div class="stat-bar glass reveal"><div class="stat-cell"><b>4</b><span>篇文章</span></div><div class="stat-cell"><b>3</b><span>则杂谈</span></div><div class="stat-cell"><b>4</b><span>条说说</span></div><div class="stat-cell"><b>6</b><span>张照片</span></div><div class="stat-cell"><b>5</b><span>天在线</span></div></div><div class="filter-row reveal"><button class="filter on" type="button" data-tfilter="">全部</button><button class="filter" type="button" data-tfilter="版本日志">版本日志 <i>1</i></button><button class="filter" type="button" data-tfilter="站点">站点 <i>1</i></button><button class="filter" type="button" data-tfilter="建站">建站 <i>1</i></button><button class="filter" type="button" data-tfilter="笔记">笔记 <i>1</i></button><button class="filter" type="button" data-tfilter="算法">算法 <i>1</i></button><button class="filter" type="button" data-tfilter="C">C <i>1</i></button><button class="filter" type="button" data-tfilter="随笔">随笔 <i>1</i></button></div><div class="timeline"><section class="tl-group reveal"><div class="tl-month"><b>2026-11</b><span>3 篇</span></div><div class="tl-items"><a class="tl-item glass" href="#/post/blog-changelog"><time>2026-11-11</time><b>博客版本日志</b><span>#版本日志 #站点</span></a><a class="tl-item glass" href="#/post/free-blog"><time>2026-11-07</time><b>零成本搭一个自己的博客</b><span>#建站 #笔记</span></a><a class="tl-item glass" href="#/post/sorting-notes"><time>2026-11-05</time><b>排序算法笔记：从冒泡到基数</b><span>#算法 #C</span></a></div></section><section class="tl-group reveal"><div class="tl-month"><b>2026-10</b><span>1 篇</span></div><div class="tl-items"><a class="tl-item glass" href="#/post/why-write"><time>2026-10-28</time><b>为什么要写下来</b><span>#随笔</span></a></div></section></div>
 </main>
 <footer class="mirror-foot">这是「星梦Staream」归档页的静态镜像，完整交互（搜索、特效、夜间模式）请
 <a href="/#/timeline">在站点中打开 →</a></footer>

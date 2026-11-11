@@ -237,6 +237,8 @@
       '<div class="article-byline"><div class="article-author">' + avatarImg('avatar avatar-sm') +
       '<span>' + esc(CFG.author || SITE.author || '我') + '</span><i>·</i><span>' +
       wordsOf(body) + ' 字</span>' +
+      '<i>·</i><span class="article-likes" title="匿名点赞数，每台设备计一次"><span data-like-stat="post:' +
+      esc(p.slug) + '">0</span> 次点赞</span>' +
       '<i>·</i><span class="article-views" data-view-post="' + esc(p.slug) +
       '" title="匿名浏览次数，不含站长本人"><span data-view="' + esc(p.slug) +
       '">0</span> 次浏览</span></div>' +
