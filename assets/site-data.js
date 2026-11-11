@@ -55,7 +55,8 @@ window.STUDIO_DATA = {
         "accent": true
       }
     ],
-    "footerNote": "纯静态 · 无追踪 · 无依赖 · 有一点点星光"
+    "footerNote": "纯静态 · 无追踪 · 无依赖 · 有一点点星光",
+    "homeViewsVer": 2
   },
   "projects": [
     {
