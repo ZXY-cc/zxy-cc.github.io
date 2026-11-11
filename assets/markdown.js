@@ -660,7 +660,10 @@
         continue;
       }
 
-      /* 列表：无序 / 有序 / 任务，支持缩进嵌套（Tab 缩进两空格算一层） */
+      /* 列表：无序 / 有序 / 任务，支持缩进嵌套（Tab 缩进两空格算一层）。
+         飞书式写法：整块列表之前可以缩进——基准缩进不再忽略，两个空格
+         （一个 Tab）算一层，渲染成左外边距（每层 22px、最多 6 层），
+         同时把基准归零，块内嵌套关系完全保持相对。 */
       var li = ln.match(/^(\s*)([-*+]|\d+[.)])\s+(.+)$/);
       if (li) {
         flush();
@@ -675,12 +678,19 @@
           });
           i++;
         }
+        var liBase = Math.min.apply(null, liItems.map(function (x) { return x.indent; }));
+        if (liBase > 0) liItems.forEach(function (x) { x.indent -= liBase; });
         var liCur = { i: 0 };
         var listHtml = [];
         while (liCur.i < liItems.length) {
           listHtml.push(listTree(liItems, liCur, liItems[liCur.i].indent));
         }
-        out.push(listHtml.join('\n'));
+        var liOut = listHtml.join('\n');
+        if (liBase > 0) {
+          var liPad = ' style="margin-left:' + (Math.min(Math.round(liBase / 2), 6) * 22) + 'px"';
+          liOut = liOut.replace(/(^|\n)<(ul|ol)>/g, '$1<$2' + liPad + '>');
+        }
+        out.push(liOut);
         continue;
       }
 
@@ -692,9 +702,10 @@
   }
 
   /* ---------------- 格式优化 ----------------
-     只删「渲染时本来就被忽略」的空白：行首行尾空格、连续空行、正文里多余的
-     连续半角空格。围栏代码块与 $$ 公式整段原样保留，反引号行内代码与 $…$
-     行内公式里的空格也不动，所以整理前后预览效果一致。 */
+     只删「渲染时本来就被忽略」的空白：行首行尾空格（列表项行首缩进除外，
+     它决定整块缩进与嵌套层级）、连续空行、正文里多余的连续半角空格。
+     围栏代码块与 $$ 公式整段原样保留，反引号行内代码与 $…$ 行内公式里的
+     空格也不动，所以整理前后预览效果一致。 */
   function tidy(src) {
     var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
     var lines = text.split('\n');
@@ -723,8 +734,15 @@
         if (!/^\s*\$\$(.+)\$\$\s*$/.test(ln)) math = true;
         blank = 0; continue;
       }
-      var t = collapse(ln.replace(/\t/g, '  ')
-        .replace(/^[ \u3000]+/, '')
+      var t = ln.replace(/\t/g, '  ');
+      /* 列表项的行首缩进有渲染含义（整块缩进 / 嵌套层级），原样保留，
+         且不能被 collapse 压掉；只清行尾、压缩标记之后的内容 */
+      var liM = t.match(/^( +)([-*+]|\d+[.)])\s/);
+      if (liM) {
+        out.push(liM[1] + collapse(t.slice(liM[1].length).replace(/[ \u3000]+$/, '')));
+        blank = 0; continue;
+      }
+      t = collapse(t.replace(/^[ \u3000]+/, '')
         .replace(/[ \u3000]+$/, ''));
       if (!t) {
         blank++;
@@ -747,5 +765,5 @@
   }
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, version: '1.2.0' };
+           tidy: tidy, highlight: highlightCode, version: '1.3.0' };
 });
