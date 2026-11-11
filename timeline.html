@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="归档 · 星梦Staream">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
-<link rel="stylesheet" href="assets/style.css?v=v3.17.0">
+<link rel="stylesheet" href="assets/style.css?v=v3.19.0">
 <style>
 body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 100%);color:#3a4668;
   font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
@@ -67,6 +67,34 @@ th .zb-math, td .zb-math, .zb-mcell .zb-math {
   var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
 }
 .zb-math-inline { display: inline; }
+/* KaTeX 字体族（SIL OFL 1.1，随站点自带，来源与许可见 assets/fonts/KaTeX-FONTS-LICENSE.txt）：
+   设置页选「KaTeX（洛谷同款）」时公式用这一族渲染。 */
+@font-face { font-family: "KaTeX_AMS"; src: url("/assets/fonts/KaTeX_AMS-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Caligraphic"; src: url("/assets/fonts/KaTeX_Caligraphic-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Caligraphic"; src: url("/assets/fonts/KaTeX_Caligraphic-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Fraktur"; src: url("/assets/fonts/KaTeX_Fraktur-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-BoldItalic.woff2") format("woff2"); font-style: italic; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Math"; src: url("/assets/fonts/KaTeX_Math-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Math"; src: url("/assets/fonts/KaTeX_Math-BoldItalic.woff2") format("woff2"); font-style: italic; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Script"; src: url("/assets/fonts/KaTeX_Script-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size1"; src: url("/assets/fonts/KaTeX_Size1-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size2"; src: url("/assets/fonts/KaTeX_Size2-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size3"; src: url("/assets/fonts/KaTeX_Size3-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size4"; src: url("/assets/fonts/KaTeX_Size4-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Typewriter"; src: url("/assets/fonts/KaTeX_Typewriter-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+:root[data-font-tex="katex"] .zb-math { font-family: "KaTeX_Main", "KaTeX_Math", "Cambria Math", "Times New Roman", Georgia, serif; }
+:root[data-font-tex="katex"] .zb-math .zb-var { font-family: "KaTeX_Math", "KaTeX_Main"; }
+:root[data-font-tex="katex"] th .zb-math, :root[data-font-tex="katex"] td .zb-math,
+:root[data-font-tex="katex"] .zb-mcell .zb-math { font-family: "KaTeX_Main", "KaTeX_Math", "Cambria Math", "Times New Roman", Georgia, serif; }
+:root[data-font-tex="katex"] .zb-bb { font-family: "KaTeX_AMS", "KaTeX_Main"; font-weight: 400; }
+:root[data-font-tex="katex"] .zb-cal { font-family: "KaTeX_Caligraphic", "Segoe Script", cursive; }
+:root[data-font-tex="katex"] .zb-math .zb-bold { font-family: "KaTeX_Main"; font-weight: 700; }
 .zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
   text-align: center; font-size: 18px; border-radius: 14px;
   border: 1px solid var(--glass-line, rgba(255, 255, 255, .72));

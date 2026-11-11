@@ -378,14 +378,25 @@
   }
 
   /* ---------------- 代码块 ---------------- */
-  function codeHtml(lang, code) {
+  function codeHtml(lang, code, hl) {
     var text = String(code).replace(/\n$/, '');
     var lines = text.split('\n');
     var nums = lines.map(function (_, n) { return n + 1; }).join('\n');
     var tag = lang ? '<span class="zb-lang">' + esc(lang) + '</span>' : '';
+    var body;
+    /* 洛谷 lines=a-b 指定行高亮：此时逐行分词包裹，跨行字符串与块注释的
+       上色会有损失（内容仍逐字保留），用来换取任意行精确高亮。 */
+    if (hl && hl[0] >= 1 && hl[0] <= hl[1] && hl[0] <= lines.length) {
+      body = lines.map(function (ln, n) {
+        var cls = (n + 1 >= hl[0] && n + 1 <= hl[1]) ? ' zb-cline-hl' : '';
+        return '<span class="zb-cline' + cls + '">' + (highlightCode(ln, lang) || '&nbsp;') + '</span>';
+      }).join('');
+    } else {
+      body = highlightCode(text, lang);
+    }
     return '<pre class="zb-code"' + (lang ? ' data-lang="' + esc(lang) + '"' : '') + '>' +
       tag + '<span class="line-numbers" aria-hidden="true">' + nums + '</span>' +
-      '<code>' + highlightCode(text, lang) + '</code>' +
+      '<code>' + body + '</code>' +
       '<button class="copy-btn" type="button">复制</button></pre>';
   }
 
@@ -408,11 +419,106 @@
   }
   function fenceInfo(line) {
     var m = line.match(/^ {0,3}(`{3,}|~{3,})[ \t]*([^\n]*)$/);
-    return m ? { ch: m[1][0], n: m[1].length, lang: (m[2] || '').trim().split(/\s+/)[0] } : null;
+    if (!m) return null;
+    var meta = (m[2] || '').trim();
+    var hl = meta.match(/\blines=(\d+)-(\d+)\b/);
+    return { ch: m[1][0], n: m[1].length,
+      lang: meta.split(/\s+/)[0] || '',
+      hl: hl ? [Number(hl[1]), Number(hl[2])] : null };
   }
   function fenceClose(line, ch, n) {
     var m = line.trim().match(/^(`{3,}|~{3,})/);
     return !!(m && m[1][0] === ch && m[1].length >= n);
+  }
+
+  /* ---------------- 洛谷扩展：表格（含 ^ 向上合并 / < 向左合并） ----------------
+     合并标记必须是单元格内的唯一纯文本；^ 并入上方最近的宿主格（rowspan+1），
+     < 并入左侧最近的宿主格（colspan+1），两种标记可在同一张表内混用。 */
+  function renderTable(headLine, alignLine, lines, startIdx, tuack) {
+    var head = cellsOf(headLine);
+    var align = tableAlign(cellsOf(alignLine));
+    var rows = [];
+    var k = startIdx;
+    while (k < lines.length && lines[k].trim().indexOf('|') >= 0 && lines[k].trim()) {
+      rows.push(cellsOf(lines[k])); k++;
+    }
+    var grid = rows.map(function (r) {
+      return head.map(function (_c, ci) { return r[ci] == null ? '' : String(r[ci]).trim(); });
+    });
+    /* span[r][c]：null 正常格；{rowspan,colspan} 宿主格；'skip' 被并入的格 */
+    var span = grid.map(function (r) { return r.map(function () { return null; }); });
+    for (var ri = 0; ri < grid.length; ri++) {          /* 先按列吃掉 ^ */
+      for (var ci = 0; ci < grid[ri].length; ci++) {
+        if (grid[ri][ci] !== '^') continue;
+        var r2 = ri - 1;
+        while (r2 >= 0 && (span[r2][ci] === 'skip' || grid[r2][ci] === '^')) r2--;
+        if (r2 < 0 || !span[r2] || span[r2][ci] === 'skip' || grid[r2][ci] === '^') {
+          grid[ri][ci] = '↑'; /* 无宿主可并：显示成箭头提示，不吞内容 */
+          continue;
+        }
+        var host = span[r2][ci] || (span[r2][ci] = { rowspan: 1, colspan: 1 });
+        host.rowspan++;
+        span[ri][ci] = 'skip';
+      }
+    }
+    for (var ri2 = 0; ri2 < grid.length; ri2++) {       /* 再按行吃掉 < */
+      var leftHost = null;
+      for (var ci2 = 0; ci2 < grid[ri2].length; ci2++) {
+        if (span[ri2][ci2] === 'skip') continue;
+        if (grid[ri2][ci2] === '<') {
+          if (leftHost) { leftHost.colspan++; span[ri2][ci2] = 'skip'; }
+          else grid[ri2][ci2] = '←';
+          continue;
+        }
+        /* 宿主对象必须写回 span 网格，后面的 < 才能把 colspan 累加到正确格子 */
+        var h = span[ri2][ci2];
+        if (!h) { h = { rowspan: 1, colspan: 1 }; span[ri2][ci2] = h; }
+        leftHost = h;
+      }
+    }
+    var th = '<thead><tr>' + head.map(function (c, ci3) {
+      return '<th style="text-align:' + (align[ci3] || 'left') + '">' + inline(c) + '</th>';
+    }).join('') + '</tr></thead><tbody>';
+    var tb = grid.map(function (r, ri3) {
+      return '<tr>' + r.map(function (c, ci4) {
+        if (span[ri3][ci4] === 'skip') return '';
+        var h = span[ri3][ci4];
+        var attrs = h ? (h.rowspan > 1 ? ' rowspan="' + h.rowspan + '"' : '') +
+          (h.colspan > 1 ? ' colspan="' + h.colspan + '"' : '') : '';
+        return '<td' + attrs + ' style="text-align:' + (align[ci4] || 'left') + '">' +
+          inline(c) + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    return { html: '<table' + (tuack ? ' class="zb-tuack"' : '') + '>' + th + tb +
+      '</tbody></table>', next: k };
+  }
+
+  /* ---------------- 洛谷扩展：容器指令（折叠框 / 对齐 / 引言 / 渐变竖线） ----------------
+     语法 :::名字[标题]{open}，闭合行是同等数量的冒号；嵌套时外层多用冒号。 */
+  function directiveInfo(line) {
+    var m = line.match(/^ {0,3}(:{3,})([a-z][a-z-]*)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?[ \t]*$/);
+    return m ? { colons: m[1].length, name: m[2], arg: m[3] || '', opt: m[4] || '' } : null;
+  }
+  var FOLD_TITLES = { info: '信息', success: '成功', warning: '注意', error: '错误' };
+  function containerHtml(dir, inner) {
+    if (dir.name === 'vl') return '<div class="zb-vl">' + inner + '</div>';
+    if (dir.name === 'align') {
+      var how = /right/i.test(dir.opt) ? 'right' : 'center';
+      return '<div class="zb-align zb-align-' + how + '">' + inner + '</div>';
+    }
+    if (dir.name === 'epigraph') {
+      return '<blockquote class="zb-epigraph">' + inner +
+        (dir.arg ? '<footer class="zb-epigraph-sign">' + inline(dir.arg) + '</footer>' : '') +
+        '</blockquote>';
+    }
+    if (FOLD_TITLES[dir.name]) {
+      var open = /open/i.test(dir.opt) ? ' open' : '';
+      return '<details class="zb-fold zb-fold-' + dir.name + '"' + open +
+        '><summary class="zb-fold-head">' +
+        (dir.arg ? inline(dir.arg) : FOLD_TITLES[dir.name]) +
+        '</summary><div class="zb-fold-body">' + inner + '</div></details>';
+    }
+    return '<div class="zb-box">' + inner + '</div>';
   }
 
   function render(src) {
@@ -431,18 +537,34 @@
 
       if (isStash(trim)) { flush(); out.push(restore(trim)); i++; continue; }
 
-      /* 蓝→粉渐变竖线区块：:::vl … ::: ，内部照常按 Markdown 渲染。
-         嵌套 render 会重置占位符表，返回后把外层表与序号还原。 */
-      if (/^ {0,3}:::vl[ \t]*$/.test(ln)) {
+      /* 洛谷扩展容器：:::info[标题]{open} / :::align{center} / :::epigraph[——署名] /
+         :::vl … :::（渐变竖线）。嵌套 render 前保存占位符表、返回后还原。
+         洛谷嵌套规则：最深一层三个冒号，每往外一层多一个；闭合用同等数量的冒号。 */
+      var dir = directiveInfo(ln);
+      if (dir) {
         flush();
-        var vbuf = [];
+        var closeRe = new RegExp('^ {0,3}\\:{' + dir.colons + '}[ \\t]*$');
+        var dbuf = [];
         i++;
-        while (i < lines.length && !/^ {0,3}:::[ \t]*$/.test(lines[i])) { vbuf.push(lines[i]); i++; }
+        while (i < lines.length && !closeRe.test(lines[i])) { dbuf.push(lines[i]); i++; }
         if (i < lines.length) i++;
         var keepStore = store, keepSeq = seq;
-        var vlInner = render(vbuf.join('\n'));
+        var dInner = render(dbuf.join('\n'));
         store = keepStore; seq = keepSeq;
-        out.push('<div class="zb-vl">' + vlInner + '</div>');
+        out.push(containerHtml(dir, dInner));
+        continue;
+      }
+
+      /* 洛谷 Tuack 表格：::cute-table{tuack} 修饰紧随其后的那张表格 */
+      if (/^ {0,3}::cute-table\{tuack\}[ \t]*$/.test(trim)) {
+        flush();
+        var tj = i + 1;
+        while (tj < lines.length && !lines[tj].trim()) tj++;
+        if (tj + 1 < lines.length && lines[tj].trim().indexOf('|') >= 0 &&
+            /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+/.test(lines[tj + 1])) {
+          var tr = renderTable(lines[tj], lines[tj + 1], lines, tj + 2, true);
+          out.push(tr.html); i = tr.next;
+        } else { i++; }
         continue;
       }
 
@@ -454,7 +576,7 @@
         while (i < lines.length && !fenceClose(lines[i], f.ch, f.n)) { buf.push(lines[i]); i++; }
         if (i < lines.length) i++;
         flush();
-        out.push(codeHtml(f.lang, buf.join('\n')));
+        out.push(codeHtml(f.lang, buf.join('\n'), f.hl));
         continue;
       }
 
@@ -495,25 +617,12 @@
         i++; continue;
       }
 
-      /* 表格 */
+      /* 表格（支持洛谷 ^ 向上合并 / < 向左合并） */
       if (trim.indexOf('|') >= 0 && i + 1 < lines.length &&
-          /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+/.test(lines[i + 1])) {
-        var head = cellsOf(ln);
-        var align = tableAlign(cellsOf(lines[i + 1]));
-        i += 2;
-        var rows = [];
-        while (i < lines.length && lines[i].trim().indexOf('|') >= 0 && lines[i].trim()) {
-          rows.push(cellsOf(lines[i])); i++;
-        }
+          /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+/.test(lines[i + 1])) {
         flush();
-        var t = '<table><thead><tr>' + head.map(function (c, k) {
-          return '<th style="text-align:' + (align[k] || 'left') + '">' + inline(c) + '</th>';
-        }).join('') + '</tr></thead><tbody>' + rows.map(function (r) {
-          return '<tr>' + head.map(function (_c, k) {
-            return '<td style="text-align:' + (align[k] || 'left') + '">' + inline(r[k] || '') + '</td>';
-          }).join('') + '</tr>';
-        }).join('') + '</tbody></table>';
-        out.push(t);
+        var t = renderTable(ln, lines[i + 1], lines, i + 2, false);
+        out.push(t.html); i = t.next;
         continue;
       }
 
@@ -611,5 +720,5 @@
   }
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, version: '1.1.1' };
+           tidy: tidy, highlight: highlightCode, version: '1.2.0' };
 });

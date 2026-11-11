@@ -545,7 +545,8 @@
   var FONT_CN_OPTS = [{ id: 'default', name: '默认', label: '中文字体' }];
   var FONT_TEX_OPTS = [
     { id: 'default', name: '默认', label: 'LaTeX 字体' },
-    { id: 'cm', name: 'Computer Modern', label: 'LaTeX 字体' }
+    { id: 'cm', name: 'Computer Modern', label: 'LaTeX 字体' },
+    { id: 'katex', name: 'KaTeX（洛谷同款）', label: 'LaTeX 字体' }
   ];
   /* 所有字体选项列表统一排序：「默认」固定在最前，其余按名称字典序。
      以后新增选项只要塞进数组就会自动落到正确位置。 */
