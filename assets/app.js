@@ -449,12 +449,21 @@
       '<a class="soft-btn" href="#/post/blog-changelog">阅读文章 →</a></div></div>' +
       frame + '</section>';
   }
+  /* 关于页简介：旧数据存的是现成 HTML；新数据存 Markdown 源文（空行分段），
+     用站点统一的渲染器输出，创作台预览、SPA 与静态镜像三处一致 */
+  function aboutIntroHtml() {
+    var raw = (CFG.intro != null && CFG.intro !== '') ? String(CFG.intro) : (SITE.about || '');
+    if (!raw) return '<p>关于本站。</p>';
+    if (/<[a-z][^>]*>/i.test(raw)) return raw;
+    if (window.ZBMD && typeof window.ZBMD.render === 'function') return window.ZBMD.render(raw);
+    return '<p>' + esc(raw) + '</p>';
+  }
   function renderAbout() {
     return pageHead('关于', '关于这个站，和写它的人', 'ABOUT') +
       '<div class="about-card glass reveal"><div class="about-top">' + avatarImg('avatar avatar-lg') +
       '<div><h2>' + esc(CFG.author || SITE.author || '我') + '</h2>' +
       '<p>' + esc(CFG.tagline || SITE.tagline || '') + '</p></div></div>' +
-      '<div class="about-intro">' + (CFG.intro || SITE.about || '<p>关于本站。</p>') + '</div>' +
+      '<div class="about-intro">' + aboutIntroHtml() + '</div>' +
       '<div class="x-chips about-skills">' + (CFG.skills || []).map(function (s) {
         return '<span>' + esc(s) + '</span>';
       }).join('') + '</div>' +
@@ -546,7 +555,7 @@
   var FONT_TEX_OPTS = [
     { id: 'default', name: '默认', label: 'LaTeX 字体' },
     { id: 'cm', name: 'Computer Modern', label: 'LaTeX 字体' },
-    { id: 'katex', name: 'KaTeX（洛谷同款）', label: 'LaTeX 字体' }
+    { id: 'katex', name: 'KaTeX', label: 'LaTeX 字体' }
   ];
   /* 所有字体选项列表统一排序：「默认」固定在最前，其余按名称字典序。
      以后新增选项只要塞进数组就会自动落到正确位置。 */

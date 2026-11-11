@@ -417,6 +417,29 @@
       return 'left';
     });
   }
+  /* 嵌套列表：缩进两空格算一层（Tab 按 4 空格），同层类型以首项为准，
+     同层换标记类型（如 - 后接 1.）按 GFM 拆成两个列表；
+     cur 是共享游标 {i}，每次调用消费一段，主循环调到消费完为止 */
+  function listTree(items, cur, level) {
+    var ordered = /\d/.test(items[cur.i].marker);
+    var tag = ordered ? 'ol' : 'ul';
+    var html = '';
+    while (cur.i < items.length) {
+      var it = items[cur.i];
+      if (it.indent < level) break;
+      if (it.indent === level && (/\d/.test(it.marker)) !== ordered) break;
+      var task = it.text.match(/^\[([ xX])\]\s*(.*)$/);
+      var inner = (task ? '<span class="zb-task' + (task[1] === ' ' ? '' : ' done') +
+        '">' + (task[1] === ' ' ? '☐' : '☑') + '</span>' : '') +
+        inline(task ? task[2] : it.text);
+      cur.i++;
+      if (cur.i < items.length && items[cur.i].indent > level) {
+        inner += listTree(items, cur, items[cur.i].indent);
+      }
+      html += '<li>' + inner + '</li>';
+    }
+    return '<' + tag + '>' + html + '</' + tag + '>';
+  }
   function fenceInfo(line) {
     var m = line.match(/^ {0,3}(`{3,}|~{3,})[ \t]*([^\n]*)$/);
     if (!m) return null;
@@ -637,23 +660,27 @@
         continue;
       }
 
-      /* 列表：无序 / 有序 / 任务 */
+      /* 列表：无序 / 有序 / 任务，支持缩进嵌套（Tab 缩进两空格算一层） */
       var li = ln.match(/^(\s*)([-*+]|\d+[.)])\s+(.+)$/);
       if (li) {
         flush();
-        var ordered = /\d/.test(li[2]);
-        var items = [];
+        var liItems = [];
         while (i < lines.length) {
-          var m = lines[i].match(/^(\s*)([-*+]|\d+[.)])\s+(.+)$/);
-          if (!m || (/\d/.test(m[2])) !== ordered) break;
-          var task = m[3].match(/^\[([ xX])\]\s*(.*)$/);
-          items.push((task ? '<span class="zb-task' + (task[1] === ' ' ? '' : ' done') +
-            '">' + (task[1] === ' ' ? '☐' : '☑') + '</span>' : '') + inline(task ? task[2] : m[3]));
+          var lm = lines[i].match(/^(\s*)([-*+]|\d+[.)])\s+(.+)$/);
+          if (!lm) break;
+          liItems.push({
+            indent: lm[1].replace(/\t/g, '  ').length,
+            marker: lm[2],
+            text: lm[3]
+          });
           i++;
         }
-        out.push('<' + (ordered ? 'ol' : 'ul') + '>' + items.map(function (x) {
-          return '<li>' + x + '</li>';
-        }).join('') + '</' + (ordered ? 'ol' : 'ul') + '>');
+        var liCur = { i: 0 };
+        var listHtml = [];
+        while (liCur.i < liItems.length) {
+          listHtml.push(listTree(liItems, liCur, liItems[liCur.i].indent));
+        }
+        out.push(listHtml.join('\n'));
         continue;
       }
 

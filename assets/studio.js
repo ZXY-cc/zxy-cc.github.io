@@ -146,6 +146,10 @@
     if (!s || typeof s !== 'object') return;
     if (s.avatar) DATA.site.avatar = String(s.avatar);
     if (typeof s.bio === 'string') DATA.site.bio = s.bio;
+    if (typeof s.tagline === 'string') DATA.site.tagline = s.tagline;
+    if (typeof s.intro === 'string') DATA.site.intro = s.intro;
+    if (Object.prototype.toString.call(s.skills) === '[object Array]') DATA.site.skills = s.skills;
+    if (Object.prototype.toString.call(s.social) === '[object Array]') DATA.site.social = s.social;
   }
   ensureIds();
   /* 线上数据文件里原本的头像与签名，供「恢复」用（本机覆盖层生效之前先存一份） */
@@ -607,7 +611,7 @@
   function tabHtml() {
     var tabs = [
       ['post', '写文章'], ['photo', '发图片'], ['moment', '发说说'], ['chatter', '发杂谈'],
-      ['project', '项目'], ['friend', '友链'], ['site', '名片设置'],
+      ['project', '项目'], ['friend', '友链'], ['site', '名片设置'], ['about', '关于页'],
       ['manage', '内容管理'], ['publish', '发布 / 同步']
     ];
     return '<div class="studio-tabs">' + tabs.map(function (t) {
@@ -763,6 +767,32 @@
   /* 名片设置：改的是首页名片的头像与名字下面的签名。
      头像可上传（压到 320px 后转 data URL）或直接填图片地址；
      保存后立刻覆盖共享的 DATA.site，首页与导航头像即时换新。 */
+  /* 关于页：编辑「关于」页面名片与正文的每一部分。
+     intro 支持 Markdown（空行分段）；底部入口逐条增删。 */
+  function formAbout() {
+    var s = DATA.site || {};
+    var social = Object.prototype.toString.call(s.social) === '[object Array]' ? s.social : [];
+    var rows = social.map(function (so, i) {
+      return '<div class="f-row about-so-row">' +
+        field('名称', 'f-so-name-' + i, 'GitHub') +
+        field('链接', 'f-so-url-' + i, 'https://… 或 #/about') +
+        field('副标题', 'f-so-note-' + i, '一句话说明') +
+        '<button class="soft-btn so-del" type="button" data-act="about-so-del" data-i="' + i +
+        '" aria-label="删除这条入口">删除</button></div>';
+    }).join('');
+    return '<div class="studio-form glass"><h2>关于页</h2>' +
+      '<p class="f-hint">这里逐项编辑「关于」页面的内容：名片文字、简介正文（支持 Markdown 扩展语法）' +
+      '与底部入口。保存后立即更新页面，并自动同步到网站与静态镜像。</p>' +
+      area('签名（关于页名字下面的那行文字）', 'f-about-tagline', '记录一些想法，和把它们弄明白的过程。', 2) +
+      area('简介正文（Markdown，空行分段）', 'f-about-intro',
+        '喜欢把事情拆开看清楚，再慢慢写下来。', 8) +
+      field('技能标签（用逗号分隔）', 'f-about-skills', '算法, Python, 折腾') +
+      '<h3 class="f-sub">底部入口（每条：名称 + 链接 + 副标题）</h3>' +
+      (rows || '<p class="f-hint">还没有入口，点下面添加。</p>') +
+      '<div class="f-actions"><button class="soft-btn" type="button" data-act="about-so-add">添加一条入口</button>' +
+      '<button class="primary-btn" type="button" data-act="save-about">保存关于页</button>' +
+      '<button class="soft-btn" type="button" data-act="about-reset">恢复线上版本</button></div></div>';
+  }
   function formSite() {
     var s = DATA.site || {};
     return '<div class="studio-form glass"><h2>名片设置</h2>' +
@@ -867,7 +897,7 @@
   function formHtml() {
     return {
       post: formPost, photo: formPhoto, moment: formMoment, chatter: formChatter,
-      project: formProject, friend: formFriend, site: formSite,
+      project: formProject, friend: formFriend, site: formSite, about: formAbout,
       manage: formManage, publish: formPublish
     }[state.tab]();
   }
@@ -996,6 +1026,57 @@
   function notifySite() {
     try { document.dispatchEvent(new CustomEvent('zb:site-change')); } catch (e) {}
   }
+  /* DATA.site 的本机覆盖层：名片与关于页共用一份，发布后随站点数据文件落库 */
+  function persistSiteLocal() {
+    if (!DATA.site || typeof DATA.site !== 'object') return false;
+    return setLs(SITE_KEY, JSON.stringify({
+      avatar: DATA.site.avatar, bio: DATA.site.bio,
+      tagline: DATA.site.tagline, intro: DATA.site.intro,
+      skills: DATA.site.skills, social: DATA.site.social
+    }));
+  }
+  /* 把关于页表单当前值写回 DATA.site（不落盘不通知，供增删入口行前暂存） */
+  function collectAbout() {
+    var s = DATA.site;
+    if (!s || typeof s !== 'object') return;
+    var tagEl = document.getElementById('f-about-tagline');
+    var intEl = document.getElementById('f-about-intro');
+    var skEl = document.getElementById('f-about-skills');
+    if (tagEl) s.tagline = String(tagEl.value || '').replace(/\s+$/, '');
+    if (intEl) s.intro = String(intEl.value || '').replace(/\s+$/, '');
+    if (skEl) s.skills = splitTags(skEl.value);
+    var social = [], i = 0;
+    while (document.getElementById('f-so-name-' + i)) {
+      var name = val('f-so-name-' + i);
+      var url = val('f-so-url-' + i);
+      if (name || url) {
+        var old = (s.social || [])[i] || {};
+        var item = { name: name, url: url, note: val('f-so-note-' + i) };
+        if (old.icon) item.icon = old.icon;
+        if (old.accent) item.accent = true;
+        social.push(item);
+      }
+      i++;
+    }
+    s.social = social;
+  }
+  function saveAbout() {
+    collectAbout();
+    if (!persistSiteLocal()) return say('本机存储空间不足，保存失败。', 'warn');
+    notifySite();
+    queueSync();
+    say('关于页已保存：页面立即更新，并已自动同步到网站。');
+  }
+  function resetAbout() {
+    ['tagline', 'intro', 'skills', 'social'].forEach(function (k) {
+      DATA.site[k] = JSON.parse(JSON.stringify(RAW_SITE[k] !== undefined ? RAW_SITE[k] : (k === 'social' ? [] : '')));
+    });
+    persistSiteLocal();
+    notifySite();
+    queueSync();
+    render(document.getElementById('app'));
+    say('已恢复站点数据文件里的关于页内容，并已自动同步到网站。');
+  }
   function saveSite() {
     var avatar = val('f-site-avatar') || RAW_SITE.avatar || 'assets/avatar.jpg';
     var bioEl = document.getElementById('f-site-bio');
@@ -1003,7 +1084,7 @@
     if (!DATA.site || typeof DATA.site !== 'object') DATA.site = {};
     DATA.site.avatar = avatar;
     DATA.site.bio = bio;
-    if (!setLs(SITE_KEY, JSON.stringify({ avatar: avatar, bio: bio }))) {
+    if (!persistSiteLocal()) {
       return say('本机存储空间不足，换一张小一点的头像再试。', 'warn');
     }
     notifySite();
@@ -1370,6 +1451,26 @@
     if (a === 'save-project') return saveProject();
     if (a === 'save-friend') return saveFriend();
     if (a === 'save-site') return saveSite();
+    if (a === 'save-about') return saveAbout();
+    if (a === 'about-reset') return resetAbout();
+    if (a === 'about-so-add') {
+      collectAbout();
+      if (!DATA.site.social || Object.prototype.toString.call(DATA.site.social) !== '[object Array]') {
+        DATA.site.social = [];
+      }
+      DATA.site.social.push({ name: '', url: '', note: '' });
+      render(document.getElementById('app'));
+      return;
+    }
+    if (a === 'about-so-del') {
+      collectAbout();
+      var di = parseInt(t.getAttribute('data-i'), 10);
+      if (DATA.site.social && di >= 0 && di < DATA.site.social.length) {
+        DATA.site.social.splice(di, 1);
+        render(document.getElementById('app'));
+      }
+      return;
+    }
     if (a === 'site-reset') return resetSite();
     if (a === 'preview-post') { setMode('preview'); return; }
     if (a === 'export-js') return download('site-data.js', dataFile());
@@ -1447,6 +1548,28 @@
       scheduleSave();
     }
   }
+  /* Tab / Shift+Tab：选区所跨行整体缩进或反缩进两空格（列表嵌套、代码块对齐通用） */
+  var EDITABLE_AREAS = ['f-body', 'f-ch-body', 'f-moment-text'];
+  function shiftIndent(ta, back) {
+    var v = ta.value, s = ta.selectionStart, e2 = ta.selectionEnd;
+    var top = ta.scrollTop || 0;
+    var ls = v.lastIndexOf('\n', s - 1) + 1;
+    var le = v.indexOf('\n', e2); if (le < 0) le = v.length;
+    var delta = 0;
+    var lines = v.slice(ls, le).split('\n').map(function (l) {
+      if (back) {
+        var cut = l.match(/^(\t| {1,2})/);
+        if (cut) { delta -= cut[0].length; return l.slice(cut[0].length); }
+        return l;
+      }
+      delta += 2;
+      return '  ' + l;
+    });
+    ta.value = v.slice(0, ls) + lines.join('\n') + v.slice(le);
+    try { ta.setSelectionRange(Math.max(ls, s + delta), Math.max(ls, e2 + delta)); } catch (err) {}
+    try { ta.scrollTop = top; } catch (err2) {}
+    try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch (err3) {}
+  }
   function onKeydown(e) {
     var t = e.target;
     if (!t || !t.id) return;
@@ -1454,6 +1577,11 @@
       if (e.preventDefault) e.preventDefault();
       addTag(t.value);
       t.value = '';
+    }
+    if (EDITABLE_AREAS.indexOf(t.id) >= 0 && (e.key === 'Tab' || e.keyCode === 9)) {
+      if (e.preventDefault) e.preventDefault();
+      shiftIndent(t, !!(e.shiftKey));
+      return;
     }
     if (t.id === 'f-body' && (e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
       if (e.preventDefault) e.preventDefault();
@@ -1488,6 +1616,17 @@
     if (isOwner() && state.tab === 'site') {
       setText('f-site-avatar', (DATA.site || {}).avatar || 'assets/avatar.jpg');
       setText('f-site-bio', (DATA.site || {}).bio || '');
+    }
+    if (isOwner() && state.tab === 'about') {
+      var sa = DATA.site || {};
+      setText('f-about-tagline', sa.tagline || '');
+      setText('f-about-intro', sa.intro || '');
+      setText('f-about-skills', (sa.skills || []).join(', '));
+      (sa.social || []).forEach(function (so, i) {
+        setText('f-so-name-' + i, so.name || '');
+        setText('f-so-url-' + i, so.url || '');
+        setText('f-so-note-' + i, so.note || '');
+      });
     }
     if (isDesk) {
       renderTagPills(); renderTagHistory(); renderCover();
