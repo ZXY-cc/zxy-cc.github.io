@@ -27,6 +27,9 @@
   var REPO = 'ZXY-cc/zxy-cc.github.io';
   var FILE = 'assets/site-data.js';
   var BRANCH = 'main';
+  /* 细粒度令牌一键生成页：预填名称、说明与 Contents 读写权限，免去在设置菜单里找入口 */
+  var TOKEN_NEW_URL = 'https://github.com/settings/personal-access-tokens/new' +
+    '?name=ZXY-Blog-Studio&description=Blog%20studio%20auto-sync&contents=write&expires_in=none';
   var DAYS = 90;
   var KINDS = ['posts', 'moments', 'chatter', 'albums', 'projects', 'friends'];
   var DRAFT_KEY = 'zb-studio-draft';
@@ -841,8 +844,12 @@
         (has ? (auto ? '自动同步已开启：本机改动会自动写进网站。' : '自动同步已关闭：改动只保存在这台设备。')
              : '尚未配置发布凭证：改动只保存在这台设备。')) + '</p>' +
       '<h3>办法一 · 一次配置，之后全自动（推荐）</h3>' +
-      '<p class="f-hint">在 GitHub 生成一个 <b>细粒度令牌</b>，只授权 <code>ZXY-cc/zxy-cc.github.io</code> 的 Contents 读写。' +
-      '令牌只保存在这台设备的浏览器里，只发往 api.github.com，不会写进任何导出文件。</p>' +
+      '<div class="f-actions"><a class="soft-btn token-new" href="' + TOKEN_NEW_URL.replace(/&/g, '&amp;') +
+      '" target="_blank" rel="noopener noreferrer">① 点这里直接生成 GitHub 令牌（已填好权限）</a></div>' +
+      '<p class="f-hint">不用去 GitHub 找 Settings，链接直达创建页。打开后在 <b>Repository access</b> 选 ' +
+      '「Only select repositories」并勾选 <code>ZXY-cc/zxy-cc.github.io</code>，拉到底点 <b>Generate token</b>；' +
+      '复制 <code>github_pat_…</code> 粘到下方。若提示不允许永不过期，把 Expiration 改成 90 天即可。' +
+      '令牌只存在这台设备、只发往 api.github.com，不会写进导出文件。</p>' +
       field('GitHub 细粒度令牌', 'f-pat', 'github_pat_…', 'password') +
       '<label class="f-check"><input type="checkbox" id="f-autosync"' + (auto ? ' checked' : '') +
       '> 自动同步每次改动到网站</label>' +

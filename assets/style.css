@@ -1182,8 +1182,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .article-author i { font-style: normal; opacity: .7; }
 .article-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
 .soft-btn { display: inline-block; font: inherit; font-size: 13px; cursor: pointer; color: var(--ink);
-  background: var(--glass-strong); border: 1px solid var(--glass-line); padding: 7px 16px; border-radius: 999px;
+  text-decoration: none; background: var(--glass-strong); border: 1px solid var(--glass-line);
+  padding: 7px 16px; border-radius: 999px;
   transition: transform .25s ease, box-shadow .25s ease; }
+.soft-btn.token-new { color: var(--accent-text); border-color: var(--glass-line); }
 .soft-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(112,138,190,.18); }
 .post-nav { display: flex; justify-content: space-between; gap: 14px; margin: 22px 0 40px; }
 .pn { display: flex; flex-direction: column; gap: 3px; max-width: 47%; font-size: 13.5px; color: var(--ink-strong);
