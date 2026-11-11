@@ -535,10 +535,6 @@
         '" aria-label="' + esc(t[3]) + '">' + esc(t[0]) + '</button>';
     }).join('');
   }
-  function setDeskWidth(on) {
-    var shell = document.querySelector && document.querySelector('.shell');
-    if (shell && shell.classList) shell.classList.toggle('is-wide', !!on);
-  }
   function download(name, text) {
     try {
       var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -637,81 +633,76 @@
       '<textarea class="f-input f-area" id="' + id + '" rows="' + (rows || 7) +
       '" placeholder="' + (ph || '') + '"></textarea></span>';
   }
-  /* 仿参考站：左侧沉浸式编辑区（大标题 + 整行工具栏 + 正文），
-     右侧窄栏放封面 / 标签 / 分类 / 摘要 / 日期与发布动作。 */
+  /* 写文章与其它分页同一套「玻璃卡片」美术框架：标题、工具栏、正文、
+     属性字段（封面 / 标签 / 分类 / 摘要 / 日期）与发布动作按同样的
+     f-label + f-input 体系纵向排布，比例与其它表单一致。 */
   function formPost() {
     var d = state.draft || readDraft();
     var editing = !!(state.editing && state.editing.kind === 'posts');
     var modes = [['write', '写作'], ['split', '并排'], ['preview', '预览']];
-    return '<div class="studio-desk" id="studio-desk">' +
-      '<section class="desk-editor glass">' +
-        editingBanner('文章', 'posts') +
-        '<div class="desk-title-row">' +
-          '<input id="f-title" class="desk-title" type="text" placeholder="文章大标题…" ' +
-            'value="' + esc(d.title) + '" aria-label="文章标题">' +
-          '<span class="desk-saved" id="draft-saved">' + esc(savedLabel()) + '</span>' +
-        '</div>' +
-        '<div class="desk-toolbar" role="toolbar" aria-label="Markdown 与 LaTeX 工具栏">' +
-          '<div class="md-tools">' + toolHtml() + '</div>' +
-          '<div class="mode-switch" role="group" aria-label="编辑视图">' + modes.map(function (m) {
-            return '<button type="button" data-mode-btn="' + m[0] + '" aria-pressed="' +
-              (state.mode === m[0] ? 'true' : 'false') + '" class="' +
-              (state.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>';
+    return '<div class="studio-form glass post-form"><h2>写文章</h2>' +
+      editingBanner('文章', 'posts') +
+      '<span class="f-cell"><label class="f-label" for="f-title">标题</label>' +
+      '<input class="f-input post-title" id="f-title" type="text" placeholder="文章大标题…" ' +
+        'value="' + esc(d.title) + '" aria-label="文章标题"></span>' +
+      '<div class="desk-toolbar" role="toolbar" aria-label="Markdown 与 LaTeX 工具栏">' +
+        '<div class="md-tools">' + toolHtml() + '</div>' +
+        '<div class="mode-switch" role="group" aria-label="编辑视图">' + modes.map(function (m) {
+          return '<button type="button" data-mode-btn="' + m[0] + '" aria-pressed="' +
+            (state.mode === m[0] ? 'true' : 'false') + '" class="' +
+            (state.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>';
+        }).join('') + '</div>' +
+        '<button class="md-tool tidy-btn" type="button" data-act="tidy" ' +
+          'title="去掉多余空格与空行，预览效果不变">✦ 格式优化</button>' +
+      '</div>' +
+      '<div class="desk-body" id="desk-body" data-mode="' + state.mode + '">' +
+        '<textarea id="f-body" class="desk-textarea" spellcheck="false" ' +
+          'placeholder="用 Markdown 写正文，用 $…$ / $$…$$ 写 LaTeX 公式…">' +
+          esc(d.markdown) + '</textarea>' +
+        '<div id="post-preview" class="desk-preview article-body"></div>' +
+      '</div>' +
+      '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · ##| 标题 或 :::vl 可加渐变竖线 · 自动保存在本机</span>' +
+        '<span class="desk-saved" id="draft-saved">' + esc(savedLabel()) + '</span>' +
+        '<span id="word-count">0 字</span></div>' +
+      '<div class="f-row">' +
+        '<span class="f-cell"><label class="f-label" for="f-cover">封面图</label>' +
+          '<input class="f-input" id="f-cover" type="text" placeholder="粘贴图片 URL，或点下方选本地图片…" ' +
+            'value="' + esc(d.cover) + '" aria-label="封面图地址">' +
+          '<div class="cover-box" id="cover-box" data-act="cover-pick" role="button" tabindex="0" ' +
+            'title="点击选择本地图片"></div>' +
+          '<input class="f-input f-file" id="f-cover-file" type="file" accept="image/*" aria-label="上传封面图">' +
+        '</span>' +
+        '<span class="f-cell"><label class="f-label" for="f-tag-input">标签</label>' +
+          '<div class="tag-pills" id="tag-pills"></div>' +
+          '<input class="f-input" id="f-tag-input" type="text" placeholder="+ 输入标签后按回车">' +
+          '<div class="tag-history" id="tag-history"></div>' +
+        '</span>' +
+      '</div>' +
+      '<div class="f-row">' +
+        '<span class="f-cell"><label class="f-label">分类</label>' +
+          '<div class="cat-pills" id="cat-pills">' + CATS.map(function (c) {
+            return '<button type="button" data-cat="' + esc(c) + '" class="' +
+              (d.category === c ? 'on' : '') + '">' + esc(c) + '</button>';
           }).join('') + '</div>' +
-          '<button class="md-tool tidy-btn" type="button" data-act="tidy" ' +
-            'title="去掉多余空格与空行，预览效果不变">✦ 格式优化</button>' +
-        '</div>' +
-        '<div class="desk-body" id="desk-body" data-mode="' + state.mode + '">' +
-          '<textarea id="f-body" class="desk-textarea" spellcheck="false" ' +
-            'placeholder="用 Markdown 写正文，用 $…$ / $$…$$ 写 LaTeX 公式…">' +
-            esc(d.markdown) + '</textarea>' +
-          '<div id="post-preview" class="desk-preview article-body"></div>' +
-        '</div>' +
-        '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · ##| 标题 或 :::vl 区块可加蓝粉渐变竖线 · 自动保存在本机</span>' +
-          '<span id="word-count">0 字</span></div>' +
-      '</section>' +
-      '<aside class="desk-meta glass">' +
-        '<div class="meta-head"><span>POST MODE</span><h2>属性设置</h2></div>' +
-        '<div class="meta-scroll">' +
-          '<section class="meta-group"><div class="meta-label l-blue">COVER IMAGE · 封面图</div>' +
-            '<div class="cover-box" id="cover-box" data-act="cover-pick" role="button" tabindex="0" ' +
-              'title="点击选择本地图片"></div>' +
-            '<input class="f-input" id="f-cover" type="text" placeholder="或粘贴图片 URL…" ' +
-              'value="' + esc(d.cover) + '" aria-label="封面图地址">' +
-            '<input class="f-input f-file" id="f-cover-file" type="file" accept="image/*" aria-label="上传封面图">' +
-          '</section>' +
-          '<section class="meta-group"><div class="meta-label l-pink">RELEVANT TAGS · 标签</div>' +
-            '<div class="tag-pills" id="tag-pills"></div>' +
-            '<input class="f-input" id="f-tag-input" type="text" placeholder="+ 输入标签后按回车">' +
-            '<div class="tag-history" id="tag-history"></div>' +
-          '</section>' +
-          '<section class="meta-group"><div class="meta-label l-violet">WORDS STORIES · 分类</div>' +
-            '<div class="cat-pills" id="cat-pills">' + CATS.map(function (c) {
-              return '<button type="button" data-cat="' + esc(c) + '" class="' +
-                (d.category === c ? 'on' : '') + '">' + esc(c) + '</button>';
-            }).join('') + '</div>' +
-            '<input class="f-input" id="f-category" type="text" placeholder="也可以自己写一个" ' +
-              'value="' + esc(d.category) + '" aria-label="分类">' +
-          '</section>' +
-          '<section class="meta-group"><div class="meta-label l-green">DESCRIPTION · 摘要</div>' +
-            '<textarea class="f-input f-area" id="f-summary" rows="4" ' +
-              'placeholder="记录一下这篇内容的核心思绪…">' + esc(d.summary) + '</textarea>' +
-            '<p class="meta-note">摘要会显示在首页卡片与搜索结果里。</p>' +
-          '</section>' +
-          '<section class="meta-group"><div class="meta-label l-amber">PUBLISH DATE · 日期</div>' +
-            '<input class="f-input" id="f-date" type="date" value="' + esc(d.date) + '">' +
-          '</section>' +
-        '</div>' +
-        '<div class="meta-foot">' +
-          '<div class="meta-status">最近落盘：<b id="meta-saved">' + esc(d.savedAt || '尚未落盘') + '</b></div>' +
-          '<div class="meta-actions">' +
-            '<button class="soft-btn" type="button" data-act="draft-save">存为草稿</button>' +
-            '<button class="primary-btn" type="button" data-act="publish-post">' +
-            (editing ? '保存修改' : '正式发布') + '</button>' +
-          '</div>' +
-          '<p class="meta-hint">发布先写入本机内容，开启自动同步后会立即写进网站；存为草稿只留在本机。</p>' +
-        '</div>' +
-      '</aside></div>';
+          '<input class="f-input" id="f-category" type="text" placeholder="也可以自己写一个" ' +
+            'value="' + esc(d.category) + '" aria-label="分类">' +
+        '</span>' +
+        '<span class="f-cell"><label class="f-label" for="f-date">发布日期</label>' +
+          '<input class="f-input" id="f-date" type="date" value="' + esc(d.date) + '">' +
+        '</span>' +
+      '</div>' +
+      '<span class="f-cell"><label class="f-label" for="f-summary">摘要</label>' +
+        '<textarea class="f-input f-area" id="f-summary" rows="4" ' +
+          'placeholder="记录一下这篇内容的核心思绪…">' + esc(d.summary) + '</textarea>' +
+        '<p class="meta-note">摘要会显示在首页卡片与搜索结果里。</p>' +
+      '</span>' +
+      '<div class="f-actions">' +
+        '<button class="soft-btn" type="button" data-act="draft-save">存为草稿</button>' +
+        '<button class="primary-btn" type="button" data-act="publish-post">' +
+        (editing ? '保存修改' : '正式发布') + '</button>' +
+      '</div>' +
+      '<p class="f-hint">发布先写入本机内容，开启自动同步后会立即写进网站；存为草稿只留在本机。' +
+        '最近落盘：<b id="meta-saved">' + esc(d.savedAt || '尚未落盘') + '</b></p></div>';
   }
   function albumOptions() {
     var albums = DATA.albums || [];
@@ -726,6 +717,8 @@
       '<select class="f-input" id="f-album">' + albumOptions() + '</select>' +
       '<div id="new-album-box">' + field('新相册标题', 'f-album-title', '例如：周末的光') +
       field('新相册说明', 'f-album-desc', '一句话') + '</div>' +
+      '<span class="f-cell"><label class="f-label" for="f-photo-date">拍摄 / 发布日期</label>' +
+      '<input class="f-input" id="f-photo-date" type="date" value="' + today() + '"></span>' +
       '<label class="file-zone" for="f-files"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择图片 · 可多选，选好自动压缩<input class="f-input f-file" id="f-files" type="file" accept="image/*" multiple></label>' +
       field('照片说明', 'f-photo-note', '留一句给这张照片（可选）') +
       '<div id="file-preview" class="file-preview"></div>' +
@@ -742,6 +735,8 @@
     return '<div class="studio-form glass"><h2>发一条说说</h2>' + editingBanner('说说', 'moments') +
       area('这一刻想说什么', 'f-moment-text', '…', 5) +
       '<div class="f-row">' + field('心情', 'f-mood', '✨ 满足') + field('地点', 'f-place', '书桌前') + '</div>' +
+      '<span class="f-cell"><label class="f-label" for="f-moment-date">发布日期</label>' +
+      '<input class="f-input" id="f-moment-date" type="date" value="' + today() + '"></span>' +
       '<label class="file-zone" for="f-moment-img"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择配图 · 可选<input class="f-input f-file" id="f-moment-img" type="file" accept="image/*"></label>' +
       '<div id="moment-img-preview" class="file-preview"></div>' +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="tidy">✦ 格式优化</button>' +
@@ -753,23 +748,31 @@
       field('标题', 'f-ch-title', '比文章短一点的标题') +
       field('摘要', 'f-ch-summary', '一句话') +
       '<div class="f-row">' + field('标签（逗号分隔）', 'f-ch-tags', '随笔, 建站') + field('心情', 'f-ch-mood', '🌸 平静') + '</div>' +
+      '<span class="f-cell"><label class="f-label" for="f-ch-date">发布日期</label>' +
+      '<input class="f-input" id="f-ch-date" type="date" value="' + today() + '"></span>' +
       area('正文', 'f-ch-body', '想到哪写到哪…', 10) +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="tidy">✦ 格式优化</button>' +
       '<button class="primary-btn" type="button" data-act="save-chatter">' +
       (state.editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formProject() {
-    return '<div class="studio-form glass"><h2>添加一个项目</h2>' +
+    var editing = !!(state.editing && state.editing.kind === 'projects');
+    return '<div class="studio-form glass"><h2>' + (editing ? '编辑这个项目' : '添加一个项目') + '</h2>' +
+      editingBanner('项目', 'projects') +
       field('名称', 'f-pj-name', '项目名') + area('描述', 'f-pj-desc', '做了什么', 4) +
       '<div class="f-row">' + field('技术标签（逗号分隔）', 'f-pj-tags', 'Python, 算法') + field('状态', 'f-pj-status', '进行中') + '</div>' +
       field('链接', 'f-pj-link', '#/about 或 https://…') +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-project">保存到本机</button></div></div>';
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-project">' +
+      (editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formFriend() {
-    return '<div class="studio-form glass"><h2>添加一个友链</h2>' +
+    var editing = !!(state.editing && state.editing.kind === 'friends');
+    return '<div class="studio-form glass"><h2>' + (editing ? '编辑这个友链' : '添加一个友链') + '</h2>' +
+      editingBanner('友链', 'friends') +
       field('名称', 'f-fr-name', '站点名') + area('描述', 'f-fr-desc', '一句话介绍', 3) +
       '<div class="f-row">' + field('地址', 'f-fr-url', 'https://…') + field('首字母标记', 'f-fr-initial', 'GH') + '</div>' +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-friend">保存到本机</button></div></div>';
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-friend">' +
+      (editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   /* 名片设置：改的是首页名片的头像与名字下面的签名。
      头像可上传（压到 320px 后转 data URL）或直接填图片地址；
@@ -858,7 +861,7 @@
         rows.push('<div class="manage-row"><span class="mr-kind">' + labels[k] + '</span>' +
           '<b>' + esc(name || '(未命名)') + '</b><span class="mr-src">' + src + '</span>' +
           '<span class="mr-id">' + esc(id) + '</span>' +
-          (k === 'posts' || k === 'moments' || k === 'chatter'
+          (k !== 'albums'
             ? '<button class="mini-btn" type="button" data-edit="' + esc(k + '::' + id) + '">编辑</button>' : '') +
           '<button class="mini-btn" type="button" data-del="' + esc(k + '::' + id) + '">删除</button></div>');
       });
@@ -866,7 +869,7 @@
     var size = 0;
     try { size = (ls(LOCAL_KEY) || '').length; } catch (e) {}
     return '<div class="studio-form glass"><h2>内容管理</h2>' +
-      '<p class="f-hint">文章、说说、杂谈可以载回对应表单重新编辑；全部条目都能删除。' +
+      '<p class="f-hint">文章、说说、杂谈、项目、友链都可以载回对应表单重新编辑；除相册外全部条目都能删除。' +
       '改动先保存在本机，开启自动同步后立即写进网站，访客看到的就是最新状态；已发布内容删除后可在仓库提交历史找回。</p>' +
       '<div class="manage-list">' + (rows.length ? rows.join('') : '<p class="page-note">还没有任何内容。</p>') + '</div>' +
       '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清空本机副本与草稿，避免浏览器存储被图片占满。</p>' +
@@ -910,7 +913,7 @@
     }[state.tab]();
   }
   function studioHtml() {
-    return '<div class="studio-wrap' + (state.tab === 'post' ? ' is-desk' : '') + '" id="studio-panel">' +
+    return '<div class="studio-wrap" id="studio-panel">' +
       '<div class="studio-head glass"><div><div class="page-kicker">OWNER STUDIO</div>' +
       '<h1>创作台</h1><p>这台设备已识别为站长的设备 · ' +
       '<span id="sync-badge" class="sync-badge' + (sync.warn ? ' warn' : '') + '">' +
@@ -983,7 +986,7 @@
     var old = (state.editing && state.editing.kind === 'moments')
       ? findItem('moments', state.editing.id) : null;
     var item = {
-      id: old ? old.id : uid('m'), date: old ? old.date : today(), text: text,
+      id: old ? old.id : uid('m'), date: val('f-moment-date') || (old ? old.date : today()), text: text,
       mood: val('f-mood') || '✨ 记录', place: val('f-place') || '',
       /* 重编辑保留原有配图；选了新图才整组替换 */
       images: (old && old.images && old.images.length && !src) ? old.images.slice() : (src ? [src] : []),
@@ -1000,7 +1003,7 @@
     var old = (state.editing && state.editing.kind === 'chatter')
       ? findItem('chatter', state.editing.id) : null;
     var item = {
-      id: old ? old.id : uid('c'), date: old ? old.date : today(), title: title,
+      id: old ? old.id : uid('c'), date: val('f-ch-date') || (old ? old.date : today()), title: title,
       summary: val('f-ch-summary') || clipSummary(title, 24), tags: splitTags(val('f-ch-tags')),
       mood: val('f-ch-mood') || '🌸 平静',
       markdown: body, body: htmlOfBody(body), format: 'markdown'
@@ -1012,23 +1015,32 @@
   function saveProject() {
     var name = val('f-pj-name');
     if (!name) return say('项目名不能为空。', 'warn');
+    /* 重编辑保留原 id 与日期，避免变成一条新项目 */
+    var old = (state.editing && state.editing.kind === 'projects')
+      ? findItem('projects', state.editing.id) : null;
     var item = {
-      id: uid('pj'), name: name, desc: val('f-pj-desc'), tags: splitTags(val('f-pj-tags')),
-      status: val('f-pj-status') || '记录', date: today(), link: val('f-pj-link')
+      id: old ? old.id : uid('pj'), name: name, desc: val('f-pj-desc'), tags: splitTags(val('f-pj-tags')),
+      status: val('f-pj-status') || '记录', date: old ? old.date : today(), link: val('f-pj-link')
     };
     if (!upsert('projects', item)) return say('保存失败。', 'warn');
-    reloadSoon('项目已保存');
+    state.editing = null;
+    reloadSoon(old ? '项目已更新' : '项目已保存');
   }
   function saveFriend() {
     var name = val('f-fr-name'), url = val('f-fr-url');
     if (!name || !url) return say('名称和地址都要填。', 'warn');
+    /* 重编辑保留原 id，避免变成一条新友链 */
+    var old = (state.editing && state.editing.kind === 'friends')
+      ? findItem('friends', state.editing.id) : null;
     var item = {
       name: name, desc: val('f-fr-desc'), url: url,
-      status: 'Online', initial: val('f-fr-initial') || name.slice(0, 2)
+      status: old ? (old.status || 'Online') : 'Online',
+      initial: val('f-fr-initial') || name.slice(0, 2)
     };
-    item.id = uid('fr');
+    item.id = old ? old.id : uid('fr');
     if (!upsert('friends', item)) return say('保存失败。', 'warn');
-    reloadSoon('友链已保存');
+    state.editing = null;
+    reloadSoon(old ? '友链已更新' : '友链已保存');
   }
   /* 前台与创作台共享同一个 DATA.site 对象，改完通知页面把导航头像一起换掉 */
   function notifySite() {
@@ -1127,6 +1139,7 @@
   function savePhoto() {
     if (!state.files.length) return say('还没有选图片。', 'warn');
     var sel = val('f-album');
+    var pdate = val('f-photo-date') || today();
     var albums = DATA.albums || [];
     var album = null, i;
     if (sel && sel !== '__new__') {
@@ -1135,13 +1148,13 @@
     if (!album) {
       var t = val('f-album-title');
       if (!t) return say('新建相册要写个标题。', 'warn');
-      album = { id: uid('a'), title: t, date: today(), desc: val('f-album-desc') || t, cover: '', photos: [] };
+      album = { id: uid('a'), title: t, date: pdate, desc: val('f-album-desc') || t, cover: '', photos: [] };
     } else {
       album = JSON.parse(JSON.stringify(album));
     }
     var note = val('f-photo-note');
     state.files.forEach(function (src, n) {
-      album.photos.push({ src: src, title: note || (album.title + ' · ' + (n + 1)), note: note || '' });
+      album.photos.push({ src: src, title: note || (album.title + ' · ' + (n + 1)), note: note || '', date: pdate });
     });
     if (!album.cover && album.photos.length) album.cover = album.photos[0].src;
     if (!upsert('albums', album)) return say('图片太大，本机存不下；请先发布已保存的内容并清理。', 'warn');
@@ -1404,6 +1417,7 @@
         setText('f-moment-text', target.text);
         setText('f-mood', target.mood);
         setText('f-place', target.place);
+        setText('f-moment-date', target.date || today());
         var mp = document.getElementById('moment-img-preview');
         if (mp && target.images && target.images.length) {
           mp.innerHTML = target.images.map(function (s) {
@@ -1419,8 +1433,28 @@
         setText('f-ch-summary', target.summary);
         setText('f-ch-tags', (target.tags || []).join(', '));
         setText('f-ch-mood', target.mood);
+        setText('f-ch-date', target.date || today());
         setText('f-ch-body', target.markdown || htmlToMd(target.body));
         say('已载入这则杂谈，改完点「保存修改」。');
+      } else if (ep[0] === 'projects') {
+        state.editing = { kind: 'projects', id: target.id };
+        state.tab = 'project';
+        render(document.getElementById('app'));
+        setText('f-pj-name', target.name);
+        setText('f-pj-desc', target.desc);
+        setText('f-pj-tags', (target.tags || []).join(', '));
+        setText('f-pj-status', target.status);
+        setText('f-pj-link', target.link);
+        say('已载入这个项目，改完点「保存修改」。');
+      } else if (ep[0] === 'friends') {
+        state.editing = { kind: 'friends', id: target.id };
+        state.tab = 'friend';
+        render(document.getElementById('app'));
+        setText('f-fr-name', target.name);
+        setText('f-fr-desc', target.desc);
+        setText('f-fr-url', target.url);
+        setText('f-fr-initial', target.initial);
+        say('已载入这个友链，改完点「保存修改」。');
       }
       return;
     }
@@ -1623,8 +1657,7 @@
 
   function render(el) {
     if (!el) return;
-    var isDesk = isOwner() && state.tab === 'post';
-    setDeskWidth(isDesk);
+    var isPost = isOwner() && state.tab === 'post';
     if (isOwner() && !state.draft) state.draft = readDraft();
     el.innerHTML = isOwner() ? studioHtml() : lockHtml();
     var nb = document.getElementById('new-album-box');
@@ -1650,7 +1683,7 @@
         setText('f-so-note-' + i, so.note || '');
       });
     }
-    if (isDesk) {
+    if (isPost) {
       renderTagPills(); renderTagHistory(); renderCover();
       syncFromForm(); setMode(state.mode); paintSaveLabel();
     }

@@ -341,7 +341,8 @@
       '<div class="photo-grid">' + photos.map(function (p, i) {
         return '<button class="photo-tile glass sheen reveal" type="button" data-photo="' + i + '">' +
           '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy" decoding="async">' +
-          '<span class="photo-cap"><b>' + esc(p.title || '') + '</b><i>' + esc(p.note || '') + '</i></span>' +
+          '<span class="photo-cap"><b>' + esc(p.title || '') + '</b><i>' +
+          esc(((p.date ? p.date + (p.note ? ' · ' : '') : '') + (p.note || '')) || ' ') + '</i></span>' +
           '</button>';
       }).join('') + '</div>';
   }
@@ -823,9 +824,6 @@
   }
   function paint(html, active, subTitle) {
     app.innerHTML = html;
-    /* 创作台会临时放宽内容栏，渲染其它分页时恢复定宽 */
-    var shell = document.querySelector && document.querySelector('.shell');
-    if (shell && shell.classList) shell.classList.remove('is-wide');
     initChangelogFrame();
     document.title = (subTitle ? subTitle + ' · ' : '') + TITLE;
     Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {
