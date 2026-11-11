@@ -71,6 +71,19 @@ window.STUDIO_DATA = {
       "status": "在用",
       "date": "2026-11-07",
       "link": "#/about"
+    },
+    {
+      "id": "pj-mwc6flztefi0",
+      "name": "爱信",
+      "desc": "一个为用户和AI聊天提供机遇的APP，支持定义AI角色的性格、语言特点，角色有心情变化、长期记忆。可以对用户拍一拍和发送表情包、照片等。目前正在尝试优化群聊功能中用户与AI的交流以及AI间交流的逻辑链稳定性。",
+      "tags": [
+        "AI全栈开发",
+        "AI拟人",
+        "长期记忆"
+      ],
+      "status": "记录",
+      "date": "2026-11-11",
+      "link": "https://my.feishu.cn/file/LqYSbKMiEokao5xjtM6cZEzNnvd"
     }
   ],
   "albums": [],
