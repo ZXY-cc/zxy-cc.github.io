@@ -2,35 +2,7 @@
   "schema": 2,
   "source": "github-issues",
   "repository": "ZXY-cc/zxy-cc.github.io",
-  "updatedAt": "2026-11-10T11:25:06.639Z",
+  "updatedAt": "2026-11-11T11:12:45.351Z",
   "pageSize": 20,
-  "posts": {
-    "why-write": {
-      "likes": 0,
-      "comments": [
-        {
-          "id": "i3",
-          "root": "",
-          "parent": "",
-          "nick": "ZXY-cc",
-          "link": "https://github.com/ZXY-cc",
-          "content": "测试！",
-          "date": "2026-11-09",
-          "likes": 0,
-          "url": "https://github.com/ZXY-cc/zxy-cc.github.io/issues/3"
-        },
-        {
-          "id": "i4",
-          "root": "",
-          "parent": "",
-          "nick": "ZXY-cc",
-          "link": "https://github.com/ZXY-cc",
-          "content": "#### Markdown测试\n* **测试**",
-          "date": "2026-11-09",
-          "likes": 0,
-          "url": "https://github.com/ZXY-cc/zxy-cc.github.io/issues/4"
-        }
-      ]
-    }
-  }
+  "posts": {}
 }
