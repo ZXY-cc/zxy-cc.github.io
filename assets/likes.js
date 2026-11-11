@@ -8,7 +8,14 @@
  *       countView 由文章页的 [data-view-post] 触发，整站首页由
  *       [data-view-home] 触发，首页文章卡片的 [data-view] 只读不写。
  * 读数带 sessionStorage 缓存（120 秒）；接口不可用时回落为数据基础数
- * （字段 likes）+ 本机状态，爱心与浏览显示都不因接口掉线而失效。 */
+ * （字段 likes）+ 本机状态，爱心与浏览显示都不因接口掉线而失效。
+ * 接口有间歇性故障窗口（错误 JSON / 超时），因此：
+ * 1. 错误响应一律按失败处理（绝不把错误当成 0 缓存展示）；
+ * 2. 读取失败回落到「最后一次已知服务端值」（localStorage 持久保存），
+ *    所有设备收敛到同一个数字，而不是各显各的基础数；
+ * 3. /hit 失败的浏览与点赞进本地补账队列（zb-hitq），下次 mount 时
+ *    静默重打（每页最多 5 笔、间隔 400ms，防触发 30 次/10 秒限速），
+ *    点赞和浏览最终都会落到服务器，不再永久丢失。 */
 (function () {
   'use strict';
   var NS_LIKE = 'zxy-blog-heart';
@@ -21,9 +28,12 @@
   var NO_COUNT_KEY = 'zb-no-count';
   /* 读数缓存升到 v2：浏览计数归零后，旧会话里的旧数字不会继续显示 */
   var CACHE_KEY = 'zb-count:v2:';
+  var LAST_KEY = 'zb-last:v1:';
+  var QUEUE_KEY = 'zb-hitq:v1';
   var VIEWED_KEY = 'zb-viewed:v1:';
   var TTL = 120000;
   var TIMEOUT = 5000;
+  var DRAIN_MAX = 5, DRAIN_GAP = 400;
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -92,25 +102,94 @@
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function (v) {
+      /* 服务端故障窗口会返回 200 + 错误 JSON（如 Failed to get data），
+         这不是 0——按失败处理，调用方回落到最近已知值或基础数。 */
       var n = v && Number(v.value);
-      return Number.isFinite(n) && n >= 0 ? n : 0;
+      if (Number.isFinite(n) && n >= 0) return n;
+      throw new Error('接口返回异常');
     }, function (e) {
       clearTimeout(timer);
       throw e;
     });
   }
   function cacheKey(ns, k) { return ns + ':' + k; }
+  /* 最近已知服务端值：只有成功响应才写入；读取失败时用它回落，
+     让所有设备在接口故障期间显示同一个「最后一次真实数字」。 */
+  function lastGet(k) {
+    try {
+      var box = JSON.parse(window.localStorage.getItem(LAST_KEY + k) || 'null');
+      return box && typeof box.n === 'number' ? box.n : null;
+    } catch (e) { return null; }
+  }
+  function lastSet(k, n) {
+    try { window.localStorage.setItem(LAST_KEY + k, JSON.stringify({ t: Date.now(), n: n })); }
+    catch (e) { /* 隐私模式记不住，不影响本次显示 */ }
+  }
+  /* 补账队列：/hit 失败的浏览与点赞先记下，下次页面加载静默补打 */
+  function readQueue() {
+    try {
+      var q = JSON.parse(window.localStorage.getItem(QUEUE_KEY) || '[]');
+      return Array.isArray(q) ? q : [];
+    } catch (e) { return []; }
+  }
+  function writeQueue(q) {
+    try { window.localStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(-40))); }
+    catch (e) { /* 记不住就放弃补账，不影响本次使用 */ }
+  }
+  function enqueue(ns, k) {
+    var s = ns + '/' + k, q = readQueue();
+    if (q.indexOf(s) < 0) { q.push(s); writeQueue(q); }
+  }
+  function dequeue(ns, k) {
+    var s = ns + '/' + k, q = readQueue(), i = q.indexOf(s);
+    if (i >= 0) { q.splice(i, 1); writeQueue(q); }
+  }
   function readCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
     var ck = cacheKey(ns, k), c = cacheGet(ck);
     if (c != null) return Promise.resolve(c);
-    return fetchJson(API + '/get/' + ns + '/' + k).then(function (n) { cacheSet(ck, n); return n; });
+    return fetchJson(API + '/get/' + ns + '/' + k).then(function (n) {
+      cacheSet(ck, n); lastSet(ck, n);
+      return n;
+    }, function () {
+      /* 接口故障：回落到最后一次已知值（跨设备一致），没有才让调用方用基础数 */
+      var l = lastGet(ck);
+      if (l != null) return l;
+      throw new Error('读取失败');
+    });
   }
   function bumpCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
-    return fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) { cacheSet(cacheKey(ns, k), n); return n; });
+    return fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) {
+      cacheSet(cacheKey(ns, k), n); lastSet(cacheKey(ns, k), n);
+      dequeue(ns, k);
+      return n;
+    }, function (e) {
+      enqueue(ns, k);
+      throw e;
+    });
+  }
+  /* 补账：把之前失败的打点逐笔补上（每页最多 DRAIN_MAX 笔，防限速） */
+  var draining = false;
+  function drainQueue() {
+    if (draining || !readQueue().length) return;
+    draining = true;
+    var done = 0;
+    var step = function () {
+      var q = readQueue();
+      if (!q.length || done >= DRAIN_MAX) { draining = false; return; }
+      var s = q[0], slash = s.indexOf('/');
+      var ns = s.slice(0, slash), k = s.slice(slash + 1);
+      fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) {
+        cacheSet(cacheKey(ns, k), n); lastSet(cacheKey(ns, k), n);
+        dequeue(ns, k);
+        done++;
+        window.setTimeout(step, DRAIN_GAP);
+      }, function () { draining = false; });
+    };
+    step();
   }
   function getCount(kind, id) { return readCount(NS_LIKE, kind, id); }
   function hitCount(kind, id) { return bumpCount(NS_LIKE, kind, id); }
@@ -142,7 +221,8 @@
         s.setItem(mark, '1');
       }
     } catch (e) { /* 记不住就按每次打开计一次 */ }
-    return bumpCount(NS_VIEW, kind, id).catch(function () { return null; });
+    /* 打点失败会自动入补账队列；这里回落为最近已知值，不让页面显示成 0 */
+    return bumpCount(NS_VIEW, kind, id).catch(function () { return getViewCount(kind, id); });
   }
   function getViews(slug) { return getViewCount(VIEW_KIND_POST, slug); }
   function countView(slug) { return countViewOnce(VIEW_KIND_POST, slug); }
@@ -261,6 +341,7 @@
     mountLikes(root);
     mountStats(root);
     mountViews(root);
+    drainQueue();
   }
 
   window.ZBLikes = {

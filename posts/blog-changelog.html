@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-11">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.23.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.24.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -257,6 +257,7 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v3.21.0</span></td><td>2026-11-11</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>文章分割线改为蓝→粉渐变色线；说说表单的心情行与配图上传行拉开间距；设置页的浏览统计卡片改为仅站长设备可见</td></tr>
 <tr><td><span class="ver">v3.22.0</span></td><td>2026-11-11</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>Markdown 支持飞书写法：无序列表之前可缩进，两个空格或一个 Tab 算一层，整块列表随之右移；格式优化保留列表行首缩进</td></tr>
 <tr><td><span class="ver">v3.23.0</span></td><td>2026-11-11</td><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span> <span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>创作台自动生成的文章与杂谈摘要超长时保证以「……」结尾；名片设置新增「清空首页浏览量」，浏览键轮换新版本后全站名片数字从零开始</td></tr>
+<tr><td><span class="ver">v3.24.0</span></td><td>2026-11-11</td><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>修复计数接口故障导致的浏览数不增长与各设备数字不一致：错误响应不再显示成 0，读取失败回落到最近一次真实数字，失败的点赞与浏览自动排队补记</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>✅ 已支持</td><td>留言直接显示在文章页，页面内写好内容后由 GitHub 确认发布；回复与 👍 点赞走仓库 Issues，网页后台可管理</td></tr>
 <tr><td>后端与统计</td><td>✅ 已支持</td><td>全站仍是静态文件，评论不依赖任何常驻服务或数据库；零费用、零运维，不采集访问数据</td></tr>
@@ -298,12 +299,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.23.0"></script>
-<script src="../assets/comment-archive.js?v=v3.23.0"></script>
-<script src="../assets/interactions-config.js?v=v3.23.0"></script>
-<script src="../assets/interactions.js?v=v3.23.0"></script>
-<script src="../assets/issues-live.js?v=v3.23.0"></script>
-<script src="../assets/likes.js?v=v3.23.0"></script>
+<script src="../assets/comments-data.js?v=v3.24.0"></script>
+<script src="../assets/comment-archive.js?v=v3.24.0"></script>
+<script src="../assets/interactions-config.js?v=v3.24.0"></script>
+<script src="../assets/interactions.js?v=v3.24.0"></script>
+<script src="../assets/issues-live.js?v=v3.24.0"></script>
+<script src="../assets/likes.js?v=v3.24.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>
