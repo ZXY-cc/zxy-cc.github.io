@@ -7,53 +7,51 @@ window.STUDIO_DATA = {
     "author": "我",
     "displayName": "星梦Staream",
     "bio": "在阳光盛放的花田里，做一缕飘忽的梦；在星光低垂的旷野上，做一尾不倦的鱼。",
-    "tagline": "记录一些想法，和把它们弄明白的过程。",
+    "tagline": "在阳光盛放的花田里，做一缕飘忽的梦；在星光低垂的旷野上，做一尾不倦的鱼。",
     "founded": "2026-11-07",
-    "intro": "<p>喜欢把事情拆开看清楚，再慢慢写下来。算法、代码、还有一点没什么用的随想，都放在这里。</p><p>这个站是纯静态的：没有数据库、没有统计脚本、不追踪任何人。几份 HTML、CSS、JavaScript 加一张头像，就能一直开下去。</p>",
+    "intro": "全栈 AI 开发者 | 探索智能体的情感边界\n学习 C/C++ 与 Python 底层开发，习惯以 LaTeX 和 Markdown 记录技术思考。目前专注于 AI Agent 全栈架构的设计与实现。\n我的研究致力于打破模型的性能壁垒，通过高级化挖掘开源模型潜力与精细化 Skill 开发，释放 AI 的最大效能。同时，我专注于情感计算与长期记忆的融合，试图通过引入“心情权重”算法，赋予 AI 拟人化的情感特征，让机器记忆不仅有深度，更有温度。",
     "skills": [
-      "算法",
-      "C / C++",
+      "AI",
+      "C/C++",
       "Python",
-      "静态站点",
-      "水彩与星空",
-      "折腾"
+      "开发"
     ],
     "social": [
       {
         "name": "GitHub",
-        "icon": "github",
         "url": "https://github.com/ZXY-cc",
-        "note": "代码存放处"
+        "note": "代码存放处",
+        "icon": "github"
       },
       {
         "name": "归档",
-        "icon": "archive",
         "url": "#/timeline",
-        "note": "全部记录"
+        "note": "全部记录",
+        "icon": "archive"
       },
       {
         "name": "照片墙",
-        "icon": "image",
         "url": "#/photowall",
-        "note": "抬头看到的颜色"
+        "note": "抬头看到的颜色",
+        "icon": "image"
       },
       {
         "name": "说说",
-        "icon": "chat",
         "url": "#/moments",
-        "note": "随手记的几句话"
+        "note": "随手记的几句话",
+        "icon": "chat"
       },
       {
         "name": "友链",
-        "icon": "link",
         "url": "#/friends",
-        "note": "常去的地方"
+        "note": "常去的地方",
+        "icon": "link"
       },
       {
         "name": "关于",
-        "icon": "star",
         "url": "#/about",
         "note": "关于这个站",
+        "icon": "star",
         "accent": true
       }
     ],
