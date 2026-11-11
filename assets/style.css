@@ -709,7 +709,8 @@ main { min-height: 320px; }
   
 }
 .article blockquote p:last-child { margin-bottom: 0; }
-.article hr { border: none; height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); margin: 36px 0; }
+/* 分割线：蓝→粉渐变（晴日下 var(--line) 太淡看不清），夜间亮色档同样适用 */
+.article hr { border: none; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-3)); margin: 36px 0; }
 
 /* 洛谷扩展语法容器：折叠框 / 对齐 / 引言 / Tuack 表格 / 代码行高亮。
    ZBMD 输出的是全局类，文章、创作台预览与评论 Markdown 共用这一套。 */
@@ -1317,6 +1318,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .file-zone svg { flex: 0 0 auto; width: 18px; height: 18px; fill: var(--star-soft);
   filter: drop-shadow(0 0 5px var(--star-glow)); }
 .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+/* 说说表单：心情/地点行与「点击选择配图」之间留出间隙 */
+.f-row + .file-zone { margin-top: 15px; }
 /* 关于页：底部入口行三字段 + 删除按钮 */
 .about-so-row { grid-template-columns: 1fr 1.4fr 1fr auto; align-items: end; }
 .about-so-row .so-del { margin-bottom: 2px; white-space: nowrap; }
@@ -1734,7 +1737,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .desk-preview li { margin-bottom: 7px; }
 .desk-preview blockquote { margin: 18px 0; padding: 12px 18px; border-left: 3px solid var(--accent-2);
   background: var(--accent-soft); border-radius: 0 var(--radius) var(--radius) 0; color: var(--muted); }
-.desk-preview hr { border: none; height: 1px; background: var(--glass-line); margin: 26px 0; }
+.desk-preview hr { border: none; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-3)); margin: 26px 0; }
 .desk-preview table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
 .desk-preview th, .desk-preview td { border: 1px solid var(--glass-line); padding: 8px 11px; }
 .desk-preview th { background: var(--glass-strong); color: var(--ink-strong); }

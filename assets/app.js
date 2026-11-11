@@ -655,6 +655,8 @@
       '<label class="font-item">LaTeX 字体' + fontSelect('tex', FONT_TEX_OPTS, readFont('tex')) + '</label>' +
       '</div>' +
       '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>' +
+      /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
+      (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner() ?
       '<section class="settings-card glass reveal" aria-label="浏览统计">' +
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>浏览统计</h2><p>页面只记录匿名访客的浏览次数，不采集身份信息。解锁过创作台的设备与预览态自动不计入；其它设备可在这里手动排除自己。</p></div>' +
@@ -663,7 +665,7 @@
       '<p class="settings-foot" id="no-count-state">' +
       esc(noCountOn() ? '已开启：这台设备浏览页面不会再增加浏览数。' :
         '未开启：解锁过创作台的设备仍会自动排除，其它设备按普通访客计入。') +
-      '</p></section>';
+      '</p></section>' : '');
   }
 
   /* ---------- 全局搜索 ---------- */
