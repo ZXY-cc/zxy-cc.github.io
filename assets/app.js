@@ -250,7 +250,7 @@
       (window.ZBLikes ? window.ZBLikes.html('post', p.slug, p.likes) : '') +
       '<button class="soft-btn" type="button" data-share="' +
       esc('#/post/' + p.slug) + '">复制文章链接</button>' +
-      '<a class="soft-btn" href="#/">← 返回文章列表</a></div>' +
+      '<a class="soft-btn" href="#/posts">← 返回文章列表</a></div>' +
       interactionsHtml(p) +
       '</div></article>' + rel + nav;
   }
@@ -747,7 +747,7 @@
     var name = TITLE;
     var bio = CFG.bio || CFG.tagline || SITE.tagline || '';
     var stats = [
-      [POSTS.length, '文章', '#/'],
+      [POSTS.length, '文章', '#/posts'],
       [arr('chatter').length, '杂谈', '#/chatter'],
       [photoCount(), '照片', '#/photowall']
     ];
@@ -770,8 +770,80 @@
       '<span data-view-home>0</span> 次浏览</span>' +
       '</div>';
   }
+  /* ---------- 首页快捷卡片 ----------
+     仿 XinghuisamaBlogs 首页架构：名片下方一张网格，把最新文章、最新相册、
+     最新说说、最新杂谈做成直达卡片——大卡 + 横幅卡 + 两张小卡，窄屏单列。 */
+  function latestByDate(list) {
+    return list.slice().sort(function (a, b) {
+      return String(b.date || '').localeCompare(String(a.date || ''));
+    })[0];
+  }
+  function qBadge(text, cls) {
+    return '<span class="q-badge' + (cls ? ' ' + cls : '') + '">' + esc(text) + '</span>';
+  }
+  function qEmpty(href, label, note) {
+    return '<a class="q-card glass sheen reveal" href="' + esc(href) + '">' +
+      '<div class="q-body"><h2>' + esc(label) + '</h2><p>' + esc(note) + '</p></div>' +
+      '<span class="q-go">去看看 →</span></a>';
+  }
   function renderHome() {
-    return profileCard() + renderList(query ? [] : POSTS, query ? '' : '最近的记录');
+    var lp = latestByDate(POSTS);
+    var album = latestByDate(arr('albums'));
+    var moment = latestByDate(arr('moments'));
+    var chatter = latestByDate(arr('chatter'));
+    var postCard = lp
+      ? '<a class="q-card q-post glass sheen reveal" href="#/post/' + encodeURIComponent(lp.slug) + '">' +
+        '<div class="q-head">' + qBadge('最新文章', 'q-post-badge') +
+        '<time>' + esc(String(lp.date || '').slice(0, 10)) + '</time></div>' +
+        '<h2>' + esc(lp.title) + '</h2>' +
+        '<p class="q-sum">' + esc(lp.summary || '') + '</p>' +
+        '<div class="q-tags">' + (lp.tags || []).slice(0, 4).map(function (t) {
+          return '<span>' + esc(t) + '</span>';
+        }).join('') + '</div>' +
+        '<span class="q-go">阅读全文 →</span></a>'
+      : qEmpty('#/posts', '还没有文章', '第一篇正在路上');
+    var photoCard = album
+      ? '<a class="q-card q-photo glass sheen reveal" href="#/album/' + encodeURIComponent(album.id) + '">' +
+        '<img src="' + esc(album.cover || (album.photos[0] && album.photos[0].src) || avatarSrc()) +
+        '" alt="' + esc(album.title) + '" loading="lazy" decoding="async">' +
+        '<div class="q-photo-cap"><b>' + esc(album.title) + '</b><i>' + esc(album.desc || '') + '</i></div>' +
+        qBadge('最新照片墙', 'q-photo-badge') + '</a>'
+      : qEmpty('#/photowall', '照片墙还空着', '定格过的光会放在这里');
+    var momentCard = moment
+      ? '<a class="q-card q-moment glass sheen reveal" href="#/moments">' +
+        '<div class="q-head">' + qBadge('最新说说') +
+        '<time>' + esc(String(moment.date || '').slice(0, 10)) + '</time></div>' +
+        '<p class="q-sum">' + esc(String(moment.text || '').slice(0, 72)) + '</p>' +
+        '<span class="q-go">去说说页 →</span></a>'
+      : qEmpty('#/moments', '还没有说说', '碎片记录会出现在这里');
+    var chatterCard = chatter
+      ? '<a class="q-card q-chatter glass sheen reveal" href="#/chatter/' + encodeURIComponent(chatter.id) + '">' +
+        '<div class="q-head">' + qBadge('最新杂谈') +
+        '<time>' + esc(String(chatter.date || '').slice(0, 10)) + '</time></div>' +
+        '<h2>' + esc(chatter.title) + '</h2>' +
+        '<p class="q-sum">' + esc(chatter.summary || '') + '</p>' +
+        '<span class="q-go">去杂谈页 →</span></a>'
+      : qEmpty('#/chatter', '还没有杂谈', '长长短短的想法会放在这里');
+    return profileCard() +
+      '<div class="home-quick">' + postCard + photoCard + momentCard + chatterCard + '</div>';
+  }
+  /* ---------- 文章页：全部文章卡片化（复用项目页 x-card 布局） ---------- */
+  function renderPostsPage() {
+    return pageHead('文章', '写过的所有记录，都在这里', 'POSTS') +
+      '<p class="page-note">共 ' + POSTS.length + ' 篇文章</p>' +
+      '<div class="card-grid">' + POSTS.map(function (p) {
+        return '<article class="x-card glass sheen reveal post-x-card">' +
+          '<div class="x-card-top"><span class="x-badge">' + esc(p.category || '随笔') + '</span>' +
+          '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
+          '<h2 class="x-title"><a href="#/post/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a></h2>' +
+          '<p>' + esc(p.summary || '') + '</p>' +
+          '<div class="x-chips">' + (p.tags || []).map(function (t) {
+            return '<span>' + esc(t) + '</span>';
+          }).join('') + '</div>' +
+          '<div class="x-foot">' + postStatsHtml(p) +
+          '<a class="x-link" href="#/post/' + encodeURIComponent(p.slug) + '">阅读全文 →</a></div>' +
+          '</article>';
+      }).join('') + '</div>';
   }
 
   /* ---------- 行号 ---------- */
@@ -855,6 +927,8 @@
 
     if (!parts.length) {
       html = query ? renderGlobalSearch(query) : renderHome();
+    } else if (parts[0] === 'posts') {
+      html = query ? renderGlobalSearch(query) : renderPostsPage(); active = 'posts'; sub = '文章';
     } else if (parts[0] === 'post' && parts[1]) {
       var p = POSTS.filter(function (x) { return x.slug === parts[1]; })[0];
       html = p ? renderPost(p) : '<p class="page-note">没找到这篇文章。</p>';

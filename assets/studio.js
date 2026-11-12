@@ -664,22 +664,19 @@
       '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · ##| 标题 或 :::vl 可加渐变竖线 · 自动保存在本机</span>' +
         '<span class="desk-saved" id="draft-saved">' + esc(savedLabel()) + '</span>' +
         '<span id="word-count">0 字</span></div>' +
-      '<div class="f-row">' +
-        '<span class="f-cell"><label class="f-label" for="f-cover">封面图</label>' +
+      '<div class="f-row post-attr-row">' +
+        '<span class="f-cell pc-cover"><label class="f-label" for="f-cover">封面图</label>' +
           '<input class="f-input" id="f-cover" type="text" placeholder="粘贴图片 URL，或点下方选本地图片…" ' +
             'value="' + esc(d.cover) + '" aria-label="封面图地址">' +
           '<div class="cover-box" id="cover-box" data-act="cover-pick" role="button" tabindex="0" ' +
             'title="点击选择本地图片"></div>' +
           '<input class="f-input f-file" id="f-cover-file" type="file" accept="image/*" aria-label="上传封面图">' +
         '</span>' +
-        '<span class="f-cell"><label class="f-label" for="f-tag-input">标签</label>' +
+        '<span class="f-cell pc-side"><label class="f-label" for="f-tag-input">标签</label>' +
           '<div class="tag-pills" id="tag-pills"></div>' +
           '<input class="f-input" id="f-tag-input" type="text" placeholder="+ 输入标签后按回车">' +
           '<div class="tag-history" id="tag-history"></div>' +
-        '</span>' +
-      '</div>' +
-      '<div class="f-row">' +
-        '<span class="f-cell"><label class="f-label">分类</label>' +
+          '<label class="f-label pc-cat-label">分类</label>' +
           '<div class="cat-pills" id="cat-pills">' + CATS.map(function (c) {
             return '<button type="button" data-cat="' + esc(c) + '" class="' +
               (d.category === c ? 'on' : '') + '">' + esc(c) + '</button>';
@@ -687,10 +684,10 @@
           '<input class="f-input" id="f-category" type="text" placeholder="也可以自己写一个" ' +
             'value="' + esc(d.category) + '" aria-label="分类">' +
         '</span>' +
-        '<span class="f-cell"><label class="f-label" for="f-date">发布日期</label>' +
-          '<input class="f-input" id="f-date" type="date" value="' + esc(d.date) + '">' +
-        '</span>' +
       '</div>' +
+      '<span class="f-cell"><label class="f-label" for="f-date">发布日期</label>' +
+        '<input class="f-input" id="f-date" type="date" value="' + esc(d.date) + '">' +
+      '</span>' +
       '<span class="f-cell"><label class="f-label" for="f-summary">摘要</label>' +
         '<textarea class="f-input f-area" id="f-summary" rows="4" ' +
           'placeholder="记录一下这篇内容的核心思绪…">' + esc(d.summary) + '</textarea>' +
