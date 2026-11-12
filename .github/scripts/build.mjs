@@ -626,7 +626,7 @@ El.prototype.closest = function () { return null; };
 function captureRoutes() {
   const body = new El('body'), ids = {}, winHandlers = {};
   const get = (id) => { if (!ids[id]) { ids[id] = new El(); ids[id].parentNode = body; } return ids[id]; };
-  const navNames = ['home', 'post', 'tags', 'timeline', 'projects', 'photowall',
+  const navNames = ['home', 'posts', 'post', 'tags', 'timeline', 'projects', 'photowall',
                     'moments', 'chatter', 'friends', 'about', 'settings'];
   const navAnchors = navNames.map((n) => { const a = new El('a'); a.setAttribute('data-nav', n); return a; });
   const document = {
