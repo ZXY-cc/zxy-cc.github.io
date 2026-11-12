@@ -24,6 +24,8 @@
   --sky-mid: #e0e5fb;
   --sky-low: #f6dfef;
   --sky-floor: #fff6f8;
+  /* 背景、相框边框、相框内铺底共用这一条渐变；夜间只覆盖上面四个色值，三者自动同源 */
+  --sky-grad: linear-gradient(176deg, var(--sky-top) 0%, var(--sky-mid) 34%, var(--sky-low) 72%, var(--sky-floor) 100%);
 
   --wash-blue: rgba(150, 193, 246, .46);
   --wash-pink: rgba(247, 183, 212, .40);
@@ -63,8 +65,12 @@
   --glass-inner: inset 0 1px 0 rgba(255, 255, 255, .86), inset 0 -1px 0 rgba(255, 255, 255, .20);
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .30) 0%, rgba(255, 255, 255, 0) 34%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, .12) 100%);
 
-  /* 照片相框：晴蓝 → 雾紫 → 樱粉；环境色只在极高画质投到照片与四周 */
-  --frame-line: linear-gradient(135deg, #bfd5f6 0%, #d7d4f1 52%, #f0d5e6 100%);
+  /* 照片相框：边框与内铺底直接取背景天空渐变，严格同色；照片外的雾也换成天空雾 */
+  --frame-line: var(--sky-grad);
+  --frame-fog: var(--sky-grad);
+  --frame-matte: rgba(255, 250, 246, .88);
+  --frame-cream: linear-gradient(135deg, rgba(255, 255, 255, .10), rgba(255, 246, 248, .06));
+  /* 环境色只在极高画质投到照片与四周 */
   --frame-amb: linear-gradient(135deg, rgba(150, 193, 246, .30), rgba(190, 185, 235, .08) 48%, rgba(247, 183, 212, .28));
   --frame-amb-photo: linear-gradient(135deg, rgba(150, 193, 246, .13), rgba(255, 255, 255, 0) 50%, rgba(247, 183, 212, .13));
   --frame-halo: -9px -10px 28px rgba(150, 193, 246, .28), 10px 13px 32px rgba(247, 183, 212, .26);
@@ -155,8 +161,8 @@
   --glass-inner: inset 0 1px 0 rgba(226, 238, 255, .22), inset 0 -1px 0 rgba(226, 238, 255, .07);
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, .04) 100%);
 
-  /* 星夜相框换近白冷调：仍是蓝 → 紫 → 粉，但不压成灰 */
-  --frame-line: linear-gradient(135deg, #6280bd 0%, #7b7bb6 52%, #b289af 100%);
+  /* 星夜沿用同一条天空渐变（上方 --sky-* 已换夜空调），相框与背景始终同色；卡纸换冷调 */
+  --frame-matte: rgba(226, 236, 255, .72);
   --frame-amb: linear-gradient(135deg, rgba(146, 186, 246, .28), rgba(190, 180, 235, .08) 48%, rgba(242, 168, 208, .26));
   --frame-amb-photo: linear-gradient(135deg, rgba(146, 186, 246, .12), rgba(255, 255, 255, 0) 50%, rgba(242, 168, 208, .12));
   --frame-halo: -9px -10px 30px rgba(146, 186, 246, .26), 10px 13px 34px rgba(242, 168, 208, .24);
@@ -210,9 +216,7 @@ body {
 
 .sky-base {
   position: absolute; inset: 0;
-  background: linear-gradient(176deg,
-    var(--sky-top) 0%, var(--sky-mid) 34%,
-    var(--sky-low) 72%, var(--sky-floor) 100%);
+  background: var(--sky-grad);
   transition: background .6s ease;
 }
 
@@ -1205,38 +1209,45 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: var(--glass-shadow), var(--glass-inner);
   transition: transform .4s cubic-bezier(.22,.68,.28,1), box-shadow .4s ease; }
 .album-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(112,138,190,.22); }
-/* 三张封面的「定格框」：统一 4:3 盒子，同一张图先模糊铺底、再 contain 等比完整显示。
+/* 三张封面的「定格框」：统一 4:3 盒子，同一张图先铺主题天空雾、再 contain 等比完整显示。
    横版与竖版都保持原比例，不裁切、不变形，也不会因 height:auto 撑出卡片；
    三层同尺寸同向小角度堆叠，底层往上错位，悬停弹性展开。 */
 .album-stack { position: relative; aspect-ratio: 4 / 3; margin: 22px 22px 0; }
 .album-stack > [data-stack-layer] { position: absolute; inset: 16px 12px 12px;
   border: 5px solid transparent; border-radius: 18px; overflow: hidden;
-  /* 渐变只画在圆角边框区，padding-box 仍由玻璃底盖住；照片保持完整硬边，不做边缘雾化 */
-  background: var(--glass-strong) padding-box, var(--frame-line) border-box;
+  /* 边框与内铺底都取背景那条天空渐变；照片保持完整硬边，不做边缘雾化 */
+  background: var(--frame-fog) padding-box, var(--frame-line) border-box;
   box-shadow: 0 14px 34px rgba(96,118,168,.22);
   transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
+/* ① 照片衍生雾换成主题天空雾：只留一成照片模糊作呼应，不再出现深棕／墨绿的照片色底 */
 .album-stack > [data-stack-layer]::before { content: ''; position: absolute; inset: -12%;
   background-image: var(--shot); background-size: cover; background-position: center;
-  background-repeat: no-repeat; filter: blur(20px) saturate(1.2) brightness(.94); }
-.album-stack > [data-stack-layer]::after { content: ''; position: absolute; inset: 0;
-  background-image: var(--shot); background-size: contain; background-position: center;
-  background-repeat: no-repeat; }
+  background-repeat: no-repeat; filter: blur(20px) saturate(1.2) brightness(.94);
+  opacity: .10; }
+/* ③ 内缩一圈奶油白卡纸内衬；② 照片叠淡奶油白并降饱和提亮，与水彩主题拉齐明度 */
+.album-stack > [data-stack-layer]::after { content: ''; position: absolute; inset: 5px;
+  border-radius: 13px; background-color: var(--frame-matte);
+  background-image: var(--frame-cream), var(--shot);
+  background-size: 100% 100%, contain;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  filter: saturate(.94) brightness(1.02); }
 :root[data-quality="mid"] .album-stack > [data-stack-layer]::before,
 :root[data-quality="low"] .album-stack > [data-stack-layer]::before {
   background-image: none; filter: none; }
-/* 仅极高画质：相框色化作环境光——向外溢出蓝粉柔光，再以柔光混入雾化铺底与照片。
+/* 仅极高画质：相框色化作环境光——向外溢出蓝粉柔光，再以柔光混入天空雾与照片。
    照片内容、比例与硬边全部不变，只是被主题色包住，不再像硬贴上去的一块。 */
 :root[data-quality="ultra"] .album-stack > [data-stack-layer] {
   box-shadow: 0 14px 34px rgba(96,118,168,.22), var(--frame-halo); }
 :root[data-quality="ultra"] .album-stack > [data-stack-layer]::before {
   background-image: var(--frame-amb), var(--shot);
-  background-blend-mode: soft-light, normal; }
+  background-blend-mode: soft-light, normal; opacity: .30; }
 :root[data-quality="ultra"] .album-stack > [data-stack-layer]::after {
-  background-image: var(--frame-amb-photo), var(--shot);
-  background-size: 100% 100%, contain;
-  background-position: center, center;
-  background-repeat: no-repeat, no-repeat;
-  background-blend-mode: soft-light, normal; }
+  background-image: var(--frame-amb-photo), var(--frame-cream), var(--shot);
+  background-size: 100% 100%, 100% 100%, contain;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-blend-mode: soft-light, normal, normal; }
 .album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
 .album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
