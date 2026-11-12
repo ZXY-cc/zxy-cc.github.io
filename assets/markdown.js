@@ -297,10 +297,17 @@
       return pre + stash(mathHtml(tex, false));
     });
     s = esc(s);
-    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)/g,
-      function (_m, alt, u, title) {
+    /* 图片：URL 后可用 ` =宽x高` 显式控制尺寸（如 =420x 或 =x300，均可省略一侧，
+       只给一侧时另一维自适应）。动图太大盖过正文时，作者可直接缩到合适宽度。 */
+    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?(?:\s+=\s*(\d*)\s*x\s*(\d*)\s*)?\)/g,
+      function (_m, alt, u, title, w, h) {
+        var dim = '';
+        if (w && +w > 0) dim += 'width:' + Math.floor(+w) + 'px;';
+        if (h && +h > 0) dim += 'height:' + Math.floor(+h) + 'px;';
+        if (w && h && +w > 0 && +h > 0) dim += 'object-fit:contain;';
         return stash('<img src="' + safeUrl(u) + '" alt="' + alt + '"' +
-          (title ? ' title="' + title + '"' : '') + ' loading="lazy">');
+          (title ? ' title="' + title + '"' : '') +
+          (dim ? ' style="' + dim + '"' : '') + ' loading="lazy">');
       });
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)/g,
       function (_m, txt, u, title) {
@@ -765,5 +772,5 @@
   }
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, version: '1.3.0' };
+           tidy: tidy, highlight: highlightCode, version: '1.4.0' };
 });

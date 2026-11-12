@@ -711,6 +711,10 @@ main { min-height: 320px; }
 .article blockquote p:last-child { margin-bottom: 0; }
 /* 分割线：蓝→粉渐变（晴日下 var(--line) 太淡看不清），夜间亮色档同样适用 */
 .article hr { border: none; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-3)); margin: 36px 0; }
+/* 文章图片自适应：超大图 / 动图不再横向溢出正文列，收缩后水平居中；
+   显式给过 style 宽高的（Markdown `=宽x高` 语法）仍受 max-width 兜底 */
+.article img, .desk-preview img { max-width: 100%; height: auto; }
+.article img { display: block; margin-left: auto; margin-right: auto; }
 
 /* 洛谷扩展语法容器：折叠框 / 对齐 / 引言 / Tuack 表格 / 代码行高亮。
    ZBMD 输出的是全局类，文章、创作台预览与评论 Markdown 共用这一套。 */
@@ -1115,25 +1119,46 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .tl-item > span { grid-column: 2; font-size: 11.5px; color: var(--accent-text); }
 
 /* ---------- 照片墙 / 相册 ---------- */
-.album-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 26px 0 40px; }
-.album-card { display: block; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--glass-line);
-  box-shadow: var(--glass-shadow), var(--glass-inner); transition: transform .38s ease, box-shadow .38s ease; }
+/* 两栏相册（Kirameku 式），窄屏回落单栏 */
+.album-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; margin: 26px 0 40px; }
+.album-card { display: block; border-radius: 20px; border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+  transition: transform .4s cubic-bezier(.22,.68,.28,1), box-shadow .4s ease; }
 .album-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(112,138,190,.22); }
-.album-cover { position: relative; height: 186px; overflow: hidden; }
-.album-cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .7s ease; }
-.album-card:hover .album-cover img { transform: scale(1.07); }
-.album-count { position: absolute; right: 12px; bottom: 12px; font-size: 11.5px; color: var(--ink-strong);
+/* 三张封面轻微旋转堆叠：静止如随手摞起的照片，悬停弹性展开（不加相框，只留柔和投影） */
+.album-stack { position: relative; height: 250px; margin: 22px 22px 0; }
+.album-stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  border-radius: 16px; box-shadow: 0 14px 34px rgba(96,118,168,.22);
+  transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
+.album-stack .stack-back { transform: rotate(-4.5deg) translateY(14px) scale(.945); }
+.album-stack .stack-mid  { transform: rotate(3deg) translateY(8px) scale(.972); }
+.album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); }
+.album-stack:hover .stack-back { transform: rotate(-11deg) translateY(6px) scale(.96); }
+.album-stack:hover .stack-mid  { transform: rotate(9deg) translateY(-4px) scale(.985); }
+.album-stack:hover .stack-top  { transform: rotate(0deg) translateY(-3px) scale(1.01); }
+.album-count { position: absolute; right: 10px; bottom: 10px; z-index: 2; font-size: 11.5px; color: var(--ink-strong);
   background: var(--glass-strong); border: 1px solid var(--glass-line); padding: 3px 11px; border-radius: 999px; }
-.album-info { padding: 16px 20px 20px; }
+.album-info { padding: 18px 22px 22px; }
 .album-info h2 { margin: 0 0 5px; font-size: 17px; font-weight: 650; color: var(--ink-strong); }
 .album-info p { margin: 0 0 9px; font-size: 13px; color: var(--muted); }
 .album-info time { font-size: 11.5px; color: var(--faint); }
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0 40px; }
 .photo-tile { display: block; padding: 0; overflow: hidden; cursor: zoom-in; text-align: left; font: inherit;
   border-radius: var(--radius); border: 1px solid var(--glass-line);
-  box-shadow: var(--glass-shadow), var(--glass-inner); transition: transform .35s ease, box-shadow .35s ease; }
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+  transition: transform .45s cubic-bezier(.34,1.4,.5,1), box-shadow .45s ease; }
 .photo-tile:hover { transform: translateY(-5px); box-shadow: 0 20px 46px rgba(112,138,190,.22); }
-.photo-tile img { display: block; width: 100%; height: 190px; object-fit: cover; }
+.photo-tile img { display: block; width: 100%; height: 190px; object-fit: cover;
+  transition: transform .6s cubic-bezier(.22,.68,.28,1); }
+.photo-tile:hover img { transform: scale(1.06); }
+/* 相册详情：瓷砖随滚动依次轻柔浮现（Kiremaku 式 stagger），动画不影响悬停 */
+.photo-tile.in { animation: tile-pop .55s cubic-bezier(.22,.68,.28,1) backwards; }
+@keyframes tile-pop { from { opacity: 0; transform: translate3d(0, 18px, 0); } to { opacity: 1; transform: none; } }
+:root[data-quality="low"] .photo-tile.in { animation: none !important; }
+@media (max-width: 700px) {
+  .album-grid { grid-template-columns: 1fr; }
+  .album-stack { height: 210px; margin: 18px 18px 0; }
+}
 .photo-cap { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px 15px; }
 .photo-cap b { font-size: 14px; color: var(--ink-strong); font-weight: 600; }
 .photo-cap i { font-style: normal; font-size: 12px; color: var(--muted); }
@@ -1744,6 +1769,12 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   margin-top: 9px; border-radius: 16px; overflow: hidden; cursor: pointer;
   border: 1px dashed var(--glass-line); background: var(--code-bg); text-align: center; }
 .cover-box img { width: 100%; height: 100%; object-fit: cover; }
+/* 属性区重排版：压低封面框高度避免与标签列高度失衡；动作与提示行居中，
+   视觉重心回到卡片中央，不再大面积留白 */
+.post-form .cover-box { aspect-ratio: auto; height: 190px; }
+.post-form .f-actions { justify-content: center; }
+.post-form .f-actions .soft-btn, .post-form .f-actions .primary-btn { min-width: 148px; }
+.post-form .f-hint { text-align: center; }
 .cover-empty { font-size: 11.5px; color: var(--faint); padding: 0 16px; }
 .cover-box:hover { border-color: var(--accent); }
 .tag-pills { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; margin-bottom: 9px;

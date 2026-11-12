@@ -326,9 +326,17 @@
       '<p class="page-note">共 ' + albums.length + ' 个相册 · ' + photoCount() + ' 张照片</p>' +
       '<div class="album-grid">' + albums.map(function (a) {
         var n = (a.photos || []).length;
+        /* Kirameku 式堆叠封面：取前三张倒序（末张在最上层），轻微旋转错位 */
+        var covers = (a.photos || []).slice(0, 3).reverse();
+        if (!covers.length) covers = [{ src: avatarSrc() }];
         return '<a class="album-card glass sheen reveal" href="#/album/' + encodeURIComponent(a.id) + '">' +
-          '<div class="album-cover"><img src="' + esc(a.cover || (a.photos[0] && a.photos[0].src) || avatarSrc()) +
-          '" alt="' + esc(a.title) + '" loading="lazy" decoding="async"><span class="album-count">' + n + ' 张</span></div>' +
+          '<div class="album-stack">' + covers.map(function (p, i) {
+            var cls = i === covers.length - 1 ? 'stack-top' :
+              (i === covers.length - 2 ? 'stack-mid' : 'stack-back');
+            return '<img class="' + cls + '" src="' + esc(p.src) +
+              '" alt="' + esc(a.title) + '" loading="lazy" decoding="async">';
+          }).join('') +
+          '<span class="album-count">' + n + ' 张</span></div>' +
           '<div class="album-info"><h2>' + esc(a.title) + '</h2><p>' + esc(a.desc) + '</p>' +
           '<time>' + esc(a.date) + '</time></div></a>';
       }).join('') + '</div>';
@@ -339,7 +347,7 @@
     return '<a class="back-link reveal" href="#/photowall">← 返回照片墙</a>' +
       pageHead(a.title, a.desc, 'ALBUM · ' + photos.length + ' 张') +
       '<div class="photo-grid">' + photos.map(function (p, i) {
-        return '<button class="photo-tile glass sheen reveal" type="button" data-photo="' + i + '">' +
+        return '<button class="photo-tile glass sheen reveal" type="button" data-photo="' + i + '" style="animation-delay:' + (i % 12) * 45 + 'ms">' +
           '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy" decoding="async">' +
           '<span class="photo-cap"><b>' + esc(p.title || '') + '</b><i>' +
           esc(((p.date ? p.date + (p.note ? ' · ' : '') : '') + (p.note || '')) || ' ') + '</i></span>' +
