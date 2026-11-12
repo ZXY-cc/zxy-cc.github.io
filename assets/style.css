@@ -63,6 +63,12 @@
   --glass-inner: inset 0 1px 0 rgba(255, 255, 255, .86), inset 0 -1px 0 rgba(255, 255, 255, .20);
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .30) 0%, rgba(255, 255, 255, 0) 34%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, .12) 100%);
 
+  /* 照片相框：晴蓝 → 雾紫 → 樱粉；环境色只在极高画质投到照片与四周 */
+  --frame-line: linear-gradient(135deg, #7fa6e8 0%, #ab8bd4 52%, #e8a0c8 100%);
+  --frame-amb: linear-gradient(135deg, rgba(120, 151, 220, .38), rgba(171, 139, 212, .10) 48%, rgba(224, 150, 189, .36));
+  --frame-amb-photo: linear-gradient(135deg, rgba(120, 151, 220, .16), rgba(255, 255, 255, 0) 50%, rgba(224, 150, 189, .16));
+  --frame-halo: -9px -10px 28px rgba(120, 151, 220, .36), 10px 13px 32px rgba(224, 150, 189, .32);
+
   /* 代码块改为雾白玻璃，与整体浅色调统一 */
   --code-bg: rgba(255, 255, 255, .30);
   --code-ink: #4a5175;
@@ -148,6 +154,12 @@
   --glass-shadow: 0 18px 50px rgba(12, 22, 58, .34);
   --glass-inner: inset 0 1px 0 rgba(226, 238, 255, .22), inset 0 -1px 0 rgba(226, 238, 255, .07);
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, .04) 100%);
+
+  /* 星夜相框换近白冷调：仍是蓝 → 紫 → 粉，但不压成灰 */
+  --frame-line: linear-gradient(135deg, #b6d0ff 0%, #ddbdfa 52%, #f9bddb 100%);
+  --frame-amb: linear-gradient(135deg, rgba(182, 208, 255, .34), rgba(221, 189, 250, .10) 48%, rgba(249, 189, 219, .32));
+  --frame-amb-photo: linear-gradient(135deg, rgba(182, 208, 255, .15), rgba(255, 255, 255, 0) 50%, rgba(249, 189, 219, .15));
+  --frame-halo: -9px -10px 30px rgba(146, 186, 246, .32), 10px 13px 34px rgba(242, 168, 208, .30);
 
   --code-bg: rgba(16, 26, 66, .28);
   --code-ink: #f6f8ff;
@@ -1145,8 +1157,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo .q-slide { padding: 0; justify-content: flex-end; overflow: visible; }
 .q-photo .q-badge { position: absolute; top: 26px; left: 24px; z-index: 6; }
 .q-photo .album-count { top: 26px; right: 18px; bottom: auto; z-index: 6; }
-.q-photo-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
-  padding: 34px 18px 15px; border-radius: 0 0 16px 16px;
+.q-photo-cap { position: absolute; left: 17px; right: 17px; bottom: 17px; z-index: 6;
+  padding: 34px 18px 15px; border-radius: 0 0 13px 13px;
   background: linear-gradient(180deg, transparent, rgba(20, 30, 64, .62)); color: #fff; }
 .q-photo-cap b { display: block; font-size: 16px; font-weight: 650; }
 .q-photo-cap i { font-style: normal; font-size: 12px; opacity: .85; }
@@ -1167,7 +1179,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-dot { width: 7px; height: 7px; padding: 0; border: 1px solid var(--glass-line); border-radius: 50%;
   background: var(--accent-soft); cursor: pointer; transition: transform .25s ease, background .25s ease; }
 .q-dot.on { background: var(--accent-text); transform: scale(1.25); }
-.q-photo .q-dots { bottom: 16px; right: 16px; z-index: 7; }
+.q-photo .q-dots { bottom: 22px; right: 22px; z-index: 7; }
 .q-photo .q-dot { background: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .6); }
 .q-photo .q-dot.on { background: #fff; }
 @media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
@@ -1198,7 +1210,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
    三层同尺寸同向小角度堆叠，底层往上错位，悬停弹性展开。 */
 .album-stack { position: relative; aspect-ratio: 4 / 3; margin: 22px 22px 0; }
 .album-stack > [data-stack-layer] { position: absolute; inset: 16px 12px 12px;
-  border-radius: 16px; overflow: hidden; background: var(--glass-strong);
+  border: 5px solid transparent; border-radius: 18px; overflow: hidden;
+  /* 渐变只画在圆角边框区，padding-box 仍由玻璃底盖住；照片保持完整硬边，不做边缘雾化 */
+  background: var(--glass-strong) padding-box, var(--frame-line) border-box;
   box-shadow: 0 14px 34px rgba(96,118,168,.22);
   transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
 .album-stack > [data-stack-layer]::before { content: ''; position: absolute; inset: -12%;
@@ -1210,6 +1224,19 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-quality="mid"] .album-stack > [data-stack-layer]::before,
 :root[data-quality="low"] .album-stack > [data-stack-layer]::before {
   background-image: none; filter: none; }
+/* 仅极高画质：相框色化作环境光——向外溢出蓝粉柔光，再以柔光混入雾化铺底与照片。
+   照片内容、比例与硬边全部不变，只是被主题色包住，不再像硬贴上去的一块。 */
+:root[data-quality="ultra"] .album-stack > [data-stack-layer] {
+  box-shadow: 0 14px 34px rgba(96,118,168,.22), var(--frame-halo); }
+:root[data-quality="ultra"] .album-stack > [data-stack-layer]::before {
+  background-image: var(--frame-amb), var(--shot);
+  background-blend-mode: soft-light, normal; }
+:root[data-quality="ultra"] .album-stack > [data-stack-layer]::after {
+  background-image: var(--frame-amb-photo), var(--shot);
+  background-size: 100% 100%, contain;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: soft-light, normal; }
 .album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
 .album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
