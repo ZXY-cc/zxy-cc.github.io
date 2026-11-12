@@ -64,10 +64,10 @@
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .30) 0%, rgba(255, 255, 255, 0) 34%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, .12) 100%);
 
   /* 照片相框：晴蓝 → 雾紫 → 樱粉；环境色只在极高画质投到照片与四周 */
-  --frame-line: linear-gradient(135deg, #7fa6e8 0%, #ab8bd4 52%, #e8a0c8 100%);
-  --frame-amb: linear-gradient(135deg, rgba(120, 151, 220, .38), rgba(171, 139, 212, .10) 48%, rgba(224, 150, 189, .36));
-  --frame-amb-photo: linear-gradient(135deg, rgba(120, 151, 220, .16), rgba(255, 255, 255, 0) 50%, rgba(224, 150, 189, .16));
-  --frame-halo: -9px -10px 28px rgba(120, 151, 220, .36), 10px 13px 32px rgba(224, 150, 189, .32);
+  --frame-line: linear-gradient(135deg, #bfd5f6 0%, #d7d4f1 52%, #f0d5e6 100%);
+  --frame-amb: linear-gradient(135deg, rgba(150, 193, 246, .30), rgba(190, 185, 235, .08) 48%, rgba(247, 183, 212, .28));
+  --frame-amb-photo: linear-gradient(135deg, rgba(150, 193, 246, .13), rgba(255, 255, 255, 0) 50%, rgba(247, 183, 212, .13));
+  --frame-halo: -9px -10px 28px rgba(150, 193, 246, .28), 10px 13px 32px rgba(247, 183, 212, .26);
 
   /* 代码块改为雾白玻璃，与整体浅色调统一 */
   --code-bg: rgba(255, 255, 255, .30);
@@ -156,10 +156,10 @@
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, .04) 100%);
 
   /* 星夜相框换近白冷调：仍是蓝 → 紫 → 粉，但不压成灰 */
-  --frame-line: linear-gradient(135deg, #b6d0ff 0%, #ddbdfa 52%, #f9bddb 100%);
-  --frame-amb: linear-gradient(135deg, rgba(182, 208, 255, .34), rgba(221, 189, 250, .10) 48%, rgba(249, 189, 219, .32));
-  --frame-amb-photo: linear-gradient(135deg, rgba(182, 208, 255, .15), rgba(255, 255, 255, 0) 50%, rgba(249, 189, 219, .15));
-  --frame-halo: -9px -10px 30px rgba(146, 186, 246, .32), 10px 13px 34px rgba(242, 168, 208, .30);
+  --frame-line: linear-gradient(135deg, #6280bd 0%, #7b7bb6 52%, #b289af 100%);
+  --frame-amb: linear-gradient(135deg, rgba(146, 186, 246, .28), rgba(190, 180, 235, .08) 48%, rgba(242, 168, 208, .26));
+  --frame-amb-photo: linear-gradient(135deg, rgba(146, 186, 246, .12), rgba(255, 255, 255, 0) 50%, rgba(242, 168, 208, .12));
+  --frame-halo: -9px -10px 30px rgba(146, 186, 246, .26), 10px 13px 34px rgba(242, 168, 208, .24);
 
   --code-bg: rgba(16, 26, 66, .28);
   --code-ink: #f6f8ff;
