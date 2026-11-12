@@ -1136,14 +1136,17 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-slide > .q-body { flex: 1 1 auto; }
 .q-post { grid-column: 1; grid-row: 1; }
 .q-photo { grid-column: 2; grid-row: 1; aspect-ratio: 4 / 3; min-height: 0;
-  align-self: start; padding: 0; }
+  align-self: start; padding: 0; overflow: visible; }
+/* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
 .q-moment { grid-column: 1; grid-row: 2; }
 .q-chatter { grid-column: 2; grid-row: 2; }
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
-.q-photo .album-stack { height: 100%; margin: 0; }
-.q-photo .q-slide { padding: 0; justify-content: flex-end; }
-.q-photo .q-badge { position: absolute; top: 14px; left: 16px; z-index: 2; }
-.q-photo-cap { position: relative; z-index: 1; padding: 34px 18px 15px; border-radius: 0 0 16px 16px;
+.q-photo .album-stack { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; margin: 0; }
+.q-photo .q-slide { padding: 0; justify-content: flex-end; overflow: visible; }
+.q-photo .q-badge { position: absolute; top: 26px; left: 24px; z-index: 6; }
+.q-photo .album-count { top: 26px; right: 18px; bottom: auto; z-index: 6; }
+.q-photo-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+  padding: 34px 18px 15px; border-radius: 0 0 16px 16px;
   background: linear-gradient(180deg, transparent, rgba(20, 30, 64, .62)); color: #fff; }
 .q-photo-cap b { display: block; font-size: 16px; font-weight: 650; }
 .q-photo-cap i { font-style: normal; font-size: 12px; opacity: .85; }
@@ -1164,7 +1167,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-dot { width: 7px; height: 7px; padding: 0; border: 1px solid var(--glass-line); border-radius: 50%;
   background: var(--accent-soft); cursor: pointer; transition: transform .25s ease, background .25s ease; }
 .q-dot.on { background: var(--accent-text); transform: scale(1.25); }
-.q-photo .q-dots { bottom: 16px; right: 16px; }
+.q-photo .q-dots { bottom: 16px; right: 16px; z-index: 7; }
 .q-photo .q-dot { background: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .6); }
 .q-photo .q-dot.on { background: #fff; }
 @media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
@@ -1190,19 +1193,36 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: var(--glass-shadow), var(--glass-inner);
   transition: transform .4s cubic-bezier(.22,.68,.28,1), box-shadow .4s ease; }
 .album-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(112,138,190,.22); }
-/* 三张封面同向小角度堆叠：底层往上错位，漏出的角在顶层上方；悬停弹性展开 */
-.album-stack { position: relative; height: 250px; margin: 22px 22px 0; }
-.album-stack img { position: absolute; top: 16px; bottom: 16px; left: 0; right: 0;
-  width: 100%; height: auto; object-fit: cover;
-  border-radius: 16px; box-shadow: 0 14px 34px rgba(96,118,168,.22);
+/* 三张封面的「定格框」：统一 4:3 盒子，同一张图先模糊铺底、再 contain 等比完整显示。
+   横版与竖版都保持原比例，不裁切、不变形，也不会因 height:auto 撑出卡片；
+   三层同尺寸同向小角度堆叠，底层往上错位，悬停弹性展开。 */
+.album-stack { position: relative; aspect-ratio: 4 / 3; margin: 22px 22px 0; }
+.album-stack > [data-stack-layer] { position: absolute; inset: 16px 12px 12px;
+  border-radius: 16px; overflow: hidden; background: var(--glass-strong);
+  box-shadow: 0 14px 34px rgba(96,118,168,.22);
   transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
-.album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); }
-.album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); }
-.album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); }
-.album-stack:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }
-.album-stack:hover .stack-mid  { transform: rotate(-4deg) translateY(-12px) scale(.99); }
-.album-stack:hover .stack-top  { transform: rotate(0deg) translateY(2px) scale(1.01); }
-.album-count { position: absolute; right: 10px; bottom: 10px; z-index: 2; font-size: 11.5px; color: var(--ink-strong);
+.album-stack > [data-stack-layer]::before { content: ''; position: absolute; inset: -12%;
+  background-image: var(--shot); background-size: cover; background-position: center;
+  background-repeat: no-repeat; filter: blur(20px) saturate(1.2) brightness(.94); }
+.album-stack > [data-stack-layer]::after { content: ''; position: absolute; inset: 0;
+  background-image: var(--shot); background-size: contain; background-position: center;
+  background-repeat: no-repeat; }
+:root[data-quality="mid"] .album-stack > [data-stack-layer]::before,
+:root[data-quality="low"] .album-stack > [data-stack-layer]::before {
+  background-image: none; filter: none; }
+.album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
+.album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
+.album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
+.album-stack:hover .stack-back,
+.album-card:hover .stack-back,
+.q-photo:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }
+.album-stack:hover .stack-mid,
+.album-card:hover .stack-mid,
+.q-photo:hover .stack-mid { transform: rotate(-4deg) translateY(-12px) scale(.99); }
+.album-stack:hover .stack-top,
+.album-card:hover .stack-top,
+.q-photo:hover .stack-top { transform: rotate(0deg) translateY(2px) scale(1.01); }
+.album-count { position: absolute; right: 10px; bottom: 10px; z-index: 5; font-size: 11.5px; color: var(--ink-strong);
   background: var(--glass-strong); border: 1px solid var(--glass-line); padding: 3px 11px; border-radius: 999px; }
 .album-info { padding: 18px 22px 22px; }
 .album-info h2 { margin: 0 0 5px; font-size: 17px; font-weight: 650; color: var(--ink-strong); }
@@ -1223,7 +1243,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-quality="low"] .photo-tile.in { animation: none !important; }
 @media (max-width: 700px) {
   .album-grid { grid-template-columns: 1fr; }
-  .album-stack { height: 210px; margin: 18px 18px 0; }
+  .album-stack { margin: 18px 18px 0; }
 }
 .photo-cap { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px 15px; }
 .photo-cap b { font-size: 14px; color: var(--ink-strong); font-weight: 600; }
@@ -1429,6 +1449,19 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .studio-preview h3 { font-size: 13px; color: var(--muted); }
 .file-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--muted); }
 .file-preview img { width: 92px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--glass-line); }
+/* 相册重编辑：已有照片缩略图，待移除的照片压暗并打勾，保存后才真正生效 */
+.album-edit-photos { margin: 16px 0 4px; }
+.album-edit-photos > .f-label { display: block; margin-bottom: 10px; }
+.aep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+.aep-tile { position: relative; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--glass-line); background: var(--glass-strong); }
+.aep-tile img { display: block; width: 100%; height: 88px; object-fit: cover; }
+.aep-tile .mini-btn { display: block; width: 100%; border: 0; border-top: 1px solid var(--glass-line);
+  border-radius: 0; padding: 6px 4px; background: var(--glass-strong); }
+.aep-tile.off img { opacity: .3; filter: grayscale(1); }
+.aep-tile.off::after { content: '待移除'; position: absolute; top: 8px; left: 8px;
+  font-size: 10.5px; color: #fff; background: rgba(110, 60, 90, .78);
+  padding: 2px 8px; border-radius: 999px; }
 /* 名片设置：头像预览 + 整栏上传区 */
 .site-avatar-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 16px; }
 .site-avatar-row .file-zone { flex: 1 1 240px; }

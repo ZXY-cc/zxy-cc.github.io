@@ -622,11 +622,13 @@
         t[0] + '">' + t[1] + '</button>';
     }).join('') + '</div>';
   }
-  function field(label, id, ph, type) {
+  function field(label, id, ph, type, value) {
     /* 每个字段包成一个 .f-cell：在 .f-row 两列网格里格子才是完整字段（标签在上、输入框在下），
-       否则 label / input 各自成为网格项，会排成「左标签右输入」的半行，视觉上留白 */
+       否则 label / input 各自成为网格项，会排成「左标签右输入」的半行，视觉上留白。
+       第 5 个参数给重编辑表单回填原值，重绘后不会丢失。 */
     return '<span class="f-cell"><label class="f-label" for="' + id + '">' + label + '</label>' +
-      '<input class="f-input" id="' + id + '" type="' + (type || 'text') + '" placeholder="' + (ph || '') + '"></span>';
+      '<input class="f-input" id="' + id + '" type="' + (type || 'text') + '" placeholder="' + (ph || '') +
+      '" value="' + esc(value == null ? '' : value) + '"></span>';
   }
   function area(label, id, ph, rows) {
     return '<span class="f-cell"><label class="f-label" for="' + id + '">' + label + '</label>' +
@@ -708,18 +710,49 @@
     }).join('');
   }
   function formPhoto() {
-    return '<div class="studio-form glass"><h2>发图片</h2>' +
-      '<p class="f-hint">图片会压到最长边 1200px 再存进本机，发布时一起写进站点数据文件。</p>' +
-      '<label class="f-label" for="f-album">归入相册</label>' +
-      '<select class="f-input" id="f-album">' + albumOptions() + '</select>' +
-      '<div id="new-album-box">' + field('新相册标题', 'f-album-title', '例如：周末的光') +
-      field('新相册说明', 'f-album-desc', '一句话') + '</div>' +
+    var ed = (state.editing && state.editing.kind === 'albums') ? findItem('albums', state.editing.id) : null;
+    /* 标记「移除某张照片」会重绘表单，先把用户刚填的字段接住，避免输入被清空 */
+    var f = (ed && state.editing && state.editing.form) || {};
+    var edTitle = f.title != null ? f.title : (ed ? ed.title : '');
+    var edDesc = f.desc != null ? f.desc : (ed ? ed.desc : '');
+    var edDate = f.date || today();
+    var edNote = f.note || '';
+    var albumField = ed
+      ? '<div class="f-row">' +
+        field('相册标题', 'f-album-title', '例如：周末的光', 'text', edTitle) +
+        field('相册说明', 'f-album-desc', '一句话', 'text', edDesc) + '</div>'
+      : '<label class="f-label" for="f-album">归入相册</label>' +
+        '<select class="f-input" id="f-album">' + albumOptions() + '</select>' +
+        '<div id="new-album-box">' + field('新相册标题', 'f-album-title', '例如：周末的光') +
+        field('新相册说明', 'f-album-desc', '一句话') + '</div>';
+    var drops = (ed && state.editing && state.editing.drop) || [];
+    var existing = ed
+      ? '<div class="album-edit-photos"><label class="f-label">相册里共 ' +
+        (ed.photos || []).length + ' 张照片 · 点「移除」标记，保存修改后生效</label>' +
+        '<div class="aep-grid">' + (ed.photos || []).map(function (p, i) {
+          var off = drops.indexOf(i) >= 0;
+          return '<div class="aep-tile' + (off ? ' off' : '') + '">' +
+            '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy">' +
+            '<button class="mini-btn" type="button" data-act="album-photo-toggle" data-i="' + i + '">' +
+            (off ? '撤销移除' : '移除') + '</button></div>';
+        }).join('') + '</div></div>'
+      : '';
+    var preview = '<div id="file-preview" class="file-preview">' + state.files.map(function (s) {
+      return '<img src="' + esc(s) + '" alt="待保存的图片">';
+    }).join('') + '</div>';
+    return '<div class="studio-form glass"><h2>' + (ed ? '编辑相册' : '发图片') + '</h2>' +
+      editingBanner('相册', 'albums') +
+      '<p class="f-hint">' + (ed
+        ? '可以改相册标题与说明、移除已有照片，也可以继续往这个相册补充图片；改完点「保存修改」。'
+        : '图片会压到最长边 1200px 再存进本机，发布时一起写进站点数据文件。') + '</p>' +
+      albumField +
       '<span class="f-cell"><label class="f-label" for="f-photo-date">拍摄 / 发布日期</label>' +
-      '<input class="f-input" id="f-photo-date" type="date" value="' + today() + '"></span>' +
+      '<input class="f-input" id="f-photo-date" type="date" value="' + esc(edDate) + '"></span>' +
       '<label class="file-zone" for="f-files"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择图片 · 可多选，选好自动压缩<input class="f-input f-file" id="f-files" type="file" accept="image/*" multiple></label>' +
-      field('照片说明', 'f-photo-note', '留一句给这张照片（可选）') +
-      '<div id="file-preview" class="file-preview"></div>' +
-      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-photo">保存到本机</button></div></div>';
+      field('照片说明', 'f-photo-note', '留一句给新加的照片（可选）', 'text', edNote) +
+      preview + existing +
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-photo">' +
+      (ed ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   /* 编辑中的条目在表单顶部给一条提示与退出按钮，保存按钮同步改字；
      只认当前表单对应的类型，避免编辑文章时切到说说页出现错误提示 */
@@ -858,16 +891,16 @@
         rows.push('<div class="manage-row"><span class="mr-kind">' + labels[k] + '</span>' +
           '<b>' + esc(name || '(未命名)') + '</b><span class="mr-src">' + src + '</span>' +
           '<span class="mr-id">' + esc(id) + '</span>' +
-          (k !== 'albums'
-            ? '<button class="mini-btn" type="button" data-edit="' + esc(k + '::' + id) + '">编辑</button>' : '') +
+          '<button class="mini-btn" type="button" data-edit="' + esc(k + '::' + id) + '">编辑</button>' +
           '<button class="mini-btn" type="button" data-del="' + esc(k + '::' + id) + '">删除</button></div>');
       });
     });
     var size = 0;
     try { size = (ls(LOCAL_KEY) || '').length; } catch (e) {}
     return '<div class="studio-form glass"><h2>内容管理</h2>' +
-      '<p class="f-hint">文章、说说、杂谈、项目、友链都可以载回对应表单重新编辑；除相册外全部条目都能删除。' +
-      '改动先保存在本机，开启自动同步后立即写进网站，访客看到的就是最新状态；已发布内容删除后可在仓库提交历史找回。</p>' +
+      '<p class="f-hint">文章、说说、杂谈、相册、项目、友链都能载回对应表单重新编辑，也都能删除；' +
+      '相册可改名、补充图片或移除单张照片。改动先保存在本机，开启自动同步后立即写进网站，' +
+      '访客看到的就是最新状态；已发布内容删除后可在仓库提交历史找回。</p>' +
       '<div class="manage-list">' + (rows.length ? rows.join('') : '<p class="page-note">还没有任何内容。</p>') + '</div>' +
       '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清空本机副本与草稿，避免浏览器存储被图片占满。</p>' +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="clear-local">清空本机内容与草稿</button></div></div>';
@@ -1134,29 +1167,47 @@
     say('首页浏览量已清零：浏览键已轮换到新版本，自动同步落地后对所有访客生效。');
   }
   function savePhoto() {
-    if (!state.files.length) return say('还没有选图片。', 'warn');
-    var sel = val('f-album');
+    var ed = (state.editing && state.editing.kind === 'albums') ? findItem('albums', state.editing.id) : null;
     var pdate = val('f-photo-date') || today();
-    var albums = DATA.albums || [];
-    var album = null, i;
-    if (sel && sel !== '__new__') {
-      for (i = 0; i < albums.length; i++) if (albums[i].id === sel) album = albums[i];
-    }
-    if (!album) {
-      var t = val('f-album-title');
-      if (!t) return say('新建相册要写个标题。', 'warn');
-      album = { id: uid('a'), title: t, date: pdate, desc: val('f-album-desc') || t, cover: '', photos: [] };
-    } else {
-      album = JSON.parse(JSON.stringify(album));
-    }
     var note = val('f-photo-note');
-    state.files.forEach(function (src, n) {
-      album.photos.push({ src: src, title: note || (album.title + ' · ' + (n + 1)), note: note || '', date: pdate });
+    var album = null, i;
+    if (ed) {
+      /* 重编辑：保留原 id 与相册创建日期，按标记移除旧照片，再补上新选的图片 */
+      album = JSON.parse(JSON.stringify(ed));
+      var at = val('f-album-title'), ad = val('f-album-desc');
+      if (at) album.title = at;
+      if (ad) album.desc = ad;
+      var drops = (state.editing && state.editing.drop) || [];
+      album.photos = (album.photos || []).filter(function (p, idx) { return drops.indexOf(idx) < 0; });
+      if (!album.photos.length && !state.files.length) {
+        return say('相册至少要留一张照片；要删整个相册请到「内容管理」。', 'warn');
+      }
+    } else {
+      if (!state.files.length) return say('还没有选图片。', 'warn');
+      var sel = val('f-album');
+      var albums = DATA.albums || [];
+      if (sel && sel !== '__new__') {
+        for (i = 0; i < albums.length; i++) if (albums[i].id === sel) album = albums[i];
+      }
+      if (!album) {
+        var t = val('f-album-title');
+        if (!t) return say('新建相册要写个标题。', 'warn');
+        album = { id: uid('a'), title: t, date: pdate, desc: val('f-album-desc') || t, cover: '', photos: [] };
+      } else {
+        album = JSON.parse(JSON.stringify(album));
+      }
+    }
+    state.files.forEach(function (src) {
+      album.photos.push({
+        src: src, title: note || (album.title + ' · ' + (album.photos.length + 1)),
+        note: note || '', date: pdate
+      });
     });
-    if (!album.cover && album.photos.length) album.cover = album.photos[0].src;
+    album.cover = album.photos.length ? album.photos[0].src : '';
     if (!upsert('albums', album)) return say('图片太大，本机存不下；请先发布已保存的内容并清理。', 'warn');
     state.files = [];
-    reloadSoon('已加入 ' + album.photos.length + ' 张照片');
+    state.editing = null;
+    reloadSoon((ed ? '相册已更新' : '已加入新照片') + '，现在共 ' + album.photos.length + ' 张照片');
   }
 
   /* ---------- 发布上线 / 自动同步 ----------
@@ -1452,6 +1503,12 @@
         setText('f-fr-url', target.url);
         setText('f-fr-initial', target.initial);
         say('已载入这个友链，改完点「保存修改」。');
+      } else if (ep[0] === 'albums') {
+        state.editing = { kind: 'albums', id: target.id, drop: [] };
+        state.files = [];
+        state.tab = 'photo';
+        render(document.getElementById('app'));
+        say('已载入这个相册：可改名、补充图片或移除已有照片，改完点「保存修改」。');
       }
       return;
     }
@@ -1482,11 +1539,28 @@
     if (a === 'lock') { revoke(); syncNav(); render(document.getElementById('app')); return; }
     if (a === 'cancel-edit') {
       var wasPost = !!(state.editing && state.editing.kind === 'posts');
+      var wasAlbum = !!(state.editing && state.editing.kind === 'albums');
       state.editing = null;
       state.momentImg = '';
+      if (wasAlbum) state.files = [];
       if (wasPost) { state.draft = blankDraft(); delLs(DRAFT_KEY); }
       render(document.getElementById('app'));
       say('已退出编辑，表单已清空。');
+      return;
+    }
+    if (a === 'album-photo-toggle') {
+      if (!state.editing || state.editing.kind !== 'albums') return;
+      var pi = parseInt(act.getAttribute('data-i'), 10);
+      if (isNaN(pi) || pi < 0) return;
+      /* 重绘前接住刚填的字段，移除标记与待保存的新图片都留在 state 里 */
+      state.editing.form = {
+        title: val('f-album-title'), desc: val('f-album-desc'),
+        date: val('f-photo-date'), note: val('f-photo-note')
+      };
+      if (!state.editing.drop) state.editing.drop = [];
+      var di = state.editing.drop.indexOf(pi);
+      if (di >= 0) state.editing.drop.splice(di, 1); else state.editing.drop.push(pi);
+      render(document.getElementById('app'));
       return;
     }
     if (a === 'tidy') return tidyForm();

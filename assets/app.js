@@ -38,7 +38,7 @@
   }
   function avatarImg(cls) {
     return '<img class="' + (cls || 'avatar') + '" src="' + esc(CFG.avatar || 'assets/avatar.jpg') +
-      '" alt="' + esc(CFG.author || SITE.author || '我') + '的头像">';
+      '" alt="' + esc(CFG.author || SITE.author || '我') + '的头像" decoding="async">';
   }
   function avatarSrc() { return esc(CFG.avatar || 'assets/avatar.jpg'); }
   /* 首页卡片上的只读统计：心形用页面里的图形精灵，眼睛用内联路径 */
@@ -764,8 +764,9 @@
       '</div>';
   }
   /* ---------- 首页快捷卡片 ----------
-     2×2 网格：文章 / 照片墙(4:3 三图堆叠) / 说说 / 杂谈各占一格，
-     每张卡各自轮播本类目最新 3 条；照片顶层默认显示最新发布的一张。 */
+     2×2 网格：文章 / 照片墙(4:3 三图堆叠) / 说说 / 杂谈各占一格。
+     文章、说说、杂谈各自轮播最新 3 条；照片卡轮播最新 3 个相册，
+     每个相册自带三张等比定格堆叠封面。 */
   function recentByDate(list, n) {
     return (list || []).map(function (v, i) { return { v: v, i: i }; }).sort(function (a, b) {
       var d = String((b.v && b.v.date) || '').localeCompare(String((a.v && a.v.date) || ''));
@@ -800,7 +801,16 @@
       '<div class="q-body"><h2>' + esc(label) + '</h2><p>' + esc(note) + '</p></div>' +
       '<span class="q-go">去看看 →</span></a></div></section>';
   }
-  /* 三张按日期倒序的照片：最新一张在最上层，底层往上错位露角 */
+  /* 把图片地址安全地放进 CSS url("…")：引号、反斜杠、换行一律转义，
+     数据 URL 里的 ; , + / = 原样保留（HTML 层再交给 esc） */
+  function shotUrl(u) {
+    return String(u == null ? '' : u).replace(/["'\\\r\n]/g, function (c) {
+      return { '"': '%22', "'": '%27', '\\': '%5C', '\r': '', '\n': '' }[c];
+    });
+  }
+  /* 三张按日期倒序的照片：最新一张在最上层，底层往上错位露角。
+     每层是固定 4:3 定格框，同一张图先模糊铺底、再 contain 等比完整显示，
+     横版与竖版都不裁切、不变形，也不会因 height:auto 撑出卡片。 */
   function stackCovers(photos, alt) {
     var list = recentByDate(photos, 3);
     if (!list.length) list = [{ src: avatarSrc() }];
@@ -808,22 +818,25 @@
     return layers.map(function (p, i) {
       var cls = i === layers.length - 1 ? 'stack-top' :
         (i === layers.length - 2 ? 'stack-mid' : 'stack-back');
-      return '<img class="' + cls + '" src="' + esc(p.src) + '" alt="' + esc(alt) +
-        '" loading="lazy" decoding="async">';
+      return '<div class="' + cls + '" data-stack-layer aria-hidden="true" ' +
+        'title="' + esc(alt) + '" style="--shot:url(&quot;' + esc(shotUrl(p.src)) + '&quot;)"></div>';
     }).join('');
   }
-  function photoFeed() {
-    var out = [];
-    arr('albums').forEach(function (a) {
+  /* 首页照片卡轮播的是「相册」而不是单张照片：按相册内最新照片日期倒序取前三个 */
+  function albumFeed() {
+    var out = arr('albums').map(function (a, i) {
+      var latest = String(a.date || '');
       (a.photos || []).forEach(function (p) {
-        out.push({ date: p.date || a.date || '', p: p, a: a });
+        var d = String(p.date || '');
+        if (d > latest) latest = d;
       });
+      return { date: latest, a: a, i: i };
     });
     return recentByDate(out, 3);
   }
   function renderHome() {
     var posts = recentByDate(POSTS, 3);
-    var photos = photoFeed();
+    var albums = albumFeed();
     var moments = recentByDate(arr('moments'), 3);
     var chatters = recentByDate(arr('chatter'), 3);
     var postCard = posts.length ? qCard('q-post', posts.map(function (p) {
@@ -840,23 +853,21 @@
       };
     }), '最新文章') : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
     var photoCard;
-    if (photos.length) {
-      var back = photos.length > 2 ? photos[2].p : photos[photos.length - 1].p;
-      var mid = photos.length > 1 ? photos[1].p : photos[0].p;
-      var base = '<img class="stack-back" src="' + esc(back.src) + '" alt="" loading="lazy" decoding="async">' +
-        '<img class="stack-mid" src="' + esc(mid.src) + '" alt="" loading="lazy" decoding="async">';
+    if (albums.length) {
       photoCard = '<section class="q-card q-photo glass sheen reveal" data-qcarousel aria-label="最新照片墙">' +
-        '<div class="album-stack q-photo-stack">' + base +
-        '<div class="q-slides">' + qSlides(photos.map(function (it) {
+        '<div class="q-slides">' + qSlides(albums.map(function (it) {
+          var a = it.a;
           return {
-            href: '#/album/' + encodeURIComponent(it.a.id),
-            inner: '<img class="stack-top" src="' + esc(it.p.src) + '" alt="' + esc(it.a.title) +
-              '" loading="lazy" decoding="async">' +
-              '<div class="q-photo-cap"><b>' + esc(it.a.title) + '</b><i>' +
-              esc(it.p.title || it.a.desc || '') + '</i></div>' +
-              qBadge('最新照片墙', 'q-photo-badge')
+            href: '#/album/' + encodeURIComponent(a.id),
+            inner: '<div class="album-stack q-photo-stack">' + stackCovers(a.photos, a.title) +
+              '<span class="album-count">' + (a.photos || []).length + ' 张</span>' +
+              '<div class="q-photo-cap"><b>' + esc(a.title) + '</b><i>' +
+              esc(a.desc || '') + '</i></div>' +
+              qBadge('最新照片墙', 'q-photo-badge') + '</div>'
           };
-        })) + '</div><div class="q-dots">' + qDots(photos.length) + '</div></div></section>';
+        })) + '</div>' +
+        (albums.length > 1 ? '<div class="q-dots">' + qDots(albums.length) + '</div>' : '') +
+        '</section>';
     } else {
       photoCard = qEmpty('q-photo', '#/photowall', '照片墙还空着', '定格过的光会放在这里');
     }
