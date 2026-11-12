@@ -773,6 +773,23 @@
       return d || b.i - a.i; /* 同一天按发布先后：后添加的排在前面 */
     }).slice(0, n || 3).map(function (o) { return o.v; });
   }
+  /* 首页文章卡的「长摘要」：早期创作台只自动截 90 字，卡片会空出一大片。
+     对被截断（以……结尾）或过短的摘要，直接从正文重新截 200 字，不必逐篇重存；
+     站长手写的完整摘要照原样保留。纯函数，静态镜像与浏览器都能跑。 */
+  function homeSummary(p) {
+    var s = String(p.summary || '');
+    var raw = String(p.markdown || '');
+    if (raw) {
+      raw = (window.ZBMD && typeof window.ZBMD.plain === 'function')
+        ? window.ZBMD.plain(raw)
+        : raw.replace(/```[\s\S]*?```/g, ' ').replace(/<[^>]+>/g, ' ')
+            .replace(/[#>*_`|]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    if (raw && (/…$/.test(s) || s.length < 120)) s = raw;
+    s = String(s || '').replace(/\s+/g, ' ').trim();
+    if (s.length <= 200) return s;
+    return s.slice(0, 198).replace(/[\s,，.。;；:：、!！?？'”’"]+$/, '') + '……';
+  }
   function qBadge(text, cls) {
     return '<span class="q-badge' + (cls ? ' ' + cls : '') + '">' + esc(text) + '</span>';
   }
@@ -845,7 +862,7 @@
         inner: '<div class="q-head">' + qBadge('最新文章', 'q-post-badge') +
           '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
           '<h2>' + esc(p.title) + '</h2>' +
-          '<p class="q-sum">' + esc(p.summary || '') + '</p>' +
+          '<p class="q-sum">' + esc(homeSummary(p)) + '</p>' +
           '<div class="q-tags">' + (p.tags || []).slice(0, 4).map(function (t) {
             return '<span>' + esc(t) + '</span>';
           }).join('') + '</div>' +

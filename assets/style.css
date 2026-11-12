@@ -631,7 +631,8 @@ main { min-height: 320px; }
 .post-meta { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; letter-spacing: .4px; }
 .post-title { display: block; margin: 9px 0 9px; font-size: 20px; font-weight: 650; line-height: 1.45; color: var(--ink-strong); }
 .post-title:hover { color: var(--accent-text); }
-.post-summary { margin: 0; color: var(--muted); font-size: 14.5px; }
+.post-summary { margin: 0; color: var(--muted); font-size: 14.5px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 /* 首页卡片只读统计：爱心数与匿名浏览数 */
 .post-stats { display: flex; align-items: center; gap: 16px; margin-top: 14px;
   padding-top: 12px; border-top: 1px solid var(--glass-line); }
@@ -1138,7 +1139,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
    文章 / 照片墙(4:3) / 说说 / 杂谈各占一格，各自轮播最新三条。 */
 .home-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;
   align-items: stretch; margin: 22px 0 44px; }
-.q-card { position: relative; display: block; min-height: 176px; overflow: hidden;
+.q-card { position: relative; display: block; min-height: 212px; overflow: hidden;
   border-radius: 18px; border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); color: inherit;
   transition: transform .38s cubic-bezier(.22,.68,.28,1), box-shadow .38s ease; }
@@ -1173,8 +1174,12 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   padding: 3px 11px; border-radius: 999px; }
 .q-photo-badge { color: #fff; background: rgba(255, 255, 255, .22);
   border-color: rgba(255, 255, 255, .35); backdrop-filter: blur(6px); }
-.q-sum { margin: 0; font-size: 13px; line-height: 1.85; color: var(--muted);
+/* 摘要至少留 1 行：卡片偏矮时可收缩，但别再被压成 0 高度（杂谈卡曾整段消失）；
+   徽标、标题、标签与跳转链接都不参与收缩，窄屏也不会被裁掉 */
+.q-slide > :not(.q-sum) { flex-shrink: 0; }
+.q-sum { margin: 0; flex: 0 1 auto; min-height: 24px; font-size: 13px; line-height: 1.85; color: var(--muted);
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.q-post .q-sum { -webkit-line-clamp: 6; }
 .q-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .q-tags span { font-size: 11px; color: var(--accent-text); padding: 2px 9px;
   border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--glass-line); }
@@ -1190,6 +1195,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 @media (max-width: 760px) {
   .home-quick { grid-template-columns: 1fr; }
   .q-post, .q-photo, .q-moment, .q-chatter { grid-column: 1; grid-row: auto; }
+  /* 单列时没有照片卡撑高，给文章卡留够空间，长摘要仍能显示多行 */
+  .q-post { min-height: 300px; }
 }
 /* 文章页：项目页 x-card 布局的卡片化文章列表 */
 .post-x-card { display: flex; flex-direction: column; }

@@ -693,7 +693,7 @@
       '<span class="f-cell"><label class="f-label" for="f-summary">摘要</label>' +
         '<textarea class="f-input f-area" id="f-summary" rows="4" ' +
           'placeholder="记录一下这篇内容的核心思绪…">' + esc(d.summary) + '</textarea>' +
-        '<p class="meta-note">摘要会显示在首页卡片与搜索结果里。</p>' +
+        '<p class="meta-note">摘要会显示在首页卡片与搜索结果里；留空时自动截取正文前 200 字。</p>' +
       '</span>' +
       '<div class="f-actions">' +
         '<button class="soft-btn" type="button" data-act="draft-save">存为草稿</button>' +
@@ -990,7 +990,7 @@
       slug: editing ? editing.id : (d.slug || uid('p')), title: d.title,
       date: editing ? (findItem('posts', editing.id) || {}).date || d.date : (d.date || today()),
       tags: d.tags.slice(), category: d.category || '', cover: d.cover || '',
-      summary: d.summary || clipSummary(window.ZBMD ? window.ZBMD.plain(d.markdown) : '', 90) || d.title,
+      summary: d.summary || clipSummary(window.ZBMD ? window.ZBMD.plain(d.markdown) : '', 200) || d.title,
       markdown: d.markdown, body: mdRender(d.markdown),
       format: 'markdown', status: 'published'
     };
