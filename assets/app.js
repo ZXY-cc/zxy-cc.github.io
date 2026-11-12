@@ -326,16 +326,9 @@
       '<p class="page-note">共 ' + albums.length + ' 个相册 · ' + photoCount() + ' 张照片</p>' +
       '<div class="album-grid">' + albums.map(function (a) {
         var n = (a.photos || []).length;
-        /* Kirameku 式堆叠封面：取前三张倒序（末张在最上层），轻微旋转错位 */
-        var covers = (a.photos || []).slice(0, 3).reverse();
-        if (!covers.length) covers = [{ src: avatarSrc() }];
+        /* Kirameku 式堆叠封面：最新三张，最新一张在最上层，底层往上错位露角 */
         return '<a class="album-card glass sheen reveal" href="#/album/' + encodeURIComponent(a.id) + '">' +
-          '<div class="album-stack">' + covers.map(function (p, i) {
-            var cls = i === covers.length - 1 ? 'stack-top' :
-              (i === covers.length - 2 ? 'stack-mid' : 'stack-back');
-            return '<img class="' + cls + '" src="' + esc(p.src) +
-              '" alt="' + esc(a.title) + '" loading="lazy" decoding="async">';
-          }).join('') +
+          '<div class="album-stack">' + stackCovers(a.photos, a.title) +
           '<span class="album-count">' + n + ' 张</span></div>' +
           '<div class="album-info"><h2>' + esc(a.title) + '</h2><p>' + esc(a.desc) + '</p>' +
           '<time>' + esc(a.date) + '</time></div></a>';
@@ -771,61 +764,167 @@
       '</div>';
   }
   /* ---------- 首页快捷卡片 ----------
-     仿 XinghuisamaBlogs 首页架构：名片下方一张网格，把最新文章、最新相册、
-     最新说说、最新杂谈做成直达卡片——大卡 + 横幅卡 + 两张小卡，窄屏单列。 */
-  function latestByDate(list) {
-    return list.slice().sort(function (a, b) {
-      return String(b.date || '').localeCompare(String(a.date || ''));
-    })[0];
+     2×2 网格：文章 / 照片墙(4:3 三图堆叠) / 说说 / 杂谈各占一格，
+     每张卡各自轮播本类目最新 3 条；照片顶层默认显示最新发布的一张。 */
+  function recentByDate(list, n) {
+    return (list || []).map(function (v, i) { return { v: v, i: i }; }).sort(function (a, b) {
+      var d = String((b.v && b.v.date) || '').localeCompare(String((a.v && a.v.date) || ''));
+      return d || b.i - a.i; /* 同一天按发布先后：后添加的排在前面 */
+    }).slice(0, n || 3).map(function (o) { return o.v; });
   }
   function qBadge(text, cls) {
     return '<span class="q-badge' + (cls ? ' ' + cls : '') + '">' + esc(text) + '</span>';
   }
-  function qEmpty(href, label, note) {
-    return '<a class="q-card glass sheen reveal" href="' + esc(href) + '">' +
+  function qSlides(items) {
+    return items.map(function (it, i) {
+      return '<a class="q-slide' + (i ? '' : ' on') + '" href="' + esc(it.href) + '">' + it.inner + '</a>';
+    }).join('');
+  }
+  function qDots(n) {
+    var s = '';
+    for (var i = 0; i < n; i++) {
+      s += '<button class="q-dot' + (i ? '' : ' on') + '" type="button" data-qdot="' + i +
+        '" aria-label="切换到第 ' + (i + 1) + ' 条"></button>';
+    }
+    return s;
+  }
+  function qCard(cls, items, label) {
+    return '<section class="q-card ' + cls + ' glass sheen reveal" data-qcarousel aria-label="' + esc(label) + '">' +
+      '<div class="q-slides">' + qSlides(items) + '</div>' +
+      (items.length > 1 ? '<div class="q-dots">' + qDots(items.length) + '</div>' : '') +
+      '</section>';
+  }
+  function qEmpty(cls, href, label, note) {
+    return '<section class="q-card ' + cls + ' glass sheen reveal">' +
+      '<div class="q-slides"><a class="q-slide on" href="' + esc(href) + '">' +
       '<div class="q-body"><h2>' + esc(label) + '</h2><p>' + esc(note) + '</p></div>' +
-      '<span class="q-go">去看看 →</span></a>';
+      '<span class="q-go">去看看 →</span></a></div></section>';
+  }
+  /* 三张按日期倒序的照片：最新一张在最上层，底层往上错位露角 */
+  function stackCovers(photos, alt) {
+    var list = recentByDate(photos, 3);
+    if (!list.length) list = [{ src: avatarSrc() }];
+    var layers = list.slice().reverse();
+    return layers.map(function (p, i) {
+      var cls = i === layers.length - 1 ? 'stack-top' :
+        (i === layers.length - 2 ? 'stack-mid' : 'stack-back');
+      return '<img class="' + cls + '" src="' + esc(p.src) + '" alt="' + esc(alt) +
+        '" loading="lazy" decoding="async">';
+    }).join('');
+  }
+  function photoFeed() {
+    var out = [];
+    arr('albums').forEach(function (a) {
+      (a.photos || []).forEach(function (p) {
+        out.push({ date: p.date || a.date || '', p: p, a: a });
+      });
+    });
+    return recentByDate(out, 3);
   }
   function renderHome() {
-    var lp = latestByDate(POSTS);
-    var album = latestByDate(arr('albums'));
-    var moment = latestByDate(arr('moments'));
-    var chatter = latestByDate(arr('chatter'));
-    var postCard = lp
-      ? '<a class="q-card q-post glass sheen reveal" href="#/post/' + encodeURIComponent(lp.slug) + '">' +
-        '<div class="q-head">' + qBadge('最新文章', 'q-post-badge') +
-        '<time>' + esc(String(lp.date || '').slice(0, 10)) + '</time></div>' +
-        '<h2>' + esc(lp.title) + '</h2>' +
-        '<p class="q-sum">' + esc(lp.summary || '') + '</p>' +
-        '<div class="q-tags">' + (lp.tags || []).slice(0, 4).map(function (t) {
-          return '<span>' + esc(t) + '</span>';
-        }).join('') + '</div>' +
-        '<span class="q-go">阅读全文 →</span></a>'
-      : qEmpty('#/posts', '还没有文章', '第一篇正在路上');
-    var photoCard = album
-      ? '<a class="q-card q-photo glass sheen reveal" href="#/album/' + encodeURIComponent(album.id) + '">' +
-        '<img src="' + esc(album.cover || (album.photos[0] && album.photos[0].src) || avatarSrc()) +
-        '" alt="' + esc(album.title) + '" loading="lazy" decoding="async">' +
-        '<div class="q-photo-cap"><b>' + esc(album.title) + '</b><i>' + esc(album.desc || '') + '</i></div>' +
-        qBadge('最新照片墙', 'q-photo-badge') + '</a>'
-      : qEmpty('#/photowall', '照片墙还空着', '定格过的光会放在这里');
-    var momentCard = moment
-      ? '<a class="q-card q-moment glass sheen reveal" href="#/moments">' +
-        '<div class="q-head">' + qBadge('最新说说') +
-        '<time>' + esc(String(moment.date || '').slice(0, 10)) + '</time></div>' +
-        '<p class="q-sum">' + esc(String(moment.text || '').slice(0, 72)) + '</p>' +
-        '<span class="q-go">去说说页 →</span></a>'
-      : qEmpty('#/moments', '还没有说说', '碎片记录会出现在这里');
-    var chatterCard = chatter
-      ? '<a class="q-card q-chatter glass sheen reveal" href="#/chatter/' + encodeURIComponent(chatter.id) + '">' +
-        '<div class="q-head">' + qBadge('最新杂谈') +
-        '<time>' + esc(String(chatter.date || '').slice(0, 10)) + '</time></div>' +
-        '<h2>' + esc(chatter.title) + '</h2>' +
-        '<p class="q-sum">' + esc(chatter.summary || '') + '</p>' +
-        '<span class="q-go">去杂谈页 →</span></a>'
-      : qEmpty('#/chatter', '还没有杂谈', '长长短短的想法会放在这里');
+    var posts = recentByDate(POSTS, 3);
+    var photos = photoFeed();
+    var moments = recentByDate(arr('moments'), 3);
+    var chatters = recentByDate(arr('chatter'), 3);
+    var postCard = posts.length ? qCard('q-post', posts.map(function (p) {
+      return {
+        href: '#/post/' + encodeURIComponent(p.slug),
+        inner: '<div class="q-head">' + qBadge('最新文章', 'q-post-badge') +
+          '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
+          '<h2>' + esc(p.title) + '</h2>' +
+          '<p class="q-sum">' + esc(p.summary || '') + '</p>' +
+          '<div class="q-tags">' + (p.tags || []).slice(0, 4).map(function (t) {
+            return '<span>' + esc(t) + '</span>';
+          }).join('') + '</div>' +
+          '<span class="q-go">阅读全文 →</span>'
+      };
+    }), '最新文章') : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
+    var photoCard;
+    if (photos.length) {
+      var back = photos.length > 2 ? photos[2].p : photos[photos.length - 1].p;
+      var mid = photos.length > 1 ? photos[1].p : photos[0].p;
+      var base = '<img class="stack-back" src="' + esc(back.src) + '" alt="" loading="lazy" decoding="async">' +
+        '<img class="stack-mid" src="' + esc(mid.src) + '" alt="" loading="lazy" decoding="async">';
+      photoCard = '<section class="q-card q-photo glass sheen reveal" data-qcarousel aria-label="最新照片墙">' +
+        '<div class="album-stack q-photo-stack">' + base +
+        '<div class="q-slides">' + qSlides(photos.map(function (it) {
+          return {
+            href: '#/album/' + encodeURIComponent(it.a.id),
+            inner: '<img class="stack-top" src="' + esc(it.p.src) + '" alt="' + esc(it.a.title) +
+              '" loading="lazy" decoding="async">' +
+              '<div class="q-photo-cap"><b>' + esc(it.a.title) + '</b><i>' +
+              esc(it.p.title || it.a.desc || '') + '</i></div>' +
+              qBadge('最新照片墙', 'q-photo-badge')
+          };
+        })) + '</div><div class="q-dots">' + qDots(photos.length) + '</div></div></section>';
+    } else {
+      photoCard = qEmpty('q-photo', '#/photowall', '照片墙还空着', '定格过的光会放在这里');
+    }
+    var momentCard = moments.length ? qCard('q-moment', moments.map(function (m) {
+      return {
+        href: '#/moments',
+        inner: '<div class="q-head">' + qBadge('最新说说') +
+          '<time>' + esc(String(m.date || '').slice(0, 10)) + '</time></div>' +
+          '<p class="q-sum">' + esc(String(m.text || '').slice(0, 72)) + '</p>' +
+          '<span class="q-go">去说说页 →</span>'
+      };
+    }), '最新说说') : qEmpty('q-moment', '#/moments', '还没有说说', '碎片记录会出现在这里');
+    var chatterCard = chatters.length ? qCard('q-chatter', chatters.map(function (c) {
+      return {
+        href: '#/chatter/' + encodeURIComponent(c.id),
+        inner: '<div class="q-head">' + qBadge('最新杂谈') +
+          '<time>' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
+          '<h2>' + esc(c.title) + '</h2>' +
+          '<p class="q-sum">' + esc(c.summary || '') + '</p>' +
+          '<span class="q-go">去杂谈页 →</span>'
+      };
+    }), '最新杂谈') : qEmpty('q-chatter', '#/chatter', '还没有杂谈', '长长短短的想法会放在这里');
     return profileCard() +
       '<div class="home-quick">' + postCard + photoCard + momentCard + chatterCard + '</div>';
+  }
+  /* ---------- 首页快捷卡轮播：每张卡各自轮换，悬停暂停、圆点可点 ---------- */
+  var quickTimer = 0, quickCards = [];
+  function mountQuickCarousel() {
+    if (!document.querySelectorAll) return;
+    var cards = document.querySelectorAll('[data-qcarousel]');
+    if (!cards || !cards.length) return;
+    if (quickTimer && typeof window.clearInterval === 'function') window.clearInterval(quickTimer);
+    quickTimer = 0;
+    quickCards = Array.prototype.slice.call(cards).filter(function (card) {
+      return card.querySelectorAll && card.querySelectorAll('.q-slide').length > 1;
+    });
+    quickCards.forEach(function (card) {
+      var slides = card.querySelectorAll('.q-slide');
+      var dots = card.querySelectorAll('.q-dot');
+      var show = function (k) {
+        Array.prototype.forEach.call(slides, function (s, i) { s.classList.toggle('on', i === k); });
+        Array.prototype.forEach.call(dots, function (d, i) { d.classList.toggle('on', i === k); });
+        card.setAttribute('data-qindex', String(k));
+      };
+      card.__qShow = show;
+      card.__qIndex = 0;
+      Array.prototype.forEach.call(dots, function (d, i) {
+        if (!d.addEventListener) return;
+        d.addEventListener('click', function (ev) {
+          if (ev.preventDefault) ev.preventDefault();
+          if (ev.stopPropagation) ev.stopPropagation();
+          card.__qIndex = i; show(i);
+        });
+      });
+      if (card.addEventListener) {
+        card.addEventListener('mouseenter', function () { card.__qPause = true; });
+        card.addEventListener('mouseleave', function () { card.__qPause = false; });
+      }
+    });
+    if (reduced() || typeof window.setInterval !== 'function') return;
+    quickTimer = window.setInterval(function () {
+      quickCards.forEach(function (card) {
+        if (card.__qPause) return;
+        var n = card.querySelectorAll('.q-slide').length;
+        card.__qIndex = (card.__qIndex + 1) % n;
+        card.__qShow(card.__qIndex);
+      });
+    }, 5600);
   }
   /* ---------- 文章页：全部文章卡片化（复用项目页 x-card 布局） ---------- */
   function renderPostsPage() {
@@ -913,6 +1012,7 @@
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
+    mountQuickCarousel();
     observeReveal();
     measureScroll();
     updateScroll();

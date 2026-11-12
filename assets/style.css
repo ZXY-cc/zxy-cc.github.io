@@ -1118,29 +1118,35 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .tl-item b { font-size: 14.5px; font-weight: 600; color: var(--ink-strong); line-height: 1.6; }
 .tl-item > span { grid-column: 2; font-size: 11.5px; color: var(--accent-text); }
 
-/* ---------- 首页快捷卡片（仿 XinghuisamaBlogs 架构） ----------
-   大文章卡居左跨两行，照片横幅卡与说说/杂谈小卡在右，窄屏全部单列。 */
-.home-quick { display: grid; grid-template-columns: 1.12fr 1fr 1fr; gap: 16px;
+/* ---------- 首页快捷卡片（2×2） ----------
+   文章 / 照片墙(4:3) / 说说 / 杂谈各占一格，各自轮播最新三条。 */
+.home-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;
   align-items: stretch; margin: 22px 0 44px; }
-.q-card { display: flex; flex-direction: column; gap: 9px; padding: 20px 22px;
+.q-card { position: relative; display: block; min-height: 176px; overflow: hidden;
   border-radius: 18px; border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); color: inherit;
   transition: transform .38s cubic-bezier(.22,.68,.28,1), box-shadow .38s ease; }
 .q-card:hover { transform: translateY(-5px); box-shadow: 0 20px 46px rgba(112,138,190,.22); }
-.q-post { grid-column: 1; grid-row: 1 / 3; justify-content: flex-start; }
+.q-slides { position: absolute; inset: 0; }
+.q-slide { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 9px;
+  padding: 20px 22px 32px; color: inherit; text-decoration: none;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .6s ease, visibility .6s ease; }
+.q-slide.on { opacity: 1; visibility: visible; pointer-events: auto; }
+.q-slide > .q-body { flex: 1 1 auto; }
+.q-post { grid-column: 1; grid-row: 1; }
+.q-photo { grid-column: 2; grid-row: 1; aspect-ratio: 4 / 3; min-height: 0;
+  align-self: start; padding: 0; }
+.q-moment { grid-column: 1; grid-row: 2; }
+.q-chatter { grid-column: 2; grid-row: 2; }
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
-.q-photo { grid-column: 2 / 4; grid-row: 1; position: relative; min-height: 190px;
-  padding: 0; overflow: hidden; justify-content: flex-end; }
-.q-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-  transition: transform .6s cubic-bezier(.22,.68,.28,1); }
-.q-photo:hover img { transform: scale(1.045); }
+.q-photo .album-stack { height: 100%; margin: 0; }
+.q-photo .q-slide { padding: 0; justify-content: flex-end; }
 .q-photo .q-badge { position: absolute; top: 14px; left: 16px; z-index: 2; }
 .q-photo-cap { position: relative; z-index: 1; padding: 34px 18px 15px; border-radius: 0 0 16px 16px;
   background: linear-gradient(180deg, transparent, rgba(20, 30, 64, .62)); color: #fff; }
 .q-photo-cap b { display: block; font-size: 16px; font-weight: 650; }
 .q-photo-cap i { font-style: normal; font-size: 12px; opacity: .85; }
-.q-moment { grid-column: 2; grid-row: 2; }
-.q-chatter { grid-column: 3; grid-row: 2; }
 .q-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .q-head time { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .q-badge { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 1.4px;
@@ -1154,17 +1160,17 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-tags span { font-size: 11px; color: var(--accent-text); padding: 2px 9px;
   border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--glass-line); }
 .q-go { margin-top: auto; padding-top: 6px; font-size: 12.5px; color: var(--accent-3-text); }
-.q-card > .q-body { flex: 1 1 auto; }
-@media (max-width: 900px) {
-  .home-quick { grid-template-columns: 1fr 1fr; }
-  .q-post { grid-column: 1 / 3; grid-row: auto; }
-  .q-photo { grid-column: 1 / 3; grid-row: auto; }
-  .q-moment { grid-column: auto; grid-row: auto; }
-  .q-chatter { grid-column: auto; grid-row: auto; }
-}
-@media (max-width: 620px) {
+.q-dots { position: absolute; right: 14px; bottom: 13px; z-index: 3; display: flex; gap: 6px; }
+.q-dot { width: 7px; height: 7px; padding: 0; border: 1px solid var(--glass-line); border-radius: 50%;
+  background: var(--accent-soft); cursor: pointer; transition: transform .25s ease, background .25s ease; }
+.q-dot.on { background: var(--accent-text); transform: scale(1.25); }
+.q-photo .q-dots { bottom: 16px; right: 16px; }
+.q-photo .q-dot { background: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .6); }
+.q-photo .q-dot.on { background: #fff; }
+@media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
+@media (max-width: 760px) {
   .home-quick { grid-template-columns: 1fr; }
-  .q-post, .q-photo { grid-column: 1; }
+  .q-post, .q-photo, .q-moment, .q-chatter { grid-column: 1; grid-row: auto; }
 }
 /* 文章页：项目页 x-card 布局的卡片化文章列表 */
 .post-x-card { display: flex; flex-direction: column; }
@@ -1184,17 +1190,18 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: var(--glass-shadow), var(--glass-inner);
   transition: transform .4s cubic-bezier(.22,.68,.28,1), box-shadow .4s ease; }
 .album-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(112,138,190,.22); }
-/* 三张封面同向小角度堆叠：如随手摞起的照片，悬停弹性展开（不加相框，只留柔和投影） */
+/* 三张封面同向小角度堆叠：底层往上错位，漏出的角在顶层上方；悬停弹性展开 */
 .album-stack { position: relative; height: 250px; margin: 22px 22px 0; }
-.album-stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+.album-stack img { position: absolute; top: 16px; bottom: 16px; left: 0; right: 0;
+  width: 100%; height: auto; object-fit: cover;
   border-radius: 16px; box-shadow: 0 14px 34px rgba(96,118,168,.22);
   transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
-.album-stack .stack-back { transform: rotate(-2.6deg) translateY(13px) scale(.955); }
-.album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(7px) scale(.978); }
+.album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); }
+.album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); }
-.album-stack:hover .stack-back { transform: rotate(-6.5deg) translateY(7px) scale(.97); }
-.album-stack:hover .stack-mid  { transform: rotate(-4deg) translateY(-2px) scale(.99); }
-.album-stack:hover .stack-top  { transform: rotate(0deg) translateY(-3px) scale(1.01); }
+.album-stack:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }
+.album-stack:hover .stack-mid  { transform: rotate(-4deg) translateY(-12px) scale(.99); }
+.album-stack:hover .stack-top  { transform: rotate(0deg) translateY(2px) scale(1.01); }
 .album-count { position: absolute; right: 10px; bottom: 10px; z-index: 2; font-size: 11.5px; color: var(--ink-strong);
   background: var(--glass-strong); border: 1px solid var(--glass-line); padding: 3px 11px; border-radius: 999px; }
 .album-info { padding: 18px 22px 22px; }
