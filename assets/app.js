@@ -784,6 +784,11 @@
         ? window.ZBMD.plain(raw)
         : raw.replace(/```[\s\S]*?```/g, ' ').replace(/<[^>]+>/g, ' ')
             .replace(/[#>*_`|]/g, ' ').replace(/\s+/g, ' ').trim();
+    } else if (p.body) {
+      /* 基础文章与版本日志文章只有渲染后的 body：先去掉表格、代码块与标签再取纯文本 */
+      raw = String(p.body).replace(/<table[\s\S]*?<\/table>/g, ' ')
+        .replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, ' ')
+        .replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim();
     }
     if (raw && (/…$/.test(s) || s.length < 120)) s = raw;
     s = String(s || '').replace(/\s+/g, ' ').trim();
