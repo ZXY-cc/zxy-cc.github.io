@@ -89,7 +89,7 @@ window.STUDIO_DATA = {
   "albums": [
     {
       "id": "a-mwcsyoffh3y5",
-      "title": "测试用",
+      "title": "（测试横版）",
       "date": "2026-11-12",
       "desc": "测试用",
       "cover": "/assets/photos/p-a8c78ca29358.jpg",
