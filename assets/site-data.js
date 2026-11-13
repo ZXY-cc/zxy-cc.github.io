@@ -3,6 +3,7 @@ window.STUDIO_DATA = {
   "version": 1,
   "studioReset": "2026-11-10-a",
   "tagLibrary": [
+    "⭐",
     "Markdown",
     "拓展",
     "版本日志",
