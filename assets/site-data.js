@@ -61,7 +61,7 @@ window.STUDIO_DATA = {
   "projects": [
     {
       "id": "p-paper",
-      "name": "星梦Staream · 静态博客",
+      "name": "静态博客·星梦Staream",
       "desc": "零依赖的单页博客：hash 路由、玻璃星空、日夜主题、全局搜索与照片灯箱，托管在 GitHub Pages 上，绑自己的域名。",
       "tags": [
         "静态站点",
