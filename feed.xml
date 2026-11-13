@@ -5,8 +5,16 @@
   <id>https://zxy-blog.top/</id>
   <link rel="self" href="https://zxy-blog.top/feed.xml"/>
   <link href="https://zxy-blog.top/"/>
-  <updated>2026-11-13T00:00:00Z</updated>
+  <updated>2026-11-14T00:00:00Z</updated>
   <author><name>星梦Staream</name></author>
+  <entry>
+    <title>博客版本日志</title>
+    <id>https://zxy-blog.top/posts/blog-changelog.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/blog-changelog.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/blog-changelog"/>
+    <updated>2026-11-14T00:00:00Z</updated>
+    <summary>每次更新都记在这里：改了什么、什么时候改的。</summary>
+  </entry>
   <entry>
     <title>本站支持的 Markdown 拓展语法</title>
     <id>https://zxy-blog.top/posts/markdown-extensions.html</id>
@@ -14,14 +22,6 @@
     <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/markdown-extensions"/>
     <updated>2026-11-13T00:00:00Z</updated>
     <summary>写法与洛谷 Markdown 手册一致的拓展语法清单：目录、渐变竖线、折叠框、对齐、署名、行号与行高亮、多语言代码组、表格合并与 Tuack 表格，每条写法都配一个代码块与紧跟其后的真实预览。</summary>
-  </entry>
-  <entry>
-    <title>博客版本日志</title>
-    <id>https://zxy-blog.top/posts/blog-changelog.html</id>
-    <link rel="alternate" href="https://zxy-blog.top/posts/blog-changelog.html"/>
-    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/blog-changelog"/>
-    <updated>2026-11-13T00:00:00Z</updated>
-    <summary>每次更新都记在这里：改了什么、什么时候改的。</summary>
   </entry>
   <entry>
     <title>第1次周报</title>

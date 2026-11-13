@@ -787,9 +787,12 @@ pre {
   border: 1px solid var(--glass-line);
   border-radius: var(--radius); padding: 18px 0; margin: 22px 0;
   overflow-x: auto; font-size: 13px; line-height: 1.75;
-  
+
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .60), 0 10px 30px rgba(112, 138, 190, .10);
 }
+/* 代码标签组：pre 的 display:flex 是作者样式，会盖掉浏览器对 [hidden]
+   的默认 display:none——多语言组里被隐藏的语言块必须显式写回隐藏 */
+pre[hidden] { display: none; }
 .line-numbers {
   flex: 0 0 auto; padding: 0 14px 0 18px; white-space: pre;
   text-align: right; color: var(--faint);

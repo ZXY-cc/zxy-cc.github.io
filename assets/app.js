@@ -1101,10 +1101,25 @@
   }
 
   /* ---------- 渲染与路由 ---------- */
+  /* ---------- 渐显观察：threshold 必须为 0——超高元素（如内嵌长 iframe 的
+     文章）在视口内的最大交会比可能低于任何正值阈值，元素将永远不显示 ---------- */
   function observeReveal() {
     if (!window.IntersectionObserver || !app.querySelectorAll) return;
     var nodes = app.querySelectorAll('.reveal');
     Array.prototype.forEach.call(nodes, function (n) { revealObserver.observe(n); });
+    /* 兜底：两帧后仍在视口内的元素强制显示。正常情况下观察器一帧内就会
+       补上 .in，这里只救极端时序（首帧前滚动位置漂移、iframe 挤压布局等） */
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(forceRevealInViewport);
+    });
+  }
+  function forceRevealInViewport() {
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    Array.prototype.forEach.call(app.querySelectorAll('.reveal'), function (n) {
+      if (n.classList.contains('in')) return;
+      var r = n.getBoundingClientRect();
+      if (r.top < vh && r.bottom > 0) n.classList.add('in');
+    });
   }
   var revealObserver = null;
   /* 版本日志 iframe：直接把生成的 HTML 全文写进 srcdoc，无需网络请求 */
@@ -1146,10 +1161,13 @@
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
     mountQuickCarousel();
+    /* 先回到页顶再注册渐显观察：观察器按当前滚动位置计算相交状态，
+       若先 observe 后 scrollTo，从页面中部点进文章时首屏元素会被判在
+       视口之外而不显示，直到用户手动滚动才出现 */
+    window.scrollTo(0, 0);
     observeReveal();
     measureScroll();
     updateScroll();
-    window.scrollTo(0, 0);
   }
   function route() {
     /* 每次导航都重算文章集合：创作台删除后回首页立即生效 */
@@ -1534,7 +1552,7 @@
         entries.forEach(function (en) {
           if (en.isIntersecting) { en.target.classList.add('in'); revealObserver.unobserve(en.target); }
         });
-      }, { rootMargin: '0px 0px -30px 0px', threshold: .06 });
+      }, { rootMargin: '0px 0px -30px 0px', threshold: 0 });
     } else {
       revealObserver = { observe: function (n) { n.classList.add('in'); }, unobserve: function () {} };
     }
