@@ -924,10 +924,11 @@
           '<span class="q-go">阅读全文 →</span>'
       };
     }), '最新文章') : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
-    /* 照片墙两张卡收窄：横版 4:3、竖版 3:4，各轮播对应方向的最新三个相册 */
-    var photoH = albumsH.length ? photoCarousel(albumsH, 'q-photo-h', '最新横版照片墙')
+    /* 照片墙两张小卡（横 4:3 / 竖 3:4 等面积），徽标统一「最新照片墙」；
+       归卡仍按相册内照片横竖多数，空态文案区分方向 */
+    var photoH = albumsH.length ? photoCarousel(albumsH, 'q-photo-h', '最新照片墙')
       : qEmpty('q-photo q-photo-h', '#/photowall', '横版相册还空着', '横版照片会归到这里');
-    var photoV = albumsV.length ? photoCarousel(albumsV, 'q-photo-v', '最新竖版照片墙')
+    var photoV = albumsV.length ? photoCarousel(albumsV, 'q-photo-v', '最新照片墙')
       : qEmpty('q-photo q-photo-v', '#/photowall', '竖版相册还空着', '竖版照片会归到这里');
     var momentCard = moments.length ? qCard('q-moment', moments.map(function (m) {
       return {
@@ -949,7 +950,7 @@
       };
     }), '最新杂谈') : qEmpty('q-chatter', '#/chatter', '还没有杂谈', '长长短短的想法会放在这里');
     return profileCard() +
-      '<div class="home-quick">' + postCard + photoV + photoH + momentCard + chatterCard + '</div>';
+      '<div class="home-quick">' + postCard + photoH + photoV + momentCard + chatterCard + '</div>';
   }
   /* ---------- 首页快捷卡轮播：每张卡各自轮换，悬停暂停、圆点可点 ---------- */
   var quickTimer = 0, quickCards = [];

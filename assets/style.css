@@ -1161,15 +1161,17 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: opacity .6s ease, visibility .6s ease; }
 .q-slide.on { opacity: 1; visibility: visible; pointer-events: auto; }
 .q-slide > .q-body { flex: 1 1 auto; }
-/* 错位 bento：文章占左上宽位，竖版照片墙（3:4）贴右跨两行，说说 + 横版照片墙（4:3）
-   居中一行，杂谈通栏收底——不整行整列，整体仍是矩形；照片墙卡收窄不占大块面积 */
+/* 错位 bento：文章卡占左上最大块（8 列），横版照片墙（4:3 = 4 列）在右上，
+   说说（4 列）+ 竖版照片墙（3:4 = 3 列，与横版等面积）+ 杂谈（5 列）居中一行；
+   面积排序：文章 > 杂谈 > 说说 > 照片墙两张小卡，整体仍是矩形 */
 .q-post { grid-column: 1 / 9; grid-row: 1; }
-.q-photo-v { grid-column: 9 / 13; grid-row: 1 / 3; }
+.q-photo-h { grid-column: 9 / 13; grid-row: 1; }
 .q-moment { grid-column: 1 / 5; grid-row: 2; }
-.q-photo-h { grid-column: 5 / 9; grid-row: 2; }
-.q-chatter { grid-column: 1 / 13; grid-row: 3; }
+.q-photo-v { grid-column: 5 / 8; grid-row: 2; }
+.q-chatter { grid-column: 8 / 13; grid-row: 2; }
 .q-photo { min-height: 0; padding: 0; overflow: visible; }
 .q-photo-h { aspect-ratio: 4 / 3; align-self: start; }
+.q-photo-v { aspect-ratio: 3 / 4; align-self: start; }
 /* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
 .q-photo .album-stack { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; margin: 0; }
@@ -1206,11 +1208,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo .q-dot { background: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .6); }
 .q-photo .q-dot.on { background: #fff; }
 @media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
-/* 中窄屏：竖版照片墙不再跨两行，与横版并排一行错落，说说 / 杂谈再各占半行 */
+/* 中窄屏：文章卡通栏，横竖两张照片墙并排一行错落，说说 / 杂谈再各占半行 */
 @media (max-width: 1080px) {
   .q-post { grid-column: 1 / 13; grid-row: 1; }
   .q-photo-h { grid-column: 1 / 7; grid-row: 2; }
-  .q-photo-v { grid-column: 7 / 13; grid-row: 2; aspect-ratio: 3 / 4; align-self: start; }
+  .q-photo-v { grid-column: 7 / 13; grid-row: 2; }
   .q-moment { grid-column: 1 / 7; grid-row: 3; }
   .q-chatter { grid-column: 7 / 13; grid-row: 3; }
 }
@@ -1276,6 +1278,14 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   background-position: center, center, center;
   background-repeat: no-repeat, no-repeat, no-repeat;
   background-blend-mode: soft-light, normal, normal; }
+/* 首页照片卡取消相框：无边框、无卡纸内衬、无雾晕与环境光，照片直接 contain 完整显示；
+   只作用于首页 .q-photo，照片墙页与相册详情的定格框保持不变 */
+.q-photo .album-stack > [data-stack-layer] {
+  inset: 12px; border: none; border-radius: 14px;
+  background: var(--shot) center / contain no-repeat;
+  box-shadow: 0 10px 26px rgba(96,118,168,.16); }
+.q-photo .album-stack > [data-stack-layer]::before,
+.q-photo .album-stack > [data-stack-layer]::after { content: none; }
 .album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
 .album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
