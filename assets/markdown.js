@@ -385,11 +385,31 @@
   }
 
   /* ---------------- 代码块 ---------------- */
-  function codeHtml(lang, code, hl) {
+  /* 围栏标识符 → 语言名称（不是文件类型），首字母大写：cpp → C++、py → Python。
+     映射表没收录的标识符按「首字母大写」兜底显示。 */
+  var LANG_NAMES = {
+    c: 'C', h: 'C', cpp: 'C++', 'c++': 'C++', cc: 'C++', cxx: 'C++', hpp: 'C++',
+    cs: 'C#', csharp: 'C#', java: 'Java', go: 'Go', golang: 'Go',
+    rs: 'Rust', rust: 'Rust', swift: 'Swift', kt: 'Kotlin', kotlin: 'Kotlin',
+    php: 'PHP', dart: 'Dart', scala: 'Scala', lua: 'Lua', rb: 'Ruby', ruby: 'Ruby',
+    py: 'Python', python: 'Python', js: 'JavaScript', javascript: 'JavaScript',
+    ts: 'TypeScript', typescript: 'TypeScript', json: 'JSON',
+    html: 'HTML', xml: 'XML', svg: 'SVG', vue: 'Vue',
+    css: 'CSS', scss: 'SCSS', less: 'Less',
+    sh: 'Shell', bash: 'Bash', shell: 'Shell', zsh: 'Zsh',
+    yaml: 'YAML', yml: 'YAML', toml: 'TOML', sql: 'SQL',
+    md: 'Markdown', markdown: 'Markdown', r: 'R', matlab: 'MATLAB', vb: 'VB'
+  };
+  function langLabel(id) {
+    var k = String(id || '').trim().toLowerCase();
+    if (!k) return '';
+    return LANG_NAMES[k] || (k.charAt(0).toUpperCase() + k.slice(1));
+  }
+  function codeHtml(lang, code, hl, noTag) {
     var text = String(code).replace(/\n$/, '');
     var lines = text.split('\n');
     var nums = lines.map(function (_, n) { return n + 1; }).join('\n');
-    var tag = lang ? '<span class="zb-lang">' + esc(lang) + '</span>' : '';
+    var tag = (lang && !noTag) ? '<span class="zb-lang">' + esc(langLabel(lang)) + '</span>' : '';
     var body;
     /* 洛谷 lines=a-b 指定行高亮：此时逐行分词包裹，跨行字符串与块注释的
        上色会有损失（内容仍逐字保留），用来换取任意行精确高亮。 */
@@ -401,10 +421,47 @@
     } else {
       body = highlightCode(text, lang);
     }
-    return '<pre class="zb-code"' + (lang ? ' data-lang="' + esc(lang) + '"' : '') + '>' +
+    return '<pre class="zb-code"' + (lang ? ' data-lang="' + esc(langLabel(lang)) + '"' : '') + '>' +
       tag + '<span class="line-numbers" aria-hidden="true">' + nums + '</span>' +
       '<code>' + body + '</code>' +
       '<button class="copy-btn" type="button">复制</button></pre>';
+  }
+
+  /* 多语言代码标签组：块组上方一排语言标签（C / C++ / Python…），点击切换对应代码。
+     第一块默认可见，其余 hidden；切换由 bindCodeTabs 的文档级委托完成，
+     构建沙箱里没有 DOM，会自动跳过绑定。 */
+  function codeTabsHtml(blocks) {
+    var bar = blocks.map(function (b, i) {
+      return '<button class="zb-tab' + (i ? '' : ' on') + '" type="button" data-zbtab="' + i + '">' +
+        esc(langLabel(b.lang)) + '</button>';
+    }).join('');
+    var pres = blocks.map(function (b, i) {
+      return codeHtml(b.lang, b.code, b.hl, true).replace('<pre class="zb-code"',
+        '<pre class="zb-code" data-zbpre="' + i + '"' + (i ? ' hidden' : ''));
+    }).join('');
+    return '<div class="zb-code-tabs"><div class="zb-tab-bar">' + bar + '</div>' + pres + '</div>';
+  }
+  function bindCodeTabs() {
+    if (typeof document === 'undefined' || !document.addEventListener ||
+        document.__zbTabsBound) return;
+    document.__zbTabsBound = true;
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var tab = t.closest('.zb-tab');
+      if (!tab) return;
+      var bar = tab.parentNode, box = bar && bar.parentNode;
+      if (!box) return;
+      var k = tab.getAttribute('data-zbtab');
+      Array.prototype.forEach.call(box.children, function (el) {
+        if (!el || el.tagName !== 'PRE') return;
+        if (el.getAttribute('data-zbpre') === k) el.removeAttribute('hidden');
+        else el.setAttribute('hidden', '');
+      });
+      Array.prototype.forEach.call(bar.children, function (el) {
+        if (el.classList) el.classList.toggle('on', el === tab);
+      });
+    });
   }
 
   /* ---------------- 块级 Markdown ---------------- */
@@ -598,15 +655,56 @@
         continue;
       }
 
-      /* 围栏代码块 */
+      /* 围栏代码块（支持两种多语言写法）：
+         ① 连续多个带语言的围栏块（之间只隔空行）合并为一组语言标签页；
+         ② 开栏写成 `​```c|cpp|python`，块内用围栏行分隔各语言的代码段。 */
       var f = fenceInfo(ln);
       if (f) {
-        var buf = [];
-        i++;
-        while (i < lines.length && !fenceClose(lines[i], f.ch, f.n)) { buf.push(lines[i]); i++; }
-        if (i < lines.length) i++;
         flush();
-        out.push(codeHtml(f.lang, buf.join('\n'), f.hl));
+        var pipes = String(f.lang || '').indexOf('|') >= 0
+          ? f.lang.split('|').map(function (s) { return s.trim(); }).filter(Boolean) : null;
+        var group = [];
+        if (pipes && pipes.length > 1) {
+          /* 竖线写法：语言数量已知，围栏行当段分隔符，收满 N 段后由末尾围栏收块 */
+          var secs = [], cur = [];
+          i++;
+          while (i < lines.length) {
+            if (fenceClose(lines[i], f.ch, f.n)) {
+              secs.push(cur.join('\n')); cur = [];
+              i++;
+              if (secs.length >= pipes.length) break;
+              continue;
+            }
+            cur.push(lines[i]); i++;
+          }
+          if (cur.length || secs.length < pipes.length) secs.push(cur.join('\n'));
+          pipes.forEach(function (lg, k) {
+            group.push({ lang: lg, code: secs[k] || '', hl: null });
+          });
+        } else {
+          /* 普通写法：先收完本块，再看后面是否紧跟着更多带语言的围栏块（合并成标签组） */
+          var buf = [];
+          i++;
+          while (i < lines.length && !fenceClose(lines[i], f.ch, f.n)) { buf.push(lines[i]); i++; }
+          if (i < lines.length) i++;
+          group.push({ lang: f.lang, code: buf.join('\n'), hl: f.hl });
+          var probe = i;
+          while (probe < lines.length && !lines[probe].trim()) probe++;
+          while (probe < lines.length) {
+            var nf = fenceInfo(lines[probe]);
+            if (!nf || !nf.lang || String(nf.lang).indexOf('|') >= 0) break;
+            var b2 = [];
+            probe++;
+            while (probe < lines.length && !fenceClose(lines[probe], nf.ch, nf.n)) { b2.push(lines[probe]); probe++; }
+            if (probe >= lines.length) break;
+            probe++;
+            group.push({ lang: nf.lang, code: b2.join('\n'), hl: nf.hl });
+            while (probe < lines.length && !lines[probe].trim()) probe++;
+          }
+          if (group.length > 1) i = probe;
+        }
+        out.push(group.length > 1 ? codeTabsHtml(group)
+          : codeHtml(f.lang, group[0].code, group[0].hl));
         continue;
       }
 
@@ -771,6 +869,9 @@
       .replace(/\s+/g, ' ').trim();
   }
 
+  /* 浏览器里给多语言代码标签组挂一次文档级委托（构建沙箱无 document 自动跳过） */
+  bindCodeTabs();
+
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, version: '1.4.0' };
+           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.5.0' };
 });

@@ -1130,7 +1130,13 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* 错位 bento：文章卡占左侧两行大块（面积最大），两张照片墙小卡在右上相邻纵排
    （面积相近且收窄），第二行说说（5 列）+ 杂谈（7 列，面积更大）收底；
    视觉面积：文章 > 杂谈 > 说说 > 照片墙两张小卡，整体仍是矩形 */
-.q-post { grid-column: 1 / 9; grid-row: 1 / 3; }
+.q-post { grid-column: 1 / 9; grid-row: 1 / 3; display: flex; flex-direction: column; }
+/* 文章卡一分为二：仍是一张卡，上半轮播第 1/3/5 篇、下半轮播第 2/4/6 篇，
+   中缝一条虚线分开，两半各自带圆点、节拍同步翻页 */
+.q-pane { position: relative; flex: 1 1 50%; min-height: 0; }
+.q-pane + .q-pane { border-top: 1px dashed var(--glass-line); }
+.q-pane h2 { font-size: 17px; }
+.q-pane .q-sum { -webkit-line-clamp: 3; }
 .q-photo-h { grid-column: 9 / 13; grid-row: 1; }
 .q-photo-v { grid-column: 9 / 13; grid-row: 2; }
 .q-moment { grid-column: 1 / 6; grid-row: 3; }
@@ -1141,6 +1147,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo-v { aspect-ratio: 5 / 4; align-self: start; }
 /* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
+/* 双半区里标题比整卡小一号，摘要每半最多 3 行 */
+.q-post .q-pane h2 { font-size: 17px; }
 .q-photo .album-stack { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; margin: 0; }
 .q-photo .q-slide { padding: 0; justify-content: flex-end; overflow: visible; }
 .q-photo .q-badge { position: absolute; top: 26px; left: 24px; z-index: 6; }
@@ -1162,7 +1170,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-slide > :not(.q-sum) { flex-shrink: 0; }
 .q-sum { margin: 0; flex: 0 1 auto; min-height: 24px; font-size: 13px; line-height: 1.85; color: var(--muted);
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.q-post .q-sum { -webkit-line-clamp: 6; }
+/* 双半区里每半只有半张卡高，摘要最多 3 行 */
+.q-post .q-sum { -webkit-line-clamp: 3; }
 .q-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .q-tags span { font-size: 11px; color: var(--accent-text); padding: 2px 9px;
   border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--glass-line); }
@@ -1204,17 +1213,18 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* ---------- 照片墙 / 相册 ---------- */
 /* 两栏相册（Kirameku 式），窄屏回落单栏 */
-/* 照片墙：双列瀑布流（CSS columns），横版 4:3 与竖版 3:4 相册卡错落排布、自动安排 */
-.album-grid { columns: 2; column-gap: 26px; margin: 26px 0 40px; }
-.album-card { display: block; break-inside: avoid; margin: 0 0 26px;
-  border-radius: 20px; border: 1px solid var(--glass-line);
+/* 照片墙：三列瀑布流（CSS columns），一行放 3 个照片集，卡片区域整体收窄；
+   横版 4:3 与竖版 3:4 相册卡错落排布、自动安排，窄屏逐级回落 2 列 / 1 列 */
+.album-grid { columns: 3; column-gap: 18px; margin: 24px 0 40px; }
+.album-card { display: block; break-inside: avoid; margin: 0 0 18px;
+  border-radius: 16px; border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner);
   transition: transform .4s cubic-bezier(.22,.68,.28,1), box-shadow .4s ease; }
 .album-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(112,138,190,.22); }
 /* 三张封面的旋转堆叠（仿星灰家）：全站取消相框——无边框、无卡纸内衬、无雾晕与环境光，
    照片直接 contain 等比完整显示；横版相册 4:3、竖版相册 3:4 原比例竖版显示。
    三层同尺寸同向小角度堆叠，底层往上错位，悬停弹性展开。 */
-.album-stack { position: relative; aspect-ratio: 4 / 3; margin: 22px 22px 0; }
+.album-stack { position: relative; aspect-ratio: 4 / 3; margin: 16px 16px 0; }
 /* 竖版照片集按原比例竖版显示（照片墙页按相册横竖多数加 is-v） */
 .album-card.is-v .album-stack { aspect-ratio: 3 / 4; }
 .album-stack > [data-stack-layer] { position: absolute; inset: 12px;
@@ -1226,8 +1236,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
 /* 旋转堆叠的景深（仿星灰家照片墙）：最上层清晰，第二层略模糊，第三层更模糊 */
-.album-stack .stack-mid { filter: blur(1.7px); }
-.album-stack .stack-back { filter: blur(3px); }
+/* 景深更轻：顶层清晰、第二层微糊、第三层略糊——保留层次又不糊成一团 */
+.album-stack .stack-mid { filter: blur(1px); }
+.album-stack .stack-back { filter: blur(1.8px); }
 .album-stack:hover .stack-back,
 .album-card:hover .stack-back,
 .q-photo:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }
@@ -1239,10 +1250,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo:hover .stack-top { transform: rotate(0deg) translateY(2px) scale(1.01); }
 .album-count { position: absolute; right: 10px; bottom: 10px; z-index: 5; font-size: 11.5px; color: var(--ink-strong);
   background: var(--glass-strong); border: 1px solid var(--glass-line); padding: 3px 11px; border-radius: 999px; }
-.album-info { padding: 18px 22px 22px; }
-.album-info h2 { margin: 0 0 5px; font-size: 17px; font-weight: 650; color: var(--ink-strong); }
-.album-info p { margin: 0 0 9px; font-size: 13px; color: var(--muted); }
-.album-info time { font-size: 11.5px; color: var(--faint); }
+.album-info { padding: 13px 16px 16px; }
+.album-info h2 { margin: 0 0 4px; font-size: 15px; font-weight: 650; color: var(--ink-strong); }
+.album-info p { margin: 0 0 7px; font-size: 12px; color: var(--muted); }
+.album-info time { font-size: 11px; color: var(--faint); }
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0 40px; }
 .photo-tile { display: block; padding: 0; overflow: hidden; cursor: zoom-in; text-align: left; font: inherit;
   border-radius: var(--radius); border: 1px solid var(--glass-line);
@@ -1255,9 +1266,12 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* 相册详情：瓷砖随滚动依次轻柔浮现（Kiremaku 式 stagger），动画不影响悬停 */
 .photo-tile.in { animation: tile-pop .55s cubic-bezier(.22,.68,.28,1) backwards; }
 @keyframes tile-pop { from { opacity: 0; transform: translate3d(0, 18px, 0); } to { opacity: 1; transform: none; } }
+@media (max-width: 1100px) {
+  .album-grid { columns: 2; }
+}
 @media (max-width: 700px) {
   .album-grid { columns: 1; }
-  .album-stack { margin: 18px 18px 0; }
+  .album-stack { margin: 14px 14px 0; }
 }
 .photo-cap { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px 15px; }
 .photo-cap b { font-size: 14px; color: var(--ink-strong); font-weight: 600; }
@@ -2065,6 +2079,18 @@ th .zb-math, td .zb-math, .zb-mcell .zb-math {
 .zb-task.done { color: var(--accent-3-text, #934268); }
 .zb-code .zb-lang { position: absolute; right: 12px; bottom: 7px; font-size: 10px;
   letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
+/* 多语言代码标签组：块组上方一排语言名（C / C++ / Python…），当前项渐变下划线高亮；
+   标签内的代码块不再重复显示右下角语言角标 */
+.zb-code-tabs { margin: 14px 0; }
+.zb-tab-bar { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 10px;
+  border: 1px solid var(--glass-line, rgba(120,140,180,.28)); border-bottom: none;
+  border-radius: 14px 14px 0 0; background: var(--glass-strong, rgba(255,255,255,.5)); }
+.zb-tab { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  padding: 7px 14px 8px; color: var(--muted, #64708f); background: transparent; border: none;
+  border-bottom: 2px solid transparent; transition: color .25s ease, border-color .25s ease; }
+.zb-tab:hover { color: var(--ink-strong, #2c3a5e); }
+.zb-tab.on { color: var(--accent-text, #3f5c9c); border-bottom-color: var(--accent, #7ea6e0); }
+.zb-code-tabs .zb-code { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
 :root[data-theme="night"] .zb-math { color: #e8f0ff; }
 :root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
 /* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。

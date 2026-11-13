@@ -152,6 +152,18 @@ th .zb-math, td .zb-math, .zb-mcell .zb-math {
 .zb-task.done { color: var(--accent-3-text, #934268); }
 .zb-code .zb-lang { position: absolute; right: 12px; bottom: 7px; font-size: 10px;
   letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
+/* 多语言代码标签组：块组上方一排语言名（C / C++ / Python…），当前项渐变下划线高亮；
+   标签内的代码块不再重复显示右下角语言角标 */
+.zb-code-tabs { margin: 14px 0; }
+.zb-tab-bar { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 10px;
+  border: 1px solid var(--glass-line, rgba(120,140,180,.28)); border-bottom: none;
+  border-radius: 14px 14px 0 0; background: var(--glass-strong, rgba(255,255,255,.5)); }
+.zb-tab { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  padding: 7px 14px 8px; color: var(--muted, #64708f); background: transparent; border: none;
+  border-bottom: 2px solid transparent; transition: color .25s ease, border-color .25s ease; }
+.zb-tab:hover { color: var(--ink-strong, #2c3a5e); }
+.zb-tab.on { color: var(--accent-text, #3f5c9c); border-bottom-color: var(--accent, #7ea6e0); }
+.zb-code-tabs .zb-code { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
 :root[data-theme="night"] .zb-math { color: #e8f0ff; }
 :root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
 /* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。

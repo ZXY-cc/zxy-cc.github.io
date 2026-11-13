@@ -910,12 +910,16 @@
       '</section>';
   }
   function renderHome() {
-    var posts = recentByDate(POSTS, 3);
+    /* 文章卡一分为二：仍是一张卡，上半轮播最新第 1/3/5 篇，下半轮播第 2/4/6 篇；
+       两半各自带轮播与圆点，节拍一致，视觉上同步翻页 */
+    var posts = recentByDate(POSTS, 6);
+    var top = [posts[0], posts[2], posts[4]].filter(Boolean);
+    var bot = [posts[1], posts[3], posts[5]].filter(Boolean);
     var albumsH = albumFeed('h');
     var albumsV = albumFeed('v');
     var moments = recentByDate(arr('moments'), 3);
     var chatters = recentByDate(arr('chatter'), 3);
-    var postCard = posts.length ? qCard('q-post', posts.map(function (p) {
+    function postSlide(p) {
       return {
         href: '#/post/' + encodeURIComponent(p.slug),
         inner: '<div class="q-head">' + qBadge('最新文章', 'q-post-badge') +
@@ -927,7 +931,18 @@
           }).join('') + '</div>' +
           '<span class="q-go">阅读全文 →</span>'
       };
-    }), '最新文章') : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
+    }
+    function postPane(list) {
+      if (!list.length) return '';
+      return '<div class="q-pane" data-qcarousel>' +
+        '<div class="q-slides">' + qSlides(list.map(postSlide)) + '</div>' +
+        (list.length > 1 ? '<div class="q-dots">' + qDots(list.length) + '</div>' : '') +
+        '</div>';
+    }
+    var postCard = posts.length
+      ? '<section class="q-card q-post glass sheen reveal" aria-label="最新文章">' +
+        postPane(top) + postPane(bot) + '</section>'
+      : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
     /* 照片墙两张小卡（横 4:3 / 竖 3:4 等面积），徽标统一「最新照片墙」；
        归卡仍按相册内照片横竖多数，空态文案区分方向 */
     var photoH = albumsH.length ? photoCarousel(albumsH, 'q-photo-h', '最新照片墙')

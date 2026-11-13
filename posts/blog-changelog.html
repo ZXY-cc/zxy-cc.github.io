@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-13">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.35.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.36.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -162,6 +162,18 @@ th .zb-math, td .zb-math, .zb-mcell .zb-math {
 .zb-task.done { color: var(--accent-3-text, #934268); }
 .zb-code .zb-lang { position: absolute; right: 12px; bottom: 7px; font-size: 10px;
   letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
+/* 多语言代码标签组：块组上方一排语言名（C / C++ / Python…），当前项渐变下划线高亮；
+   标签内的代码块不再重复显示右下角语言角标 */
+.zb-code-tabs { margin: 14px 0; }
+.zb-tab-bar { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 10px;
+  border: 1px solid var(--glass-line, rgba(120,140,180,.28)); border-bottom: none;
+  border-radius: 14px 14px 0 0; background: var(--glass-strong, rgba(255,255,255,.5)); }
+.zb-tab { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  padding: 7px 14px 8px; color: var(--muted, #64708f); background: transparent; border: none;
+  border-bottom: 2px solid transparent; transition: color .25s ease, border-color .25s ease; }
+.zb-tab:hover { color: var(--ink-strong, #2c3a5e); }
+.zb-tab.on { color: var(--accent-text, #3f5c9c); border-bottom-color: var(--accent, #7ea6e0); }
+.zb-code-tabs .zb-code { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
 :root[data-theme="night"] .zb-math { color: #e8f0ff; }
 :root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
 /* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。
@@ -268,6 +280,7 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v3.33.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>首页改错位卡片布局：照片墙拆横 4:3 与竖 3:4 两张等面积小卡并取消相框、徽标统一「最新照片墙」，文章卡面积最大，相册按照片横竖多数归卡；画质档位整体下移一档，高与极高加密星空与流星</td></tr>
 <tr><td><span class="ver">v3.34.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>创作台改管理面板式布局：左侧分组菜单 + 顶栏面包屑；首页文章卡通栏、照片墙两卡相邻；星空按最佳观感定档并四档梯度递减</td></tr>
 <tr><td><span class="ver">v3.35.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>全站照片取消相框；照片墙改双列瀑布流，竖版相册按 3:4 原比例竖排（构建自动回填照片宽高）；旋转堆叠加景深：顶层清晰、第二层略糊、第三层更糊；首页文章卡占两行最大、杂谈大于说说</td></tr>
+<tr><td><span class="ver">v3.36.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>首页文章卡一分为二：上轮播第 1/3/5 篇、下轮播第 2/4/6 篇仍是一张卡；新增多语言代码标签组（标签显示语言名称且首字母大写）；照片墙一行 3 个照片集；堆叠下层模糊减弱</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>✅ 已支持</td><td>留言直接显示在文章页，页面内写好内容后由 GitHub 确认发布；回复与 👍 点赞走仓库 Issues，网页后台可管理</td></tr>
 <tr><td>后端与统计</td><td>✅ 已支持</td><td>全站仍是静态文件，评论不依赖任何常驻服务或数据库；零费用、零运维，不采集访问数据</td></tr>
@@ -310,14 +323,16 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.35.0"></script>
-<script src="../assets/comment-archive.js?v=v3.35.0"></script>
-<script src="../assets/interactions-config.js?v=v3.35.0"></script>
-<script src="../assets/interactions.js?v=v3.35.0"></script>
-<script src="../assets/issues-live.js?v=v3.35.0"></script>
-<script src="../assets/likes.js?v=v3.35.0"></script>
+<script src="../assets/comments-data.js?v=v3.36.0"></script>
+<script src="../assets/comment-archive.js?v=v3.36.0"></script>
+<script src="../assets/interactions-config.js?v=v3.36.0"></script>
+<script src="../assets/interactions.js?v=v3.36.0"></script>
+<script src="../assets/issues-live.js?v=v3.36.0"></script>
+<script src="../assets/likes.js?v=v3.36.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>
