@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.36.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.37.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -238,14 +238,16 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.36.0"></script>
-<script src="../assets/comment-archive.js?v=v3.36.0"></script>
-<script src="../assets/interactions-config.js?v=v3.36.0"></script>
-<script src="../assets/interactions.js?v=v3.36.0"></script>
-<script src="../assets/issues-live.js?v=v3.36.0"></script>
-<script src="../assets/likes.js?v=v3.36.0"></script>
+<script src="../assets/comments-data.js?v=v3.37.0"></script>
+<script src="../assets/comment-archive.js?v=v3.37.0"></script>
+<script src="../assets/interactions-config.js?v=v3.37.0"></script>
+<script src="../assets/interactions.js?v=v3.37.0"></script>
+<script src="../assets/issues-live.js?v=v3.37.0"></script>
+<script src="../assets/likes.js?v=v3.37.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
 window.ZBLive && window.ZBLive.mount("free-blog");
 window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

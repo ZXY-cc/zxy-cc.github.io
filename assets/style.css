@@ -1143,8 +1143,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-chatter { grid-column: 6 / 13; grid-row: 3; }
 .q-photo { min-height: 0; padding: 0; overflow: visible; }
 .q-photo-h { aspect-ratio: 4 / 3; align-self: start; }
-/* 竖版卡不再强求与横版等面积：略矮的 5:4 收窄面积，竖版照片仍 contain 完整显示 */
-.q-photo-v { aspect-ratio: 5 / 4; align-self: start; }
+/* 竖版卡拉长到 3:4 原比例：竖版照片完整利用卡片空间；文章卡跨两行自动等长 */
+.q-photo-v { aspect-ratio: 3 / 4; align-self: start; }
+/* 首页竖版照片墙封面 cover 铺满：照片占满整个卡片，左右两侧不留空 */
+.q-photo-v .album-stack > [data-stack-layer] { background-size: cover; }
 /* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
 /* 双半区里标题比整卡小一号，摘要每半最多 3 行 */
