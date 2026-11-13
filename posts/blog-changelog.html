@@ -208,7 +208,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>博客版本日志</h1>
-<p class="meta" data-view-post="blog-changelog">2026-11-13 · 版本日志 / 站点 / A · <span class="mirror-likes"><span data-like-stat="post:blog-changelog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="blog-changelog">0</span> 次浏览（不含站长）</span></p>
+<p class="meta" data-view-post="blog-changelog">2026-11-13 · 版本日志 / 站点 · <span class="mirror-likes"><span data-like-stat="post:blog-changelog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="blog-changelog">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><h2>更新约定</h2><div class="note"><p><strong>一、只写做了什么。</strong> 「主要改动」列用 1~3 句说清改动本身，不写原理分析、根因、排查过程、实测数据与文件清单。</p><p><strong>二、控制在 100 字以内。</strong> 一条版本记一件事；改动多就合并成一段最终状态，不把八件事拆成八行。</p><p><strong>三、验收细节不进日志。</strong> 断言数、回归项、构建次数一律不写；日志只体现「改没改」。</p><p><strong>四、类别取自图例。</strong> 多标签用「 · 」连接，单元格只放纯文本，每行必须与表头列数一致。</p><p><strong>五、同类改动必须合并。</strong> 同一主题反复微调只算一次迭代，合并为一个版本号，后续版本号顺延。</p><p><strong>六、按阶段成表。</strong> 一个阶段 = 一个二级标题 + 一张表（各自重复表头）；新版本排在旧版本下方。</p><p><strong>七、双格式同步。</strong> 每次改完本日志（md），必须重新生成同名 HTML 镜像，并同步进站点文章与关于页预览。</p><p><strong>八、脱敏。</strong> 不写令牌、密钥、激活码、本机路径等私人信息，只写改动本身。</p><p><strong>九、按主题分版。</strong> 一条版本只记同一主题的最终状态；其它功能更新或架构级大更新另起版本号，不往旧版本里续写。</p></div><h2>类别图例</h2><table class="t-legend"><thead><tr><th>标签</th><th>含义</th></tr></thead><tbody>
 <tr><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span></td><td>从无到有的新页面、新能力或新入口</td></tr>
 <tr><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span></td><td>修复既有 bug 或异常表现</td></tr>
@@ -338,7 +338,5 @@ pre, pre > code, .article :not(pre) > code {
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>
-<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
-document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>
