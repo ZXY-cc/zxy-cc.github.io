@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-13">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.37.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.42.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -208,7 +208,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>博客版本日志</h1>
-<p class="meta" data-view-post="blog-changelog">2026-11-13 · 版本日志 / 站点 · <span class="mirror-likes"><span data-like-stat="post:blog-changelog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="blog-changelog">0</span> 次浏览（不含站长）</span></p>
+<p class="meta" data-view-post="blog-changelog">2026-11-13 · 版本日志 / 站点 / A · <span class="mirror-likes"><span data-like-stat="post:blog-changelog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="blog-changelog">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><h2>更新约定</h2><div class="note"><p><strong>一、只写做了什么。</strong> 「主要改动」列用 1~3 句说清改动本身，不写原理分析、根因、排查过程、实测数据与文件清单。</p><p><strong>二、控制在 100 字以内。</strong> 一条版本记一件事；改动多就合并成一段最终状态，不把八件事拆成八行。</p><p><strong>三、验收细节不进日志。</strong> 断言数、回归项、构建次数一律不写；日志只体现「改没改」。</p><p><strong>四、类别取自图例。</strong> 多标签用「 · 」连接，单元格只放纯文本，每行必须与表头列数一致。</p><p><strong>五、同类改动必须合并。</strong> 同一主题反复微调只算一次迭代，合并为一个版本号，后续版本号顺延。</p><p><strong>六、按阶段成表。</strong> 一个阶段 = 一个二级标题 + 一张表（各自重复表头）；新版本排在旧版本下方。</p><p><strong>七、双格式同步。</strong> 每次改完本日志（md），必须重新生成同名 HTML 镜像，并同步进站点文章与关于页预览。</p><p><strong>八、脱敏。</strong> 不写令牌、密钥、激活码、本机路径等私人信息，只写改动本身。</p><p><strong>九、按主题分版。</strong> 一条版本只记同一主题的最终状态；其它功能更新或架构级大更新另起版本号，不往旧版本里续写。</p></div><h2>类别图例</h2><table class="t-legend"><thead><tr><th>标签</th><th>含义</th></tr></thead><tbody>
 <tr><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span></td><td>从无到有的新页面、新能力或新入口</td></tr>
 <tr><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span></td><td>修复既有 bug 或异常表现</td></tr>
@@ -282,6 +282,11 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v3.35.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>全站照片取消相框；照片墙改双列瀑布流，竖版相册按 3:4 原比例竖排（构建自动回填照片宽高）；旋转堆叠加景深：顶层清晰、第二层略糊、第三层更糊；首页文章卡占两行最大、杂谈大于说说</td></tr>
 <tr><td><span class="ver">v3.36.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>首页文章卡一分为二：上轮播第 1/3/5 篇、下轮播第 2/4/6 篇仍是一张卡；新增多语言代码标签组（标签显示语言名称且首字母大写）；照片墙一行 3 个照片集；堆叠下层模糊减弱</td></tr>
 <tr><td><span class="ver">v3.37.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>首页竖版照片墙卡拉长到 3:4 原比例，封面 cover 铺满卡片左右不留空；文章卡跨两行自动等长，仍对半两区同显两篇</td></tr>
+<tr><td><span class="ver">v3.38.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>写文章取消分类只留标签，新增标签管理可增删并拖拽排序；全站标签按标签库顺序显示，A / B 恒排最后并决定首页文章卡上下半区，旧文补齐分区标签</td></tr>
+<tr><td><span class="ver">v3.39.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>夜间星标按钮改创作台同款渐变，杂谈卡标题与文章卡同字号；画质效果表默认折叠并加圆形问号，点击流畅展开收起；下层照片模糊同时略微变白，修正手机平板卡片溢出</td></tr>
+<tr><td><span class="ver">v3.40.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>每张照片可写文字批注，创作台发图与相册重编辑都逐张填写；相册详情页鼠标悬停或触屏常显渐变说明层，已有照片补上批注</td></tr>
+<tr><td><span class="ver">v3.41.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span> <span class="chip" style="color:#b37816;background:#b3781614;border-color:#b3781638">⚡ 优化</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>创作台粘贴网址自动转成 Markdown 链接，选中文字作锚文本；修复普通 ## 标题出现彩色短竖条纹及示例代码块被误并成标签组</td></tr>
+<tr><td><span class="ver">v3.42.0</span></td><td>2026-11-13</td><td><span class="chip" style="color:#6b6b8f;background:#6b6b8f14;border-color:#6b6b8f38">📄 文档</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>新增《本站支持的 Markdown 拓展语法》文章，按顺序列出全部拓展写法，每条配一个语法代码块与紧跟其后的真实预览效果</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>✅ 已支持</td><td>留言直接显示在文章页，页面内写好内容后由 GitHub 确认发布；回复与 👍 点赞走仓库 Issues，网页后台可管理</td></tr>
 <tr><td>后端与统计</td><td>✅ 已支持</td><td>全站仍是静态文件，评论不依赖任何常驻服务或数据库；零费用、零运维，不采集访问数据</td></tr>
@@ -324,14 +329,16 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.37.0"></script>
-<script src="../assets/comment-archive.js?v=v3.37.0"></script>
-<script src="../assets/interactions-config.js?v=v3.37.0"></script>
-<script src="../assets/interactions.js?v=v3.37.0"></script>
-<script src="../assets/issues-live.js?v=v3.37.0"></script>
-<script src="../assets/likes.js?v=v3.37.0"></script>
+<script src="../assets/comments-data.js?v=v3.42.0"></script>
+<script src="../assets/comment-archive.js?v=v3.42.0"></script>
+<script src="../assets/interactions-config.js?v=v3.42.0"></script>
+<script src="../assets/interactions.js?v=v3.42.0"></script>
+<script src="../assets/issues-live.js?v=v3.42.0"></script>
+<script src="../assets/likes.js?v=v3.42.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

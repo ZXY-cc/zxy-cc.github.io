@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.37.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.42.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -208,7 +208,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>（测试）零成本搭一个自己的博客</h1>
-<p class="meta" data-view-post="free-blog">2026-11-07 · 建站 / 笔记 · <span class="mirror-likes"><span data-like-stat="post:free-blog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="free-blog">0</span> 次浏览（不含站长）</span></p>
+<p class="meta" data-view-post="free-blog">2026-11-07 · 建站 / 笔记 / A · <span class="mirror-likes"><span data-like-stat="post:free-blog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="free-blog">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>想拥有一个自己的博客，其实只需要解决三个问题：别人怎么找到你、内容放在哪、以及浏览器地址栏里那把小锁。这三件事分别对应域名、托管和证书，彼此独立，可以分开选。</p>
 <h2 id="h-三条信息-三层链路">三条信息，三层链路</h2>
 <p>环节可选服务要做的事免费域名dpdns.org申请一个 you.dpdns.org解析与证书Cloudflare / 平台自带加解析记录，勾强制 HTTPS网站托管GitHub Pages / Cloudflare Pages上传静态文件dpdns.org 来自 DigitalPlat FreeDomain，是一个免费二级域名服务。注册后你会拿到形如 you.dpdns.org 的地址，并且拥有完整的 DNS 控制权，可以自己添加 A、CNAME、TXT 记录，也可以把 NS 委派给 Cloudflare。每个账号的免费名额有限，长期闲置或违规会被回收，所以它适合练手和个人站点，不适合承载重要业务。</p>
@@ -238,14 +238,16 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.37.0"></script>
-<script src="../assets/comment-archive.js?v=v3.37.0"></script>
-<script src="../assets/interactions-config.js?v=v3.37.0"></script>
-<script src="../assets/interactions.js?v=v3.37.0"></script>
-<script src="../assets/issues-live.js?v=v3.37.0"></script>
-<script src="../assets/likes.js?v=v3.37.0"></script>
+<script src="../assets/comments-data.js?v=v3.42.0"></script>
+<script src="../assets/comment-archive.js?v=v3.42.0"></script>
+<script src="../assets/interactions-config.js?v=v3.42.0"></script>
+<script src="../assets/interactions.js?v=v3.42.0"></script>
+<script src="../assets/issues-live.js?v=v3.42.0"></script>
+<script src="../assets/likes.js?v=v3.42.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
 window.ZBLive && window.ZBLive.mount("free-blog");
 window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

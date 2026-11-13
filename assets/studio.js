@@ -33,8 +33,9 @@
   var DAYS = 90;
   var KINDS = ['posts', 'moments', 'chatter', 'albums', 'projects', 'friends'];
   var DRAFT_KEY = 'zb-studio-draft';
-  var CATS = ['随笔', '算法', '建站', '随想', '笔记', '其它'];
-  var state = { tab: 'post', msg: '', busy: false, files: [], mode: 'write', draft: null, saveTimer: null, editing: null, pat: '' };
+  var TAGLIB_KEY = 'zb-studio-taglib';
+  var state = { tab: 'post', msg: '', busy: false, files: [], fileNotes: [], tagDraft: '', dragTag: -1,
+    mode: 'write', draft: null, saveTimer: null, editing: null, pat: '' };
   /* 自动同步队列：改动先落本机，防抖合并后串行写仓库；失败保留本机内容并重试 */
   var sync = { timer: null, running: false, dirty: false, fails: 0, status: '', warn: true };
 
@@ -152,10 +153,59 @@
     if (Object.prototype.toString.call(s.social) === '[object Array]') DATA.site.social = s.social;
     if (Number(s.homeViewsVer) >= 1) DATA.site.homeViewsVer = Math.floor(Number(s.homeViewsVer));
   }
+  /* ---------- 标签库 ----------
+     顺序由「内容管理 → 标签管理」维护，写进站点数据文件随自动同步下发；
+     写文章与杂谈都从这里取候选标签，A / B 恒排最后供首页文章卡分区用。 */
+  function tagLibNormalize(list) {
+    var seen = {}, out = [], hasA = false, hasB = false;
+    (list || []).forEach(function (t) {
+      t = String(t == null ? '' : t).trim().replace(/^#/, '');
+      if (t === 'A') { hasA = true; return; }
+      if (t === 'B') { hasB = true; return; }
+      if (t && !seen[t]) { seen[t] = 1; out.push(t); }
+    });
+    if (hasA) out.push('A');
+    if (hasB) out.push('B');
+    return out;
+  }
+  function tagLib() {
+    var lib = DATA.tagLibrary;
+    if (Object.prototype.toString.call(lib) === '[object Array]' && lib.length) {
+      return tagLibNormalize(lib);
+    }
+    var used = [], seen = {};
+    (window.POSTS || []).concat(DATA.posts || [], DATA.chatter || []).forEach(function (p) {
+      (p.tags || []).forEach(function (t) { if (t && !seen[t]) { seen[t] = 1; used.push(t); } });
+    });
+    return tagLibNormalize(used.concat(['A', 'B']));
+  }
+  function tagLibAll() {
+    var out = tagLib().slice(), seen = {};
+    out.forEach(function (t) { seen[t] = 1; });
+    (window.POSTS || []).concat(DATA.posts || [], DATA.chatter || []).forEach(function (p) {
+      (p.tags || []).forEach(function (t) { if (t && !seen[t]) { seen[t] = 1; out.push(t); } });
+    });
+    return tagLibNormalize(out);
+  }
+  function applyTagLibLocal() {
+    var lib = null;
+    try { lib = JSON.parse(ls(TAGLIB_KEY) || 'null'); } catch (e) { lib = null; }
+    if (Object.prototype.toString.call(lib) === '[object Array]') {
+      DATA.tagLibrary = tagLibNormalize(lib);
+    }
+  }
+  function saveTagLib(list) {
+    DATA.tagLibrary = tagLibNormalize(list);
+    setLs(TAGLIB_KEY, JSON.stringify(DATA.tagLibrary));
+    queueSync();
+    try { document.dispatchEvent(new CustomEvent('zb:studio-data')); } catch (e) {}
+    render(document.getElementById('app'));
+  }
   ensureIds();
   /* 线上数据文件里原本的头像与签名，供「恢复」用（本机覆盖层生效之前先存一份） */
   var RAW_SITE = JSON.parse(JSON.stringify(DATA.site || {}));
   applySiteLocal();
+  applyTagLibLocal();
   /* 内置内容快照：每次合并都先回到线上版本，再叠加本机条目，
      这样删除本机条目不会把 site-data.js 里的原有内容一起抹掉。 */
   var BUILTIN = {};
@@ -357,13 +407,13 @@
   /* ---------- 写文章工作台：草稿、工具栏与属性 ---------- */
   function blankDraft() {
     return { slug: '', title: '', markdown: '', tags: [], cover: '',
-      summary: '', category: '随笔', date: today(), status: 'draft', savedAt: '' };
+      summary: '', date: today(), status: 'draft', savedAt: '' };
   }
   function readDraft() {
     var d = null, b = blankDraft();
     try { d = JSON.parse(ls(DRAFT_KEY) || 'null'); } catch (e) { d = null; }
     if (d && typeof d === 'object') {
-      ['slug', 'title', 'markdown', 'cover', 'summary', 'category', 'date', 'status', 'savedAt']
+      ['slug', 'title', 'markdown', 'cover', 'summary', 'date', 'status', 'savedAt']
         .forEach(function (k) { if (d[k] != null) b[k] = String(d[k]); });
       if (Object.prototype.toString.call(d.tags) === '[object Array]') b.tags = d.tags.slice();
     }
@@ -386,7 +436,6 @@
     if (body) d.markdown = body.value;
     d.cover = val('f-cover');
     d.summary = val('f-summary');
-    d.category = val('f-category') || d.category;
     d.date = val('f-date') || d.date;
     var wc = document.getElementById('word-count');
     if (wc) wc.textContent = String(d.markdown.replace(/\s/g, '').length) + ' 字';
@@ -434,13 +483,7 @@
         '<button type="button" data-tag-del="' + esc(t) + '" aria-label="移除标签">×</button></span>';
     }).join('') : '<span class="tag-empty">还没有标签</span>';
   }
-  function historyTags() {
-    var seen = {}, out = [];
-    (window.POSTS || []).concat(DATA.posts || []).forEach(function (p) {
-      (p.tags || []).forEach(function (t) { if (!seen[t]) { seen[t] = 1; out.push(t); } });
-    });
-    return out.slice(0, 18);
-  }
+  function historyTags() { return tagLibAll(); }
   function renderTagHistory() {
     var box = document.getElementById('tag-history');
     if (!box) return;
@@ -449,6 +492,16 @@
       return '<button type="button" class="tag-history-btn' + (cur.indexOf(t) >= 0 ? ' on' : '') +
         '" data-tag-add="' + esc(t) + '">+ ' + esc(t) + '</button>';
     }).join('') || '<span class="tag-empty">暂无历史标签</span>';
+  }
+  /* 杂谈表单：把标签库全部标签列成按钮，点一下写进隐藏的逗号分隔输入框 */
+  function renderChPicker() {
+    var box = document.getElementById('ch-tag-picker');
+    if (!box) return;
+    var cur = splitTags(val('f-ch-tags'));
+    box.innerHTML = tagLibAll().map(function (t) {
+      return '<button type="button" class="tag-history-btn' + (cur.indexOf(t) >= 0 ? ' on' : '') +
+        '" data-ch-tag="' + esc(t) + '">' + (cur.indexOf(t) >= 0 ? '✓ ' : '+ ') + esc(t) + '</button>';
+    }).join('') || '<span class="tag-empty">标签库还是空的</span>';
   }
   function renderCover() {
     var box = document.getElementById('cover-box');
@@ -584,10 +637,11 @@
     }
     delLs(DRAFT_KEY);
     /* 名片设置已随站点数据文件发布，本机覆盖层可以撤掉，避免以后另一台设备改了不生效 */
-    if (confirmed) { delLs(LOCAL_KEY); delLs(SITE_KEY); }
+    if (confirmed) { delLs(LOCAL_KEY); delLs(SITE_KEY); delLs(TAGLIB_KEY); }
     state.draft = null;
     state.editing = null;
     state.files = [];
+    state.fileNotes = [];
     state.momentImg = '';
     try {
       if (window.sessionStorage) window.sessionStorage.setItem('zb-data-v', String(Date.now()));
@@ -622,6 +676,7 @@
     ] },
     { group: '内容管理', items: [
       ['manage', '内容管理', 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'],
+      ['taglib', '标签管理', 'M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z'],
       ['project', '项目', 'M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z'],
       ['friend', '友链', 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z']
     ] },
@@ -728,13 +783,7 @@
           '<div class="tag-pills" id="tag-pills"></div>' +
           '<input class="f-input" id="f-tag-input" type="text" placeholder="+ 输入标签后按回车">' +
           '<div class="tag-history" id="tag-history"></div>' +
-          '<label class="f-label pc-cat-label">分类</label>' +
-          '<div class="cat-pills" id="cat-pills">' + CATS.map(function (c) {
-            return '<button type="button" data-cat="' + esc(c) + '" class="' +
-              (d.category === c ? 'on' : '') + '">' + esc(c) + '</button>';
-          }).join('') + '</div>' +
-          '<input class="f-input" id="f-category" type="text" placeholder="也可以自己写一个" ' +
-            'value="' + esc(d.category) + '" aria-label="分类">' +
+          '<p class="meta-note">下面列出标签库全部标签，点一下即可添加；A / B 是首页文章卡分区标签，恒排在最后。</p>' +
         '</span>' +
       '</div>' +
       '<span class="f-cell"><label class="f-label" for="f-date">发布日期</label>' +
@@ -757,6 +806,16 @@
     var albums = DATA.albums || [];
     return '<option value="__new__">＋ 新建一个相册</option>' + albums.map(function (a) {
       return '<option value="' + esc(a.id) + '">' + esc(a.title) + '</option>';
+    }).join('');
+  }
+  /* 待保存图片逐张配一个文字批注输入框，重绘后从 state.fileNotes 回填 */
+  function renderFilePreview() {
+    var box = document.getElementById('file-preview');
+    if (!box) return;
+    box.innerHTML = state.files.map(function (src, i) {
+      return '<div class="fp-tile"><img src="' + esc(src) + '" alt="待保存的图片">' +
+        '<input class="f-input" id="f-file-note-' + i + '" type="text" ' +
+        'placeholder="这张照片的文字批注" value="' + esc(state.fileNotes[i] || '') + '"></div>';
     }).join('');
   }
   function formPhoto() {
@@ -783,13 +842,14 @@
           var off = drops.indexOf(i) >= 0;
           return '<div class="aep-tile' + (off ? ' off' : '') + '">' +
             '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy">' +
+            '<input class="f-input f-aep-note" id="f-aep-note-' + i + '" type="text" ' +
+            'placeholder="这张照片的文字批注" value="' +
+            esc((f.notes && f.notes['f-aep-note-' + i] != null) ? f.notes['f-aep-note-' + i] : (p.note || '')) + '">' +
             '<button class="mini-btn" type="button" data-act="album-photo-toggle" data-i="' + i + '">' +
             (off ? '撤销移除' : '移除') + '</button></div>';
         }).join('') + '</div></div>'
       : '';
-    var preview = '<div id="file-preview" class="file-preview">' + state.files.map(function (s) {
-      return '<img src="' + esc(s) + '" alt="待保存的图片">';
-    }).join('') + '</div>';
+    var preview = '<div id="file-preview" class="file-preview"></div>';
     return '<div class="studio-form glass"><h2>' + (ed ? '编辑相册' : '发图片') + '</h2>' +
       editingBanner('相册', 'albums') +
       '<p class="f-hint">' + (ed
@@ -799,7 +859,7 @@
       '<span class="f-cell"><label class="f-label" for="f-photo-date">拍摄 / 发布日期</label>' +
       '<input class="f-input" id="f-photo-date" type="date" value="' + esc(edDate) + '"></span>' +
       '<label class="file-zone" for="f-files"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择图片 · 可多选，选好自动压缩<input class="f-input f-file" id="f-files" type="file" accept="image/*" multiple></label>' +
-      field('照片说明', 'f-photo-note', '留一句给新加的照片（可选）', 'text', edNote) +
+      field('默认文字批注', 'f-photo-note', '新照片没逐张写批注时用这句', 'text', edNote) +
       preview + existing +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-photo">' +
       (ed ? '保存修改' : '保存到本机') + '</button></div></div>';
@@ -827,7 +887,10 @@
     return '<div class="studio-form glass"><h2>写一则杂谈</h2>' + editingBanner('杂谈', 'chatter') +
       field('标题', 'f-ch-title', '比文章短一点的标题') +
       field('摘要', 'f-ch-summary', '一句话') +
-      '<div class="f-row">' + field('标签（逗号分隔）', 'f-ch-tags', '随笔, 建站') + field('心情', 'f-ch-mood', '🌸 平静') + '</div>' +
+      '<span class="f-cell"><label class="f-label" for="f-ch-tags">标签</label>' +
+      '<input class="f-input" id="f-ch-tags" type="text" placeholder="点下面的标签库选择，也可逗号分隔手写">' +
+      '<div class="tag-history ch-tag-picker" id="ch-tag-picker"></div></span>' +
+      field('心情', 'f-ch-mood', '🌸 平静') +
       '<span class="f-cell"><label class="f-label" for="f-ch-date">发布日期</label>' +
       '<input class="f-input" id="f-ch-date" type="date" value="' + today() + '"></span>' +
       area('正文', 'f-ch-body', '想到哪写到哪…', 10) +
@@ -955,6 +1018,27 @@
       '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清空本机副本与草稿，避免浏览器存储被图片占满。</p>' +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="clear-local">清空本机内容与草稿</button></div></div>';
   }
+  /* 标签管理：增删标签库、拖拽调整顺序；A / B 是首页分区标签，恒排在最后不可删 */
+  function formTagLib() {
+    var list = tagLib();
+    return '<div class="studio-form glass"><h2>标签管理</h2>' +
+      '<p class="f-hint">标签库里的标签按顺序显示在文章、标签页、筛选条与写作表单里；' +
+      '写文章和写杂谈时可直接点选。按住一行拖动即可调整顺序，A / B 两个分区标签恒排在最后。</p>' +
+      '<div class="taglib-list">' + (list.length ? list.map(function (t, i) {
+        var fixed = t === 'A' || t === 'B';
+        return '<div class="taglib-row' + (fixed ? ' is-fixed' : '') + '" data-taglib-row="' + i + '"' +
+          (fixed ? '' : ' draggable="true"') + '>' +
+          '<span class="taglib-grip" aria-hidden="true">⠿</span>' +
+          '<span class="taglib-name">#' + esc(t) + '</span>' +
+          (fixed ? '<span class="taglib-fixed">分区标签 · 固定在最后</span>' : '') +
+          (fixed ? '' : '<button class="mini-btn" type="button" data-act="taglib-del" data-i="' + i +
+            '">删除</button>') + '</div>';
+      }).join('') : '<p class="page-note">标签库还是空的，先添加一个。</p>') + '</div>' +
+      '<span class="f-cell"><label class="f-label" for="f-taglib-new">新增标签</label>' +
+      '<input class="f-input" id="f-taglib-new" type="text" placeholder="输入标签名，点下面添加" ' +
+      'value="' + esc(state.tagDraft) + '"></span>' +
+      '<div class="f-actions"><button class="primary-btn" type="button" data-act="taglib-add">添加标签</button></div></div>';
+  }
   function formPublish() {
     var auto = autoEnabled(), has = !!syncToken();
     return '<div class="studio-form glass"><h2>发布上线 / 自动同步</h2>' +
@@ -989,7 +1073,7 @@
     return {
       post: formPost, photo: formPhoto, moment: formMoment, chatter: formChatter,
       project: formProject, friend: formFriend, site: formSite, about: formAbout,
-      manage: formManage, publish: formPublish
+      manage: formManage, taglib: formTagLib, publish: formPublish
     }[state.tab]();
   }
 
@@ -1029,7 +1113,7 @@
       /* 重编辑保留原来的 slug / 日期，避免生成一篇新文章 */
       slug: editing ? editing.id : (d.slug || uid('p')), title: d.title,
       date: editing ? (findItem('posts', editing.id) || {}).date || d.date : (d.date || today()),
-      tags: d.tags.slice(), category: d.category || '', cover: d.cover || '',
+      tags: d.tags.slice(), cover: d.cover || '',
       summary: d.summary || clipSummary(window.ZBMD ? window.ZBMD.plain(d.markdown) : '', 200) || d.title,
       markdown: d.markdown, body: mdRender(d.markdown),
       format: 'markdown', status: 'published'
@@ -1210,6 +1294,7 @@
     var ed = (state.editing && state.editing.kind === 'albums') ? findItem('albums', state.editing.id) : null;
     var pdate = val('f-photo-date') || today();
     var note = val('f-photo-note');
+    var formNotes = (state.editing && state.editing.form && state.editing.form.notes) || {};
     var album = null, i;
     if (ed) {
       /* 重编辑：保留原 id 与相册创建日期，按标记移除旧照片，再补上新选的图片 */
@@ -1219,6 +1304,14 @@
       if (ad) album.desc = ad;
       var drops = (state.editing && state.editing.drop) || [];
       album.photos = (album.photos || []).filter(function (p, idx) { return drops.indexOf(idx) < 0; });
+      /* 已存在照片的批注按原行号逐一写回，留空则保留原批注 */
+      (ed.photos || []).forEach(function (p, idx) {
+        var key = 'f-aep-note-' + idx;
+        if (drops.indexOf(idx) >= 0 || !Object.prototype.hasOwnProperty.call(formNotes, key)) return;
+        var k = 0;
+        for (var j = 0; j < idx; j++) if (drops.indexOf(j) < 0) k++;
+        if (album.photos[k]) album.photos[k].note = String(formNotes[key] || '').trim() || album.photos[k].note;
+      });
       if (!album.photos.length && !state.files.length) {
         return say('相册至少要留一张照片；要删整个相册请到「内容管理」。', 'warn');
       }
@@ -1237,15 +1330,19 @@
         album = JSON.parse(JSON.stringify(album));
       }
     }
+    var fi = 0;
     state.files.forEach(function (src) {
+      var cap = state.fileNotes[fi] || note || (album.title + ' · ' + (album.photos.length + 1));
+      fi++;
       album.photos.push({
         src: src, title: note || (album.title + ' · ' + (album.photos.length + 1)),
-        note: note || '', date: pdate
+        note: cap, date: pdate
       });
     });
     album.cover = album.photos.length ? album.photos[0].src : '';
     if (!upsert('albums', album)) return say('图片太大，本机存不下；请先发布已保存的内容并清理。', 'warn');
     state.files = [];
+    state.fileNotes = [];
     state.editing = null;
     reloadSoon((ed ? '相册已更新' : '已加入新照片') + '，现在共 ' + album.photos.length + ' 张照片');
   }
@@ -1464,7 +1561,7 @@
             if (!sync.dirty && !sync.running &&
                 dataFile().replace(/\r\n/g, '\n') === payload) {
               refreshBuiltin();
-              delLs(LOCAL_KEY); delLs(SITE_KEY); delLs(PENDING_KEY);
+              delLs(LOCAL_KEY); delLs(SITE_KEY); delLs(TAGLIB_KEY); delLs(PENDING_KEY);
               try {
                 if (window.sessionStorage) window.sessionStorage.setItem('zb-data-v', String(Date.now()));
               } catch (e) {}
@@ -1605,15 +1702,15 @@
     if (tagDel) { delTag(tagDel.getAttribute('data-tag-del')); return; }
     var tagAdd = t.closest('[data-tag-add]');
     if (tagAdd) { addTag(tagAdd.getAttribute('data-tag-add')); return; }
-    var catBtn = t.closest('[data-cat]');
-    if (catBtn) {
-      var cv = catBtn.getAttribute('data-cat'), ci = document.getElementById('f-category');
-      if (ci) ci.value = cv;
-      var cats = document.querySelectorAll ? document.querySelectorAll('[data-cat]') : [];
-      Array.prototype.forEach.call(cats, function (b) {
-        if (b.classList) b.classList.toggle('on', b.getAttribute('data-cat') === cv);
-      });
-      writeDraft(true);
+    var chTag = t.closest('[data-ch-tag]');
+    if (chTag) {
+      var ct = chTag.getAttribute('data-ch-tag'), cbox = document.getElementById('f-ch-tags');
+      if (cbox) {
+        var cur = splitTags(cbox.value), ci = cur.indexOf(ct);
+        if (ci >= 0) cur.splice(ci, 1); else cur.push(ct);
+        cbox.value = cur.join(', ');
+        renderChPicker();
+      }
       return;
     }
     var edit = t.closest('[data-edit]');
@@ -1626,7 +1723,7 @@
         d.slug = target.slug || ''; d.title = target.title || '';
         d.markdown = target.markdown || htmlToMd(target.body);
         d.tags = (target.tags || []).slice(); d.cover = target.cover || '';
-        d.summary = target.summary || ''; d.category = target.category || '随笔';
+        d.summary = target.summary || '';
         d.date = target.date || today(); d.status = target.status || 'published';
         state.draft = d;
         state.editing = { kind: 'posts', id: target.slug };
@@ -1658,6 +1755,7 @@
         setText('f-ch-title', target.title);
         setText('f-ch-summary', target.summary);
         setText('f-ch-tags', (target.tags || []).join(', '));
+        renderChPicker();
         setText('f-ch-mood', target.mood);
         setText('f-ch-date', target.date || today());
         setText('f-ch-body', target.markdown || htmlToMd(target.body));
@@ -1731,14 +1829,39 @@
       var pi = parseInt(act.getAttribute('data-i'), 10);
       if (isNaN(pi) || pi < 0) return;
       /* 重绘前接住刚填的字段，移除标记与待保存的新图片都留在 state 里 */
+      var kept = findItem('albums', state.editing.id) || {}, pnotes = {};
+      for (var ni = 0; ni < (kept.photos || []).length; ni++) {
+        var ne = document.getElementById('f-aep-note-' + ni);
+        pnotes['f-aep-note-' + ni] = ne ? String(ne.value || '') : ((kept.photos[ni] || {}).note || '');
+      }
       state.editing.form = {
         title: val('f-album-title'), desc: val('f-album-desc'),
-        date: val('f-photo-date'), note: val('f-photo-note')
+        date: val('f-photo-date'), note: val('f-photo-note'), notes: pnotes
       };
       if (!state.editing.drop) state.editing.drop = [];
       var di = state.editing.drop.indexOf(pi);
       if (di >= 0) state.editing.drop.splice(di, 1); else state.editing.drop.push(pi);
       render(document.getElementById('app'));
+      return;
+    }
+    if (a === 'taglib-add') {
+      var nv = val('f-taglib-new').replace(/^#/, '');
+      if (!nv) return say('先写标签名。', 'warn');
+      var tl = tagLib();
+      if (tl.indexOf(nv) >= 0) return say('这个标签已经在标签库里了。', 'warn');
+      state.tagDraft = '';
+      saveTagLib(tl.concat([nv]));
+      say('已添加标签 #' + nv + '，并自动同步到网站。');
+      return;
+    }
+    if (a === 'taglib-del') {
+      var ti = parseInt(act.getAttribute('data-i'), 10), td = tagLib();
+      if (isNaN(ti) || ti < 0 || ti >= td.length) return;
+      if (td[ti] === 'A' || td[ti] === 'B') return say('A / B 是首页分区标签，不能删。', 'warn');
+      state.tagDraft = val('f-taglib-new');
+      var gone = td[ti];
+      saveTagLib(td.filter(function (_, i) { return i !== ti; }));
+      say('已删除标签 #' + gone + '，并自动同步到网站。');
       return;
     }
     if (a === 'tidy') return tidyForm();
@@ -1798,6 +1921,7 @@
     if (!t || !t.id) return;
     if (t.id === 'f-files' && t.files && t.files.length) {
       state.files = [];
+      state.fileNotes = [];
       var box = document.getElementById('file-preview');
       if (box) box.innerHTML = '<span>正在处理图片…</span>';
       var files = Array.prototype.slice.call(t.files);
@@ -1806,9 +1930,7 @@
         compress(f, function (src) {
           if (src) state.files.push(src);
           left--;
-          if (!left && box) box.innerHTML = state.files.map(function (s) {
-            return '<img src="' + s + '" alt="待保存的图片">';
-          }).join('');
+          if (!left) renderFilePreview();
         });
       });
     }
@@ -1849,8 +1971,16 @@
     } else if (t.id === 'f-site-avatar') {
       var img = document.getElementById('site-avatar-preview');
       if (img) img.src = t.value;
-    } else if (t.id === 'f-category' || t.id === 'f-date') {
+    } else if (t.id === 'f-date') {
       scheduleSave();
+    } else if (t.id === 'f-taglib-new') {
+      state.tagDraft = t.value;
+    } else if (t.id.indexOf('f-file-note-') === 0) {
+      var fi = parseInt(t.id.slice('f-file-note-'.length), 10);
+      if (!isNaN(fi)) state.fileNotes[fi] = t.value;
+    } else if (t.id.indexOf('f-aep-note-') === 0 && state.editing && state.editing.form) {
+      if (!state.editing.form.notes) state.editing.form.notes = {};
+      state.editing.form.notes[t.id] = t.value;
     }
   }
   /* Tab / Shift+Tab：选区所跨行整体缩进或反缩进两空格（列表嵌套、代码块对齐通用） */
@@ -1893,6 +2023,71 @@
       insertMd('**', '**', '');
     }
   }
+  /* 粘贴纯链接自动转成 Markdown 链接：选中文字作锚文本，未选中则用链接本身 */
+  var PASTE_AREAS = ['f-body', 'f-ch-body', 'f-moment-text', 'f-about-intro'];
+  function onPaste(e) {
+    var t = e.target;
+    if (!t || !t.id || PASTE_AREAS.indexOf(t.id) < 0) return;
+    var cd = e.clipboardData || window.clipboardData;
+    if (!cd || !cd.getData) return;
+    var url = String(cd.getData('text/plain') || '').trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) return;
+    if (e.preventDefault) e.preventDefault();
+    var st = t.selectionStart, en = t.selectionEnd, v = t.value;
+    var sel = String(v.slice(st, en) || '').trim();
+    var link = '[' + (sel && sel !== url ? sel : url) + '](' + url + ')';
+    t.value = v.slice(0, st) + link + v.slice(en);
+    var caret = st + link.length;
+    try { t.setSelectionRange(caret, caret); } catch (err) {}
+    try { t.dispatchEvent(new Event('input', { bubbles: true })); } catch (err2) {}
+  }
+  /* 标签管理：HTML5 原生拖拽调整顺序，落点行与源行互换位置后整体规范化 */
+  function tagDragRow(e) {
+    var t = e.target;
+    return t && t.closest ? t.closest('[data-taglib-row]') : null;
+  }
+  function onTagDragStart(e) {
+    var row = tagDragRow(e);
+    if (!row) return;
+    state.dragTag = parseInt(row.getAttribute('data-taglib-row'), 10);
+    if (row.classList) row.classList.add('dragging');
+    if (e.dataTransfer) {
+      try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(state.dragTag)); }
+      catch (err) {}
+    }
+  }
+  function onTagDragOver(e) {
+    var row = tagDragRow(e);
+    if (!row || state.dragTag < 0) return;
+    if (e.preventDefault) e.preventDefault();
+    if (row.classList) row.classList.add('drag-over');
+  }
+  function onTagDragLeave(e) {
+    var row = tagDragRow(e);
+    if (row && row.classList) row.classList.remove('drag-over');
+  }
+  function onTagDrop(e) {
+    var row = tagDragRow(e), from = state.dragTag;
+    state.dragTag = -1;
+    if (!row || from < 0) return;
+    if (e.preventDefault) e.preventDefault();
+    var to = parseInt(row.getAttribute('data-taglib-row'), 10), list = tagLib();
+    if (isNaN(to) || from >= list.length || to >= list.length || from === to) {
+      render(document.getElementById('app')); return;
+    }
+    var item = list.splice(from, 1)[0];
+    list.splice(to, 0, item);
+    state.tagDraft = val('f-taglib-new');
+    saveTagLib(list);
+    say('标签顺序已调整，并自动同步到网站。');
+  }
+  function onTagDragEnd() {
+    state.dragTag = -1;
+    var rows = document.querySelectorAll ? document.querySelectorAll('.taglib-row') : [];
+    Array.prototype.forEach.call(rows, function (r) {
+      if (r.classList) { r.classList.remove('dragging'); r.classList.remove('drag-over'); }
+    });
+  }
   function bindDoor() {
     var door = document.getElementById('owner-door');
     if (!door || !door.addEventListener) return;
@@ -1932,6 +2127,8 @@
         setText('f-so-note-' + i, so.note || '');
       });
     }
+    if (isOwner() && state.tab === 'chatter') renderChPicker();
+    if (isOwner() && state.tab === 'photo') renderFilePreview();
     if (isPost) {
       renderTagPills(); renderTagHistory(); renderCover();
       syncFromForm(); setMode(state.mode); paintSaveLabel();
@@ -1948,7 +2145,7 @@
     syncStatus('尚未配置自动同步：改动只保存在这台设备，到「发布上线」配置一次即可。', true);
   } else {
     syncStatus('自动同步已开启：每次改动都会写进网站。');
-    var hasLocal = !!ls(SITE_KEY);
+    var hasLocal = !!ls(SITE_KEY) || !!ls(TAGLIB_KEY);
     if (!hasLocal) {
       var bootLocal = readLocal(), bootDead = readDead();
       KINDS.forEach(function (k) {
@@ -1982,5 +2179,11 @@
     appEl.addEventListener('change', onChange);
     appEl.addEventListener('input', onInput);
     appEl.addEventListener('keydown', onKeydown);
+    appEl.addEventListener('paste', onPaste);
+    appEl.addEventListener('dragstart', onTagDragStart);
+    appEl.addEventListener('dragover', onTagDragOver);
+    appEl.addEventListener('dragleave', onTagDragLeave);
+    appEl.addEventListener('drop', onTagDrop);
+    appEl.addEventListener('dragend', onTagDragEnd);
   }
 })();

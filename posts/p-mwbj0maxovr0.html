@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-11">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.37.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.42.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -208,7 +208,7 @@ pre, pre > code, .article :not(pre) > code {
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
 <h1>第1次周报</h1>
-<p class="meta" data-view-post="p-mwbj0maxovr0">2026-11-11 · 科协 / 随笔 · <span class="mirror-likes"><span data-like-stat="post:p-mwbj0maxovr0">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwbj0maxovr0">0</span> 次浏览（不含站长）</span></p>
+<p class="meta" data-view-post="p-mwbj0maxovr0">2026-11-11 · 科协 / 随笔 / B · <span class="mirror-likes"><span data-like-stat="post:p-mwbj0maxovr0">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwbj0maxovr0">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><h1 class="zb-vl" id="h-完成事项">完成事项</h1>
 <ul><li>开始继续使用Obsidian，享受关系图谱的视觉直观性</li><li>将配置VSCode时的mingw64换为ucrt64<ul><li>企图解决 <code>long double</code> 的 <code>printf(&quot;%Lf&quot;)</code> 输出错误结果的问题；UTF-8 locale、数学函数、时区处理在旧版本mingw64的遗留问题；……</li></ul></li><li>下载并安装Unity Hub，定位国内支持的最高版本Unity2022LTS、科学上网获取的Unity6.6<ul><li>目前已制定第一个游戏制作项目的框架和市场定位：<em>“随笔驱动型”社交模拟经营沙河建造游戏</em></li></ul></li><li>更新「爱信」项目：<a href="https://my.feishu.cn/file/SFE9bwzOios7LLxneIHcSjd7nSd" target="_blank" rel="noopener noreferrer">aichat-版本日志.html</a><ul><li>新增群聊功能，保证群聊与角色聊天的功能一致性，尝试解决不附带昵称时角色聊天指向对象不明确的问题，尝试让角色之间聊天且保证用户的中心性，修复一系列BUG</li></ul></li></ul>
 <hr>
@@ -404,14 +404,16 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/p-mwbj0maxovr0">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.37.0"></script>
-<script src="../assets/comment-archive.js?v=v3.37.0"></script>
-<script src="../assets/interactions-config.js?v=v3.37.0"></script>
-<script src="../assets/interactions.js?v=v3.37.0"></script>
-<script src="../assets/issues-live.js?v=v3.37.0"></script>
-<script src="../assets/likes.js?v=v3.37.0"></script>
+<script src="../assets/comments-data.js?v=v3.42.0"></script>
+<script src="../assets/comment-archive.js?v=v3.42.0"></script>
+<script src="../assets/interactions-config.js?v=v3.42.0"></script>
+<script src="../assets/interactions.js?v=v3.42.0"></script>
+<script src="../assets/issues-live.js?v=v3.42.0"></script>
+<script src="../assets/likes.js?v=v3.42.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("p-mwbj0maxovr0");
 window.ZBLive && window.ZBLive.mount("p-mwbj0maxovr0");
 window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

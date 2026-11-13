@@ -526,7 +526,9 @@
     var align = tableAlign(cellsOf(alignLine));
     var rows = [];
     var k = startIdx;
-    while (k < lines.length && lines[k].trim().indexOf('|') >= 0 && lines[k].trim()) {
+    /* 标题行不算表格数据行：紧跟表格的 ## 标题不能被吞成单元格 */
+    while (k < lines.length && lines[k].trim().indexOf('|') >= 0 && lines[k].trim() &&
+           !/^ {0,3}#{1,6}\|?\s/.test(lines[k])) {
       rows.push(cellsOf(lines[k])); k++;
     }
     var grid = rows.map(function (r) {
@@ -634,7 +636,16 @@
         var dbuf = [];
         i++;
         while (i < lines.length && !closeRe.test(lines[i])) { dbuf.push(lines[i]); i++; }
-        if (i < lines.length) i++;
+        var closed = i < lines.length;
+        if (closed) i++;
+        /* :::vl 忘了闭合时，只包住到第一个标题为止，后面的普通 ## 标题不再整片染色 */
+        if (!closed && dir.name === 'vl') {
+          var vcut = -1;
+          for (var vi = 0; vi < dbuf.length; vi++) {
+            if (/^ {0,3}#{1,6}\s/.test(dbuf[vi])) { vcut = vi; break; }
+          }
+          if (vcut > 0) { i = i - (dbuf.length - vcut); dbuf = dbuf.slice(0, vcut); }
+        }
         var keepStore = store, keepSeq = seq;
         var dInner = render(dbuf.join('\n'));
         store = keepStore; seq = keepSeq;
@@ -688,20 +699,24 @@
           while (i < lines.length && !fenceClose(lines[i], f.ch, f.n)) { buf.push(lines[i]); i++; }
           if (i < lines.length) i++;
           group.push({ lang: f.lang, code: buf.join('\n'), hl: f.hl });
-          var probe = i;
-          while (probe < lines.length && !lines[probe].trim()) probe++;
-          while (probe < lines.length) {
-            var nf = fenceInfo(lines[probe]);
-            if (!nf || !nf.lang || String(nf.lang).indexOf('|') >= 0) break;
-            var b2 = [];
-            probe++;
-            while (probe < lines.length && !fenceClose(lines[probe], nf.ch, nf.n)) { b2.push(lines[probe]); probe++; }
-            if (probe >= lines.length) break;
-            probe++;
-            group.push({ lang: nf.lang, code: b2.join('\n'), hl: nf.hl });
+          /* 只有「首块自己也带语言」才尝试合并：纯文本围栏块 + 后面的代码块
+             不该被合成标签页（否则标签条会出现一个空标签）。 */
+          if (f.lang) {
+            var probe = i;
             while (probe < lines.length && !lines[probe].trim()) probe++;
+            while (probe < lines.length) {
+              var nf = fenceInfo(lines[probe]);
+              if (!nf || !nf.lang || String(nf.lang).indexOf('|') >= 0) break;
+              var b2 = [];
+              probe++;
+              while (probe < lines.length && !fenceClose(lines[probe], nf.ch, nf.n)) { b2.push(lines[probe]); probe++; }
+              if (probe >= lines.length) break;
+              probe++;
+              group.push({ lang: nf.lang, code: b2.join('\n'), hl: nf.hl });
+              while (probe < lines.length && !lines[probe].trim()) probe++;
+            }
+            if (group.length > 1) i = probe;
           }
-          if (group.length > 1) i = probe;
         }
         out.push(group.length > 1 ? codeTabsHtml(group)
           : codeHtml(f.lang, group[0].code, group[0].hl));
@@ -735,6 +750,8 @@
 
       /* 标题；井号后紧跟 | 就给这个标题加一条蓝→粉渐变竖线（.zb-vl） */
       var hd = ln.match(/^ {0,3}(#{1,6})(\|?)\s+(.+?)\s*#*\s*$/);
+      /* 井号后带 | 且正文里还有 | 的多半是表格行，不当成渐变竖线标题 */
+      if (hd && hd[2] && hd[3].indexOf('|') >= 0) hd = null;
       if (hd) {
         flush();
         var lev = Math.min(6, hd[1].length);
@@ -873,5 +890,5 @@
   bindCodeTabs();
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.5.0' };
+           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.5.1' };
 });

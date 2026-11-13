@@ -8,6 +8,14 @@
   <updated>2026-11-13T00:00:00Z</updated>
   <author><name>星梦Staream</name></author>
   <entry>
+    <title>本站支持的 Markdown 拓展语法</title>
+    <id>https://zxy-blog.top/posts/markdown-extensions.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/markdown-extensions.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/markdown-extensions"/>
+    <updated>2026-11-13T00:00:00Z</updated>
+    <summary>按顺序列出本站渲染引擎支持的全部 Markdown 拓展语法，每条写法都配一个代码块与紧跟其后的真实预览效果。</summary>
+  </entry>
+  <entry>
     <title>博客版本日志</title>
     <id>https://zxy-blog.top/posts/blog-changelog.html</id>
     <link rel="alternate" href="https://zxy-blog.top/posts/blog-changelog.html"/>

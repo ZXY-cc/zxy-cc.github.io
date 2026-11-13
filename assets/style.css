@@ -1026,6 +1026,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .profile-avatar-wrap {
   box-shadow: 0 0 0 1px rgba(208,226,255,.40), 0 10px 30px rgba(8,16,44,.32); }
 :root[data-theme="night"] .p-link { color: var(--accent-text); }
+/* 夜间星标按钮换成创作台 LOGO 同款：主题变量渐变底 + 白色星形柔光 */
+:root[data-theme="night"] .p-link.is-accent { color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  box-shadow: 0 6px 16px rgba(171, 139, 212, .35), var(--glass-inner); }
+:root[data-theme="night"] .p-link.is-accent svg { filter: drop-shadow(0 0 6px rgba(255,255,255,.55)); }
 
 /* ---------- 通用页头与统计 ----------
    全站每个分页统一用 .page-head：小标 → 大标题 → 副标题 → 一条化开的渐变分隔线，
@@ -1151,6 +1156,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
 /* 双半区里标题比整卡小一号，摘要每半最多 3 行 */
 .q-post .q-pane h2 { font-size: 17px; }
+/* 杂谈卡标题与文章卡双半区标题同字号，同时收掉浏览器默认 h2 外边距 */
+.q-chatter h2 { margin: 4px 0 0; font-size: 17px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
 .q-photo .album-stack { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; margin: 0; }
 .q-photo .q-slide { padding: 0; justify-content: flex-end; overflow: visible; }
 .q-photo .q-badge { position: absolute; top: 26px; left: 24px; z-index: 6; }
@@ -1188,19 +1195,25 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
 /* 中窄屏：文章卡通栏，横竖两张照片墙并排一行错落，说说 / 杂谈再各占半行 */
 @media (max-width: 1080px) {
-  .q-post { grid-column: 1 / 13; grid-row: 1; }
+  .q-post { grid-column: 1 / 13; grid-row: 1; min-height: 420px; }
   .q-photo-h { grid-column: 1 / 5; grid-row: 2; }
-  .q-photo-v { grid-column: 5 / 8; grid-row: 2; aspect-ratio: 3 / 4; align-self: start; }
+  .q-photo-v { grid-column: 5 / 8; grid-row: 2; aspect-ratio: 3 / 4; align-self: start;
+    width: min(100%, 320px); }
   .q-moment { grid-column: 8 / 13; grid-row: 2; }
   .q-chatter { grid-column: 1 / 13; grid-row: 3; }
+  .q-slide { padding: 15px 18px 28px; }
 }
 @media (max-width: 760px) {
-  .home-quick { grid-template-columns: 1fr; }
+  .home-quick { grid-template-columns: minmax(0, 1fr); }
   .q-post, .q-photo-h, .q-photo-v, .q-moment, .q-chatter { grid-column: 1; grid-row: auto; }
   /* 竖版照片墙收窄居中，避免单列下占满整屏高度 */
   .q-photo-v { width: min(100%, 320px); justify-self: center; }
-  /* 单列时没有照片卡撑高，给文章卡留够空间，长摘要仍能显示多行 */
-  .q-post { min-height: 300px; }
+  /* 单列时没有照片卡撑高：文章卡两半各留足高度，摘要收两行、内边距收紧，不再被裁 */
+  .q-post { min-height: 420px; }
+  .q-slide { padding: 13px 16px 26px; }
+  .q-pane .q-sum { -webkit-line-clamp: 2; }
+  .q-pane h2 { font-size: 16px; }
+  .q-tags span { font-size: 10.5px; padding: 2px 7px; }
 }
 /* 文章页：项目页 x-card 布局的卡片化文章列表 */
 .post-x-card { display: flex; flex-direction: column; }
@@ -1239,8 +1252,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
 /* 旋转堆叠的景深（仿星灰家照片墙）：最上层清晰，第二层略模糊，第三层更模糊 */
 /* 景深更轻：顶层清晰、第二层微糊、第三层略糊——保留层次又不糊成一团 */
-.album-stack .stack-mid { filter: blur(1px); }
-.album-stack .stack-back { filter: blur(1.8px); }
+/* 下层除了景深模糊还略微提亮、降饱和，看起来像蒙了一层薄白 */
+.album-stack .stack-mid  { filter: blur(1px) brightness(1.06) saturate(.92); }
+.album-stack .stack-back { filter: blur(1.8px) brightness(1.13) saturate(.86); }
 .album-stack:hover .stack-back,
 .album-card:hover .stack-back,
 .q-photo:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }
@@ -1256,7 +1270,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .album-info h2 { margin: 0 0 4px; font-size: 15px; font-weight: 650; color: var(--ink-strong); }
 .album-info p { margin: 0 0 7px; font-size: 12px; color: var(--muted); }
 .album-info time { font-size: 11px; color: var(--faint); }
-.photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0 40px; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; margin: 24px 0 40px; }
 .photo-tile { display: block; padding: 0; overflow: hidden; cursor: zoom-in; text-align: left; font: inherit;
   border-radius: var(--radius); border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner);
@@ -1274,10 +1288,40 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 @media (max-width: 700px) {
   .album-grid { columns: 1; }
   .album-stack { margin: 14px 14px 0; }
+  /* 单列竖版相册限宽居中，避免一张 3:4 竖图占满整屏 */
+  .album-card.is-v .album-stack { width: min(100%, 360px); margin-left: auto; margin-right: auto; }
 }
-.photo-cap { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px 15px; }
-.photo-cap b { font-size: 14px; color: var(--ink-strong); font-weight: 600; }
-.photo-cap i { font-style: normal; font-size: 12px; color: var(--muted); }
+/* 相册详情：鼠标悬停时从底部浮出这张照片的文字批注（黑渐变 + 文字上浮） */
+.photo-tile { position: relative; }
+.photo-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  display: flex; flex-direction: column; gap: 3px; padding: 38px 16px 15px;
+  color: #fff; opacity: 0; transform: translateY(10px);
+  background: linear-gradient(180deg, transparent, rgba(12, 18, 42, .82));
+  transition: opacity .35s ease, transform .4s cubic-bezier(.22,.68,.28,1); }
+.photo-tile:hover .photo-cap, .photo-tile:focus-visible .photo-cap { opacity: 1; transform: none; }
+.photo-cap b { font-size: 14px; font-weight: 650; text-shadow: 0 1px 6px rgba(0,0,0,.4); }
+.photo-cap i { font-style: normal; font-size: 12px; opacity: .92; line-height: 1.6; }
+.photo-cap i em { font-style: normal; opacity: .72; }
+@media (hover: none) { .photo-cap { opacity: 1; transform: none; } }
+
+/* ---------- 标签管理与逐张照片批注 ---------- */
+.taglib-list { display: grid; gap: 8px; margin: 18px 0 6px; }
+.taglib-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border-radius: 12px; border: 1px solid var(--glass-line); background: var(--glass-strong);
+  cursor: grab; transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease; }
+.taglib-row:hover { transform: translateX(3px); border-color: var(--accent); }
+.taglib-row.dragging { opacity: .42; }
+.taglib-row.drag-over { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-soft); }
+.taglib-row.is-fixed { cursor: default; opacity: .86; }
+.taglib-grip { flex: 0 0 auto; font-size: 16px; color: var(--muted); letter-spacing: -2px; }
+.taglib-name { flex: 1 1 auto; font-size: 14px; font-weight: 600; color: var(--ink-strong); }
+.taglib-fixed { flex: 0 0 auto; font-size: 11.5px; color: var(--muted); }
+.ch-tag-picker { margin-top: 10px; }
+.file-preview .fp-tile { display: flex; flex-direction: column; gap: 6px; width: 148px; }
+.file-preview .fp-tile .f-input { font-size: 12px; padding: 6px 9px; }
+.f-aep-note { display: block; width: 100%; margin: 0; border: 0; border-top: 1px solid var(--glass-line);
+  border-radius: 0; font-size: 11.5px; padding: 7px 9px; }
+.aep-tile.off .f-aep-note { opacity: .45; }
 
 /* ---------- 说说 ---------- */
 .moment-list { display: grid; gap: 18px; margin-bottom: 40px; }
@@ -1593,7 +1637,18 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .q-spec td { text-shadow: var(--night-ink-halo); }
 
 /* 档位效果对照表：与三张档位卡片同属一张玻璃卡 */
-.q-spec-wrap { margin: 22px 0 0; overflow-x: auto; }
+/* 效果对照表默认折叠：0fr → 1fr 等价于 height 0 → auto，配 0.3s 淡入淡出 */
+.q-spec-panel { display: grid; grid-template-rows: 0fr; opacity: 0; margin: 0;
+  transition: grid-template-rows .34s cubic-bezier(.22,.68,.28,1), opacity .3s ease, margin .34s ease; }
+.q-spec-panel.open { grid-template-rows: 1fr; opacity: 1; margin: 22px 0 0; }
+.q-spec-inner { min-height: 0; overflow: hidden; }
+.q-help { display: inline-grid; place-items: center; width: 19px; height: 19px; padding: 0;
+  border-radius: 50%; border: 1px solid var(--accent); background: var(--accent-soft);
+  color: var(--accent-text); font: inherit; font-size: 12px; font-weight: 700; line-height: 1;
+  cursor: pointer; transition: transform .3s ease, background .3s ease, box-shadow .3s ease; }
+.q-help:hover, .q-help.on { transform: rotate(12deg) scale(1.08); background: var(--accent);
+  color: #fff; box-shadow: 0 4px 14px var(--accent-soft); }
+.q-spec-wrap { margin: 0; overflow-x: auto; }
 .q-spec { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 420px; }
 .q-spec th, .q-spec td { padding: 9px 12px; text-align: left;
   border-bottom: 1px solid var(--glass-line); color: var(--muted); }
@@ -1897,6 +1952,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .desk-preview > :first-child { margin-top: 0; }
 .desk-preview h1 { font-size: 25px; margin: 22px 0 14px; color: var(--ink-strong); }
 .desk-preview h2 { font-size: 21px; margin: 30px 0 13px; color: var(--ink-strong); }
+/* 预览在 .studio-form 内部：普通 ## 标题不该继承表单标题的渐变短竖条与 flex 布局 */
+.studio-form .desk-preview h2 { display: block; }
+.studio-form .desk-preview h2::before { content: none; }
 .desk-preview h3 { font-size: 17px; margin: 24px 0 10px; color: var(--ink-strong); }
 .desk-preview p { margin: 0 0 16px; font-size: 15px; line-height: 1.9; }
 .desk-preview ul, .desk-preview ol { padding-left: 22px; margin: 0 0 18px; }

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本站支持的 Markdown 拓展语法 · 星梦Staream</title>
+<meta name="description" content="按顺序列出本站渲染引擎支持的全部 Markdown 拓展语法，每条写法都配一个代码块与紧跟其后的真实预览效果。">
+<link rel="canonical" href="https://zxy-blog.top/posts/markdown-extensions.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="本站支持的 Markdown 拓展语法 · 星梦Staream">
+<meta property="og:description" content="按顺序列出本站渲染引擎支持的全部 Markdown 拓展语法，每条写法都配一个代码块与紧跟其后的真实预览效果。">
+<meta property="og:url" content="https://zxy-blog.top/posts/markdown-extensions.html">
+<meta property="og:image" content="https://zxy-blog.top/assets/og-card.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
+<meta property="article:published_time" content="2026-11-13">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.42.0">
+<style>
+:root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#dceafb,#eae6fb 46%,#fdeef5);color:var(--ink);font:15.5px/1.9 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:36px 22px 70px}
+.crumb{font-size:13px;color:var(--muted);margin:0 0 18px}
+.crumb a{color:var(--brand);text-decoration:none}
+article{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;padding:32px 36px;box-shadow:0 10px 30px rgba(112,138,190,.10)}
+h1{font-size:27px;margin:0 0 8px;letter-spacing:.5px}
+.meta{color:var(--muted);font-size:13px;margin:0 0 26px}
+h2{font-size:22px;margin:34px 0 14px}
+.zb-vl{border-left:3px solid transparent;border-image:linear-gradient(180deg,#7897dc,#ab8bd4,#e096bd) 1;padding-left:13px}
+.zb-vl>:first-child{margin-top:0}.zb-vl>:last-child{margin-bottom:0}
+h3{font-size:17px;margin:24px 0 10px}
+p{margin:0 0 18px}
+strong{color:var(--ink)}
+code{background:#eef3ff;border-radius:5px;padding:1px 6px;font-size:13px}
+pre{background:#eef3ff;border-radius:10px;padding:16px;overflow:auto;font-size:13px;line-height:1.7}
+blockquote{margin:20px 0;padding:12px 18px;border-left:3px solid var(--brand);background:#eef3ff;border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:22px 0;font-size:14px;background:rgba(255,255,255,.5)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
+th{background:#eef3ff}
+ul,ol{padding-left:22px}
+a{color:var(--brand)}
+.back{margin:24px 0 0;font-size:14px}
+@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+
+/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+   build.mjs 会原样抽进 posts/*.html 的内联样式。 */
+/* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
+   用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-roman.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-italic.woff2") format("woff2");
+  font-style: italic; font-weight: 400; font-display: swap;
+}
+.zb-math { font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  line-height: 1.55; color: var(--ink-strong, #39436a); }
+/* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
+:root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
+  Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
+/* 表格单元格里的公式（含 $$…$$ 写法）显式钉住同一套字体栈：
+   单元格有自己的小字号与通用排版，不能让公式回落到正文默认字体。 */
+th .zb-math, td .zb-math, .zb-mcell .zb-math {
+  font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  font-size: 1.08em;
+}
+:root[data-font-tex="default"] th .zb-math,
+:root[data-font-tex="default"] td .zb-math,
+:root[data-font-tex="default"] .zb-mcell .zb-math {
+  font-family: "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+}
+.zb-math-inline { display: inline; }
+/* KaTeX 字体族（SIL OFL 1.1，随站点自带，来源与许可见 assets/fonts/KaTeX-FONTS-LICENSE.txt）：
+   设置页选「KaTeX（洛谷同款）」时公式用这一族渲染。 */
+@font-face { font-family: "KaTeX_AMS"; src: url("/assets/fonts/KaTeX_AMS-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Caligraphic"; src: url("/assets/fonts/KaTeX_Caligraphic-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Caligraphic"; src: url("/assets/fonts/KaTeX_Caligraphic-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Fraktur"; src: url("/assets/fonts/KaTeX_Fraktur-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-BoldItalic.woff2") format("woff2"); font-style: italic; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Math"; src: url("/assets/fonts/KaTeX_Math-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Math"; src: url("/assets/fonts/KaTeX_Math-BoldItalic.woff2") format("woff2"); font-style: italic; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Script"; src: url("/assets/fonts/KaTeX_Script-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size1"; src: url("/assets/fonts/KaTeX_Size1-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size2"; src: url("/assets/fonts/KaTeX_Size2-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size3"; src: url("/assets/fonts/KaTeX_Size3-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size4"; src: url("/assets/fonts/KaTeX_Size4-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Typewriter"; src: url("/assets/fonts/KaTeX_Typewriter-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+:root[data-font-tex="katex"] .zb-math { font-family: "KaTeX_Main", "KaTeX_Math", "Cambria Math", "Times New Roman", Georgia, serif; }
+:root[data-font-tex="katex"] .zb-math .zb-var { font-family: "KaTeX_Math", "KaTeX_Main"; }
+:root[data-font-tex="katex"] th .zb-math, :root[data-font-tex="katex"] td .zb-math,
+:root[data-font-tex="katex"] .zb-mcell .zb-math { font-family: "KaTeX_Main", "KaTeX_Math", "Cambria Math", "Times New Roman", Georgia, serif; }
+:root[data-font-tex="katex"] .zb-bb { font-family: "KaTeX_AMS", "KaTeX_Main"; font-weight: 400; }
+:root[data-font-tex="katex"] .zb-cal { font-family: "KaTeX_Caligraphic", "Segoe Script", cursive; }
+:root[data-font-tex="katex"] .zb-math .zb-bold { font-family: "KaTeX_Main"; font-weight: 700; }
+.zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
+  text-align: center; font-size: 18px; border-radius: 14px;
+  border: 1px solid var(--glass-line, rgba(255, 255, 255, .72));
+  background: var(--code-bg, rgba(255, 255, 255, .30)); }
+.zb-var { font-style: italic; }
+.zb-digit, .zb-num, .zb-text, .zb-textchar, .zb-func, .zb-sym { font-style: normal; }
+.zb-op { margin: 0 .1em; }
+.zb-frac { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .18em; font-size: .92em; line-height: 1.2; }
+.zb-frac > .zb-num { display: block; padding: 0 .3em .08em; border-bottom: 1px solid currentColor; }
+.zb-frac > .zb-den { display: block; padding: .08em .3em 0; }
+.zb-binom .zb-frac > .zb-num { border-bottom: none; }
+.zb-sqrt { display: inline-flex; align-items: stretch; vertical-align: middle; margin: 0 .1em; }
+.zb-radical { font-size: 1.25em; line-height: 1; }
+.zb-radicand { border-top: 1px solid currentColor; padding: .06em .18em 0 .06em; }
+.zb-root-deg { font-size: .62em; align-self: flex-start; margin-right: -.25em; }
+.zb-script { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.zb-base { display: inline-flex; align-items: center; }
+.zb-scripts { display: inline-flex; flex-direction: column; justify-content: center;
+  font-size: .68em; line-height: 1.05; margin-left: .05em; }
+.zb-sup, .zb-sub { display: block; min-height: .7em; }
+.zb-bigop { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .16em; line-height: 1.05; }
+.zb-bigop > .zb-op { font-size: 1.7em; }
+.zb-bigop .zb-over, .zb-bigop .zb-under { font-size: .66em; }
+.zb-bb { font-weight: 700; }
+.zb-bold { font-weight: 700; }
+.zb-cal { font-family: "Segoe Script", "Brush Script MT", cursive; }
+.zb-quad { display: inline-block; width: 1em; }
+.zb-qquad { display: inline-block; width: 2em; }
+.zb-thinspace { display: inline-block; width: .17em; }
+.zb-nbsp { display: inline-block; width: .3em; }
+.zb-delim { font-size: 1.12em; }
+.zb-unknown { font-style: normal; color: #b0456b; }
+.zb-group { display: inline; }
+.zb-accent { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; }
+.zb-accent-mark { font-size: .7em; height: .55em; }
+.zb-accent-underline { flex-direction: column-reverse; }
+.zb-aligned { display: inline-flex; flex-direction: column; align-items: center; gap: .35em; }
+.zb-line, .zb-cell { display: inline-flex; }
+.zb-mtable { display: inline-flex; flex-direction: column; }
+.zb-mrow { display: inline-flex; }
+.zb-mcell { padding: .1em .4em; text-align: center; }
+.zb-matrix { display: inline-flex; align-items: center; vertical-align: middle; }
+.zb-matrix-pmatrix::before, .zb-matrix-pmatrix::after { font-size: 1.8em; }
+.zb-matrix-pmatrix::before { content: '('; }
+.zb-matrix-pmatrix::after { content: ')'; }
+.zb-matrix-bmatrix::before { content: '['; font-size: 1.8em; }
+.zb-matrix-bmatrix::after { content: ']'; font-size: 1.8em; }
+.zb-matrix-cases::before { content: '\7B'; font-size: 2em; }
+.zb-break { display: block; height: 0; }
+.zb-alignmark { display: inline-block; width: .5em; }
+.zb-task { margin-right: 7px; color: var(--accent-text, #3f5c9c); }
+.zb-task.done { color: var(--accent-3-text, #934268); }
+.zb-code .zb-lang { position: absolute; right: 12px; bottom: 7px; font-size: 10px;
+  letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
+/* 多语言代码标签组：块组上方一排语言名（C / C++ / Python…），当前项渐变下划线高亮；
+   标签内的代码块不再重复显示右下角语言角标 */
+.zb-code-tabs { margin: 14px 0; }
+.zb-tab-bar { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 10px;
+  border: 1px solid var(--glass-line, rgba(120,140,180,.28)); border-bottom: none;
+  border-radius: 14px 14px 0 0; background: var(--glass-strong, rgba(255,255,255,.5)); }
+.zb-tab { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  padding: 7px 14px 8px; color: var(--muted, #64708f); background: transparent; border: none;
+  border-bottom: 2px solid transparent; transition: color .25s ease, border-color .25s ease; }
+.zb-tab:hover { color: var(--ink-strong, #2c3a5e); }
+.zb-tab.on { color: var(--accent-text, #3f5c9c); border-bottom-color: var(--accent, #7ea6e0); }
+.zb-code-tabs .zb-code { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+:root[data-theme="night"] .zb-math { color: #e8f0ff; }
+:root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
+/* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。
+   夜空直接用原版色值；晴空底色是雾白玻璃，同色相加深保证可读。
+   低画质不上色：全部 token 回退为正文颜色（只动 color，不需重渲染）。 */
+:root {
+  --syn-cm: #6d7fa8; --syn-st: #0d9e5a; --syn-kw: #9a7c17; --syn-ty: #0b98a3;
+  --syn-nu: #bf5a1d; --syn-cs: #bc3d16; --syn-fn: #1972c2; --syn-cls: #8a4ed6; --syn-pr: #b3541b;
+}
+:root[data-theme="night"] {
+  --syn-cm: #4a5e84; --syn-st: #3cec85; --syn-kw: #eacd61; --syn-ty: #22ecdb;
+  --syn-nu: #ff955c; --syn-cs: #e35535; --syn-fn: #69c3ff; --syn-cls: #b78aff; --syn-pr: #ff955c;
+}
+pre code .tk-cm { color: var(--syn-cm); font-style: italic; }
+pre code .tk-st { color: var(--syn-st); }
+pre code .tk-kw { color: var(--syn-kw); }
+pre code .tk-ty { color: var(--syn-ty); }
+pre code .tk-nu { color: var(--syn-nu); }
+pre code .tk-cs { color: var(--syn-cs); }
+pre code .tk-fn { color: var(--syn-fn); }
+pre code .tk-cls { color: var(--syn-cls); }
+pre code .tk-pr { color: var(--syn-pr); }
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
+pre, pre > code, .article :not(pre) > code {
+  font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
+<article>
+<h1>本站支持的 Markdown 拓展语法</h1>
+<p class="meta" data-view-post="markdown-extensions">2026-11-13 · Markdown / 拓展 / A · <span class="mirror-likes"><span data-like-stat="post:markdown-extensions">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="markdown-extensions">0</span> 次浏览（不含站长）</span></p>
+<div class="body"><p>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。</p>
+<h2 id="h-一-渐变竖线标题">一、渐变竖线标题</h2>
+<p>井号后紧跟一个竖线，只给这一个标题加蓝→粉渐变竖线；普通 <code>## 标题</code> 保持干净。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2</span><code>##| 带渐变竖线的小标题
+## 普通小标题</code><button class="copy-btn" type="button">复制</button></pre>
+<h2 class="zb-vl" id="h-带渐变竖线的小标题">带渐变竖线的小标题</h2>
+<h2 id="h-普通小标题">普通小标题</h2>
+<h2 id="h-二-渐变竖线区块">二、渐变竖线区块</h2>
+<p>用 <code>:::vl … :::</code> 包住整段内容，区块左侧是一整条渐变竖线；外层多写一个冒号就能嵌套。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3</span><code>:::vl
+这里是一整段被引用的内容，可以写**加粗**、列表和公式。
+:::</code><button class="copy-btn" type="button">复制</button></pre>
+<div class="zb-vl"><p>这里是一整段被引用的内容，可以写<strong>加粗</strong>、列表和公式。</p></div>
+<h2 id="h-三-四色折叠框">三、四色折叠框</h2>
+<p><code>info / success / warning / error</code> 四种颜色，方括号写标题，花括号写 <code>open</code> 则默认展开；冒号数量配对可嵌套。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</span><code>:::info[信息框]
+这是信息框，默认折叠。
+:::
+:::success[成功框]{open}
+这是默认展开的成功框。
+:::
+:::warning[注意框]
+这是警告框。
+:::
+:::error[错误框]
+这是错误框。
+:::</code><button class="copy-btn" type="button">复制</button></pre>
+<details class="zb-fold zb-fold-info"><summary class="zb-fold-head">信息框</summary><div class="zb-fold-body"><p>这是信息框，默认折叠。</p></div></details>
+<details class="zb-fold zb-fold-success" open><summary class="zb-fold-head">成功框</summary><div class="zb-fold-body"><p>这是默认展开的成功框。</p></div></details>
+<details class="zb-fold zb-fold-warning"><summary class="zb-fold-head">注意框</summary><div class="zb-fold-body"><p>这是警告框。</p></div></details>
+<details class="zb-fold zb-fold-error"><summary class="zb-fold-head">错误框</summary><div class="zb-fold-body"><p>这是错误框。</p></div></details>
+<h2 id="h-四-对齐容器">四、对齐容器</h2>
+<p><code>center</code> 居中、<code>right</code> 右对齐，其它值按居中处理。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6</span><code>:::align{center}
+居中显示的一句话
+:::
+:::align{right}
+靠右显示的一句话
+:::</code><button class="copy-btn" type="button">复制</button></pre>
+<div class="zb-align zb-align-center"><p>居中显示的一句话</p></div>
+<div class="zb-align zb-align-right"><p>靠右显示的一句话</p></div>
+<h2 id="h-五-引言与署名">五、引言与署名</h2>
+<p><code>:::epigraph[署名]</code> 生成带署名的题记。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3</span><code>:::epigraph[—— 星梦 <span class="tk-cls">Staream</span>]
+把想说的话写下来，慢慢就成了一条路。
+:::</code><button class="copy-btn" type="button">复制</button></pre>
+<blockquote class="zb-epigraph"><p>把想说的话写下来，慢慢就成了一条路。</p><footer class="zb-epigraph-sign">—— 星梦 Staream</footer></blockquote>
+<h2 id="h-六-代码块语言标签与行高亮">六、代码块语言标签与行高亮</h2>
+<p>围栏后写语言标识符，标签自动显示语言名称且首字母大写；再加 <code>lines=a-b</code> 可高亮指定行。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6
+7</span><code><span class="tk-st">``</span><span class="tk-st">`cpp lines=2-3
+#include &lt;cstdio&gt;
+int main() {
+  puts(&quot;hello&quot;);
+  return 0;
+}
+`</span><span class="tk-st">``</span></code><button class="copy-btn" type="button">复制</button></pre>
+<pre class="zb-code" data-lang="C++"><span class="zb-lang">C++</span><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5</span><code><span class="tk-kw">#include</span> &lt;cstdio&gt;<span class="tk-ty">int</span> <span class="tk-fn">main</span>() {  <span class="tk-fn">puts</span>(<span class="tk-st">&quot;hello&quot;</span>);  <span class="tk-kw">return</span> <span class="tk-nu">0</span>;}</code><button class="copy-btn" type="button">复制</button></pre>
+<h2 id="h-七-多语言代码标签组">七、多语言代码标签组</h2>
+<p>写法一：连续几个带语言的代码块自动合并成一组标签页。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6</span><code><span class="tk-st">``</span><span class="tk-st">`c
+printf(&quot;C\n&quot;);
+`</span><span class="tk-st">``</span>
+<span class="tk-st">``</span><span class="tk-st">`python
+print(&quot;Python&quot;)
+`</span><span class="tk-st">``</span></code><button class="copy-btn" type="button">复制</button></pre>
+<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C</button><button class="zb-tab" type="button" data-zbtab="1">Python</button></div><pre class="zb-code" data-zbpre="0" data-lang="C"><span class="line-numbers" aria-hidden="true">1</span><code><span class="tk-fn">printf</span>(<span class="tk-st">&quot;C\n&quot;</span>);</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="Python"><span class="line-numbers" aria-hidden="true">1</span><code><span class="tk-fn">print</span>(<span class="tk-st">&quot;Python&quot;</span>)</code><button class="copy-btn" type="button">复制</button></pre></div>
+<p>写法二：开栏用竖线列出语言，块内用围栏行分隔各段。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6
+7</span><code><span class="tk-st">``</span><span class="tk-st">`c|cpp|python
+puts(&quot;C&quot;);
+`</span><span class="tk-st">``</span>
+std::cout &lt;&lt; <span class="tk-st">&quot;C++&quot;</span>;
+<span class="tk-st">``</span><span class="tk-st">`
+print(&quot;Python&quot;)
+`</span><span class="tk-st">``</span></code><button class="copy-btn" type="button">复制</button></pre>
+<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C</button><button class="zb-tab" type="button" data-zbtab="1">C++</button><button class="zb-tab" type="button" data-zbtab="2">Python</button></div><pre class="zb-code" data-zbpre="0" data-lang="C"><span class="line-numbers" aria-hidden="true">1</span><code><span class="tk-fn">puts</span>(<span class="tk-st">&quot;C&quot;</span>);</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="C++"><span class="line-numbers" aria-hidden="true">1</span><code>std::cout &lt;&lt; <span class="tk-st">&quot;C++&quot;</span>;</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Python"><span class="line-numbers" aria-hidden="true">1</span><code><span class="tk-fn">print</span>(<span class="tk-st">&quot;Python&quot;</span>)</code><button class="copy-btn" type="button">复制</button></pre></div>
+<h2 id="h-八-表格合并单元格">八、表格合并单元格</h2>
+<p>单元格里单独写 <code>^</code> 表示向上合并，单独写 <code>&lt;</code> 表示向左合并；分隔行也支持 <code>:---:</code> 居中。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5</span><code>| 季度 | 月份 | 记录 |
+| :--- | :---: | ---: |
+| 春 | 三月 | 花开 |
+| ^ | 四月 | 风起 |
+| &lt; | &lt; | 收尾 |</code><button class="copy-btn" type="button">复制</button></pre>
+<table><thead><tr><th style="text-align:left">季度</th><th style="text-align:center">月份</th><th style="text-align:right">记录</th></tr></thead><tbody><tr><td rowspan="2" style="text-align:left">春</td><td style="text-align:center">三月</td><td style="text-align:right">花开</td></tr><tr><td style="text-align:center">四月</td><td style="text-align:right">风起</td></tr><tr><td style="text-align:left">←</td><td style="text-align:center">←</td><td style="text-align:right">收尾</td></tr></tbody></table>
+<h2 id="h-九-可爱表格">九、可爱表格</h2>
+<p>表格前加一行 <code>::cute-table{tuack}</code>，同一张表换成圆润样式。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5</span><code>::cute-table{tuack}
+| 语法 | 用途 |
+| --- | --- |
+| ^ | 向上合并 |
+| &lt; | 向左合并 |</code><button class="copy-btn" type="button">复制</button></pre>
+<table class="zb-tuack"><thead><tr><th style="text-align:left">语法</th><th style="text-align:left">用途</th></tr></thead><tbody><tr><td style="text-align:left">↑</td><td style="text-align:left">向上合并</td></tr><tr><td style="text-align:left">←</td><td style="text-align:left">向左合并</td></tr></tbody></table>
+<h2 id="h-十-latex-公式">十、LaTeX 公式</h2>
+<p>行内用 <code>$…$</code> 或 <code>$$…$$</code>，独占一行用块级 <code>$$</code>；支持分式、根号、矩阵与上下标。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6
+7
+8</span><code>行内：质能方程 $E=mc^<span class="tk-nu">2</span>$，分式 $\frac{a+b}{c}$ 与根号 $\sqrt[n]{x}$。
+
+$$
+\begin{matrix}
+<span class="tk-nu">1</span> &amp; <span class="tk-nu">2</span> \\
+<span class="tk-nu">3</span> &amp; <span class="tk-nu">4</span>
+\end{matrix}
+$$</code><button class="copy-btn" type="button">复制</button></pre>
+<p>行内：质能方程 <span class="zb-math zb-math-inline"><i class="zb-var">E</i><span class="zb-op">=</span><i class="zb-var">m</i><span class="zb-script"><span class="zb-base"><i class="zb-var">c</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span></span>，分式 <span class="zb-math zb-math-inline"><span class="zb-frac"><span class="zb-num"><i class="zb-var">a</i><span class="zb-op">+</span><i class="zb-var">b</i></span><span class="zb-den"><i class="zb-var">c</i></span></span></span> 与根号 <span class="zb-math zb-math-inline"><span class="zb-sqrt"><span class="zb-root-deg"><i class="zb-var">n</i></span><span class="zb-radical">√</span><span class="zb-radicand"><i class="zb-var">x</i></span></span></span>。</p>
+<div class="zb-math zb-math-block"><span class="zb-matrix zb-matrix-matrix"><span class="zb-mtable"><span class="zb-mrow"><span class="zb-mcell"><span class="zb-digit">1</span></span><span class="zb-mcell"><span class="zb-digit">2</span></span></span><span class="zb-mrow"><span class="zb-mcell"><span class="zb-digit">3</span></span><span class="zb-mcell"><span class="zb-digit">4</span></span></span></span></span></div>
+<h2 id="h-十一-图片显式尺寸">十一、图片显式尺寸</h2>
+<p>图片链接后写 <code>=宽x高</code>，可以只给一边；表格单元格里的公式与行内代码也不会被竖线切错。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2</span><code>![星梦头像](/assets/avatar.<span class="tk-pr">jpg</span> =100x100)
+![只给高度](/assets/avatar.<span class="tk-pr">jpg</span> =x72)</code><button class="copy-btn" type="button">复制</button></pre>
+<p><img src="/assets/avatar.jpg" alt="星梦头像" style="width:100px;height:100px;object-fit:contain;" loading="lazy"><br><img src="/assets/avatar.jpg" alt="只给高度" style="height:72px;" loading="lazy"></p>
+<h2 id="h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</h2>
+<p><code>- [ ]</code> / <code>- [x]</code> 生成任务项；两个空格一层嵌套，整块缩进会渲染成左边距。</p>
+<pre class="zb-code"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4</span><code>  - [x] 已完成的记录
+    - 子项一
+    - 子项二
+  - [ ] 待完成的记录</code><button class="copy-btn" type="button">复制</button></pre>
+<ul style="margin-left:22px"><li><span class="zb-task done">☑</span>已完成的记录<ul><li>子项一</li><li>子项二</li></ul></li><li><span class="zb-task">☐</span>待完成的记录</li></ul>
+<p>上面这些写法在文章页、创作台预览与静态阅读版里是同一套渲染引擎，效果完全一致。</p></div>
+<section class="interactions" aria-label="互动区">
+<div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
+<h2>留言</h2><p>留言直接显示在这里，写在页面上、用 GitHub 账号确认发布；👍 点赞、在 Issue 下回复，留言会长期存档到本站仓库；无广告、无追踪。</p></div></div>
+<div class="zb-composer" id="zb-composer"><div class="zb-composer-label-row"><label class="zb-composer-label" for="zb-composer-input">写下想说的话</label><button class="zb-composer-md" type="button" id="zb-composer-md" aria-pressed="false" title="支持 Markdown 语法：**加粗**、*斜体*、~~删除线~~、`代码`、[链接](url)、引用、列表等">预览 Markdown</button></div><textarea class="zb-composer-input" id="zb-composer-input" rows="3" maxlength="2000" placeholder="路过、读后感，或者只是打个招呼…（支持 Markdown 语法）"></textarea><div class="zb-composer-preview" id="zb-composer-preview" hidden aria-live="polite"></div><div class="zb-composer-bar"><span class="zb-composer-tip">支持 Markdown · 留言会公开保存在本站仓库 · 发布需 GitHub 账号</span><span class="zb-composer-count" id="zb-composer-count">0 / 2000</span><button class="interactions-btn primary" type="button" id="zb-composer-submit">发布留言</button></div><p class="zb-composer-after" id="zb-composer-after" hidden>已打开 GitHub 发布页，登录后确认提交；回来刷新就能在这里看到。</p></div>
+<div class="zb-slot" id="zb-slot"><div id="zb-live-host"></div>
+<!-- ZB_ARCHIVE:BEGIN -->
+<div class="zb-archive zb-empty" id="zb-archive"><span class="zb-empty-star" aria-hidden="true">✦</span><p class="zb-empty-title">还没有留言</p><p class="zb-empty-note">在上方写下第一句话吧，留言会长期保存在本站仓库里。</p></div>
+<!-- ZB_ARCHIVE:END -->
+<p class="zb-live-note" id="zb-live-note" hidden>实时同步暂不可用 · 已显示站内存档</p>
+</div>
+<p class="interactions-hint" id="interactions-hint" hidden></p>
+<div class="interactions-links"><a href="https://github.com/ZXY-cc/zxy-cc.github.io/issues" target="_blank" rel="noopener nofollow">留言仓库 ↗</a><span aria-hidden="true">·</span><a href="https://github.com/ZXY-cc/zxy-cc.github.io/issues/new?title=%E7%95%99%E8%A8%80%20%7C%20markdown-extensions" target="_blank" rel="noopener nofollow">在 GitHub 写 ↗</a></div>
+</section>
+</article>
+<p class="back"><a href="/#/post/markdown-extensions">在站点中打开 →</a></p>
+</div>
+<script src="../assets/comments-data.js?v=v3.42.0"></script>
+<script src="../assets/comment-archive.js?v=v3.42.0"></script>
+<script src="../assets/interactions-config.js?v=v3.42.0"></script>
+<script src="../assets/interactions.js?v=v3.42.0"></script>
+<script src="../assets/issues-live.js?v=v3.42.0"></script>
+<script src="../assets/likes.js?v=v3.42.0"></script>
+<script>window.ZBInteractions && window.ZBInteractions.mount("markdown-extensions");
+window.ZBLive && window.ZBLive.mount("markdown-extensions");
+window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
+</body>
+</html>

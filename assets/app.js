@@ -10,6 +10,21 @@
   var lb = { list: [], index: 0 };
 
   function arr(k) { return (DATA[k] || []).slice(); }
+  /* 标签展示顺序统一取创作台「标签管理」的标签库；分区用的 A / B 恒排在所有标签之后 */
+  function orderedTags(tags) {
+    var lib = (DATA.tagLibrary || []).slice();
+    function rank(t) { return t === 'A' ? 2 : (t === 'B' ? 3 : 1); }
+    return (tags || []).slice().sort(function (a, b) {
+      var ra = rank(a), rb = rank(b);
+      if (ra !== rb) return ra - rb;
+      if (ra > 1) return a === 'A' ? -1 : 1;
+      var ia = lib.indexOf(a), ib = lib.indexOf(b);
+      if (ia < 0 && ib < 0) return String(a).localeCompare(String(b), 'zh');
+      if (ia < 0) return 1;
+      if (ib < 0) return -1;
+      return ia - ib;
+    });
+  }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -127,7 +142,7 @@
   /* ---------- 公共片段 ---------- */
   function tagsHtml(tags) {
     if (!tags || !tags.length) return '';
-    return '<div class="tags">' + tags.map(function (t) {
+    return '<div class="tags">' + orderedTags(tags).map(function (t) {
       return '<a class="tag" href="#/tag/' + encodeURIComponent(t) + '">' + esc(t) + '</a>';
     }).join('') + '</div>';
   }
@@ -257,7 +272,7 @@
   function renderTags() {
     var counts = {};
     POSTS.forEach(function (p) { (p.tags || []).forEach(function (t) { counts[t] = (counts[t] || 0) + 1; }); });
-    var names = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+    var names = orderedTags(Object.keys(counts));
     return pageHead('标签', '把相近的文章放在一起', 'TAGS') +
       '<p class="page-note">共 ' + names.length + ' 个标签</p>' +
       '<div class="tag-cloud glass reveal">' + names.map(function (t) {
@@ -276,7 +291,7 @@
           '<div class="x-card-top"><span class="x-badge">' + esc(p.status || '记录') + '</span>' +
           '<time>' + esc(p.date || '') + '</time></div>' +
           '<h2>' + esc(p.name) + '</h2><p>' + esc(p.desc) + '</p>' +
-          '<div class="x-chips">' + (p.tags || []).map(function (t) {
+          '<div class="x-chips">' + orderedTags(p.tags || []).map(function (t) {
             return '<span>' + esc(t) + '</span>';
           }).join('') + '</div>' +
           (p.link ? '<a class="x-link" href="' + esc(p.link) + '">去看看 →</a>' : '') +
@@ -289,7 +304,7 @@
     var all = POSTS.slice();
     var counts = {};
     all.forEach(function (p) { (p.tags || []).forEach(function (t) { counts[t] = (counts[t] || 0) + 1; }); });
-    var names = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 14);
+    var names = orderedTags(Object.keys(counts)).slice(0, 14);
     var filters = '<div class="filter-row reveal"><button class="filter' +
       (timelineTag ? '' : ' on') + '" type="button" data-tfilter="">全部</button>' +
       names.map(function (t) {
@@ -313,7 +328,7 @@
           groups[k].map(function (p) {
             return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
               '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
-              '<span>' + (p.tags || []).map(function (t) { return '#' + esc(t); }).join(' ') + '</span></a>';
+              '<span>' + orderedTags(p.tags || []).map(function (t) { return '#' + esc(t); }).join(' ') + '</span></a>';
           }).join('') + '</div></section>';
       }).join('') + '</div>';
   }
@@ -342,10 +357,12 @@
     return '<a class="back-link reveal" href="#/photowall">← 返回照片墙</a>' +
       pageHead(a.title, a.desc, 'ALBUM · ' + photos.length + ' 张') +
       '<div class="photo-grid">' + photos.map(function (p, i) {
+        var cap = p.note || '记录这一刻';
         return '<button class="photo-tile glass sheen reveal" type="button" data-photo="' + i + '" style="animation-delay:' + (i % 12) * 45 + 'ms">' +
           '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy" decoding="async">' +
-          '<span class="photo-cap"><b>' + esc(p.title || '') + '</b><i>' +
-          esc(((p.date ? p.date + (p.note ? ' · ' : '') : '') + (p.note || '')) || ' ') + '</i></span>' +
+          '<span class="photo-cap"><b>' + esc(p.title || '这一刻') + '</b><i>' +
+          esc(cap) + (p.date ? ' <em>· ' + esc(String(p.date).slice(0, 10)) + '</em>' : '') +
+          '</i></span>' +
           '</button>';
       }).join('') + '</div>';
   }
@@ -381,6 +398,7 @@
     var list = arr('chatter');
     var tags = [];
     list.forEach(function (c) { (c.tags || []).forEach(function (t) { if (tags.indexOf(t) < 0) tags.push(t); }); });
+    tags = orderedTags(tags);
     var filters = '<div class="filter-row reveal"><button class="filter' +
       (chatterTag ? '' : ' on') + '" type="button" data-cfilter="">全部</button>' +
       tags.map(function (t) {
@@ -396,7 +414,7 @@
           '<time>' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
           '<a class="chatter-title" href="#/chatter/' + encodeURIComponent(c.id) + '">' + esc(c.title) + '</a>' +
           '<p>' + esc(c.summary) + '</p>' +
-          '<div class="x-chips">' + (c.tags || []).map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</div>' +
+          '<div class="x-chips">' + orderedTags(c.tags || []).map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</div>' +
           '<div class="chatter-foot">' +
           (L ? L.html('chatter', c.id, c.likes) : '<span></span>') + '</div>' +
           '</article>';
@@ -625,7 +643,11 @@
       return '<tr><th scope="row">' + esc(r[0]) + '</th><td>' + esc(r[1]) +
         '</td><td>' + esc(r[2]) + '</td><td>' + esc(r[3]) + '</td><td>' + esc(r[4]) + '</td></tr>';
     }).join('') + '</tbody>';
-    return '<div class="q-spec-wrap"><table class="q-spec">' + head + body + '</table></div>';
+    /* 效果对照表默认折叠：外层用 0fr → 1fr 的网格行高过渡（等价于 height 0 → auto），
+       同时淡入淡出，动画节奏参考 Kirameku 说说页的 0.3s 展开/收起 */
+    return '<div class="q-spec-panel" id="q-spec-panel" aria-hidden="true">' +
+      '<div class="q-spec-inner"><div class="q-spec-wrap"><table class="q-spec">' +
+      head + body + '</table></div></div></div>';
   }
   function renderSettings() {
     var cur = readQuality();
@@ -644,7 +666,9 @@
     return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
       '<div class="settings-block"><div class="settings-info">' +
-      '<h2>画质</h2><p>选择画面呈现的档位，切换后立即生效。偏好保存在本机浏览器里，不会上传到任何地方。</p></div>' +
+      '<h2>画质<button class="q-help" type="button" data-qspec-toggle aria-expanded="false" ' +
+      'aria-controls="q-spec-panel" aria-label="展开画质效果对照表" title="查看四档效果对照">?</button></h2>' +
+      '<p>选择画面呈现的档位，切换后立即生效。偏好保存在本机浏览器里，不会上传到任何地方。</p></div>' +
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
@@ -910,11 +934,32 @@
       '</section>';
   }
   function renderHome() {
-    /* 文章卡一分为二：仍是一张卡，上半轮播最新第 1/3/5 篇，下半轮播第 2/4/6 篇；
-       两半各自带轮播与圆点，节拍一致，视觉上同步翻页 */
+    /* 文章卡一分为二，仍是同一张卡：标签 A 进上半、标签 B 进下半；
+       两个标签都没有的文章按时间由近到远交替补进当前较短的一区，
+       每区最多 3 篇，A / B 溢出的落到对侧，保证两区同屏都显示文章。 */
     var posts = recentByDate(POSTS, 6);
-    var top = [posts[0], posts[2], posts[4]].filter(Boolean);
-    var bot = [posts[1], posts[3], posts[5]].filter(Boolean);
+    function homePanes(list) {
+      var top = [], bot = [], rest = [];
+      list.forEach(function (p) {
+        var ts = p.tags || [];
+        if (ts.indexOf('A') >= 0) top.push(p);
+        else if (ts.indexOf('B') >= 0) bot.push(p);
+        else rest.push(p);
+      });
+      function put(side, p) {
+        var first = side === 'top' ? top : bot, second = side === 'top' ? bot : top;
+        if (first.length < 3) first.push(p);
+        else if (second.length < 3) second.push(p);
+      }
+      var over = [];
+      if (top.length > 3) top.splice(3).forEach(function (p) { over.push(['bot', p]); });
+      if (bot.length > 3) bot.splice(3).forEach(function (p) { over.push(['top', p]); });
+      over.forEach(function (it) { put(it[0], it[1]); });
+      rest.forEach(function (p) { put(top.length <= bot.length ? 'top' : 'bot', p); });
+      return { top: top, bot: bot };
+    }
+    var panes = homePanes(posts);
+    var top = panes.top, bot = panes.bot;
     var albumsH = albumFeed('h');
     var albumsV = albumFeed('v');
     var moments = recentByDate(arr('moments'), 3);
@@ -926,7 +971,7 @@
           '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
           '<h2>' + esc(p.title) + '</h2>' +
           '<p class="q-sum">' + esc(homeSummary(p)) + '</p>' +
-          '<div class="q-tags">' + (p.tags || []).slice(0, 4).map(function (t) {
+          '<div class="q-tags">' + orderedTags(p.tags || []).slice(0, 4).map(function (t) {
             return '<span>' + esc(t) + '</span>';
           }).join('') + '</div>' +
           '<span class="q-go">阅读全文 →</span>'
@@ -1021,11 +1066,13 @@
       '<p class="page-note">共 ' + POSTS.length + ' 篇文章</p>' +
       '<div class="card-grid">' + POSTS.map(function (p) {
         return '<article class="x-card glass sheen reveal post-x-card">' +
-          '<div class="x-card-top"><span class="x-badge">' + esc(p.category || '随笔') + '</span>' +
+          '<div class="x-card-top"><span class="x-badge">' +
+          esc(orderedTags(p.tags || []).filter(function (t) { return t !== 'A' && t !== 'B'; })[0] || '随笔') +
+          '</span>' +
           '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
           '<h2 class="x-title"><a href="#/post/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a></h2>' +
           '<p>' + esc(p.summary || '') + '</p>' +
-          '<div class="x-chips">' + (p.tags || []).map(function (t) {
+          '<div class="x-chips">' + orderedTags(p.tags || []).map(function (t) {
             return '<span>' + esc(t) + '</span>';
           }).join('') + '</div>' +
           '<div class="x-foot">' + postStatsHtml(p) +
@@ -1401,6 +1448,18 @@
           var like = node.closest('[data-like]');
           if (like && window.ZBLikes) {
             window.ZBLikes.onLike(like);
+            return;
+          }
+          var specBtn = node.closest('[data-qspec-toggle]');
+          if (specBtn) {
+            var panel = document.getElementById('q-spec-panel');
+            if (panel) {
+              var open = !panel.classList.contains('open');
+              panel.classList.toggle('open', open);
+              panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+              specBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+              specBtn.classList.toggle('on', open);
+            }
             return;
           }
           var quality = node.closest('[data-quality]');

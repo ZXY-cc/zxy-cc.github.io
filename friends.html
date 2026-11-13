@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="友链 · 星梦Staream">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
-<link rel="stylesheet" href="assets/style.css?v=v3.37.0">
+<link rel="stylesheet" href="assets/style.css?v=v3.42.0">
 <style>
 body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 100%);color:#3a4668;
   font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
@@ -195,12 +195,14 @@ pre, pre > code, .article :not(pre) > code {
 <header class="mirror-head">
   <a class="brand" href="/">星梦Staream</a>
   <span><a class="mlink" href="projects.html">项目</a> · <a class="mlink" href="timeline.html">归档</a> · <a class="mlink" href="photowall.html">照片墙</a> · <a class="mlink" href="moments.html">说说</a> · <a class="mlink" href="chatter.html">杂谈</a> · <a class="mlink" href="friends.html">友链</a> · <a class="mlink" href="tags.html">标签</a> · <a class="mlink" href="about.html">关于</a></span>
-  <span><a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/p-mwbj0maxovr0.html">第1次周报</a> · <a class="mlink" href="posts/free-blog.html">（测试）零成本搭一个自己的博客</a></span>
+  <span><a class="mlink" href="posts/markdown-extensions.html">本站支持的 Markdown 拓展语法</a> · <a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/p-mwbj0maxovr0.html">第1次周报</a> · <a class="mlink" href="posts/free-blog.html">（测试）零成本搭一个自己的博客</a></span>
 </header>
 <main class="route-mirror">
 <div class="page-head reveal"><div class="page-kicker">LINKS</div><h1 class="page-title">友链</h1><p class="page-sub">那些散落在别处的、值得停一下的地方</p></div><div class="friend-grid"><a class="friend-card glass sheen reveal" href="https://oi-wiki.org/" target="_blank" rel="noopener noreferrer"><span class="friend-initial">OI</span><span class="friend-body"><b>OI Wiki</b><i>算法与竞赛知识的公共笔记，写排序那篇时翻了很多次。</i></span><span class="friend-status">常去</span></a><a class="friend-card glass sheen reveal" href="https://github.com/ZXY-cc" target="_blank" rel="noopener noreferrer"><span class="friend-initial">GH</span><span class="friend-body"><b>GitHub</b><i>代码与站点都放在这里，也是这个博客的托管方。</i></span><span class="friend-status">常去</span></a></div>
 </main>
 <footer class="mirror-foot">这是「星梦Staream」友链页的静态镜像，完整交互（搜索、特效、夜间模式）请
 <a href="/#/friends">在站点中打开 →</a></footer>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态镜像无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>
