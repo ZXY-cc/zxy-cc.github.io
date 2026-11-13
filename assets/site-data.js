@@ -101,6 +101,27 @@ window.STUDIO_DATA = {
           "date": "2026-11-12"
         }
       ]
+    },
+    {
+      "id": "a-mweqopzs46wx",
+      "title": "测试（竖版）",
+      "date": "2026-11-13",
+      "desc": "测试（竖版）",
+      "cover": "/assets/photos/p-1b45faf9e766.jpg",
+      "photos": [
+        {
+          "src": "/assets/photos/p-1b45faf9e766.jpg",
+          "title": "测试（竖版） · 1",
+          "note": "",
+          "date": "2026-11-13"
+        },
+        {
+          "src": "/assets/photos/p-b51ff49eae8d.jpg",
+          "title": "测试（竖版） · 2",
+          "note": "",
+          "date": "2026-11-13"
+        }
+      ]
     }
   ],
   "moments": [
