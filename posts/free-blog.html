@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>零成本搭一个自己的博客 · 星梦Staream</title>
+<title>（测试）零成本搭一个自己的博客 · 星梦Staream</title>
 <meta name="description" content="域名、证书、托管这三件事各管什么，以及一条最省事的上线路径。">
 <link rel="canonical" href="https://zxy-blog.top/posts/free-blog.html">
 <meta property="og:type" content="article">
-<meta property="og:title" content="零成本搭一个自己的博客 · 星梦Staream">
+<meta property="og:title" content="（测试）零成本搭一个自己的博客 · 星梦Staream">
 <meta property="og:description" content="域名、证书、托管这三件事各管什么，以及一条最省事的上线路径。">
 <meta property="og:url" content="https://zxy-blog.top/posts/free-blog.html">
 <meta property="og:image" content="https://zxy-blog.top/assets/og-card.jpg">
@@ -196,16 +196,21 @@ pre, pre > code, .article :not(pre) > code {
 <div class="wrap">
 <p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
 <article>
-<h1>零成本搭一个自己的博客</h1>
+<h1>（测试）零成本搭一个自己的博客</h1>
 <p class="meta" data-view-post="free-blog">2026-11-07 · 建站 / 笔记 · <span class="mirror-likes"><span data-like-stat="post:free-blog">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="free-blog">0</span> 次浏览（不含站长）</span></p>
-<div class="body"><p>想拥有一个自己的博客，其实只需要解决三个问题：别人怎么找到你、内容放在哪、以及浏览器地址栏里那把小锁。这三件事分别对应域名、托管和证书，彼此独立，可以分开选。</p><h2>三条信息，三层链路</h2><table><thead><tr><th>环节</th><th>可选服务</th><th>要做的事</th></tr></thead><tbody><tr><td>免费域名</td><td>dpdns.org</td><td>申请一个 you.dpdns.org</td></tr><tr><td>解析与证书</td><td>Cloudflare / 平台自带</td><td>加解析记录，勾强制 HTTPS</td></tr><tr><td>网站托管</td><td>GitHub Pages / Cloudflare Pages</td><td>上传静态文件</td></tr></tbody></table><p>dpdns.org 来自 DigitalPlat FreeDomain，是一个免费二级域名服务。注册后你会拿到形如 <code>you.dpdns.org</code> 的地址，并且拥有完整的 DNS 控制权，可以自己添加 A、CNAME、TXT 记录，也可以把 NS 委派给 Cloudflare。每个账号的免费名额有限，长期闲置或违规会被回收，所以它适合练手和个人站点，不适合承载重要业务。</p><blockquote><p>一个常见误解：以为要单独去申请一张免费证书。其实不用。GitHub Pages 通过 Let's Encrypt 自动签发，Cloudflare Pages 用 Universal SSL，两者都会自动续期，你要做的只是把 DNS 指对，然后勾选强制 HTTPS。</p></blockquote><h2>最省事的一条路径</h2><ol><li>在 DigitalPlat 控制台注册域名，委派模式选「DigitalPlat DNS」（默认且标了推荐），解析记录就在这个面板里加，先不必迁到 Cloudflare。</li><li>把博客文件推到 GitHub 仓库，在 Settings → Pages 里选择从 main 分支根目录部署。此时已经能用 <code>username.github.io</code> 访问了。</li><li>回到域名控制台添加解析记录。注意 <code>you.dpdns.org</code> 是这个区域的根，标准 DNS 不允许在根上放 CNAME：</li></ol><pre><code>方案 <span class="tk-cls">A</span>：不带 www，给根域加 <span class="tk-nu">4</span> 条 <span class="tk-cls">A</span> 记录
-<span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">108.153</span>
-<span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">109.153</span>
-<span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">110.153</span>
-<span class="tk-cls">A</span>  you.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  <span class="tk-nu">185.199</span>.<span class="tk-nu">111.153</span>
-
-方案 <span class="tk-cls">B</span>：用 www，只加一条 <span class="tk-cls">CNAME</span>
-<span class="tk-cls">CNAME</span>  www.<span class="tk-pr">you</span>.<span class="tk-pr">dpdns</span>.<span class="tk-pr">org</span>  username.<span class="tk-pr">github</span>.<span class="tk-pr">io</span></code></pre><p>然后在仓库的 Pages 设置里填入对应的域名并保存。DNS 生效后勾选 <strong>Enforce HTTPS</strong>，证书最多需要一天左右签发完成，之后就是一条带小锁的正式地址。</p><h2>如果用 Cloudflare Pages</h2><p>子域名不必把 NS 迁到 Cloudflare，直接在 Pages 项目的 Custom domains 里发起添加，再去域名控制台按提示补一条 CNAME 指向 <code>xxx.pages.dev</code> 即可。注意顺序不能反：只在 DNS 里手写 CNAME、而不在 Pages 后台登记域名，会得到 522 错误。CF Pages 只提供 CNAME 目标，所以走 <code>www.you.dpdns.org</code> 这类子域最省事；只有绑裸域（apex）才必须把 NS 托管到 Cloudflare。</p><h2>几个值得记住的坑</h2><ul><li>根域不能放 CNAME。想直接用 <code>you.dpdns.org</code> 就得用 A 记录，CNAME 只能给 <code>www</code> 这类子域用。</li><li>委派模式选「外部名称服务器」时，得先在外部 DNS 建好区域、拿到 NS 主机名再提交注册；而 <code>dpdns.org</code> 是子域，Cloudflare 免费版只接受可注册根域作为区域，容易卡在这一步。</li><li>把 GitHub Pages 套在 Cloudflare 代理后面时，DNS 记录先设为「仅 DNS」（灰云），否则 Let's Encrypt 的验证容易失败；证书签发后再考虑开代理。</li><li>免费域名随时可能调整政策，重要内容要留有迁移方案：DNS 记录导出一份，随时能换到付费域名。</li><li>静态博客不需要构建工具。三个文件加一份文章数据，就能直接拖进托管平台。</li></ul><hr><p>写到这里，这个站本身也是这么搭起来的。剩下的问题只有一个：下一篇写什么。</p></div>
+<div class="body"><p>想拥有一个自己的博客，其实只需要解决三个问题：别人怎么找到你、内容放在哪、以及浏览器地址栏里那把小锁。这三件事分别对应域名、托管和证书，彼此独立，可以分开选。</p>
+<h2 id="h-三条信息-三层链路">三条信息，三层链路</h2>
+<p>环节可选服务要做的事免费域名dpdns.org申请一个 you.dpdns.org解析与证书Cloudflare / 平台自带加解析记录，勾强制 HTTPS网站托管GitHub Pages / Cloudflare Pages上传静态文件dpdns.org 来自 DigitalPlat FreeDomain，是一个免费二级域名服务。注册后你会拿到形如 you.dpdns.org 的地址，并且拥有完整的 DNS 控制权，可以自己添加 A、CNAME、TXT 记录，也可以把 NS 委派给 Cloudflare。每个账号的免费名额有限，长期闲置或违规会被回收，所以它适合练手和个人站点，不适合承载重要业务。</p>
+<p>一个常见误解：以为要单独去申请一张免费证书。其实不用。GitHub Pages 通过 Let&#39;s Encrypt 自动签发，Cloudflare Pages 用 Universal SSL，两者都会自动续期，你要做的只是把 DNS 指对，然后勾选强制 HTTPS。</p>
+<h2 id="h-最省事的一条路径">最省事的一条路径</h2>
+<ul><li>在 DigitalPlat 控制台注册域名，委派模式选「DigitalPlat DNS」（默认且标了推荐），解析记录就在这个面板里加，先不必迁到 Cloudflare。</li><li>把博客文件推到 GitHub 仓库，在 Settings → Pages 里选择从 main 分支根目录部署。此时已经能用 username.github.io 访问了。</li><li>回到域名控制台添加解析记录。注意 you.dpdns.org 是这个区域的根，标准 DNS 不允许在根上放 CNAME：</li></ul>
+<p>方案 A：不带 www，给根域加 4 条 A 记录<br>A  you.dpdns.org  185.199.108.153<br>A  you.dpdns.org  185.199.109.153<br>A  you.dpdns.org  185.199.110.153<br>A  you.dpdns.org  185.199.111.153</p>
+<p>方案 B：用 www，只加一条 CNAME<br>CNAME  www.you.dpdns.org  username.github.io然后在仓库的 Pages 设置里填入对应的域名并保存。DNS 生效后勾选 Enforce HTTPS，证书最多需要一天左右签发完成，之后就是一条带小锁的正式地址。</p>
+<h2 id="h-如果用-cloudflare-pages">如果用 Cloudflare Pages</h2>
+<p>子域名不必把 NS 迁到 Cloudflare，直接在 Pages 项目的 Custom domains 里发起添加，再去域名控制台按提示补一条 CNAME 指向 xxx.pages.dev 即可。注意顺序不能反：只在 DNS 里手写 CNAME、而不在 Pages 后台登记域名，会得到 522 错误。CF Pages 只提供 CNAME 目标，所以走 www.you.dpdns.org 这类子域最省事；只有绑裸域（apex）才必须把 NS 托管到 Cloudflare。</p>
+<h2 id="h-几个值得记住的坑">几个值得记住的坑</h2>
+<ul><li>根域不能放 CNAME。想直接用 you.dpdns.org 就得用 A 记录，CNAME 只能给 www 这类子域用。</li><li>委派模式选「外部名称服务器」时，得先在外部 DNS 建好区域、拿到 NS 主机名再提交注册；而 dpdns.org 是子域，Cloudflare 免费版只接受可注册根域作为区域，容易卡在这一步。</li><li>把 GitHub Pages 套在 Cloudflare 代理后面时，DNS 记录先设为「仅 DNS」（灰云），否则 Let&#39;s Encrypt 的验证容易失败；证书签发后再考虑开代理。</li><li>免费域名随时可能调整政策，重要内容要留有迁移方案：DNS 记录导出一份，随时能换到付费域名。</li><li>静态博客不需要构建工具。三个文件加一份文章数据，就能直接拖进托管平台。</li></ul>
+<p>写到这里，这个站本身也是这么搭起来的。剩下的问题只有一个：下一篇写什么。</p></div>
 <section class="interactions" aria-label="互动区">
 <div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
 <h2>留言</h2><p>留言直接显示在这里，写在页面上、用 GitHub 账号确认发布；👍 点赞、在 Issue 下回复，留言会长期存档到本站仓库；无广告、无追踪。</p></div></div>
