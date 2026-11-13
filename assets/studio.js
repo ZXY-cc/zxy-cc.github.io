@@ -1285,19 +1285,36 @@
         });
       });
   }
+  /* 量一张图的真实宽高：失败或超时都返回 null，不阻塞同步主流程 */
+  function measureDims(uri) {
+    return new Promise(function (res) {
+      if (!window.Image) return res(null);
+      var im = new window.Image();
+      var done = false;
+      var finish = function (dim) { if (!done) { done = true; res(dim); } };
+      im.onload = function () { finish(im.naturalWidth ? { w: im.naturalWidth, h: im.naturalHeight } : null); };
+      im.onerror = function () { finish(null); };
+      window.setTimeout(function () { finish(null); }, 4000);
+      im.src = uri;
+    });
+  }
   function extractPhotos(pat, message) {
     var found = [];
     walkImages(DATA, function (uri) { if (found.indexOf(uri) < 0) found.push(uri); });
     if (!found.length) return Promise.resolve(0);
     syncStatus('正在把 ' + found.length + ' 张内嵌图片转为仓库文件…');
     var map = {};
+    var dims = {}; /* 新图 url → { w, h }，写回照片对象供首页横竖分卡 */
     var chain = Promise.resolve();
     found.forEach(function (uri) {
       chain = chain.then(function () {
-        return toImageNode(uri).then(function (node) {
-          if (!node) return;
-          map[uri] = node.url;
-          return ghPut(node.path, node.b64, message, pat);
+        return measureDims(uri).then(function (dim) {
+          return toImageNode(uri).then(function (node) {
+            if (!node) return;
+            map[uri] = node.url;
+            if (dim) dims[node.url] = dim;
+            return ghPut(node.path, node.b64, message, pat);
+          });
         });
       });
     });
@@ -1310,6 +1327,21 @@
           return node;
         }
         return node;
+      })(DATA);
+      /* 把量到的宽高写回 { src, … } 形状的照片对象；其余字符串（头像、封面）不挂字段 */
+      (function markDims(node) {
+        if (typeof node === 'string') return;
+        if (Array.isArray(node)) { node.forEach(markDims); return; }
+        if (node && typeof node === 'object') {
+          Object.keys(node).forEach(function (k) {
+            var v = node[k];
+            if (typeof v === 'string') {
+              if (k === 'src' && dims[v]) { node.w = dims[v].w; node.h = dims[v].h; }
+              return;
+            }
+            markDims(v);
+          });
+        }
       })(DATA);
       return Object.keys(map).length;
     });

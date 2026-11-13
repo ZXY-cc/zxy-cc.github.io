@@ -482,27 +482,27 @@
   }
 
   /* ---------- 设置：画质档位 ----------
-     高 = 站点原本的完整效果，也是所有访客的默认档；极高 = 高的全部效果 + 实时毛玻璃，
-     以后新增的画质细节都挂在极高上；中 / 低按 QUALITY_SPEC 逐层减负，全部不开实时毛玻璃。
+     中 = 站点原本的完整效果（旧「高」档整体下移一档）；极高 = 高的全部效果 + 实时毛玻璃
+     + 更密一档星空，以后新增的画质细节都挂在极高上；低 = 旧「中」档（星点减半、装饰静止）。
      根节点 data-quality 驱动 CSS（首屏由 index.html 里的内联脚本预置，避免闪烁），
      qualityNow 供脚本判断是否需要跑逐帧光幕；切换即时生效，无需刷新。 */
   var QUALITY_KEY = 'zb-quality';
   var QUALITY_OPTS = [
-    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上开启实时毛玻璃，并把流星与花瓣加到两倍密度；以后新增的画质细节都会出现在这一档' },
-    { id: 'high', name: '高', desc: '完整效果：星空、花瓣、花朵爱心游走、全部流星与光幕（默认档）' },
-    { id: 'mid', name: '中', desc: '星点减半、花朵爱心静止；关闭鼠标光幕与卡片高光，保留主要动效' },
-    { id: 'low', name: '低', desc: '静态精简星空：关闭装饰、流星、流萤、光幕与入场动画' }
+    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上开启实时毛玻璃，并把星星、花瓣与流星再加一档密度；以后新增的画质细节都会出现在这一档' },
+    { id: 'high', name: '高', desc: '加密星空：比中档更多的星星、花瓣与流星，光幕与卡片高光全开（默认档）' },
+    { id: 'mid', name: '中', desc: '完整效果：星空、花瓣、花朵爱心游走、全部流星与光幕（原「高」档效果）' },
+    { id: 'low', name: '低', desc: '星点减半、花瓣留少许、花朵爱心静止；关闭鼠标光幕与卡片高光，保留主要动效（原「中」档效果）' }
   ];
   var QUALITY_SPEC = [
-    ['星星 / 花瓣', '72 / 24', '72 / 12', '36 / 6', '18 / 0'],
-    ['花朵与爱心', '缓慢游走旋转', '缓慢游走旋转', '静止', '隐藏'],
-    ['流星', '常驻 6 + 快速 6', '常驻 3 + 快速 3', '各留 1 条', '关闭'],
-    ['流萤', '夜间 8 只', '夜间 8 只', '夜间 4 只', '关闭'],
-    ['鼠标光幕 / 尾迹', '开启', '开启', '关闭', '关闭'],
-    ['卡片高光', '开启', '开启', '关闭', '关闭'],
+    ['星星 / 花瓣', '144 / 36', '108 / 24', '72 / 12', '36 / 6'],
+    ['花朵与爱心', '缓慢游走旋转', '缓慢游走旋转', '缓慢游走旋转', '静止'],
+    ['流星', '常驻 9 + 快速 9', '常驻 6 + 快速 6', '常驻 3 + 快速 3', '各留 1 条'],
+    ['流萤', '夜间 8 只', '夜间 8 只', '夜间 8 只', '夜间 4 只'],
+    ['鼠标光幕 / 尾迹', '开启', '开启', '开启', '关闭'],
+    ['卡片高光', '开启', '开启', '开启', '关闭'],
     ['实时毛玻璃', '开启', '关闭', '关闭', '关闭'],
-    ['代码高亮', 'Woodfish 配色', 'Woodfish 配色', 'Woodfish 配色', '不上色'],
-    ['入场动画', '开启', '开启', '开启', '关闭']
+    ['代码高亮', 'Woodfish 配色', 'Woodfish 配色', 'Woodfish 配色', 'Woodfish 配色'],
+    ['入场动画', '开启', '开启', '开启', '开启']
   ];
   var qualityNow = 'high';
   /* 用户没选过画质时，按设备能力自动降档：内存/核心极少直接给静态档，
@@ -646,7 +646,7 @@
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 首次访问默认高画质；「极高」在其上额外开启实时毛玻璃并加密流星与花瓣，中 / 低 依次减少装饰与实时渲染。</p></section>' +
+      '</b> · 首次访问默认高画质；中档保留完整动效、低档减少装饰，均为原「高 / 中」档效果整体下移；「极高」额外开启实时毛玻璃并再加一档星空密度。</p></section>' +
       '<section class="settings-card glass reveal" aria-label="字体设置">' +
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>字体</h2><p>设置网页的中英文字体、代码字体与 LaTeX 公式字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
@@ -844,9 +844,42 @@
         'title="' + esc(alt) + '" style="--shot:url(&quot;' + esc(shotUrl(p.src)) + '&quot;)"></div>';
     }).join('');
   }
-  /* 首页照片卡轮播的是「相册」而不是单张照片：按相册内最新照片日期倒序取前三个 */
-  function albumFeed() {
-    var out = arr('albums').map(function (a, i) {
+  /* 首页照片墙拆成横竖两张卡：相册按「照片横竖多数」归卡——
+     照片带 w / h（创作台上传时记录）直接判定；缺尺寸的本机异步量一次，量完重绘首页。
+     数不出多数时先按横版处理，等测量回调再归位。 */
+  var orientMemo = {};
+  function photoOrient(p) {
+    if (p && p.w && p.h) return p.w >= p.h ? 'h' : 'v';
+    if (p && p.src && orientMemo[p.src]) return orientMemo[p.src];
+    return null;
+  }
+  function measureOrient(src) {
+    if (!src || orientMemo[src] || !window.Image) return;
+    orientMemo[src] = '?';
+    var im = new window.Image();
+    im.onload = function () {
+      orientMemo[src] = im.naturalWidth >= im.naturalHeight ? 'h' : 'v';
+      if (location.hash === '#/' || location.hash === '#' || location.hash === '') route();
+    };
+    im.onerror = function () { orientMemo[src] = 'h'; };
+    im.src = src;
+  }
+  function albumOrient(a) {
+    var h = 0, v = 0;
+    (a.photos || []).forEach(function (p) {
+      var o = photoOrient(p);
+      if (o === 'h') h++; else if (o === 'v') v++;
+    });
+    if (h === v) {
+      (a.photos || []).forEach(function (p) { if (p && p.src && !photoOrient(p)) measureOrient(p.src); });
+      return 'h';
+    }
+    return h > v ? 'h' : 'v';
+  }
+  /* 首页照片卡轮播的是「相册」而不是单张照片：按相册内最新照片日期倒序取前三个，
+     且只取横竖版与卡片一致的相册 */
+  function albumFeed(orient) {
+    var out = arr('albums').filter(function (a) { return albumOrient(a) === orient; }).map(function (a, i) {
       var latest = String(a.date || '');
       (a.photos || []).forEach(function (p) {
         var d = String(p.date || '');
@@ -856,9 +889,26 @@
     });
     return recentByDate(out, 3);
   }
+  function photoCarousel(albums, cls, badge) {
+    return '<section class="q-card q-photo ' + cls + ' glass sheen reveal" data-qcarousel aria-label="' + esc(badge) + '">' +
+      '<div class="q-slides">' + qSlides(albums.map(function (it) {
+        var a = it.a;
+        return {
+          href: '#/album/' + encodeURIComponent(a.id),
+          inner: '<div class="album-stack q-photo-stack">' + stackCovers(a.photos, a.title) +
+              '<span class="album-count">' + (a.photos || []).length + ' 张</span>' +
+              '<div class="q-photo-cap"><b>' + esc(a.title) + '</b><i>' +
+              esc(a.desc || '') + '</i></div>' +
+              qBadge(badge, 'q-photo-badge') + '</div>'
+        };
+      })) + '</div>' +
+      (albums.length > 1 ? '<div class="q-dots">' + qDots(albums.length) + '</div>' : '') +
+      '</section>';
+  }
   function renderHome() {
     var posts = recentByDate(POSTS, 3);
-    var albums = albumFeed();
+    var albumsH = albumFeed('h');
+    var albumsV = albumFeed('v');
     var moments = recentByDate(arr('moments'), 3);
     var chatters = recentByDate(arr('chatter'), 3);
     var postCard = posts.length ? qCard('q-post', posts.map(function (p) {
@@ -874,25 +924,11 @@
           '<span class="q-go">阅读全文 →</span>'
       };
     }), '最新文章') : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
-    var photoCard;
-    if (albums.length) {
-      photoCard = '<section class="q-card q-photo glass sheen reveal" data-qcarousel aria-label="最新照片墙">' +
-        '<div class="q-slides">' + qSlides(albums.map(function (it) {
-          var a = it.a;
-          return {
-            href: '#/album/' + encodeURIComponent(a.id),
-            inner: '<div class="album-stack q-photo-stack">' + stackCovers(a.photos, a.title) +
-              '<span class="album-count">' + (a.photos || []).length + ' 张</span>' +
-              '<div class="q-photo-cap"><b>' + esc(a.title) + '</b><i>' +
-              esc(a.desc || '') + '</i></div>' +
-              qBadge('最新照片墙', 'q-photo-badge') + '</div>'
-          };
-        })) + '</div>' +
-        (albums.length > 1 ? '<div class="q-dots">' + qDots(albums.length) + '</div>' : '') +
-        '</section>';
-    } else {
-      photoCard = qEmpty('q-photo', '#/photowall', '照片墙还空着', '定格过的光会放在这里');
-    }
+    /* 照片墙两张卡收窄：横版 4:3、竖版 3:4，各轮播对应方向的最新三个相册 */
+    var photoH = albumsH.length ? photoCarousel(albumsH, 'q-photo-h', '最新横版照片墙')
+      : qEmpty('q-photo q-photo-h', '#/photowall', '横版相册还空着', '横版照片会归到这里');
+    var photoV = albumsV.length ? photoCarousel(albumsV, 'q-photo-v', '最新竖版照片墙')
+      : qEmpty('q-photo q-photo-v', '#/photowall', '竖版相册还空着', '竖版照片会归到这里');
     var momentCard = moments.length ? qCard('q-moment', moments.map(function (m) {
       return {
         href: '#/moments',
@@ -913,7 +949,7 @@
       };
     }), '最新杂谈') : qEmpty('q-chatter', '#/chatter', '还没有杂谈', '长长短短的想法会放在这里');
     return profileCard() +
-      '<div class="home-quick">' + postCard + photoCard + momentCard + chatterCard + '</div>';
+      '<div class="home-quick">' + postCard + photoV + photoH + momentCard + chatterCard + '</div>';
   }
   /* ---------- 首页快捷卡轮播：每张卡各自轮换，悬停暂停、圆点可点 ---------- */
   var quickTimer = 0, quickCards = [];
@@ -1121,13 +1157,14 @@
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
       return seed / 0x7fffffff;
     }
-    for (var i = 0; i < 72; i++) {
+    for (var i = 0; i < 144; i++) {
       var puffy = i % 8 === 0;
       var warm = !puffy && i % 13 === 5;
       var still = !puffy && !warm;
       var s = document.createElement('span');
-      /* 按生成顺序标注档位：前 18 颗低画质也保留，前 36 颗中画质保留，其余仅高画质 */
-      var tier = i < 18 ? ' q-core' : (i < 36 ? ' q-mid' : ' q-high');
+      /* 按生成顺序标注档位：前 36 颗低画质也保留，前 72 颗中画质保留，
+         前 108 颗高画质保留，其余只在极高画质出现 */
+      var tier = i < 36 ? ' q-core' : (i < 72 ? ' q-mid' : (i < 108 ? ' q-high' : ' q-ultra'));
       s.className = (puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star is-still')) + tier;
       var size = puffy ? (11 + rnd() * 10).toFixed(1) + 'px' : (1 + rnd() * 2.1).toFixed(1) + 'px';
       var dx = rnd() * 56 - 28;
@@ -1160,11 +1197,11 @@
     if (petalBox && petalBox.appendChild) {
       var fills = ['rgba(250,205,225,.72)', 'rgba(255,255,255,.80)',
         'rgba(244,186,212,.62)', 'rgba(206,224,250,.58)'];
-      /* 前 6 片低画质保留，其后 6 片高画质保留，最后 12 片只在极高画质出现（密度翻倍）。
-         位置沿用同一随机序列，因此高画质的前 12 片摆位与旧版逐像素一致。 */
-      for (var j = 0; j < 24; j++) {
+      /* 前 6 片低画质保留，其后 6 片中画质保留，再后 12 片高画质保留，
+         最后 12 片只在极高画质出现。位置沿用同一随机序列，因此高档的前 12 片摆位与旧版一致。 */
+      for (var j = 0; j < 36; j++) {
         var p = document.createElement('span');
-        p.className = 'petal' + (j < 6 ? ' q-core' : (j < 12 ? ' q-high' : ' q-ultra'));
+        p.className = 'petal' + (j < 6 ? ' q-core' : (j < 12 ? ' q-mid' : (j < 24 ? ' q-high' : ' q-ultra')));
         p.style.cssText = 'left:' + (rnd() * 96).toFixed(2) + '%;' +
           'top:' + (-8 - rnd() * 18).toFixed(1) + '%;' +
           '--size:' + (9 + rnd() * 9).toFixed(1) + 'px;' +
@@ -1489,8 +1526,8 @@
         if (h && h === host && (!to || !h.contains || !h.contains(to))) { host = null; rect = null; }
       }, { passive: true });
       document.addEventListener('pointermove', function (e) {
-        /* 中 / 低 画质不再跑逐帧光幕与卡片高光（极高与高一致） */
-        if (qualityNow !== 'high' && qualityNow !== 'ultra') return;
+        /* 低画质不再跑逐帧光幕与卡片高光（极高 / 高 / 中一致） */
+        if (qualityNow === 'low') return;
         px = e.clientX; py = e.clientY;
         /* 尾迹直接在事件里落段、不等 rAF：刷新后入场动画占住帧队列时也不会跳段断线 */
         if (!trailOn) { trailX = px; trailY = py; trailOn = true; }

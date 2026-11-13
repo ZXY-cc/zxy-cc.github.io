@@ -343,6 +343,8 @@ body {
 .petal svg { display: block; width: 100%; height: 100%; fill: var(--petal-fill, rgba(250, 205, 225, .72)); }
 /* 极高画质追加的后半段花瓣：默认不占位 */
 .petals .petal.q-ultra { display: none; }
+/* 极高画质追加的最后一档星点：默认不占位 */
+.stars .star.q-ultra { display: none; }
 
 /* 少量模糊流星：头部在行进前方（左端 / 左下），光迹只留在走过的后方（右上） */
 .meteors { position: absolute; inset: 0; }
@@ -380,6 +382,10 @@ body {
 .meteor-d { top: 24%; left: 80%; --len: 165px; --angle: -23deg; --tx: -340px; --ty: 162px; --dur: 26s; --delay: 9s;  --peak: .62; }
 .meteor-e { top: 57%; left: 66%; --len: 132px; --angle: -29deg; --tx: -290px; --ty: 178px; --dur: 33s; --delay: 19s; --peak: .48; }
 .meteor-f { top: 70%; left: 93%; --len: 200px; --angle: -18deg; --tx: -420px; --ty: 138px; --dur: 41s; --delay: 31s; --peak: .56; }
+/* 只属于极高画质的追加流星：更散更密，整片天空都动起来 */
+.meteor-g { top: 33%; left: 88%; --len: 150px; --angle: -25deg; --tx: -320px; --ty: 150px; --dur: 28s; --delay: 3s;  --peak: .50; }
+.meteor-h { top: 62%; left: 52%; --len: 118px; --angle: -33deg; --tx: -260px; --ty: 170px; --dur: 36s; --delay: 15s; --peak: .40; }
+.meteor-i { top: 84%; left: 74%; --len: 175px; --angle: -21deg; --tx: -360px; --ty: 128px; --dur: 44s; --delay: 27s; --peak: .46; }
 /* 只属于极高画质：默认不占位、不跑动画 */
 .meteors .meteor.q-ultra,
 .shoots .shoot.q-ultra { display: none; }
@@ -430,6 +436,10 @@ body {
 .shoot-d { top: 22%; left: 92%; --sangle: 152deg; --tlen: 34vw; --sdist: 118vw; --scycle: 23s; --sdelay: -14s; --speak: .84; --shold: .58; }
 .shoot-e { top: 46%; left: 78%; --sangle: 158deg; --tlen: 30vw; --sdist: 112vw; --scycle: 31s; --sdelay: -21s; --speak: .70; --shold: .46; }
 .shoot-f { top: 14%; left: 98%; --sangle: 148deg; --tlen: 38vw; --sdist: 126vw; --scycle: 38s; --sdelay: -27s; --speak: .74; --shold: .50; }
+/* 只属于极高画质的追加快速流星：更散更密 */
+.shoot-g { top: 58%; left: 88%; --sangle: 154deg; --tlen: 32vw; --sdist: 116vw; --scycle: 26s; --sdelay: -4s;  --speak: .68; --shold: .44; }
+.shoot-h { top: 6%;  left: 58%; --sangle: 162deg; --tlen: 26vw; --sdist: 104vw; --scycle: 30s; --sdelay: -17s; --speak: .58; --shold: .38; }
+.shoot-i { top: 74%; left: 96%; --sangle: 146deg; --tlen: 36vw; --sdist: 122vw; --scycle: 42s; --sdelay: -33s; --speak: .62; --shold: .40; }
 
 @keyframes shoot-head {
   0%, 43.9%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.8); }
@@ -1137,7 +1147,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* ---------- 首页快捷卡片（2×2） ----------
    文章 / 照片墙(4:3) / 说说 / 杂谈各占一格，各自轮播最新三条。 */
-.home-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;
+.home-quick { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px;
   align-items: stretch; margin: 22px 0 44px; }
 .q-card { position: relative; display: block; min-height: 212px; overflow: hidden;
   border-radius: 18px; border: 1px solid var(--glass-line);
@@ -1151,12 +1161,16 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: opacity .6s ease, visibility .6s ease; }
 .q-slide.on { opacity: 1; visibility: visible; pointer-events: auto; }
 .q-slide > .q-body { flex: 1 1 auto; }
-.q-post { grid-column: 1; grid-row: 1; }
-.q-photo { grid-column: 2; grid-row: 1; aspect-ratio: 4 / 3; min-height: 0;
-  align-self: start; padding: 0; overflow: visible; }
+/* 错位 bento：文章占左上宽位，竖版照片墙（3:4）贴右跨两行，说说 + 横版照片墙（4:3）
+   居中一行，杂谈通栏收底——不整行整列，整体仍是矩形；照片墙卡收窄不占大块面积 */
+.q-post { grid-column: 1 / 9; grid-row: 1; }
+.q-photo-v { grid-column: 9 / 13; grid-row: 1 / 3; }
+.q-moment { grid-column: 1 / 5; grid-row: 2; }
+.q-photo-h { grid-column: 5 / 9; grid-row: 2; }
+.q-chatter { grid-column: 1 / 13; grid-row: 3; }
+.q-photo { min-height: 0; padding: 0; overflow: visible; }
+.q-photo-h { aspect-ratio: 4 / 3; align-self: start; }
 /* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
-.q-moment { grid-column: 1; grid-row: 2; }
-.q-chatter { grid-column: 2; grid-row: 2; }
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
 .q-photo .album-stack { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; margin: 0; }
 .q-photo .q-slide { padding: 0; justify-content: flex-end; overflow: visible; }
@@ -1192,9 +1206,19 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo .q-dot { background: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .6); }
 .q-photo .q-dot.on { background: #fff; }
 @media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
+/* 中窄屏：竖版照片墙不再跨两行，与横版并排一行错落，说说 / 杂谈再各占半行 */
+@media (max-width: 1080px) {
+  .q-post { grid-column: 1 / 13; grid-row: 1; }
+  .q-photo-h { grid-column: 1 / 7; grid-row: 2; }
+  .q-photo-v { grid-column: 7 / 13; grid-row: 2; aspect-ratio: 3 / 4; align-self: start; }
+  .q-moment { grid-column: 1 / 7; grid-row: 3; }
+  .q-chatter { grid-column: 7 / 13; grid-row: 3; }
+}
 @media (max-width: 760px) {
   .home-quick { grid-template-columns: 1fr; }
-  .q-post, .q-photo, .q-moment, .q-chatter { grid-column: 1; grid-row: auto; }
+  .q-post, .q-photo-h, .q-photo-v, .q-moment, .q-chatter { grid-column: 1; grid-row: auto; }
+  /* 竖版照片墙收窄居中，避免单列下占满整屏高度 */
+  .q-photo-v { width: min(100%, 320px); justify-self: center; }
   /* 单列时没有照片卡撑高，给文章卡留够空间，长摘要仍能显示多行 */
   .q-post { min-height: 300px; }
 }
@@ -1239,9 +1263,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   background-position: center, center;
   background-repeat: no-repeat, no-repeat;
   filter: saturate(.94) brightness(1.02); }
-:root[data-quality="mid"] .album-stack > [data-stack-layer]::before,
-:root[data-quality="low"] .album-stack > [data-stack-layer]::before {
-  background-image: none; filter: none; }
 /* 仅极高画质：相框色化作环境光——向外溢出蓝粉柔光，再以柔光混入天空雾与照片。
    照片内容、比例与硬边全部不变，只是被主题色包住，不再像硬贴上去的一块。 */
 :root[data-quality="ultra"] .album-stack > [data-stack-layer] {
@@ -1285,7 +1306,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* 相册详情：瓷砖随滚动依次轻柔浮现（Kiremaku 式 stagger），动画不影响悬停 */
 .photo-tile.in { animation: tile-pop .55s cubic-bezier(.22,.68,.28,1) backwards; }
 @keyframes tile-pop { from { opacity: 0; transform: translate3d(0, 18px, 0); } to { opacity: 1; transform: none; } }
-:root[data-quality="low"] .photo-tile.in { animation: none !important; }
 @media (max-width: 700px) {
   .album-grid { grid-template-columns: 1fr; }
   .album-stack { margin: 18px 18px 0; }
@@ -1593,51 +1613,46 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* ---------- 画质档位：高 = 完整效果（默认档），极高 = 高 + 实时毛玻璃，中 / 低 逐层减负 ----------
    只作用于根节点带 data-quality 的情况，高画质（默认、无该属性）一行都不改。
    CSS 负责静态装饰与渲染开销，脚本负责跳过逐帧的光幕与卡片高光。 */
-/* 极高：在「高」之上独占实时毛玻璃与更密的流星 / 花瓣；以后新增的画质细节都挂在这一档 */
+/* 极高：在「高」之上独占实时毛玻璃与更密的流星 / 花瓣 / 星点；以后新增的画质细节都挂在这一档 */
 :root[data-quality="ultra"] { --glass-blur: blur(10px) saturate(128%); }
 :root[data-quality="ultra"] .meteors .meteor.q-ultra,
 :root[data-quality="ultra"] .shoots .shoot.q-ultra,
-:root[data-quality="ultra"] .petals .petal.q-ultra { display: block; }
-/* 中：星星 72→36、花瓣 12→6；常驻流星与快速流星各留 1、流萤留 4 */
-:root[data-quality="mid"] .stars .star.q-high { display: none; }
-:root[data-quality="mid"] .petals .petal.q-high { display: none; }
-:root[data-quality="mid"] .meteor-b,
-:root[data-quality="mid"] .meteor-c,
-:root[data-quality="mid"] .shoot-b,
-:root[data-quality="mid"] .shoot-c,
-:root[data-quality="mid"] .fireflies .firefly:nth-child(n+5) { display: none; }
-/* 中：花朵 / 爱心 / 装饰星停止旋转与移动，保留静态摆位 */
-:root[data-quality="mid"] .blooms .sky-deco {
+:root[data-quality="ultra"] .petals .petal.q-ultra,
+:root[data-quality="ultra"] .stars .star.q-ultra { display: block; }
+/* 中 = 旧「高」档完整效果：72 星 / 12 花瓣 / 常驻 3 + 快速 3 流星 / 8 流萤，花朵爱心游走、光幕全开；
+   只隐去高与极高追加的最后几档密度 */
+:root[data-quality="mid"] .stars .star.q-high,
+:root[data-quality="mid"] .petals .petal.q-high,
+:root[data-quality="mid"] .meteors .meteor.q-high,
+:root[data-quality="mid"] .shoots .shoot.q-high { display: none; }
+/* 中 / 低：相框里照片衍生雾晕一并省去，只留卡纸与照片 */
+:root[data-quality="mid"] .album-stack > [data-stack-layer]::before,
+:root[data-quality="low"] .album-stack > [data-stack-layer]::before {
+  background-image: none; filter: none; }
+/* 低 = 旧「中」档：36 星 / 6 花瓣 / 流星各留 1 / 流萤 4，花朵爱心静止；
+   关闭鼠标光幕与卡片高光，保留主要动效 */
+:root[data-quality="low"] .stars .star.q-high,
+:root[data-quality="low"] .stars .star.q-mid { display: none; }
+:root[data-quality="low"] .petals .petal.q-high,
+:root[data-quality="low"] .petals .petal.q-mid { display: none; }
+:root[data-quality="low"] .meteors .meteor.q-high,
+:root[data-quality="low"] .shoots .shoot.q-high,
+:root[data-quality="low"] .meteor-b,
+:root[data-quality="low"] .meteor-c,
+:root[data-quality="low"] .shoot-b,
+:root[data-quality="low"] .shoot-c,
+:root[data-quality="low"] .fireflies .firefly:nth-child(n+5) { display: none; }
+/* 低：花朵 / 爱心 / 装饰星停止旋转与移动，保留静态摆位 */
+:root[data-quality="low"] .blooms .sky-deco {
   animation: none !important;
   transform: rotate(var(--dir0, 0deg)) !important;
 }
-/* 中 / 低：取消跟随鼠标的光幕与尾迹，以及鼠标停在卡片上时发出的高光 */
-:root[data-quality="mid"] .cursor-glow,
-:root[data-quality="mid"] .mouse-trail,
+/* 低：取消跟随鼠标的光幕与尾迹，以及鼠标停在卡片上时发出的高光 */
 :root[data-quality="low"] .cursor-glow,
 :root[data-quality="low"] .mouse-trail { display: none !important; }
-:root[data-quality="mid"] .sheen::after,
 :root[data-quality="low"] .sheen::after { display: none !important; }
-
-/* 低：星星 36→18 且全部静止；装饰、花瓣、流星、流萤整体隐去 */
-:root[data-quality="low"] .stars .star.q-high,
-:root[data-quality="low"] .stars .star.q-mid { display: none; }
-:root[data-quality="low"] .stars .star {
-  animation: none !important; opacity: var(--sop, .82);
-}
-:root[data-quality="low"] .blooms,
-:root[data-quality="low"] .petals,
-:root[data-quality="low"] .meteors,
-:root[data-quality="low"] .shoots,
-:root[data-quality="low"] .fireflies { display: none !important; }
-/* 低：关闭实时毛玻璃、入场动效与启动闪屏，只留静态水彩天空 */
+/* 低：关闭实时毛玻璃，只留静态水彩天空 */
 :root[data-quality="low"] { --glass-blur: none; }
-:root[data-quality="low"] .reveal {
-  opacity: 1 !important; transform: none !important; transition: none !important;
-}
-:root[data-quality="low"] .splash,
-:root[data-quality="low"] .puffy-mark svg { animation: none !important; }
-:root[data-quality="low"] .splash { display: none !important; }
 
 /* ---------- 启动闪屏 / 光标柔光 / 流萤 ---------- */
 .splash { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;
@@ -1829,8 +1844,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .stars .star:nth-child(n+37),
   .petals .petal:nth-child(n+7),
   .shoot-c, .meteor-c { display: none; }
-  /* 极高画质追加的流星与花瓣在窄屏同样减负（窄屏不追求满特效） */
-  .shoot.q-ultra, .meteor.q-ultra, .petal.q-ultra { display: none !important; }
+  /* 高 / 极高画质追加的流星与花瓣在窄屏同样减负（窄屏不追求满特效） */
+  .shoot.q-ultra, .meteor.q-ultra, .petal.q-ultra, .star.q-ultra,
+  .shoot.q-high, .meteor.q-high, .petal.q-high { display: none !important; }
 }
 
 /* 更窄的屏幕：继续收窄卡片内边距，保住正文有效行宽 */
@@ -2098,7 +2114,6 @@ pre code .tk-cs { color: var(--syn-cs); }
 pre code .tk-fn { color: var(--syn-fn); }
 pre code .tk-cls { color: var(--syn-cls); }
 pre code .tk-pr { color: var(--syn-pr); }
-:root[data-quality="low"] pre code span[class^="tk-"] { color: inherit; font-style: normal; }
 /* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
 pre, pre > code, .article :not(pre) > code {
   font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
