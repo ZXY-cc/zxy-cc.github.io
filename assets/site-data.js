@@ -99,18 +99,6 @@ window.STUDIO_DATA = {
           "title": "测试",
           "note": "测试",
           "date": "2026-11-12"
-        },
-        {
-          "src": "/assets/photos/p-1b45faf9e766.jpg",
-          "title": "测试",
-          "note": "测试",
-          "date": "2026-11-12"
-        },
-        {
-          "src": "/assets/photos/p-b51ff49eae8d.jpg",
-          "title": "测试",
-          "note": "测试",
-          "date": "2026-11-12"
         }
       ]
     }
