@@ -61,7 +61,7 @@ window.STUDIO_DATA = {
   "projects": [
     {
       "id": "p-paper",
-      "name": "静态博客·星梦Staream",
+      "name": "博客·星梦Staream",
       "desc": "零依赖的单页博客：hash 路由、玻璃星空、日夜主题、全局搜索与照片灯箱，托管在 GitHub Pages 上，绑自己的域名。",
       "tags": [
         "静态站点",
@@ -74,7 +74,7 @@ window.STUDIO_DATA = {
     },
     {
       "id": "pj-mwc6flztefi0",
-      "name": "爱信",
+      "name": "APP·爱信",
       "desc": "一个为用户和AI聊天提供机遇的APP，支持定义AI角色的性格、语言特点，角色有心情变化、长期记忆。可以对用户拍一拍和发送表情包、照片等。目前正在尝试优化群聊功能中用户与AI的交流以及AI间交流的逻辑链稳定性。",
       "tags": [
         "AI全栈开发",
