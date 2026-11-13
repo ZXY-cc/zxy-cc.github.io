@@ -326,8 +326,10 @@
       '<p class="page-note">共 ' + albums.length + ' 个相册 · ' + photoCount() + ' 张照片</p>' +
       '<div class="album-grid">' + albums.map(function (a) {
         var n = (a.photos || []).length;
-        /* Kirameku 式堆叠封面：最新三张，最新一张在最上层，底层往上错位露角 */
-        return '<a class="album-card glass sheen reveal" href="#/album/' + encodeURIComponent(a.id) + '">' +
+        /* Kirameku 式堆叠封面：最新三张，最新一张在最上层，底层往上错位露角；
+           竖版照片集按原比例竖版显示（is-v → 3:4），横版保持 4:3 */
+        var v = albumOrient(a) === 'v';
+        return '<a class="album-card' + (v ? ' is-v' : '') + ' glass sheen reveal" href="#/album/' + encodeURIComponent(a.id) + '">' +
           '<div class="album-stack">' + stackCovers(a.photos, a.title) +
           '<span class="album-count">' + n + ' 张</span></div>' +
           '<div class="album-info"><h2>' + esc(a.title) + '</h2><p>' + esc(a.desc) + '</p>' +
@@ -830,8 +832,8 @@
       return { '"': '%22', "'": '%27', '\\': '%5C', '\r': '', '\n': '' }[c];
     });
   }
-  /* 三张按日期倒序的照片：最新一张在最上层，底层往上错位露角。
-     每层是固定 4:3 定格框，同一张图先模糊铺底、再 contain 等比完整显示，
+  /* 三张按日期倒序的照片：最新一张在最上层，底层往上错位露角（CSS 端再做景深模糊：
+     顶层清晰、第二层略糊、第三层更糊）。照片 contain 等比完整显示，无相框，
      横版与竖版都不裁切、不变形，也不会因 height:auto 撑出卡片。 */
   function stackCovers(photos, alt) {
     var list = recentByDate(photos, 3);
@@ -859,7 +861,9 @@
     var im = new window.Image();
     im.onload = function () {
       orientMemo[src] = im.naturalWidth >= im.naturalHeight ? 'h' : 'v';
-      if (location.hash === '#/' || location.hash === '#' || location.hash === '') route();
+      var h = location.hash || '';
+      /* 首页与照片墙都依赖横竖归卡 / is-v 标记，量完任一页面在场就重绘 */
+      if (h === '#/' || h === '#' || h === '' || h.indexOf('#/photowall') === 0) route();
     };
     im.onerror = function () { orientMemo[src] = 'h'; };
     im.src = src;

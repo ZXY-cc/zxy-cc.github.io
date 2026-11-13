@@ -98,7 +98,9 @@ window.STUDIO_DATA = {
           "src": "/assets/photos/p-a8c78ca29358.jpg",
           "title": "测试",
           "note": "测试",
-          "date": "2026-11-12"
+          "date": "2026-11-12",
+          "w": 1200,
+          "h": 900
         }
       ]
     },
@@ -113,13 +115,17 @@ window.STUDIO_DATA = {
           "src": "/assets/photos/p-1b45faf9e766.jpg",
           "title": "测试（竖版） · 1",
           "note": "",
-          "date": "2026-11-13"
+          "date": "2026-11-13",
+          "w": 900,
+          "h": 1200
         },
         {
           "src": "/assets/photos/p-b51ff49eae8d.jpg",
           "title": "测试（竖版） · 2",
           "note": "",
-          "date": "2026-11-13"
+          "date": "2026-11-13",
+          "w": 900,
+          "h": 1200
         }
       ]
     }

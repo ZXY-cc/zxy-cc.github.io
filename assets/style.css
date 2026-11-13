@@ -65,16 +65,6 @@
   --glass-inner: inset 0 1px 0 rgba(255, 255, 255, .86), inset 0 -1px 0 rgba(255, 255, 255, .20);
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .30) 0%, rgba(255, 255, 255, 0) 34%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, .12) 100%);
 
-  /* 照片相框：边框与内铺底直接取背景天空渐变，严格同色；照片外的雾也换成天空雾 */
-  --frame-line: var(--sky-grad);
-  --frame-fog: var(--sky-grad);
-  --frame-matte: rgba(255, 250, 246, .88);
-  --frame-cream: linear-gradient(135deg, rgba(255, 255, 255, .10), rgba(255, 246, 248, .06));
-  /* 环境色只在极高画质投到照片与四周 */
-  --frame-amb: linear-gradient(135deg, rgba(150, 193, 246, .30), rgba(190, 185, 235, .08) 48%, rgba(247, 183, 212, .28));
-  --frame-amb-photo: linear-gradient(135deg, rgba(150, 193, 246, .13), rgba(255, 255, 255, 0) 50%, rgba(247, 183, 212, .13));
-  --frame-halo: -9px -10px 28px rgba(150, 193, 246, .28), 10px 13px 32px rgba(247, 183, 212, .26);
-
   /* 代码块改为雾白玻璃，与整体浅色调统一 */
   --code-bg: rgba(255, 255, 255, .30);
   --code-ink: #4a5175;
@@ -160,12 +150,6 @@
   --glass-shadow: 0 18px 50px rgba(12, 22, 58, .34);
   --glass-inner: inset 0 1px 0 rgba(226, 238, 255, .22), inset 0 -1px 0 rgba(226, 238, 255, .07);
   --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, .04) 100%);
-
-  /* 星夜沿用同一条天空渐变（上方 --sky-* 已换夜空调），相框与背景始终同色；卡纸换冷调 */
-  --frame-matte: rgba(226, 236, 255, .72);
-  --frame-amb: linear-gradient(135deg, rgba(146, 186, 246, .28), rgba(190, 180, 235, .08) 48%, rgba(242, 168, 208, .26));
-  --frame-amb-photo: linear-gradient(135deg, rgba(146, 186, 246, .12), rgba(255, 255, 255, 0) 50%, rgba(242, 168, 208, .12));
-  --frame-halo: -9px -10px 30px rgba(146, 186, 246, .26), 10px 13px 34px rgba(242, 168, 208, .24);
 
   --code-bg: rgba(16, 26, 66, .28);
   --code-ink: #f6f8ff;
@@ -1143,17 +1127,18 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: opacity .6s ease, visibility .6s ease; }
 .q-slide.on { opacity: 1; visibility: visible; pointer-events: auto; }
 .q-slide > .q-body { flex: 1 1 auto; }
-/* 错位 bento：文章卡通栏置顶（面积最大），第二行横版照片墙（4:3 = 4 列）与
-   竖版照片墙（3:4 = 3 列，与横版等面积）紧邻，说说（5 列）收右侧余量，
-   杂谈通栏收底；整体仍是矩形 */
-.q-post { grid-column: 1 / 13; grid-row: 1; }
-.q-photo-h { grid-column: 1 / 5; grid-row: 2; }
-.q-photo-v { grid-column: 5 / 8; grid-row: 2; }
-.q-moment { grid-column: 8 / 13; grid-row: 2; }
-.q-chatter { grid-column: 1 / 13; grid-row: 3; }
+/* 错位 bento：文章卡占左侧两行大块（面积最大），两张照片墙小卡在右上相邻纵排
+   （面积相近且收窄），第二行说说（5 列）+ 杂谈（7 列，面积更大）收底；
+   视觉面积：文章 > 杂谈 > 说说 > 照片墙两张小卡，整体仍是矩形 */
+.q-post { grid-column: 1 / 9; grid-row: 1 / 3; }
+.q-photo-h { grid-column: 9 / 13; grid-row: 1; }
+.q-photo-v { grid-column: 9 / 13; grid-row: 2; }
+.q-moment { grid-column: 1 / 6; grid-row: 3; }
+.q-chatter { grid-column: 6 / 13; grid-row: 3; }
 .q-photo { min-height: 0; padding: 0; overflow: visible; }
 .q-photo-h { aspect-ratio: 4 / 3; align-self: start; }
-.q-photo-v { aspect-ratio: 3 / 4; align-self: start; }
+/* 竖版卡不再强求与横版等面积：略矮的 5:4 收窄面积，竖版照片仍 contain 完整显示 */
+.q-photo-v { aspect-ratio: 5 / 4; align-self: start; }
 /* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
 .q-photo .album-stack { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; margin: 0; }
@@ -1193,10 +1178,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* 中窄屏：文章卡通栏，横竖两张照片墙并排一行错落，说说 / 杂谈再各占半行 */
 @media (max-width: 1080px) {
   .q-post { grid-column: 1 / 13; grid-row: 1; }
-  .q-photo-h { grid-column: 1 / 7; grid-row: 2; }
-  .q-photo-v { grid-column: 7 / 13; grid-row: 2; aspect-ratio: 3 / 4; align-self: start; }
-  .q-moment { grid-column: 1 / 7; grid-row: 3; }
-  .q-chatter { grid-column: 7 / 13; grid-row: 3; }
+  .q-photo-h { grid-column: 1 / 5; grid-row: 2; }
+  .q-photo-v { grid-column: 5 / 8; grid-row: 2; aspect-ratio: 3 / 4; align-self: start; }
+  .q-moment { grid-column: 8 / 13; grid-row: 2; }
+  .q-chatter { grid-column: 1 / 13; grid-row: 3; }
 }
 @media (max-width: 760px) {
   .home-quick { grid-template-columns: 1fr; }
@@ -1219,58 +1204,30 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* ---------- 照片墙 / 相册 ---------- */
 /* 两栏相册（Kirameku 式），窄屏回落单栏 */
-.album-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; margin: 26px 0 40px; }
-.album-card { display: block; border-radius: 20px; border: 1px solid var(--glass-line);
+/* 照片墙：双列瀑布流（CSS columns），横版 4:3 与竖版 3:4 相册卡错落排布、自动安排 */
+.album-grid { columns: 2; column-gap: 26px; margin: 26px 0 40px; }
+.album-card { display: block; break-inside: avoid; margin: 0 0 26px;
+  border-radius: 20px; border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner);
   transition: transform .4s cubic-bezier(.22,.68,.28,1), box-shadow .4s ease; }
 .album-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(112,138,190,.22); }
-/* 三张封面的「定格框」：统一 4:3 盒子，同一张图先铺主题天空雾、再 contain 等比完整显示。
-   横版与竖版都保持原比例，不裁切、不变形，也不会因 height:auto 撑出卡片；
+/* 三张封面的旋转堆叠（仿星灰家）：全站取消相框——无边框、无卡纸内衬、无雾晕与环境光，
+   照片直接 contain 等比完整显示；横版相册 4:3、竖版相册 3:4 原比例竖版显示。
    三层同尺寸同向小角度堆叠，底层往上错位，悬停弹性展开。 */
 .album-stack { position: relative; aspect-ratio: 4 / 3; margin: 22px 22px 0; }
-.album-stack > [data-stack-layer] { position: absolute; inset: 16px 12px 12px;
-  border: 5px solid transparent; border-radius: 18px; overflow: hidden;
-  /* 边框与内铺底都取背景那条天空渐变；照片保持完整硬边，不做边缘雾化 */
-  background: var(--frame-fog) padding-box, var(--frame-line) border-box;
-  box-shadow: 0 14px 34px rgba(96,118,168,.22);
-  transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
-/* ① 照片衍生雾换成主题天空雾：只留一成照片模糊作呼应，不再出现深棕／墨绿的照片色底 */
-.album-stack > [data-stack-layer]::before { content: ''; position: absolute; inset: -12%;
-  background-image: var(--shot); background-size: cover; background-position: center;
-  background-repeat: no-repeat; filter: blur(20px) saturate(1.2) brightness(.94);
-  opacity: .10; }
-/* ③ 内缩一圈奶油白卡纸内衬；② 照片叠淡奶油白并降饱和提亮，与水彩主题拉齐明度 */
-.album-stack > [data-stack-layer]::after { content: ''; position: absolute; inset: 5px;
-  border-radius: 13px; background-color: var(--frame-matte);
-  background-image: var(--frame-cream), var(--shot);
-  background-size: 100% 100%, contain;
-  background-position: center, center;
-  background-repeat: no-repeat, no-repeat;
-  filter: saturate(.94) brightness(1.02); }
-/* 仅极高画质：相框色化作环境光——向外溢出蓝粉柔光，再以柔光混入天空雾与照片。
-   照片内容、比例与硬边全部不变，只是被主题色包住，不再像硬贴上去的一块。 */
-:root[data-quality="ultra"] .album-stack > [data-stack-layer] {
-  box-shadow: 0 14px 34px rgba(96,118,168,.22), var(--frame-halo); }
-:root[data-quality="ultra"] .album-stack > [data-stack-layer]::before {
-  background-image: var(--frame-amb), var(--shot);
-  background-blend-mode: soft-light, normal; opacity: .30; }
-:root[data-quality="ultra"] .album-stack > [data-stack-layer]::after {
-  background-image: var(--frame-amb-photo), var(--frame-cream), var(--shot);
-  background-size: 100% 100%, 100% 100%, contain;
-  background-position: center, center, center;
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-blend-mode: soft-light, normal, normal; }
-/* 首页照片卡取消相框：无边框、无卡纸内衬、无雾晕与环境光，照片直接 contain 完整显示；
-   只作用于首页 .q-photo，照片墙页与相册详情的定格框保持不变 */
-.q-photo .album-stack > [data-stack-layer] {
-  inset: 12px; border: none; border-radius: 14px;
+/* 竖版照片集按原比例竖版显示（照片墙页按相册横竖多数加 is-v） */
+.album-card.is-v .album-stack { aspect-ratio: 3 / 4; }
+.album-stack > [data-stack-layer] { position: absolute; inset: 12px;
+  border-radius: 14px; overflow: hidden;
   background: var(--shot) center / contain no-repeat;
-  box-shadow: 0 10px 26px rgba(96,118,168,.16); }
-.q-photo .album-stack > [data-stack-layer]::before,
-.q-photo .album-stack > [data-stack-layer]::after { content: none; }
+  box-shadow: 0 10px 26px rgba(96,118,168,.16);
+  transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
 .album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
 .album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
+/* 旋转堆叠的景深（仿星灰家照片墙）：最上层清晰，第二层略模糊，第三层更模糊 */
+.album-stack .stack-mid { filter: blur(1.7px); }
+.album-stack .stack-back { filter: blur(3px); }
 .album-stack:hover .stack-back,
 .album-card:hover .stack-back,
 .q-photo:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }
@@ -1299,7 +1256,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .photo-tile.in { animation: tile-pop .55s cubic-bezier(.22,.68,.28,1) backwards; }
 @keyframes tile-pop { from { opacity: 0; transform: translate3d(0, 18px, 0); } to { opacity: 1; transform: none; } }
 @media (max-width: 700px) {
-  .album-grid { grid-template-columns: 1fr; }
+  .album-grid { columns: 1; }
   .album-stack { margin: 18px 18px 0; }
 }
 .photo-cap { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px 15px; }
@@ -1646,10 +1603,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-quality="mid"] .meteors .meteor.q-high,
 :root[data-quality="mid"] .shoots .shoot.q-high,
 :root[data-quality="mid"] .blooms .sky-deco.q-high { display: none; }
-/* 中 / 低：相框里照片衍生雾晕一并省去，只留卡纸与照片 */
-:root[data-quality="mid"] .album-stack > [data-stack-layer]::before,
-:root[data-quality="low"] .album-stack > [data-stack-layer]::before {
-  background-image: none; filter: none; }
 /* 低 = 静态精简：36 星 / 4 花瓣 / 常驻 1 + 快速 1 流星 / 4 花朵静止 / 流萤 4，
    关闭鼠标光幕与卡片高光，保留主要动效 */
 :root[data-quality="low"] .stars .star.q-high,
