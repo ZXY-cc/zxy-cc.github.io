@@ -1217,6 +1217,103 @@
   function b64utf8(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
+  /* ---------- 照片出库 ----------
+     data URI 的图片（相册 / 说说 / 头像 / 封面）不进数据文件：同步前先把它们
+     按内容哈希上传成仓库真实文件 assets/photos/p-<hash>.<ext>，DATA 原地换成
+     /assets/photos/... URL。同一张图哈希相同 → 文件名相同 → 已存在且内容一致就
+     跳过上传，天然去重、重试幂等；数据文件从 MB 级回到 KB 级，访客首屏不再拉大 JSON。 */
+  function walkImages(node, fn) {
+    if (typeof node === 'string') {
+      if (/^data:image\/[a-z0-9.+-]+;base64,/.test(node)) fn(node);
+      return;
+    }
+    if (Array.isArray(node)) { node.forEach(function (v) { walkImages(v, fn); }); return; }
+    if (node && typeof node === 'object') {
+      Object.keys(node).forEach(function (k) { walkImages(node[k], fn); });
+    }
+  }
+  function imageHash(bytes) {
+    var c = window.crypto || window.msCrypto;
+    if (c && c.subtle && c.subtle.digest) {
+      return c.subtle.digest('SHA-256', bytes).then(function (buf) {
+        var hex = '';
+        new Uint8Array(buf).forEach(function (b) {
+          hex += (b < 16 ? '0' : '') + b.toString(16);
+        });
+        return hex.slice(0, 12);
+      });
+    }
+    /* 无 crypto.subtle 的回落：FNV-1a + 长度，仍能稳定命名（冲突概率可忽略） */
+    var h = 0x811c9dc5;
+    for (var i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = (h * 0x01000193) >>> 0; }
+    return Promise.resolve(('00000000' + h.toString(16)).slice(-8) +
+      ('0000' + (bytes.length % 65536).toString(16)).slice(-4));
+  }
+  function toImageNode(dataUri) {
+    var m = String(dataUri).match(/^data:image\/([a-z0-9.+-]+);base64,([\s\S]*)$/);
+    if (!m) return null;
+    var ext = m[1] === 'jpeg' ? 'jpg' : m[1];
+    var bin;
+    try { bin = atob(m[2]); } catch (e) { return null; }
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return imageHash(bytes).then(function (hash) {
+      var name = 'p-' + hash + '.' + ext;
+      return { path: 'assets/photos/' + name, url: '/assets/photos/' + name, b64: m[2] };
+    });
+  }
+  function ghPut(path, b64, message, pat) {
+    var url = 'https://api.github.com/repos/' + REPO + '/contents/' + path;
+    var headers = {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': 'Bearer ' + pat,
+      'Content-Type': 'application/json'
+    };
+    return ghFetch(url + '?ref=' + BRANCH, { method: 'GET', headers: headers })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        /* 文件已存在且内容一致：跳过，不制造空提交 */
+        if (d && d.sha && d.content && String(d.content).replace(/\n/g, '') === b64) return;
+        return ghFetch(url, {
+          method: 'PUT', headers: headers,
+          body: JSON.stringify({
+            message: message, content: b64,
+            sha: d && d.sha, branch: BRANCH
+          })
+        }).then(function (r) {
+          if (!r.ok) throw new Error('图片上传失败 ' + path + '（HTTP ' + r.status + '）');
+        });
+      });
+  }
+  function extractPhotos(pat, message) {
+    var found = [];
+    walkImages(DATA, function (uri) { if (found.indexOf(uri) < 0) found.push(uri); });
+    if (!found.length) return Promise.resolve(0);
+    syncStatus('正在把 ' + found.length + ' 张内嵌图片转为仓库文件…');
+    var map = {};
+    var chain = Promise.resolve();
+    found.forEach(function (uri) {
+      chain = chain.then(function () {
+        return toImageNode(uri).then(function (node) {
+          if (!node) return;
+          map[uri] = node.url;
+          return ghPut(node.path, node.b64, message, pat);
+        });
+      });
+    });
+    return chain.then(function () {
+      (function swap(node) {
+        if (typeof node === 'string') return map[node] !== undefined ? map[node] : node;
+        if (Array.isArray(node)) { node.forEach(function (v, i) { node[i] = swap(v); }); return node; }
+        if (node && typeof node === 'object') {
+          Object.keys(node).forEach(function (k) { node[k] = swap(node[k]); });
+          return node;
+        }
+        return node;
+      })(DATA);
+      return Object.keys(map).length;
+    });
+  }
   function ghFetch(url, opts) {
     var f = window.fetch;
     if (!f) return Promise.reject(new Error('当前浏览器不支持 fetch'));
@@ -1312,12 +1409,17 @@
   }
   function runSync() {
     if (sync.running || !sync.dirty) return;
-    var payload = dataFile().replace(/\r\n/g, '\n');
     var pat = syncToken();
     if (!pat) { syncStatus('待同步：本机已保存，到「发布上线」填一次令牌即可自动同步', true); return; }
     sync.dirty = false;
     sync.running = true;
-    pushData(payload, pat, 'content: auto sync from owner studio ' + today())
+    var payload = '';
+    extractPhotos(pat, 'content: photo files from owner studio ' + today())
+      .then(function () {
+        payload = dataFile().replace(/\r\n/g, '\n');
+        return pushData(payload, pat,
+          'content: auto sync from owner studio ' + today());
+      })
       .then(function () {
         sync.running = false;
         sync.fails = 0;
@@ -1372,8 +1474,12 @@
     state.busy = true;
     say('正在提交到仓库…');
     syncStatus('正在同步到网站…');
-    var payload = dataFile().replace(/\r\n/g, '\n');
-    pushData(payload, pat, 'content: publish from owner studio ' + today())
+    var payload = '';
+    extractPhotos(pat, 'content: photo files from owner studio ' + today())
+      .then(function () {
+        payload = dataFile().replace(/\r\n/g, '\n');
+        return pushData(payload, pat, 'content: publish from owner studio ' + today());
+      })
       .then(function () {
         state.busy = false;
         delLs(PENDING_KEY);
