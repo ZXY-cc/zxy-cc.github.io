@@ -123,8 +123,11 @@
   var TITLE = CFG.displayName || '星梦Staream';
   var founded = CFG.founded || SITE.since || '2026-11-07';
   function runningDays() {
-    var t = new Date(String(founded).replace(/-/g, '/')).getTime();
-    if (isNaN(t)) return 1;
+    /* 用 UTC 基准计算：静态镜像可能在任何时区的构建机生成，
+       按本地时区取整会让同一份镜像出现差一天的两个数值 */
+    var m = String(founded).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return 1;
+    var t = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
     return Math.max(1, Math.floor((Date.now() - t) / 86400000) + 1);
   }
   function photoCount() {
