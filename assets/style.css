@@ -709,8 +709,20 @@ main { min-height: 320px; }
 .article img, .desk-preview img { max-width: 100%; height: auto; }
 .article img { display: block; margin-left: auto; margin-right: auto; }
 
-/* 洛谷扩展语法容器：折叠框 / 对齐 / 引言 / Tuack 表格 / 代码行高亮。
+/* 洛谷扩展语法容器：折叠框 / 对齐 / 引言 / Tuack 表格 / 代码行高亮 / 目录。
    ZBMD 输出的是全局类，文章、创作台预览与评论 Markdown 共用这一套。 */
+/* :::cont::: 目录：按文章标题生成，链接直达对应锚点 */
+.zb-toc { margin: 20px 0; border-radius: 14px; border: 1px solid var(--glass-line);
+  background: var(--glass-strong); padding: 14px 20px 12px; }
+.zb-toc-title { font-weight: 700; color: var(--ink-strong); font-size: 14px;
+  letter-spacing: .08em; margin-bottom: 6px; }
+.zb-toc ul { list-style: none; margin: 0; padding: 0; }
+.zb-toc li { margin: 0; }
+.zb-toc li a { display: inline-block; padding: 4px 0; color: var(--ink);
+  text-decoration: none; border-bottom: 1px dashed transparent; }
+.zb-toc li a:hover { color: var(--accent-text); border-bottom-color: var(--accent); }
+.zb-toc-l3 { padding-left: 20px; }
+.zb-toc-l4 { padding-left: 40px; }
 .zb-fold { margin: 20px 0; border-radius: 14px; border: 1px solid var(--glass-line);
   background: var(--glass-strong); overflow: hidden; }
 .zb-fold-head { display: flex; align-items: center; gap: 9px; cursor: pointer;
@@ -1250,11 +1262,14 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
 .album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
-/* 旋转堆叠的景深（仿星灰家照片墙）：最上层清晰，第二层略模糊，第三层更模糊 */
-/* 景深更轻：顶层清晰、第二层微糊、第三层略糊——保留层次又不糊成一团 */
-/* 下层除了景深模糊还略微提亮、降饱和，看起来像蒙了一层薄白 */
-.album-stack .stack-mid  { filter: blur(1px) brightness(1.06) saturate(.92); }
-.album-stack .stack-back { filter: blur(1.8px) brightness(1.13) saturate(.86); }
+/* 旋转堆叠的景深：不再模糊，下层照片盖一层半透明白，越深越白，层次靠明度差表达 */
+.album-stack .stack-mid::after,
+.album-stack .stack-back::after {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background: #fff; pointer-events: none;
+}
+.album-stack .stack-mid::after  { opacity: .30; }
+.album-stack .stack-back::after { opacity: .48; }
 .album-stack:hover .stack-back,
 .album-card:hover .stack-back,
 .q-photo:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }

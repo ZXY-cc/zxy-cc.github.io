@@ -648,7 +648,7 @@ function imgDims(file) {
 function captureRoutes() {
   const body = new El('body'), ids = {}, winHandlers = {};
   const get = (id) => { if (!ids[id]) { ids[id] = new El(); ids[id].parentNode = body; } return ids[id]; };
-  const navNames = ['home', 'posts', 'post', 'tags', 'timeline', 'projects', 'photowall',
+  const navNames = ['home', 'posts', 'post', 'timeline', 'projects', 'photowall',
                     'moments', 'chatter', 'friends', 'about', 'settings'];
   const navAnchors = navNames.map((n) => { const a = new El('a'); a.setAttribute('data-nav', n); return a; });
   const document = {
@@ -698,7 +698,6 @@ function captureRoutes() {
     ['moments', '说说', '正文之外的瞬间与温度'],
     ['chatter', '杂谈', '长长短短的想法'],
     ['friends', '友链', '朋友们的站点'],
-    ['tags', '标签', '按标签浏览全部文章'],
     ['about', '关于', '关于我与这个站点']
   ];
   const captured = {};

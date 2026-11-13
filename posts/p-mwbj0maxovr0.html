@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-11">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.42.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.45.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -244,19 +244,7 @@ pre, pre > code, .article :not(pre) > code {
 <p>数组实现一般会使用 swap 将最小元素移到已排序部分，以此减少移动次数，所以不稳定．</p>
 <h4 id="h-时间复杂度">时间复杂度</h4>
 <table><thead><tr><th style="text-align:center">最优时间复杂度</th><th style="text-align:center">平均时间复杂度</th><th style="text-align:center">最坏时间复杂度</th><th style="text-align:center">空间复杂度</th><th style="text-align:center">稳定性</th></tr></thead><tbody><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span></td><td style="text-align:center">—</td></tr></tbody></table>
-<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><span class="line-numbers" aria-hidden="true">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13</span><code><span class="tk-ty">void</span> <span class="tk-fn">selection_sort</span>(<span class="tk-ty">int</span>* a, <span class="tk-ty">int</span> n) {
+<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><code><span class="tk-ty">void</span> <span class="tk-fn">selection_sort</span>(<span class="tk-ty">int</span>* a, <span class="tk-ty">int</span> n) {
   <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt; n; ++i) {
     <span class="tk-ty">int</span> ith = i;
     <span class="tk-kw">for</span> (<span class="tk-ty">int</span> j = i + <span class="tk-nu">1</span>; j &lt;= n; ++j) {
@@ -280,23 +268,7 @@ pre, pre > code, .article :not(pre) > code {
 <p>最坏情况下需要执行的交换次数为：<span class="zb-math zb-math-inline"><span class="zb-frac"><span class="zb-num"><i class="zb-var">n</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-op">-</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span><span class="zb-den"><span class="zb-digit">2</span></span></span></span>，序列完全有序时，只需遍历一遍数组、不执行任何交换，因此最优时间复杂度为 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span>．</p>
 <table><thead><tr><th style="text-align:center">最优时间复杂度</th><th style="text-align:center">平均时间复杂度</th><th style="text-align:center">最坏时间复杂度</th><th style="text-align:center">空间复杂度</th><th style="text-align:center">稳定性</th></tr></thead><tbody><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span></td><td style="text-align:center">稳定</td></tr></tbody></table>
 <h4 id="h-代码实现">代码实现</h4>
-<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><span class="line-numbers" aria-hidden="true">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17</span><code><span class="tk-kw">#include</span> &lt;stdbool.<span class="tk-pr">h</span>&gt;
+<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><code><span class="tk-kw">#include</span> &lt;stdbool.<span class="tk-pr">h</span>&gt;
 
 <span class="tk-cm">/* 数组大小为 n + 1，下标从 1 开始 */</span>
 <span class="tk-ty">void</span> <span class="tk-fn">bubble_sort</span>(<span class="tk-ty">int</span> *a, <span class="tk-ty">int</span> n) {
@@ -326,17 +298,7 @@ pre, pre > code, .article :not(pre) > code {
 <p>完全逆序时需要移动的元素个数为：<span class="zb-math zb-math-inline"><span class="zb-frac"><span class="zb-num"><i class="zb-var">n</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-op">-</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span><span class="zb-den"><span class="zb-digit">2</span></span></span></span>，序列已有序时每轮只需比较一次，故最优时间复杂度为 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span>，在数列几乎有序时效率很高．若用二分查找确定插入位置，比较次数降为 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-func">log</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span>，但最坏仍需移动 <span class="zb-math zb-math-inline"><span class="zb-sym">Θ</span><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span> 个元素，总体时间复杂度不变．</p>
 <table><thead><tr><th style="text-align:center">最优时间复杂度</th><th style="text-align:center">平均时间复杂度</th><th style="text-align:center">最坏时间复杂度</th><th style="text-align:center">空间复杂度</th><th style="text-align:center">稳定性</th></tr></thead><tbody><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span></td><td style="text-align:center">稳定</td></tr></tbody></table>
 <h4 id="h-代码实现">代码实现</h4>
-<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><span class="line-numbers" aria-hidden="true">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11</span><code><span class="tk-ty">void</span> <span class="tk-fn">insertion_sort</span>(<span class="tk-ty">int</span> arr[], <span class="tk-ty">int</span> len) {
+<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><code><span class="tk-ty">void</span> <span class="tk-fn">insertion_sort</span>(<span class="tk-ty">int</span> arr[], <span class="tk-ty">int</span> len) {
     <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt; len; ++i) {
         <span class="tk-ty">int</span> key = arr[i];
         <span class="tk-ty">int</span> j = i - <span class="tk-nu">1</span>;
@@ -359,21 +321,7 @@ pre, pre > code, .article :not(pre) > code {
 <p>设 <span class="zb-math zb-math-inline"><i class="zb-var">n</i></span> 为元素个数、<span class="zb-math zb-math-inline"><i class="zb-var">w</i></span> 为待排序数据的值域大小，时间复杂度为 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-op">+</span><i class="zb-var">w</i><span class="zb-textchar">)</span></span>；当 <span class="zb-math zb-math-inline"><i class="zb-var">w</i></span> 远大于 <span class="zb-math zb-math-inline"><i class="zb-var">n</i></span> 时不再具备优势．</p>
 <table><thead><tr><th style="text-align:center">最优时间复杂度</th><th style="text-align:center">平均时间复杂度</th><th style="text-align:center">最坏时间复杂度</th><th style="text-align:center">空间复杂度</th><th style="text-align:center">稳定性</th></tr></thead><tbody><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-op">+</span><i class="zb-var">w</i><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-op">+</span><i class="zb-var">w</i><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-op">+</span><i class="zb-var">w</i><span class="zb-textchar">)</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-op">+</span><i class="zb-var">w</i><span class="zb-textchar">)</span></span></td><td style="text-align:center">稳定</td></tr></tbody></table>
 <h4 id="h-代码实现">代码实现</h4>
-<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><span class="line-numbers" aria-hidden="true">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15</span><code><span class="tk-kw">#include</span> &lt;<span class="tk-ty">string</span>.<span class="tk-pr">h</span>&gt;
+<pre class="zb-code" data-lang="C"><span class="zb-lang">C</span><code><span class="tk-kw">#include</span> &lt;<span class="tk-ty">string</span>.<span class="tk-pr">h</span>&gt;
 
 <span class="tk-kw">#define</span> <span class="tk-cls">MAXN</span> <span class="tk-nu">1010</span>
 <span class="tk-kw">#define</span> <span class="tk-cls">MAXW</span> <span class="tk-nu">100010</span>
@@ -404,12 +352,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/p-mwbj0maxovr0">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.42.0"></script>
-<script src="../assets/comment-archive.js?v=v3.42.0"></script>
-<script src="../assets/interactions-config.js?v=v3.42.0"></script>
-<script src="../assets/interactions.js?v=v3.42.0"></script>
-<script src="../assets/issues-live.js?v=v3.42.0"></script>
-<script src="../assets/likes.js?v=v3.42.0"></script>
+<script src="../assets/comments-data.js?v=v3.45.0"></script>
+<script src="../assets/comment-archive.js?v=v3.45.0"></script>
+<script src="../assets/interactions-config.js?v=v3.45.0"></script>
+<script src="../assets/interactions.js?v=v3.45.0"></script>
+<script src="../assets/issues-live.js?v=v3.45.0"></script>
+<script src="../assets/likes.js?v=v3.45.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("p-mwbj0maxovr0");
 window.ZBLive && window.ZBLive.mount("p-mwbj0maxovr0");
 window.ZBLikes && window.ZBLikes.mount();</script>

@@ -405,24 +405,26 @@
     if (!k) return '';
     return LANG_NAMES[k] || (k.charAt(0).toUpperCase() + k.slice(1));
   }
-  function codeHtml(lang, code, hl, noTag) {
+  function codeHtml(lang, code, hl, noTag, ln) {
     var text = String(code).replace(/\n$/, '');
     var lines = text.split('\n');
-    var nums = lines.map(function (_, n) { return n + 1; }).join('\n');
     var tag = (lang && !noTag) ? '<span class="zb-lang">' + esc(langLabel(lang)) + '</span>' : '';
     var body;
     /* 洛谷 lines=a-b 指定行高亮：此时逐行分词包裹，跨行字符串与块注释的
        上色会有损失（内容仍逐字保留），用来换取任意行精确高亮。 */
     if (hl && hl[0] >= 1 && hl[0] <= hl[1] && hl[0] <= lines.length) {
-      body = lines.map(function (ln, n) {
+      body = lines.map(function (ln2, n) {
         var cls = (n + 1 >= hl[0] && n + 1 <= hl[1]) ? ' zb-cline-hl' : '';
-        return '<span class="zb-cline' + cls + '">' + (highlightCode(ln, lang) || '&nbsp;') + '</span>';
+        return '<span class="zb-cline' + cls + '">' + (highlightCode(ln2, lang) || '&nbsp;') + '</span>';
       }).join('');
     } else {
       body = highlightCode(text, lang);
     }
+    /* 洛谷 line-numbers 关键字：显式声明才显示行号列 */
+    var gutter = ln ? '<span class="line-numbers" aria-hidden="true">' +
+      lines.map(function (_, n) { return n + 1; }).join('\n') + '</span>' : '';
     return '<pre class="zb-code"' + (lang ? ' data-lang="' + esc(langLabel(lang)) + '"' : '') + '>' +
-      tag + '<span class="line-numbers" aria-hidden="true">' + nums + '</span>' +
+      tag + gutter +
       '<code>' + body + '</code>' +
       '<button class="copy-btn" type="button">复制</button></pre>';
   }
@@ -436,7 +438,7 @@
         esc(langLabel(b.lang)) + '</button>';
     }).join('');
     var pres = blocks.map(function (b, i) {
-      return codeHtml(b.lang, b.code, b.hl, true).replace('<pre class="zb-code"',
+      return codeHtml(b.lang, b.code, b.hl, true, b.ln).replace('<pre class="zb-code"',
         '<pre class="zb-code" data-zbpre="' + i + '"' + (i ? ' hidden' : ''));
     }).join('');
     return '<div class="zb-code-tabs"><div class="zb-tab-bar">' + bar + '</div>' + pres + '</div>';
@@ -511,7 +513,8 @@
     var hl = meta.match(/\blines=(\d+)-(\d+)\b/);
     return { ch: m[1][0], n: m[1].length,
       lang: meta.split(/\s+/)[0] || '',
-      hl: hl ? [Number(hl[1]), Number(hl[2])] : null };
+      hl: hl ? [Number(hl[1]), Number(hl[2])] : null,
+      ln: /\bline-numbers\b/.test(meta) };
   }
   function fenceClose(line, ch, n) {
     var m = line.trim().match(/^(`{3,}|~{3,})/);
@@ -585,29 +588,66 @@
   /* ---------------- 洛谷扩展：容器指令（折叠框 / 对齐 / 引言 / 渐变竖线） ----------------
      语法 :::名字[标题]{open}，闭合行是同等数量的冒号；嵌套时外层多用冒号。 */
   function directiveInfo(line) {
-    var m = line.match(/^ {0,3}(:{3,})([a-z][a-z-]*)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?[ \t]*$/);
+    var m = line.match(/^ {0,3}(:{3,})([a-z][a-z-]*|\|)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?[ \t]*$/);
     return m ? { colons: m[1].length, name: m[2], arg: m[3] || '', opt: m[4] || '' } : null;
   }
-  var FOLD_TITLES = { info: '信息', success: '成功', warning: '注意', error: '错误' };
+  /* 四色折叠框：succ / warn / err 是洛谷短名，success / warning / error 为兼容旧文保留 */
+  var FOLD_TITLES = { info: '信息', success: '成功', succ: '成功',
+                      warning: '注意', warn: '注意', error: '错误', err: '错误' };
+  var FOLD_CLASS = { succ: 'success', warn: 'warning', err: 'error' };
   function containerHtml(dir, inner) {
-    if (dir.name === 'vl') return '<div class="zb-vl">' + inner + '</div>';
+    if (dir.name === 'vl' || dir.name === '|') return '<div class="zb-vl">' + inner + '</div>';
     if (dir.name === 'align') {
-      var how = /right/i.test(dir.opt) ? 'right' : 'center';
+      var how = (dir.opt === 'r' || /right/i.test(dir.opt)) ? 'right' : 'center';
       return '<div class="zb-align zb-align-' + how + '">' + inner + '</div>';
     }
-    if (dir.name === 'epigraph') {
+    if (dir.name === 'epigraph' || dir.name === 'epig') {
       return '<blockquote class="zb-epigraph">' + inner +
         (dir.arg ? '<footer class="zb-epigraph-sign">' + inline(dir.arg) + '</footer>' : '') +
         '</blockquote>';
     }
     if (FOLD_TITLES[dir.name]) {
+      var fname = FOLD_CLASS[dir.name] || dir.name;
       var open = /open/i.test(dir.opt) ? ' open' : '';
-      return '<details class="zb-fold zb-fold-' + dir.name + '"' + open +
+      return '<details class="zb-fold zb-fold-' + fname + '"' + open +
         '><summary class="zb-fold-head">' +
         (dir.arg ? inline(dir.arg) : FOLD_TITLES[dir.name]) +
         '</summary><div class="zb-fold-body">' + inner + '</div></details>';
     }
     return '<div class="zb-box">' + inner + '</div>';
+  }
+
+  /* :::cont::: 目录：按整篇文章的标题（含 :::| / ##| 渐变竖线标题）生成带链接的目录。
+     扫描时跳过围栏代码块；slug 生成规则与标题渲染完全一致，锚点一一对应。 */
+  function scanToc(lines) {
+    var items = [], fence = null;
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      var fm = ln.match(/^ {0,3}(`{3,}|~{3,})/);
+      if (fm) {
+        if (fence && fm[1][0] === fence.ch && fm[1].length >= fence.n) fence = null;
+        else if (!fence) fence = { ch: fm[1][0], n: fm[1].length };
+        continue;
+      }
+      if (fence) continue;
+      var hd = ln.match(/^ {0,3}(#{1,6})(\|?)\s+(.+?)\s*#*\s*$/);
+      if (hd && hd[2] && hd[3].indexOf('|') >= 0) hd = null;
+      if (hd) {
+        var lev = hd[1].length;
+        if (lev >= 2 && lev <= 4) {
+          var slug = 'h-' + String(hd[3]).toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').slice(0, 40);
+          items.push({ lev: lev, text: hd[3], slug: slug });
+        }
+      }
+    }
+    return items;
+  }
+  function tocHtml(items) {
+    if (!items.length) return '';
+    var html = items.map(function (it) {
+      return '<li class="zb-toc-l' + it.lev + '"><a href="#' + esc(it.slug) + '">' + esc(it.text) + '</a></li>';
+    }).join('');
+    return '<nav class="zb-toc" aria-label="目录"><div class="zb-toc-title">目录</div><ul>' + html + '</ul></nav>';
   }
 
   function render(src) {
@@ -626,10 +666,44 @@
 
       if (isStash(trim)) { flush(); out.push(restore(trim)); i++; continue; }
 
-      /* 洛谷扩展容器：:::info[标题]{open} / :::align{center} / :::epigraph[——署名] /
-         :::vl … :::（渐变竖线）。嵌套 render 前保存占位符表、返回后还原。
+      /* 洛谷 Tuack 表格：::cute-table{tuack}（或 :::cute-table{tuack}）修饰紧随其后的那张表格。
+         必须在容器解析之前判断，否则三个冒号的写法会被当成 :::cute-table 容器。 */
+      if (/^ {0,3}:{2,3}cute-table\{tuack\}[ \t]*$/.test(trim)) {
+        flush();
+        var tj = i + 1;
+        while (tj < lines.length && !lines[tj].trim()) tj++;
+        if (tj + 1 < lines.length && lines[tj].trim().indexOf('|') >= 0 &&
+            /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+/.test(lines[tj + 1])) {
+          var tr = renderTable(lines[tj], lines[tj + 1], lines, tj + 2, true);
+          out.push(tr.html); i = tr.next;
+        } else { i++; }
+        continue;
+      }
+
+      /* :::cont::: 单行目录标记：按整篇文章标题生成目录 */
+      if (/^ {0,3}:::cont:::[ \t]*$/.test(trim)) {
+        flush();
+        out.push(tocHtml(scanToc(lines)));
+        i++;
+        continue;
+      }
+
+      /* 洛谷扩展容器：:::info[标题]{open} / :::align{c|center} / :::epig[——署名] /
+         :::| … :::（渐变竖线）。嵌套 render 前保存占位符表、返回后还原。
          洛谷嵌套规则：最深一层三个冒号，每往外一层多一个；闭合用同等数量的冒号。 */
       var dir = directiveInfo(ln);
+      if (dir && dir.name === 'cont') {
+        /* 目录容器：不包裹内容，直接按全文标题生成目录（也可写成单行 :::cont:::） */
+        flush();
+        out.push(tocHtml(scanToc(lines)));
+        if (dir.colons >= 3) {
+          var closeCont = new RegExp('^ {0,3}\\:{' + dir.colons + '}[ \\t]*$');
+          i++;
+          while (i < lines.length && !closeCont.test(lines[i])) i++;
+          if (i < lines.length) i++;
+        }
+        continue;
+      }
       if (dir) {
         flush();
         var closeRe = new RegExp('^ {0,3}\\:{' + dir.colons + '}[ \\t]*$');
@@ -638,8 +712,8 @@
         while (i < lines.length && !closeRe.test(lines[i])) { dbuf.push(lines[i]); i++; }
         var closed = i < lines.length;
         if (closed) i++;
-        /* :::vl 忘了闭合时，只包住到第一个标题为止，后面的普通 ## 标题不再整片染色 */
-        if (!closed && dir.name === 'vl') {
+        /* :::|（或 :::vl）忘了闭合时，只包住到第一个标题为止，后面的普通 ## 标题不再整片染色 */
+        if (!closed && (dir.name === 'vl' || dir.name === '|')) {
           var vcut = -1;
           for (var vi = 0; vi < dbuf.length; vi++) {
             if (/^ {0,3}#{1,6}\s/.test(dbuf[vi])) { vcut = vi; break; }
@@ -653,8 +727,8 @@
         continue;
       }
 
-      /* 洛谷 Tuack 表格：::cute-table{tuack} 修饰紧随其后的那张表格 */
-      if (/^ {0,3}::cute-table\{tuack\}[ \t]*$/.test(trim)) {
+      /* 洛谷 Tuack 表格：::cute-table{tuack}（或 :::cute-table{tuack}）修饰紧随其后的那张表格 */
+      if (/^ {0,3}:{2,3}cute-table\{tuack\}[ \t]*$/.test(trim)) {
         flush();
         var tj = i + 1;
         while (tj < lines.length && !lines[tj].trim()) tj++;
@@ -690,7 +764,7 @@
           }
           if (cur.length || secs.length < pipes.length) secs.push(cur.join('\n'));
           pipes.forEach(function (lg, k) {
-            group.push({ lang: lg, code: secs[k] || '', hl: null });
+            group.push({ lang: lg, code: secs[k] || '', hl: null, ln: f.ln });
           });
         } else {
           /* 普通写法：先收完本块，再看后面是否紧跟着更多带语言的围栏块（合并成标签组） */
@@ -698,7 +772,7 @@
           i++;
           while (i < lines.length && !fenceClose(lines[i], f.ch, f.n)) { buf.push(lines[i]); i++; }
           if (i < lines.length) i++;
-          group.push({ lang: f.lang, code: buf.join('\n'), hl: f.hl });
+          group.push({ lang: f.lang, code: buf.join('\n'), hl: f.hl, ln: f.ln });
           /* 只有「首块自己也带语言」才尝试合并：纯文本围栏块 + 后面的代码块
              不该被合成标签页（否则标签条会出现一个空标签）。 */
           if (f.lang) {
@@ -712,14 +786,14 @@
               while (probe < lines.length && !fenceClose(lines[probe], nf.ch, nf.n)) { b2.push(lines[probe]); probe++; }
               if (probe >= lines.length) break;
               probe++;
-              group.push({ lang: nf.lang, code: b2.join('\n'), hl: nf.hl });
+              group.push({ lang: nf.lang, code: b2.join('\n'), hl: nf.hl, ln: nf.ln });
               while (probe < lines.length && !lines[probe].trim()) probe++;
             }
             if (group.length > 1) i = probe;
           }
         }
         out.push(group.length > 1 ? codeTabsHtml(group)
-          : codeHtml(f.lang, group[0].code, group[0].hl));
+          : codeHtml(f.lang, group[0].code, group[0].hl, undefined, group[0].ln));
         continue;
       }
 
@@ -890,5 +964,5 @@
   bindCodeTabs();
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.5.1' };
+           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.6.0' };
 });

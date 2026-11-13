@@ -160,13 +160,12 @@
     var seen = {}, out = [], hasA = false, hasB = false;
     (list || []).forEach(function (t) {
       t = String(t == null ? '' : t).trim().replace(/^#/, '');
+      if (t === '⭐') return; /* 置顶标签恒在，固定排最前 */
       if (t === 'A') { hasA = true; return; }
       if (t === 'B') { hasB = true; return; }
       if (t && !seen[t]) { seen[t] = 1; out.push(t); }
     });
-    if (hasA) out.push('A');
-    if (hasB) out.push('B');
-    return out;
+    return ['⭐'].concat(out, hasA ? ['A'] : [], hasB ? ['B'] : []);
   }
   function tagLib() {
     var lib = DATA.tagLibrary;
@@ -1023,14 +1022,17 @@
     var list = tagLib();
     return '<div class="studio-form glass"><h2>标签管理</h2>' +
       '<p class="f-hint">标签库里的标签按顺序显示在文章、标签页、筛选条与写作表单里；' +
-      '写文章和写杂谈时可直接点选。按住一行拖动即可调整顺序，A / B 两个分区标签恒排在最后。</p>' +
+      '写文章和写杂谈时可直接点选。按住一行拖动即可调整顺序。⭐ 是置顶标签（固定在最前，' +
+      '带它的内容排在其它内容前面），A / B 两个分区标签恒排在最后。</p>' +
       '<div class="taglib-list">' + (list.length ? list.map(function (t, i) {
-        var fixed = t === 'A' || t === 'B';
+        var fixed = t === '⭐' || t === 'A' || t === 'B';
+        var fixNote = t === '⭐' ? '置顶标签 · 固定在最前'
+          : (t === 'A' || t === 'B') ? '分区标签 · 固定在最后' : '';
         return '<div class="taglib-row' + (fixed ? ' is-fixed' : '') + '" data-taglib-row="' + i + '"' +
           (fixed ? '' : ' draggable="true"') + '>' +
           '<span class="taglib-grip" aria-hidden="true">⠿</span>' +
           '<span class="taglib-name">#' + esc(t) + '</span>' +
-          (fixed ? '<span class="taglib-fixed">分区标签 · 固定在最后</span>' : '') +
+          (fixed ? '<span class="taglib-fixed">' + fixNote + '</span>' : '') +
           (fixed ? '' : '<button class="mini-btn" type="button" data-act="taglib-del" data-i="' + i +
             '">删除</button>') + '</div>';
       }).join('') : '<p class="page-note">标签库还是空的，先添加一个。</p>') + '</div>' +

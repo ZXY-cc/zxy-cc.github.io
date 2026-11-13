@@ -13,7 +13,8 @@
   /* 标签展示顺序统一取创作台「标签管理」的标签库；分区用的 A / B 恒排在所有标签之后 */
   function orderedTags(tags) {
     var lib = (DATA.tagLibrary || []).slice();
-    function rank(t) { return t === 'A' ? 2 : (t === 'B' ? 3 : 1); }
+    /* ⭐ 置顶标签恒排最前；A / B 分区标签恒排最后；其余按标签库顺序 */
+    function rank(t) { return t === '⭐' ? 0 : (t === 'A' ? 2 : (t === 'B' ? 3 : 1)); }
     return (tags || []).slice().sort(function (a, b) {
       var ra = rank(a), rb = rank(b);
       if (ra !== rb) return ra - rb;
@@ -24,6 +25,14 @@
       if (ib < 0) return -1;
       return ia - ib;
     });
+  }
+  /* ⭐ 置顶排序：带 ⭐ 的条目稳定地排在其它条目前方（组内保持原有时间序） */
+  function pinnedFirst(list) {
+    var head = [], tail = [];
+    (list || []).forEach(function (p) {
+      ((p && p.tags) || []).indexOf('⭐') >= 0 ? head.push(p) : tail.push(p);
+    });
+    return head.concat(tail);
   }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -39,6 +48,8 @@
     if (s.indexOf('<pre') < 0 || !window.ZBMD) return s;
     return s.replace(/<pre[^>]*>[\s\S]*?<\/pre>/g, function (blk) {
       if (blk.indexOf('<code') < 0) return blk;
+      /* lines=a-b 的行高亮块已逐行分词，重刷会拍平 zb-cline 结构，跳过 */
+      if (blk.indexOf('zb-cline') >= 0) return blk;
       var lang = (blk.match(/data-lang="([^"]*)"/) || [])[1] ||
         (blk.match(/class="zb-lang">([^<]*)</) || [])[1] || '';
       return blk.replace(/<code[^>]*>[\s\S]*?<\/code>/, function (cm) {
@@ -395,7 +406,7 @@
 
   /* ---------- 杂谈 ---------- */
   function renderChatter() {
-    var list = arr('chatter');
+    var list = pinnedFirst(arr('chatter'));
     var tags = [];
     list.forEach(function (c) { (c.tags || []).forEach(function (t) { if (tags.indexOf(t) < 0) tags.push(t); }); });
     tags = orderedTags(tags);
@@ -939,11 +950,13 @@
        每区最多 3 篇，A / B 溢出的落到对侧，保证两区同屏都显示文章。 */
     var posts = recentByDate(POSTS, 6);
     function homePanes(list) {
-      var top = [], bot = [], rest = [];
+      var top = [], bot = [];
+      var pinned = [], aList = [], bList = [], rest = [];
       list.forEach(function (p) {
         var ts = p.tags || [];
-        if (ts.indexOf('A') >= 0) top.push(p);
-        else if (ts.indexOf('B') >= 0) bot.push(p);
+        if (ts.indexOf('⭐') >= 0) pinned.push(p);
+        else if (ts.indexOf('A') >= 0) aList.push(p);
+        else if (ts.indexOf('B') >= 0) bList.push(p);
         else rest.push(p);
       });
       function put(side, p) {
@@ -952,10 +965,16 @@
         else if (second.length < 3) second.push(p);
       }
       var over = [];
+      /* ⭐ 置顶文章先占卡片（时间近到远），溢出的补到对侧 */
+      pinned.forEach(function (p) { put(top.length <= bot.length ? 'top' : 'bot', p); });
       if (top.length > 3) top.splice(3).forEach(function (p) { over.push(['bot', p]); });
       if (bot.length > 3) bot.splice(3).forEach(function (p) { over.push(['top', p]); });
-      over.forEach(function (it) { put(it[0], it[1]); });
+      aList.forEach(function (p) { put('top', p); });
+      bList.forEach(function (p) { put('bot', p); });
+      if (top.length > 3) top.splice(3).forEach(function (p) { over.push(['bot', p]); });
+      if (bot.length > 3) bot.splice(3).forEach(function (p) { over.push(['top', p]); });
       rest.forEach(function (p) { put(top.length <= bot.length ? 'top' : 'bot', p); });
+      over.forEach(function (it) { put(it[0], it[1]); });
       return { top: top, bot: bot };
     }
     var panes = homePanes(posts);
@@ -1064,10 +1083,10 @@
   function renderPostsPage() {
     return pageHead('文章', '写过的所有记录，都在这里', 'POSTS') +
       '<p class="page-note">共 ' + POSTS.length + ' 篇文章</p>' +
-      '<div class="card-grid">' + POSTS.map(function (p) {
+      '<div class="card-grid">' + pinnedFirst(POSTS).map(function (p) {
         return '<article class="x-card glass sheen reveal post-x-card">' +
           '<div class="x-card-top"><span class="x-badge">' +
-          esc(orderedTags(p.tags || []).filter(function (t) { return t !== 'A' && t !== 'B'; })[0] || '随笔') +
+          esc(orderedTags(p.tags || []).filter(function (t) { return t !== 'A' && t !== 'B' && t !== '⭐'; })[0] || '随笔') +
           '</span>' +
           '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
           '<h2 class="x-title"><a href="#/post/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a></h2>' +
@@ -1079,27 +1098,6 @@
           '<a class="x-link" href="#/post/' + encodeURIComponent(p.slug) + '">阅读全文 →</a></div>' +
           '</article>';
       }).join('') + '</div>';
-  }
-
-  /* ---------- 行号 ---------- */
-  function addLineNumbers() {
-    var blocks = app.querySelectorAll('pre > code');
-    Array.prototype.forEach.call(blocks, function (block) {
-      var pre = block.parentNode;
-      if (!pre || pre.querySelector('.line-numbers')) return;
-      var lines = block.textContent.replace(/\n$/, '').split('\n');
-      var nums = document.createElement('span');
-      nums.className = 'line-numbers';
-      nums.setAttribute('aria-hidden', 'true');
-      nums.textContent = lines.map(function (_, i) { return i + 1; }).join('\n');
-      pre.insertBefore(nums, block);
-      var btn = document.createElement('button');
-      btn.className = 'copy-btn';
-      btn.type = 'button';
-      btn.textContent = '复制';
-      btn.setAttribute('aria-label', '复制代码');
-      pre.appendChild(btn);
-    });
   }
 
   /* ---------- 渲染与路由 ---------- */
@@ -1144,7 +1142,6 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
-    addLineNumbers();
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
