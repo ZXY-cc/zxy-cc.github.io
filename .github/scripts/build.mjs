@@ -455,7 +455,7 @@ const changelogPost = {
   slug: 'blog-changelog',
   title: '博客版本日志',
   date: LOG_DATE,
-  tags: ['版本日志', '站点'],
+  tags: ['版本日志', '站点', 'A'],
   summary: '每次更新都记在这里：改了什么、什么时候改的。',
   body: articleHtml
 };
@@ -586,6 +586,8 @@ ${INTERACTIONS_READY ? `<div class="interactions-links"><a href="${esc(INTERACTI
 <script>window.ZBInteractions && window.ZBInteractions.mount(${JSON.stringify(String(p.slug))});
 window.ZBLive && window.ZBLive.mount(${JSON.stringify(String(p.slug))});
 window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>
 `;
@@ -623,6 +625,26 @@ El.prototype.getAttribute = function (k) { return Object.prototype.hasOwnPropert
 El.prototype.addEventListener = function (t, fn) { (this.handlers[t] = this.handlers[t] || []).push(fn); };
 El.prototype.closest = function () { return null; };
 
+/* 照片尺寸现读：创作台 v3.33 起上传时记录 w/h，更早入库的照片从仓库文件补读一次，
+   照片墙竖版相册（is-v → 3:4）与首页横竖归卡在静态镜像里也能正确判定 */
+function imgDims(file) {
+  try {
+    const buf = fs.readFileSync(file);
+    if (buf.length > 24 && buf[0] === 0x89 && buf[1] === 0x50)
+      return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+    let i = 2;
+    while (i + 9 < buf.length) {
+      if (buf[i] !== 0xff) { i++; continue; }
+      const m = buf[i + 1];
+      if (m === 0xd8 || (m >= 0xd0 && m <= 0xd9)) { i += 2; continue; }
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc)
+        return { h: buf.readUInt16BE(i + 5), w: buf.readUInt16BE(i + 7) };
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+  } catch (e) { /* 文件缺失按未知尺寸处理，横竖判定回落默认 */ }
+  return null;
+}
+
 function captureRoutes() {
   const body = new El('body'), ids = {}, winHandlers = {};
   const get = (id) => { if (!ids[id]) { ids[id] = new El(); ids[id].parentNode = body; } return ids[id]; };
@@ -653,6 +675,15 @@ function captureRoutes() {
   for (const f of ['assets/posts.js', 'assets/site-data.js', 'assets/changelog.js',
                    'assets/markdown.js', 'assets/studio.js', 'assets/app.js']) {
     vm.runInContext(read(f), sandbox, { filename: f });
+    if (f === 'assets/site-data.js') {
+      /* 在 app.js 启动快照之前把照片 w/h 补进站点数据 */
+      ((sandbox.STUDIO_DATA || {}).albums || []).forEach((a) => (a.photos || []).forEach((p) => {
+        if (p && p.src && !p.w && /^\/?assets\/photos\//.test(p.src)) {
+          const d = imgDims(path.join(ROOT, p.src.replace(/^\//, '')));
+          if (d) { p.w = d.w; p.h = d.h; }
+        }
+      }));
+    }
   }
   const appEl = get('app');
   const fire = () => {
@@ -732,6 +763,8 @@ ${data.html}
 </main>
 <footer class="mirror-foot">这是「${esc(SITE_TITLE)}」${esc(label)}页的静态镜像，完整交互（搜索、特效、夜间模式）请
 <a href="/#/${name}">在站点中打开 →</a></footer>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态镜像无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>
 `;
