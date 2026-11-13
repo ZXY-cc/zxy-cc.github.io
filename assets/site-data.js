@@ -75,10 +75,10 @@ window.STUDIO_DATA = {
     },
     {
       "id": "pj-mwc6flztefi0",
-      "name": "APP·爱信",
+      "name": "Demo·爱信",
       "desc": "一个为用户和AI聊天提供机遇的APP，支持定义AI角色的性格、语言特点，角色有心情变化、长期记忆。可以对用户拍一拍和发送表情包、照片等。目前正在尝试优化群聊功能中用户与AI的交流以及AI间交流的逻辑链稳定性。",
       "tags": [
-        "AI全栈开发",
+        "VibeCoding",
         "AI拟人",
         "长期记忆"
       ],
