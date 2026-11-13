@@ -611,16 +611,66 @@
   }
 
   /* ---------- 创作台外壳 ---------- */
-  function tabHtml() {
-    var tabs = [
-      ['post', '写文章'], ['photo', '发图片'], ['moment', '发说说'], ['chatter', '发杂谈'],
-      ['project', '项目'], ['friend', '友链'], ['site', '名片设置'], ['about', '关于页'],
-      ['manage', '内容管理'], ['publish', '发布 / 同步']
-    ];
-    return '<div class="studio-tabs">' + tabs.map(function (t) {
-      return '<button class="stab' + (state.tab === t[0] ? ' on' : '') + '" type="button" data-tab="' +
-        t[0] + '">' + t[1] + '</button>';
-    }).join('') + '</div>';
+  /* 管理面板菜单（Pure-Admin 形式）：左侧分组导航 + 顶栏面包屑。
+     data-tab 委托与旧的 .stab 完全一致，切换逻辑不变。 */
+  var ADM_TABS = [
+    { group: '内容创作', items: [
+      ['post', '写文章', 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'],
+      ['photo', '发图片', 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 12.5l2.5 3.01L14.5 12l4.5 6H5l3.5-5.5z'],
+      ['moment', '发说说', 'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'],
+      ['chatter', '发杂谈', 'M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z']
+    ] },
+    { group: '内容管理', items: [
+      ['manage', '内容管理', 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'],
+      ['project', '项目', 'M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z'],
+      ['friend', '友链', 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z']
+    ] },
+    { group: '站点与发布', items: [
+      ['site', '名片设置', 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-9 7H5V9h6v2zm0-4H5V5h6v2zm9 10h-8v-2h8v2zm0-4h-8v-2h8v2z'],
+      ['about', '关于页', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'],
+      ['publish', '发布 / 同步', 'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z']
+    ] }
+  ];
+  function admLabel(tab) {
+    for (var g = 0; g < ADM_TABS.length; g++)
+      for (var i = 0; i < ADM_TABS[g].items.length; i++)
+        if (ADM_TABS[g].items[i][0] === tab) return ADM_TABS[g].items[i][1];
+    return '写文章';
+  }
+  function admMenu() {
+    return ADM_TABS.map(function (g) {
+      return '<div class="adm-group">' + g.group + '</div>' + g.items.map(function (t) {
+        return '<button class="adm-item' + (state.tab === t[0] ? ' on' : '') +
+          '" type="button" data-tab="' + t[0] + '">' +
+          '<span class="adm-ico"><svg viewBox="0 0 24 24"><path d="' + t[2] + '"/></svg></span>' +
+          '<span>' + t[1] + '</span></button>';
+      }).join('');
+    }).join('');
+  }
+  function studioHtml() {
+    var warn = sync.warn ? ' warn' : '';
+    return '<div class="studio-wrap" id="studio-panel">' +
+      '<div class="adm">' +
+        '<aside class="adm-side glass">' +
+          '<div class="adm-brand"><span class="adm-logo"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z"/></svg></span>' +
+          '<div><b>创作台</b><i>OWNER STUDIO</i></div></div>' +
+          '<nav class="adm-menu">' + admMenu() + '</nav>' +
+          '<div class="adm-side-foot"><button class="soft-btn" type="button" data-act="lock">退出站长模式</button></div>' +
+        '</aside>' +
+        '<div class="adm-main">' +
+          '<header class="adm-top glass">' +
+            '<div class="adm-crumb"><span>创作台</span><i>/</i><b>' + admLabel(state.tab) + '</b></div>' +
+            '<div class="adm-top-right"><span id="sync-badge" class="sync-badge' + warn + '">' +
+              (sync.warn ? '待同步' : '自动同步') + '</span>' +
+              '<span class="adm-owner">站长模式</span></div>' +
+          '</header>' +
+          '<div class="adm-body">' +
+            '<div id="studio-msg" class="studio-msg">' + esc(state.msg) + '</div>' +
+            formHtml() +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }
   function field(label, id, ph, type, value) {
     /* 每个字段包成一个 .f-cell：在 .f-row 两列网格里格子才是完整字段（标签在上、输入框在下），
@@ -941,16 +991,6 @@
       project: formProject, friend: formFriend, site: formSite, about: formAbout,
       manage: formManage, publish: formPublish
     }[state.tab]();
-  }
-  function studioHtml() {
-    return '<div class="studio-wrap" id="studio-panel">' +
-      '<div class="studio-head glass"><div><div class="page-kicker">OWNER STUDIO</div>' +
-      '<h1>创作台</h1><p>这台设备已识别为站长的设备 · ' +
-      '<span id="sync-badge" class="sync-badge' + (sync.warn ? ' warn' : '') + '">' +
-      (sync.warn ? '待同步' : '自动同步') + '</span> · 每次改动自动写进网站，其它设备刷新即可看到最新状态。</p></div>' +
-      '<button class="soft-btn" type="button" data-act="lock">退出站长模式</button></div>' +
-      tabHtml() + '<div id="studio-msg" class="studio-msg">' + esc(state.msg) + '</div>' +
-      formHtml() + '</div>';
   }
 
   /* ---------- 图片压缩 ---------- */
