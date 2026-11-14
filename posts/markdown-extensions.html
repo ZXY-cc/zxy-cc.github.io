@@ -254,18 +254,19 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <h1>本站支持的 Markdown 拓展语法</h1>
 <p class="meta" data-view-post="markdown-extensions">2026-11-13 · Markdown / 拓展 / A / ⭐ · <span class="mirror-likes"><span data-like-stat="post:markdown-extensions">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="markdown-extensions">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法，写法与洛谷 Markdown 手册保持一致。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。</p>
-<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-带渐变竖线的小标题">带渐变竖线的小标题</a><a class="toc-item" href="#h-普通小标题">普通小标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-truck-表格">十、Truck 表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
+<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-truck-表格">十、Truck 表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
 <h2 id="h-一-目录">一、目录</h2>
 <p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的）。花括号里写层级号可以只收部分标题：<code>:::cont{1}:::</code> 只收一级标题，<code>:::cont{2,3}:::</code> 只收二、三级标题；不写花括号就是全部标题（一级、二级、三级都收）。</p>
 <pre class="zb-code"><code>:::cont:::
 :::cont{<span class="tk-nu">1</span>}:::
 :::cont{<span class="tk-nu">2</span>,<span class="tk-nu">3</span>}:::</code><button class="copy-btn" type="button">复制</button></pre>
+<p>（占据篇幅，此处省略）</p>
 <h2 id="h-二-渐变竖线标题">二、渐变竖线标题</h2>
 <p>井号后紧跟一个竖线，只给这一个标题加蓝→粉渐变竖线；普通 <code>## 标题</code> 保持干净。</p>
-<pre class="zb-code"><code>##| 带渐变竖线的小标题
-## 普通小标题</code><button class="copy-btn" type="button">复制</button></pre>
-<h2 class="zb-vl" id="h-带渐变竖线的小标题">带渐变竖线的小标题</h2>
-<h2 id="h-普通小标题">普通小标题</h2>
+<pre class="zb-code"><code>###| 带渐变竖线的小标题
+### 普通小标题</code><button class="copy-btn" type="button">复制</button></pre>
+<h3 class="zb-vl" id="h-带渐变竖线的小标题">带渐变竖线的小标题</h3>
+<h3 id="h-普通小标题">普通小标题</h3>
 <h2 id="h-三-渐变竖线区块">三、渐变竖线区块</h2>
 <p>用 <code>:::| … :::</code> 包住整段内容，区块左侧是一整条渐变竖线；外层多写一个冒号就能嵌套。</p>
 <pre class="zb-code"><code>:::|
@@ -308,36 +309,22 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <blockquote class="zb-epigraph"><p>大家好啊，这里是签名。</p><footer class="zb-epigraph-sign">——otto</footer></blockquote>
 <h2 id="h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</h2>
 <p>开栏写三个反引号加语言名，再接 <code>lnum l=起-止</code>：<code>lnum</code> 显示行号列，<code>l=a-b</code> 把第 a 到 b 行高亮。两个参数各自独立，只写 <code>l=a-b</code> 也能高亮，只是不显示行号列；<code>line-numbers</code>、<code>lines=a-b</code> 是旧写法，同样兼容。</p>
-<pre class="zb-code"><code><span class="zb-fmeta">```cpp lnum l=5-6</span>
-<span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;
-<span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;
-
+<pre class="zb-code"><code><span class="zb-fmeta">```c lnum l=4-5</span>
+<span class="tk-kw">#include</span> &lt;stdio.<span class="tk-pr">h</span>&gt;
 <span class="tk-ty">int</span> <span class="tk-fn">main</span>(){
-    ios :: <span class="tk-fn">sync_with_stdio</span>(<span class="tk-cs">false</span>);
-    <span class="tk-ty">int</span> a, b;
-    cin &gt;&gt; a &gt;&gt; b;
-    cout &lt;&lt; a + b &lt;&lt; endl;
-    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+  <span class="tk-ty">int</span> a,b;
+  <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d %d&quot;</span>, &amp;a, &amp;b);
+  <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d\n&quot;</span>, a + b);
+  <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
 }
 <span class="zb-fmeta">```</span></code><button class="copy-btn" type="button">复制</button></pre>
-<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><span class="line-numbers" aria-hidden="true">1
+<pre class="zb-code" data-lang="C" data-code-lang="c"><span class="zb-lang">C</span><span class="line-numbers" aria-hidden="true">1
 2
 3
 4
 5
 6
-7
-8
-9
-10</span><code><span class="zb-cline"><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;</span><span class="zb-cline"><span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;</span><span class="zb-cline">&nbsp;</span><span class="zb-cline"><span class="tk-ty">int</span> <span class="tk-fn">main</span>(){</span><span class="zb-cline zb-cline-hl">    ios :: <span class="tk-fn">sync_with_stdio</span>(<span class="tk-cs">false</span>);</span><span class="zb-cline zb-cline-hl">    <span class="tk-ty">int</span> a, b;</span><span class="zb-cline">    cin &gt;&gt; a &gt;&gt; b;</span><span class="zb-cline">    cout &lt;&lt; a + b &lt;&lt; endl;</span><span class="zb-cline">    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre>
-<p>只写 <code>l=2-3</code> 不写 <code>lnum</code>：第 2、3 行照样高亮，左侧没有行号列。</p>
-<pre class="zb-code"><code><span class="zb-fmeta">```cpp l=2-3</span>
-<span class="tk-ty">int</span> a;
-<span class="tk-ty">int</span> b;
-<span class="tk-ty">int</span> c;
-<span class="tk-ty">int</span> d;
-<span class="zb-fmeta">```</span></code><button class="copy-btn" type="button">复制</button></pre>
-<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="zb-cline"><span class="tk-ty">int</span> a;</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> b;</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> c;</span><span class="zb-cline"><span class="tk-ty">int</span> d;</span></code><button class="copy-btn" type="button">复制</button></pre>
+7</span><code><span class="zb-cline"><span class="tk-kw">#include</span> &lt;stdio.<span class="tk-pr">h</span>&gt;</span><span class="zb-cline"><span class="tk-ty">int</span> <span class="tk-fn">main</span>(){</span><span class="zb-cline">    <span class="tk-ty">int</span> a,b;</span><span class="zb-cline zb-cline-hl">    <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d %d&quot;</span>, &amp;a, &amp;b);</span><span class="zb-cline zb-cline-hl">    <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d\n&quot;</span>, a + b);</span><span class="zb-cline">    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre>
 <h2 id="h-八-多语言代码标签组">八、多语言代码标签组</h2>
 <p>同一份代码的多个语言版本可以合成一组标签页，点击标签切换；行号与行高亮参数逐块独立，两种写法都能精确控制每个语言块。</p>
 <ul><li>写法一：上一段代码块的结束围栏后面直接写下一段的开栏参数（<code>cpp l=5-6</code>、<code>java lnum l=5-7</code> 这样），就表示当前语言段结束、下一段开始；最后的裸围栏收组；</li><li>写法二：开栏用 <code>|</code> 分隔多段完整参数，块内用围栏行分隔各语言段落，最后用围栏收尾。</li></ul>
@@ -349,25 +336,25 @@ a, b = <span class="tk-fn">map</span>(int, <span class="tk-fn">input</span>().<s
 <span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;
 <span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;
 <span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
-<span class="tk-ty">int</span> a, b;
-cin &gt;&gt; a &gt;&gt; b;
-cout &lt;&lt; a + b &lt;&lt; endl;
-<span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+    <span class="tk-ty">int</span> a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+    cout &lt;&lt; a + b &lt;&lt; endl;
+    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
 }
 <span class="zb-fmeta">```java lnum l=5-7</span>
 import java.<span class="tk-pr">util</span>.<span class="tk-pr">Scanner</span>;
 <span class="tk-ty">public</span> <span class="tk-ty">class</span> <span class="tk-cls">Main</span> {
-<span class="tk-ty">public</span> <span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">main</span>(<span class="tk-cls">String</span>[] args) {
-<span class="tk-cls">Scanner</span> scanner = <span class="tk-ty">new</span> <span class="tk-fn">Scanner</span>(<span class="tk-cls">System</span>.<span class="tk-pr">in</span>);
-<span class="tk-ty">int</span> a = scanner.<span class="tk-fn">nextInt</span>();
-<span class="tk-ty">int</span> b = scanner.<span class="tk-fn">nextInt</span>();
-<span class="tk-cls">System</span>.<span class="tk-pr">out</span>.<span class="tk-fn">println</span>(a + b);
-scanner.<span class="tk-fn">close</span>();
-}
+    <span class="tk-ty">public</span> <span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">main</span>(<span class="tk-cls">String</span>[] args) {
+        <span class="tk-cls">Scanner</span> scanner = <span class="tk-ty">new</span> <span class="tk-fn">Scanner</span>(<span class="tk-cls">System</span>.<span class="tk-pr">in</span>);
+        <span class="tk-ty">int</span> a = scanner.<span class="tk-fn">nextInt</span>();
+        <span class="tk-ty">int</span> b = scanner.<span class="tk-fn">nextInt</span>();
+        <span class="tk-cls">System</span>.<span class="tk-pr">out</span>.<span class="tk-fn">println</span>(a + b);
+        scanner.<span class="tk-fn">close</span>();
+    }
 }
 <span class="zb-fmeta">```</span></code><button class="copy-btn" type="button">复制</button></pre>
 <div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">Python</button><button class="zb-tab" type="button" data-zbtab="1">C++</button><button class="zb-tab" type="button" data-zbtab="2">Java</button></div><pre class="zb-code" data-zbpre="0" data-lang="Python" data-code-lang="python"><span class="line-numbers" aria-hidden="true">1
-2</span><code><span class="zb-cline zb-cline-hl">a, b = <span class="tk-fn">map</span>(int, <span class="tk-fn">input</span>().<span class="tk-fn">split</span>())</span><span class="zb-cline zb-cline-hl"><span class="tk-fn">print</span>(a + b)</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="C++" data-code-lang="cpp"><code><span class="zb-cline"><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;</span><span class="zb-cline"><span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;</span><span class="zb-cline"><span class="tk-ty">int</span> <span class="tk-fn">main</span>() {</span><span class="zb-cline"><span class="tk-ty">int</span> a, b;</span><span class="zb-cline zb-cline-hl">cin &gt;&gt; a &gt;&gt; b;</span><span class="zb-cline zb-cline-hl">cout &lt;&lt; a + b &lt;&lt; endl;</span><span class="zb-cline"><span class="tk-kw">return</span> <span class="tk-nu">0</span>;</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java" data-code-lang="java"><span class="line-numbers" aria-hidden="true">1
+2</span><code><span class="zb-cline zb-cline-hl">a, b = <span class="tk-fn">map</span>(int, <span class="tk-fn">input</span>().<span class="tk-fn">split</span>())</span><span class="zb-cline zb-cline-hl"><span class="tk-fn">print</span>(a + b)</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="C++" data-code-lang="cpp"><code><span class="zb-cline"><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;</span><span class="zb-cline"><span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;</span><span class="zb-cline"><span class="tk-ty">int</span> <span class="tk-fn">main</span>() {</span><span class="zb-cline">    <span class="tk-ty">int</span> a, b;</span><span class="zb-cline zb-cline-hl">    cin &gt;&gt; a &gt;&gt; b;</span><span class="zb-cline zb-cline-hl">    cout &lt;&lt; a + b &lt;&lt; endl;</span><span class="zb-cline">    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java" data-code-lang="java"><span class="line-numbers" aria-hidden="true">1
 2
 3
 4
@@ -376,31 +363,43 @@ scanner.<span class="tk-fn">close</span>();
 7
 8
 9
-10</span><code><span class="zb-cline">import java.<span class="tk-pr">util</span>.<span class="tk-pr">Scanner</span>;</span><span class="zb-cline"><span class="tk-ty">public</span> <span class="tk-ty">class</span> <span class="tk-cls">Main</span> {</span><span class="zb-cline"><span class="tk-ty">public</span> <span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">main</span>(<span class="tk-cls">String</span>[] args) {</span><span class="zb-cline"><span class="tk-cls">Scanner</span> scanner = <span class="tk-ty">new</span> <span class="tk-fn">Scanner</span>(<span class="tk-cls">System</span>.<span class="tk-pr">in</span>);</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> a = scanner.<span class="tk-fn">nextInt</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> b = scanner.<span class="tk-fn">nextInt</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-cls">System</span>.<span class="tk-pr">out</span>.<span class="tk-fn">println</span>(a + b);</span><span class="zb-cline">scanner.<span class="tk-fn">close</span>();</span><span class="zb-cline">}</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre></div>
+10</span><code><span class="zb-cline">import java.<span class="tk-pr">util</span>.<span class="tk-pr">Scanner</span>;</span><span class="zb-cline"><span class="tk-ty">public</span> <span class="tk-ty">class</span> <span class="tk-cls">Main</span> {</span><span class="zb-cline">    <span class="tk-ty">public</span> <span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">main</span>(<span class="tk-cls">String</span>[] args) {</span><span class="zb-cline">        <span class="tk-cls">Scanner</span> scanner = <span class="tk-ty">new</span> <span class="tk-fn">Scanner</span>(<span class="tk-cls">System</span>.<span class="tk-pr">in</span>);</span><span class="zb-cline zb-cline-hl">        <span class="tk-ty">int</span> a = scanner.<span class="tk-fn">nextInt</span>();</span><span class="zb-cline zb-cline-hl">        <span class="tk-ty">int</span> b = scanner.<span class="tk-fn">nextInt</span>();</span><span class="zb-cline zb-cline-hl">        <span class="tk-cls">System</span>.<span class="tk-pr">out</span>.<span class="tk-fn">println</span>(a + b);</span><span class="zb-cline">        scanner.<span class="tk-fn">close</span>();</span><span class="zb-cline">    }</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre></div>
 <p>写法二（声明式开栏，效果完全一致）：</p>
-<pre class="zb-code"><code><span class="zb-fmeta">```cpp lnum l=1-2|python l=3-4|java lnum l=5-6</span>
-<span class="tk-ty">void</span> <span class="tk-fn">f_cpp</span>();
-<span class="tk-ty">int</span> <span class="tk-fn">g_cpp</span>();
+<pre class="zb-code"><code><span class="zb-fmeta">```python lnum l=1-2|cpp l=5-6|java lnum l=5-7</span>
+a, b = <span class="tk-fn">map</span>(int, <span class="tk-fn">input</span>().<span class="tk-fn">split</span>())
+<span class="tk-fn">print</span>(a + b)
 <span class="zb-fmeta">```</span>
-a_py = <span class="tk-nu">1</span>
-b_py = <span class="tk-nu">2</span>
-c_py = <span class="tk-nu">3</span>
-d_py = <span class="tk-nu">4</span>
+<span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;
+<span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;
+<span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
+    <span class="tk-ty">int</span> a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+    cout &lt;&lt; a + b &lt;&lt; endl;
+    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+}
 <span class="zb-fmeta">```</span>
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">f_java</span>();
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">g_java</span>();
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">h_java</span>();
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">i_java</span>();
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">j_java</span>();
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">k_java</span>();
+import java.<span class="tk-pr">util</span>.<span class="tk-pr">Scanner</span>;
+<span class="tk-ty">public</span> <span class="tk-ty">class</span> <span class="tk-cls">Main</span> {
+    <span class="tk-ty">public</span> <span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">main</span>(<span class="tk-cls">String</span>[] args) {
+        <span class="tk-cls">Scanner</span> scanner = <span class="tk-ty">new</span> <span class="tk-fn">Scanner</span>(<span class="tk-cls">System</span>.<span class="tk-pr">in</span>);
+        <span class="tk-ty">int</span> a = scanner.<span class="tk-fn">nextInt</span>();
+        <span class="tk-ty">int</span> b = scanner.<span class="tk-fn">nextInt</span>();
+        <span class="tk-cls">System</span>.<span class="tk-pr">out</span>.<span class="tk-fn">println</span>(a + b);
+        scanner.<span class="tk-fn">close</span>();
+    }
+}
 <span class="zb-fmeta">```</span></code><button class="copy-btn" type="button">复制</button></pre>
-<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C++</button><button class="zb-tab" type="button" data-zbtab="1">Python</button><button class="zb-tab" type="button" data-zbtab="2">Java</button></div><pre class="zb-code" data-zbpre="0" data-lang="C++" data-code-lang="cpp"><span class="line-numbers" aria-hidden="true">1
-2</span><code><span class="zb-cline zb-cline-hl"><span class="tk-ty">void</span> <span class="tk-fn">f_cpp</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> <span class="tk-fn">g_cpp</span>();</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="Python" data-code-lang="python"><code><span class="zb-cline">a_py = <span class="tk-nu">1</span></span><span class="zb-cline">b_py = <span class="tk-nu">2</span></span><span class="zb-cline zb-cline-hl">c_py = <span class="tk-nu">3</span></span><span class="zb-cline zb-cline-hl">d_py = <span class="tk-nu">4</span></span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java" data-code-lang="java"><span class="line-numbers" aria-hidden="true">1
+<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">Python</button><button class="zb-tab" type="button" data-zbtab="1">C++</button><button class="zb-tab" type="button" data-zbtab="2">Java</button></div><pre class="zb-code" data-zbpre="0" data-lang="Python" data-code-lang="python"><span class="line-numbers" aria-hidden="true">1
+2</span><code><span class="zb-cline zb-cline-hl">a, b = <span class="tk-fn">map</span>(int, <span class="tk-fn">input</span>().<span class="tk-fn">split</span>())</span><span class="zb-cline zb-cline-hl"><span class="tk-fn">print</span>(a + b)</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="C++" data-code-lang="cpp"><code><span class="zb-cline"><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;</span><span class="zb-cline"><span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;</span><span class="zb-cline"><span class="tk-ty">int</span> <span class="tk-fn">main</span>() {</span><span class="zb-cline">    <span class="tk-ty">int</span> a, b;</span><span class="zb-cline zb-cline-hl">    cin &gt;&gt; a &gt;&gt; b;</span><span class="zb-cline zb-cline-hl">    cout &lt;&lt; a + b &lt;&lt; endl;</span><span class="zb-cline">    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java" data-code-lang="java"><span class="line-numbers" aria-hidden="true">1
 2
 3
 4
 5
-6</span><code><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">f_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">g_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">h_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">i_java</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">j_java</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">k_java</span>();</span></code><button class="copy-btn" type="button">复制</button></pre></div>
+6
+7
+8
+9
+10</span><code><span class="zb-cline">import java.<span class="tk-pr">util</span>.<span class="tk-pr">Scanner</span>;</span><span class="zb-cline"><span class="tk-ty">public</span> <span class="tk-ty">class</span> <span class="tk-cls">Main</span> {</span><span class="zb-cline">    <span class="tk-ty">public</span> <span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">main</span>(<span class="tk-cls">String</span>[] args) {</span><span class="zb-cline">        <span class="tk-cls">Scanner</span> scanner = <span class="tk-ty">new</span> <span class="tk-fn">Scanner</span>(<span class="tk-cls">System</span>.<span class="tk-pr">in</span>);</span><span class="zb-cline zb-cline-hl">        <span class="tk-ty">int</span> a = scanner.<span class="tk-fn">nextInt</span>();</span><span class="zb-cline zb-cline-hl">        <span class="tk-ty">int</span> b = scanner.<span class="tk-fn">nextInt</span>();</span><span class="zb-cline zb-cline-hl">        <span class="tk-cls">System</span>.<span class="tk-pr">out</span>.<span class="tk-fn">println</span>(a + b);</span><span class="zb-cline">        scanner.<span class="tk-fn">close</span>();</span><span class="zb-cline">    }</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre></div>
 <p>两种写法里每个语言块都按自己的语言上色，行号列与高亮范围互不干扰。</p>
 <h2 id="h-九-表格合并单元格">九、表格合并单元格</h2>
 <p>在正常 Markdown 表格的基础上，结合 <code>^</code> 向上合并单元格，结合 <code>&lt;</code> 向左合并单元格。在同一个表格内可混用这两种方式。合并标记必须是单元格内唯一的纯文本内容，不能与其他文字或 Markdown 格式混用。</p>
