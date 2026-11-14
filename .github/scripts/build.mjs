@@ -478,16 +478,17 @@ const base = loadWindowJs('assets/posts.js');
 const overlay = loadWindowJs('assets/site-data.js');
 const generated = loadWindowJs('assets/changelog.js');
 const POSTS = (base.POSTS || []).slice();
-((overlay.STUDIO_DATA || {}).posts || []).forEach((p) => {
-  const i = POSTS.findIndex((x) => x.slug === p.slug);
-  if (i >= 0) POSTS[i] = p; else POSTS.push(p);
-});
+/* 版本日志文章先合并：站长在工坊里编辑/删除它时，site-data 覆盖层与墓碑随后生效 */
 if (generated.CHANGELOG_POST) {
   const i = POSTS.findIndex((x) => x.slug === generated.CHANGELOG_POST.slug);
   if (i >= 0) POSTS[i] = generated.CHANGELOG_POST; else POSTS.push(generated.CHANGELOG_POST);
 }
+((overlay.STUDIO_DATA || {}).posts || []).forEach((p) => {
+  const i = POSTS.findIndex((x) => x.slug === p.slug);
+  if (i >= 0) POSTS[i] = p; else POSTS.push(p);
+});
 POSTS.sort((a, b) => String(b.date).localeCompare(String(a.date)));
-/* 创作台删除的基础文章：site-data.js 的 deleted.posts 全局生效——
+/* 工坊删除的基础文章：site-data.js 的 deleted.posts 全局生效——
    文章集合、静态阅读版与站点地图都不再收录，旧的静态文件一并清掉 */
 const DEAD_POSTS = ((overlay.STUDIO_DATA || {}).deleted || {}).posts || [];
 if (DEAD_POSTS.length) {
@@ -656,8 +657,8 @@ El.prototype.getAttribute = function (k) { return Object.prototype.hasOwnPropert
 El.prototype.addEventListener = function (t, fn) { (this.handlers[t] = this.handlers[t] || []).push(fn); };
 El.prototype.closest = function () { return null; };
 
-/* 照片尺寸现读：创作台 v3.33 起上传时记录 w/h，更早入库的照片从仓库文件补读一次，
-   照片墙竖版相册（is-v → 3:4）与首页横竖归卡在静态镜像里也能正确判定 */
+/* 照片尺寸现读：工坊 v3.33 起上传时记录 w/h，更早入库的照片从仓库文件补读一次，
+   相册竖版相册（is-v → 3:4）与首页横竖归卡在静态镜像里也能正确判定 */
 function imgDims(file) {
   try {
     const buf = fs.readFileSync(file);
@@ -725,7 +726,7 @@ function captureRoutes() {
   const ROUTES = [
     ['projects', '项目', '计划中与完成中的项目记录'],
     ['timeline', '归档', '全部文章按时间排列的归档'],
-    ['photowall', '照片墙', '定格时间，也定格当时的天色'],
+    ['photowall', '相册', '定格时间，也定格当时的天色'],
     ['moments', '说说', '正文之外的瞬间与温度'],
     ['chatter', '杂谈', '长长短短的想法'],
     ['friends', '友链', '朋友们的站点'],
@@ -821,7 +822,7 @@ write('404.html', `<!DOCTYPE html>
 <p>可以从下面的入口找回去：</p>
 <ul>
   <li><a href="/">回到首页</a></li>
-  <li><a href="/#/photowall">照片墙</a> · <a href="/#/moments">说说</a> · <a href="/#/chatter">杂谈</a> · <a href="/#/friends">友链</a></li>
+  <li><a href="/#/photowall">相册</a> · <a href="/#/moments">说说</a> · <a href="/#/chatter">杂谈</a> · <a href="/#/friends">友链</a></li>
   ${POSTS.map((p) => '<li><a href="posts/' + encodeURIComponent(p.slug) + '.html">' + esc(p.title) + '</a></li>').join('\n  ')}
 </ul>
 <p>也欢迎直接在首页顶部的搜索框里搜关键词。</p>

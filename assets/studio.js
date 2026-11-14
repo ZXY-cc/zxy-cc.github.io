@@ -1,7 +1,7 @@
-/* 星梦Staream · 站长创作台
+/* 星梦Staream · 站长工坊
    静态站没有账号系统，因此「是不是我」由两层凭证判定：
-   1) 设备凭证：创作台入口不再公开。持有 128 位密钥链接的设备首次访问 ?o=<密钥>
-      时通过 SHA-256 校验并写入本机 90 天签名标记；之后导航才会出现创作台入口，
+   1) 设备凭证：工坊入口不再公开。持有 128 位密钥链接的设备首次访问 ?o=<密钥>
+      时通过 SHA-256 校验并写入本机 90 天签名标记；之后导航才会出现工坊入口，
       其它设备的 #/studio 渲染为「页面不存在」，源码中只保留摘要（明码永不入库）。
    2) 发布凭证：真正把内容写上线时，用 GitHub 细粒度令牌，
       由 GitHub 服务器确认「你确实是这个仓库的所有者」，前端说了不算；
@@ -251,9 +251,11 @@
         }
         if (!found) base.push(item);
       });
-      /* 墓碑清理：条目已不在基础快照里（发布删除后 / 本机草稿）就不再保留 */
+      /* 墓碑清理：条目已不在基础快照里（发布删除后 / 本机草稿）就不再保留；
+         版本日志文章（build 生成，不在基础快照与 posts.js 里）的墓碑要保留 */
       dead[k] = dead[k].filter(function (id) {
-        return inBuiltin(k, id) || (k === 'posts' && inBasePosts(id));
+        return inBuiltin(k, id) ||
+          (k === 'posts' && (inBasePosts(id) || isChangelogSlug(id)));
       });
       DATA[k] = base.filter(function (x) { return dead[k].indexOf(keyOf(x, k)) < 0; });
     });
@@ -317,10 +319,14 @@
   function inBasePosts(id) {
     return (window.POSTS || []).some(function (p) { return p.slug === id; });
   }
+  function isChangelogSlug(id) {
+    return !!(window.CHANGELOG_POST && window.CHANGELOG_POST.slug) &&
+      id === window.CHANGELOG_POST.slug;
+  }
   function remove(kind, id) {
     /* 已发布内容记墓碑（本机隐藏 + 发布时从数据文件移除）；
-       未发布过的本机草稿直接消失 */
-    if (inBuiltin(kind, id) || (kind === 'posts' && inBasePosts(id))) {
+       未发布过的本机草稿直接消失。版本日志文章同样可删。 */
+    if (inBuiltin(kind, id) || (kind === 'posts' && (inBasePosts(id) || isChangelogSlug(id)))) {
       var d = readDead();
       if (d[kind].indexOf(id) < 0) d[kind].push(id);
       setLs(DEAD_KEY, JSON.stringify(d));
@@ -334,7 +340,7 @@
 
   /* ---------- 判定：设备凭证 ----------
      标记绑定门禁摘要：sig = sha256(OWNER_HASH + '::device::' + t)。
-     注意：本地标记只控制「是否显示创作台界面」，不含密钥本身；
+     注意：本地标记只控制「是否显示工坊界面」，不含密钥本身；
      真正的发布权限永远由 GitHub 细粒度令牌决定，伪造本机标记拿不到任何内容。 */
   function isOwner() {
     var m = null;
@@ -370,19 +376,33 @@
     var nav = document.querySelector && document.querySelector('.nav');
     if (!nav || !nav.querySelector) return;
     var a = nav.querySelector('[data-nav="studio"]');
-    if (isOwner() && !a) {
-      var el = document.createElement('a');
-      el.setAttribute('href', '#/studio');
-      el.setAttribute('data-nav', 'studio');
-      el.textContent = '创作台';
-      nav.appendChild(el);
-    } else if (!isOwner() && a && a.parentNode) {
-      a.parentNode.removeChild(a);
+    var x = nav.querySelector('[data-nav="studio-exp"]');
+    if (isOwner()) {
+      if (!a) {
+        var el = document.createElement('a');
+        el.setAttribute('href', '#/studio');
+        el.setAttribute('data-nav', 'studio');
+        el.textContent = '工坊';
+        nav.appendChild(el);
+      }
+      if (x && x.parentNode) x.parentNode.removeChild(x);
+    } else {
+      /* 游客：完整工坊不出现，换成只读的「工坊 · 体验」入口 */
+      if (a && a.parentNode) a.parentNode.removeChild(a);
+      if (!x) {
+        var ex = document.createElement('a');
+        ex.setAttribute('href', '#/studio-exp');
+        ex.setAttribute('data-nav', 'studio-exp');
+        ex.textContent = '工坊 · 体验';
+        nav.appendChild(ex);
+      }
     }
+    /* 通知前台按「名称意境」设置刷新导航名（墨坊 / 墨坊 · 冥会） */
+    try { document.dispatchEvent(new Event('zb-nav-sync')); } catch (e) {}
   }
 
   /* ---------- Markdown + LaTeX ----------
-     渲染统一交给 assets/markdown.js（window.ZBMD）：创作台预览、前台文章、
+     渲染统一交给 assets/markdown.js（window.ZBMD）：工坊预览、前台文章、
      静态阅读版共用同一套输出，公式与代码块都不会被二次转义。 */
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -462,6 +482,8 @@
     return d;
   }
   function writeDraft(quiet) {
+    /* 体验模式不落盘：游客的编辑只在内存里演示，不会写入任何存储 */
+    if (!isOwner()) return false;
     var d = syncFromForm(), t = new Date();
     function p(n) { return (n < 10 ? '0' : '') + n; }
     d.savedAt = p(t.getHours()) + ':' + p(t.getMinutes());
@@ -581,11 +603,13 @@
       if (el) { ta = el; break; }
     }
     if (!ta || !window.ZBMD || !window.ZBMD.tidy) return say('当前没有可整理的正文。', 'warn');
-    var before = ta.value, after = window.ZBMD.tidy(before);
+    var loose = readTidyMode() === 'loose';
+    var before = ta.value, after = window.ZBMD.tidy(before, { mode: readTidyMode() });
     if (after === before) return say('格式已经很整齐，没有多余空格或空行。');
     ta.value = after;
     if (ta.id === 'f-body') { syncFromForm(); refreshPreview(); writeDraft(true); }
-    say('格式已整理：去掉 ' + (before.length - after.length) + ' 个多余字符，预览效果不变。');
+    say(loose ? '已按「舒展」方式整理：不同内容之间都留出了空行，便于阅读编辑。'
+              : '格式已整理：去掉 ' + (before.length - after.length) + ' 个多余字符，预览效果不变。');
   }
   /* 工具栏：前面是 Markdown，后面是 LaTeX；点击往光标处插入对应源码 */
   var MD_TOOLS = [
@@ -622,7 +646,7 @@
     } catch (e) { say('下载失败，请改用导出内容手动复制。'); }
   }
   function dataFile() {
-    return '/* 星梦Staream · 由创作台发布生成 */\nwindow.STUDIO_DATA = ' +
+    return '/* 星梦Staream · 由工坊发布生成 */\nwindow.STUDIO_DATA = ' +
       JSON.stringify(DATA, null, 2) + ';\n';
   }
   function say(msg, kind) {
@@ -634,7 +658,7 @@
     say(msg + ' · 正在刷新…');
     window.setTimeout(function () { location.reload(); }, 700);
   }
-  /* 发布完成：清空创作台内容并整页回到首页。
+  /* 发布完成：清空工坊内容并整页回到首页。
      confirmed 为真（站点数据文件已确认更新）才清理本机副本，构建未完成时
      先留着，避免首页短暂看不到刚发布的内容；草稿与编辑态一律清空。
      带 ?published 强制整页导航，并给站点数据文件换一个会话内版本号绕开缓存。 */
@@ -677,7 +701,7 @@
 
   /* ---------- 解锁页 ---------- */
   function lockHtml() {
-    /* 非站长设备看到的和访问任何不存在的路径完全一样：没有激活码、没有创作台、没有任何提示 */
+    /* 非站长设备看到的和访问任何不存在的路径完全一样：没有激活码、没有工坊、没有任何提示 */
     return '<div class="notfound glass">' +
       '<div class="lock-star"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></div>' +
       '<h1>页面不存在</h1>' +
@@ -685,7 +709,7 @@
       '<p><a class="soft-btn" href="#/">回到首页</a></p></div>';
   }
 
-  /* ---------- 创作台外壳 ---------- */
+  /* ---------- 工坊外壳 ---------- */
   /* 管理面板菜单（Pure-Admin 形式）：左侧分组导航 + 顶栏面包屑。
      data-tab 委托与旧的 .stab 完全一致，切换逻辑不变。 */
   var ADM_TABS = [
@@ -702,6 +726,7 @@
       ['friend', '友链', 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z']
     ] },
     { group: '站点与发布', items: [
+      ['settings', '设置', 'M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'],
       ['site', '名片设置', 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-9 7H5V9h6v2zm0-4H5V5h6v2zm9 10h-8v-2h8v2zm0-4h-8v-2h8v2z'],
       ['about', '关于页', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'],
       ['publish', '发布 / 同步', 'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z']
@@ -723,22 +748,24 @@
       }).join('');
     }).join('');
   }
-  function studioHtml() {
+  function studioHtml(expMode) {
     var warn = sync.warn ? ' warn' : '';
     return '<div class="studio-wrap" id="studio-panel">' +
       '<div class="adm">' +
         '<aside class="adm-side glass">' +
           '<div class="adm-brand"><span class="adm-logo"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z"/></svg></span>' +
-          '<div><b>创作台</b><i>OWNER STUDIO</i></div></div>' +
+          '<div><b>工坊</b><i>' + (expMode ? 'EXPERIENCE' : 'OWNER STUDIO') + '</i></div></div>' +
           '<nav class="adm-menu">' + admMenu() + '</nav>' +
-          '<div class="adm-side-foot"><button class="soft-btn" type="button" data-act="lock">退出站长模式</button></div>' +
+          '<div class="adm-side-foot"><button class="soft-btn" type="button" data-act="' +
+            (expMode ? 'exit-exp">退出体验' : 'lock">退出站长模式') + '</button></div>' +
         '</aside>' +
         '<div class="adm-main">' +
           '<header class="adm-top glass">' +
-            '<div class="adm-crumb"><span>创作台</span><i>/</i><b>' + admLabel(state.tab) + '</b></div>' +
-            '<div class="adm-top-right"><span id="sync-badge" class="sync-badge' + warn + '">' +
-              (sync.warn ? '待同步' : '自动同步') + '</span>' +
-              '<span class="adm-owner">站长模式</span></div>' +
+            '<div class="adm-crumb"><span>工坊</span><i>/</i><b>' + admLabel(state.tab) + '</b></div>' +
+            '<div class="adm-top-right">' + (expMode ? '' :
+              '<span id="sync-badge" class="sync-badge' + warn + '">' +
+              (sync.warn ? '待同步' : '自动同步') + '</span>') +
+              '<span class="adm-owner">' + (expMode ? '体验模式' : '站长模式') + '</span></div>' +
           '</header>' +
           '<div class="adm-body">' +
             '<div id="studio-msg" class="studio-msg">' + esc(state.msg) + '</div>' +
@@ -996,6 +1023,15 @@
        墓碑（BUILTIN_DEAD）都已由 mergeLocal 汇总进 DATA.deleted.posts，
        这里不过滤的话，被删除的 posts.js 基础文章会在内容管理里反复复活。 */
     var out = (window.POSTS || []).slice();
+    /* 版本日志文章（build 从 博客版本日志.md 生成）同样进管理列表，可编辑可删除；
+       DATA.posts 里站长改过的同名条目会在下面的合并中覆盖生成版 */
+    if (window.CHANGELOG_POST && window.CHANGELOG_POST.slug) {
+      var cp = window.CHANGELOG_POST, hitCp = false;
+      for (var ci = 0; ci < out.length; ci++) {
+        if (out[ci].slug === cp.slug) { out[ci] = cp; hitCp = true; break; }
+      }
+      if (!hitCp) out.push(cp);
+    }
     (DATA.posts || []).forEach(function (p) {
       var hit = false;
       for (var i = 0; i < out.length; i++) {
@@ -1063,6 +1099,40 @@
       'value="' + esc(state.tagDraft) + '"></span>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="taglib-add">添加标签</button></div></div>';
   }
+  /* 工坊设置：格式优化方式（紧凑默认 / 舒展）与代码块缩进长度（默认 4）。
+     都只保存在本机浏览器；游客体验模式下同样可以改，但不影响线上任何内容。 */
+  var TIDY_KEY = 'zb-studio-tidy-mode';
+  var INDENT_KEY = 'zb-studio-indent';
+  function readTidyMode() { return ls(TIDY_KEY) === 'loose' ? 'loose' : 'compact'; }
+  function readIndent() {
+    var n = parseInt(ls(INDENT_KEY), 10);
+    return (n === 1 || n === 2 || n === 4 || n === 8) ? n : 4;
+  }
+  function formSettings() {
+    var mode = readTidyMode(), ind = readIndent();
+    function radio(name, v, cur, label, desc) {
+      return '<label class="opt-item"><input type="radio" name="' + name +
+        '" value="' + v + '"' + (cur === v ? ' checked' : '') + ' data-studio-set="' + name + '">' +
+        '<span><b>' + esc(label) + '</b>' + (desc ? '<i>' + esc(desc) + '</i>' : '') + '</span></label>';
+    }
+    return '<div class="studio-form glass"><h2>设置</h2>' +
+      '<p class="f-hint">工坊的编辑偏好，只保存在本机浏览器；换设备需要重新设置。</p>' +
+      '<div class="settings-block"><h3>格式优化方式</h3>' +
+      '<div class="opt-group" role="radiogroup" aria-label="格式优化方式">' +
+      radio('zb-tidy', 'compact', mode, '紧凑', '在保证预览效果不变的前提下去除所有能去除的换行') +
+      radio('zb-tidy', 'loose', mode, '舒展', '不同内容之间留一个空行，便于阅读和编辑文本') +
+      '</div>' +
+      '<p class="f-hint">点击编辑器上方的「格式优化」按钮时，会按这里选择的方式整理正文。</p></div>' +
+      '<div class="settings-block"><h3>代码块缩进长度</h3>' +
+      '<div class="opt-group" role="radiogroup" aria-label="代码块缩进长度">' +
+      [1, 2, 4, 8].map(function (n) {
+        return radio('zb-indent', String(n), String(ind), n + ' 空格',
+          n === 4 ? '默认' : '');
+      }).join('') +
+      '</div>' +
+      '<p class="f-hint">把自己的代码复制进工坊时，会自动把每行缩进调整成这里选择的长度（原缩进按每 4 空格一层换算）。</p></div>' +
+      '</div>';
+  }
   function formPublish() {
     var auto = autoEnabled(), has = !!syncToken();
     return '<div class="studio-form glass"><h2>发布上线 / 自动同步</h2>' +
@@ -1097,7 +1167,8 @@
     return {
       post: formPost, photo: formPhoto, moment: formMoment, chatter: formChatter,
       project: formProject, friend: formFriend, site: formSite, about: formAbout,
-      manage: formManage, taglib: formTagLib, publish: formPublish
+      manage: formManage, taglib: formTagLib, publish: formPublish,
+      settings: formSettings
     }[state.tab]();
   }
 
@@ -1131,7 +1202,7 @@
     if (!d.title) return say('请先写标题。', 'warn');
     if (!d.markdown) return say('正文还是空的。', 'warn');
     writeDraft(true);
-    if (asDraft) return say('草稿已保存到本机，下次打开创作台会继续这一篇。');
+    if (asDraft) return say('草稿已保存到本机，下次打开工坊会继续这一篇。');
     var editing = (state.editing && state.editing.kind === 'posts') ? state.editing : null;
     var item = {
       /* 重编辑保留原来的 slug / 日期，避免生成一篇新文章 */
@@ -1220,7 +1291,7 @@
     state.editing = null;
     reloadSoon(old ? '友链已更新' : '友链已保存');
   }
-  /* 前台与创作台共享同一个 DATA.site 对象，改完通知页面把导航头像一起换掉 */
+  /* 前台与工坊共享同一个 DATA.site 对象，改完通知页面把导航头像一起换掉 */
   function notifySite() {
     try { document.dispatchEvent(new CustomEvent('zb:site-change')); } catch (e) {}
   }
@@ -1685,7 +1756,7 @@
             .then(function (r) { return r.ok ? r.text() : ''; }, function () { return ''; })
             .then(function (txt) {
               if (String(txt).replace(/\r\n/g, '\n') === payload) {
-                homeSoon(true, '站点已更新 · 创作台内容已清空，正在回到首页…');
+                homeSoon(true, '站点已更新 · 工坊内容已清空，正在回到首页…');
               } else if (tries >= 20) {
                 homeSoon(false, '已提交到仓库，构建稍慢；稍后刷新首页即可看到，正在回到首页…');
               } else {
@@ -1712,6 +1783,20 @@
     var panel = t.closest('#studio-panel') || t.closest('.studio-lock');
     var door = t.closest('#owner-door');
     if (!panel && !door) return;
+
+    /* 体验模式（游客）：浏览、切换页面、预览都不受限；
+       一切会改动网站内容的按钮（编辑 / 删除 / 发布 / 保存 / 同步…）统一拦截 */
+    if (!isOwner() && panel) {
+      var deny = t.closest('[data-del], [data-edit], [data-act]');
+      if (deny) {
+        var da = deny.getAttribute('data-act');
+        if (da !== 'exit-exp' && da !== 'preview-post' &&
+            da !== 'export-js' && da !== 'export-json') {
+          say('~仅供体验 · 权限不足~');
+          return;
+        }
+      }
+    }
 
     /* 写作工作台：工具栏插入、视图切换、标签 / 分类 */
     var mdBtn = t.closest('[data-md]');
@@ -1814,6 +1899,7 @@
     }
 
     if (t.closest('[data-act="lock"]')) { revoke(); syncNav(); render(document.getElementById('app')); return; }
+    if (t.closest('[data-act="exit-exp"]')) { state.exp = false; location.hash = '#/'; return; }
     var tab = t.closest('[data-tab]');
     if (tab) {
       state.tab = tab.getAttribute('data-tab');
@@ -1942,6 +2028,10 @@
   }
   function onChange(e) {
     var t = e.target;
+    /* 设置页单选：格式优化方式 / 代码块缩进长度，落 localStorage 即刻生效 */
+    var sk = t && t.getAttribute ? t.getAttribute('data-studio-set') : null;
+    if (sk === 'zb-tidy') { setLs(TIDY_KEY, t.value === 'loose' ? 'loose' : 'compact'); say('格式优化方式已设为「' + (t.value === 'loose' ? '舒展' : '紧凑') + '」。'); return; }
+    if (sk === 'zb-indent') { setLs(INDENT_KEY, t.value); say('代码缩进已设为 ' + t.value + ' 空格。'); return; }
     if (!t || !t.id) return;
     if (t.id === 'f-files' && t.files && t.files.length) {
       state.files = [];
@@ -2054,16 +2144,41 @@
     if (!t || !t.id || PASTE_AREAS.indexOf(t.id) < 0) return;
     var cd = e.clipboardData || window.clipboardData;
     if (!cd || !cd.getData) return;
-    var url = String(cd.getData('text/plain') || '').trim();
-    if (!/^https?:\/\/\S+$/i.test(url)) return;
+    var txt = String(cd.getData('text/plain') || '');
+    var url = txt.trim();
+    /* 粘贴纯网址自动转 Markdown 链接 */
+    if (/^https?:\/\/\S+$/i.test(url)) {
+      if (e.preventDefault) e.preventDefault();
+      var st0 = t.selectionStart, en0 = t.selectionEnd, v0 = t.value;
+      var sel = String(v0.slice(st0, en0) || '').trim();
+      var link = '[' + (sel && sel !== url ? sel : url) + '](' + url + ')';
+      t.value = v0.slice(0, st0) + link + v0.slice(en0);
+      var caret0 = st0 + link.length;
+      try { t.setSelectionRange(caret0, caret0); } catch (err) {}
+      try { t.dispatchEvent(new Event('input', { bubbles: true })); } catch (err2) {}
+      return;
+    }
+    /* 粘贴多行代码（光标在 ``` 围栏内）：按工坊设置的缩进长度重排每行缩进。
+       原缩进按「每 4 空格 = 一层、一个 Tab = 一层」换算，再展开为 N 空格。 */
+    if (txt.indexOf('\n') < 0 || !readIndent()) return;
+    var st = t.selectionStart;
+    var opens = (t.value.slice(0, st).match(/^ {0,3}(?:`{3,}|~{3,})/gm) || []).length;
+    if (opens % 2 === 0) return;
     if (e.preventDefault) e.preventDefault();
-    var st = t.selectionStart, en = t.selectionEnd, v = t.value;
-    var sel = String(v.slice(st, en) || '').trim();
-    var link = '[' + (sel && sel !== url ? sel : url) + '](' + url + ')';
-    t.value = v.slice(0, st) + link + v.slice(en);
-    var caret = st + link.length;
-    try { t.setSelectionRange(caret, caret); } catch (err) {}
-    try { t.dispatchEvent(new Event('input', { bubbles: true })); } catch (err2) {}
+    var n = readIndent();
+    var out = txt.replace(/\r\n?/g, '\n').split('\n').map(function (ln) {
+      var lead = (ln.match(/^[ \t]*/) || [''])[0];
+      if (!lead) return ln;
+      var spaces = 0;
+      for (var i = 0; i < lead.length; i++) spaces += lead[i] === '\t' ? 4 : 1;
+      var pad = Math.max(lead.length ? 1 : 0, Math.round(spaces * n / 4));
+      return ' '.repeat(pad) + ln.slice(lead.length);
+    }).join('\n');
+    var s0 = t.selectionStart, s1 = t.selectionEnd, v = t.value;
+    t.value = v.slice(0, s0) + out + v.slice(s1);
+    var caret = s0 + out.length;
+    try { t.setSelectionRange(caret, caret); } catch (err3) {}
+    try { t.dispatchEvent(new Event('input', { bubbles: true })); } catch (err4) {}
   }
   /* 标签管理：HTML5 原生拖拽调整顺序，落点行与源行互换位置后整体规范化 */
   function tagDragRow(e) {
@@ -2117,17 +2232,23 @@
     if (!door || !door.addEventListener) return;
     var taps = 0, timer = null;
     door.addEventListener('click', function () {
-      /* 只有已授权设备才能通过小门进入创作台；其它设备点了没有任何反应 */
+      /* 只有已授权设备才能通过小门进入工坊；其它设备点了没有任何反应 */
       if (!isOwner()) return;
       location.hash = '#/studio';
     });
   }
 
-  function render(el) {
+  function render(el, exp) {
     if (!el) return;
-    var isPost = isOwner() && state.tab === 'post';
-    if (isOwner() && !state.draft) state.draft = readDraft();
-    el.innerHTML = isOwner() ? studioHtml() : lockHtml();
+    /* 体验标记挂在 state 上：内部切 tab / 重绘时保持体验态；
+       只有入口显式传参才改变它（工坊正门 = false，体验入口 = true） */
+    if (exp === true) state.exp = true;
+    var owner = isOwner();
+    var expMode = !!state.exp && !owner;
+    var isPost = owner && state.tab === 'post';
+    if (owner && !state.draft) state.draft = readDraft();
+    if (expMode && !state.draft) state.draft = blankDraft();
+    el.innerHTML = (owner || expMode) ? studioHtml(expMode) : lockHtml();
     var nb = document.getElementById('new-album-box');
     var sel = document.getElementById('f-album');
     if (nb && sel && sel.value !== '__new__') nb.style.display = 'none';
@@ -2164,7 +2285,7 @@
   mergeLocal();
 
   /* 自动同步状态：没配置令牌就明确标「待同步」；有令牌且本机留有未发布改动时，
-     一打开创作台就补一次同步（上次离线 / 失败的改动不会一直停在这台设备）。 */
+     一打开工坊就补一次同步（上次离线 / 失败的改动不会一直停在这台设备）。 */
   if (!autoEnabled() || !syncToken()) {
     syncStatus('尚未配置自动同步：改动只保存在这台设备，到「发布上线」配置一次即可。', true);
   } else {
@@ -2185,7 +2306,9 @@
   }
 
   window.STUDIO = {
-    render: render,
+    /* 正门：直接访问 #/studio 时清掉可能残留的体验标记 */
+    render: function (el) { state.exp = false; render(el); },
+    renderExperience: function (el) { state.exp = true; render(el); },
     isOwner: isOwner,
     _sha256: sha256,
     _salt: SALT,

@@ -10,7 +10,7 @@
   var lb = { list: [], index: 0 };
 
   function arr(k) { return (DATA[k] || []).slice(); }
-  /* 标签展示顺序统一取创作台「标签管理」的标签库；分区用的 A / B 恒排在所有标签之后 */
+  /* 标签展示顺序统一取工坊「标签管理」的标签库；分区用的 A / B 恒排在所有标签之后 */
   function orderedTags(tags) {
     var lib = (DATA.tagLibrary || []).slice();
     /* ⭐ 置顶标签恒排最前；A / B 分区标签恒排最后；其余按标签库顺序 */
@@ -85,16 +85,11 @@
   }
 
   /* posts.js 是只读的原始文章；site-data.js 的 posts 是站长发布的新文章；
-     创作台未发布的本机内容由 studio.js 合并进同一个数组，这里统一去重排序。 */
+     工坊未发布的本机内容由 studio.js 合并进同一个数组，这里统一去重排序。 */
   function buildPosts() {
     var out = (window.POSTS || []).slice();
-    (DATA.posts || []).forEach(function (p) {
-      for (var i = 0; i < out.length; i++) {
-        if (out[i].slug === p.slug) { out[i] = p; return; }
-      }
-      out.push(p);
-    });
-    /* 版本日志文章由构建脚本从 博客版本日志.md 生成，posts.js 保持逐字节不动 */
+    /* 版本日志文章由构建脚本从 博客版本日志.md 生成，posts.js 保持逐字节不动；
+       它先合并进集合，这样站长在工坊里编辑过的同名条目（DATA.posts）能覆盖生成版 */
     if (window.CHANGELOG_POST && window.CHANGELOG_POST.slug) {
       var cp = window.CHANGELOG_POST, hitCp = false;
       for (var ci = 0; ci < out.length; ci++) {
@@ -102,8 +97,14 @@
       }
       if (!hitCp) out.push(cp);
     }
+    (DATA.posts || []).forEach(function (p) {
+      for (var i = 0; i < out.length; i++) {
+        if (out[i].slug === p.slug) { out[i] = p; return; }
+      }
+      out.push(p);
+    });
     out.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
-    /* 创作台删除的基础文章以 site-data.js 的 deleted.posts 下发，这里统一过滤
+    /* 工坊删除的基础文章以 site-data.js 的 deleted.posts 下发，这里统一过滤
        （要在版本日志文章合并之后再过滤，changelog 文章同样可删） */
     var DEAD_POSTS = (DATA.deleted && DATA.deleted.posts) || [];
     if (DEAD_POSTS.length) {
@@ -112,7 +113,7 @@
     return out;
   }
   var POSTS = buildPosts();
-  /* 创作台在本机删文章只改了共享的 DATA，POSTS 是启动时的数组。
+  /* 工坊在本机删文章只改了共享的 DATA，POSTS 是启动时的数组。
      收到数据变更事件或每次路由时就地重建，首页卡片无需刷新网页即消失。 */
   function syncPosts() {
     var next = buildPosts();
@@ -147,7 +148,7 @@
     '© ' + (SITE.since || new Date().getFullYear()) + ' ' + (CFG.author || SITE.author || '');
   var footNote = document.getElementById('foot-note');
   if (footNote) footNote.textContent = CFG.footerNote || '纯静态 · 无追踪 · 无依赖';
-  /* 导航头像与首页名片共用同一份站点数据；创作台改名后即时同步 */
+  /* 导航头像与首页名片共用同一份站点数据；工坊改名后即时同步 */
   function syncBrandAvatar() {
     var el = document.querySelector && document.querySelector('.avatar-brand');
     if (el) el.src = CFG.avatar || 'assets/avatar.jpg';
@@ -256,7 +257,7 @@
       if (x.slug === p.slug) return false;
       return (x.tags || []).some(function (t) { return (p.tags || []).indexOf(t) >= 0; });
     }).slice(0, 2);
-    /* 创作台写的文章保留 Markdown / LaTeX 原文，前台用同一套引擎渲染；
+    /* 工坊写的文章保留 Markdown / LaTeX 原文，前台用同一套引擎渲染；
        早期文章只有 body（已是 HTML），直接沿用。 */
     var body = rehlHtml((p.markdown && window.ZBMD) ? window.ZBMD.render(p.markdown) : (p.body || ''));
     var nav = '<div class="post-nav reveal">' +
@@ -352,11 +353,11 @@
       }).join('') + '</div>';
   }
 
-  /* ---------- 照片墙 ---------- */
+  /* ---------- 相册 ---------- */
   function renderPhotowall() {
     var albums = arr('albums');
-    if (!albums.length) return pageHead('照片墙', '定格过的光', 'GALLERY') + '<p class="page-note">还没有相册。</p>';
-    return pageHead('照片墙', '定格时间，也定格当时的天色', 'GALLERY') +
+    if (!albums.length) return pageHead('相册', '定格过的光', 'GALLERY') + '<p class="page-note">还没有相册。</p>';
+    return pageHead('相册', '定格时间，也定格当时的天色', 'GALLERY') +
       '<p class="page-note">共 ' + albums.length + ' 个相册 · ' + photoCount() + ' 张照片</p>' +
       '<div class="album-grid">' + albums.map(function (a) {
         var n = (a.photos || []).length;
@@ -373,7 +374,7 @@
   function renderAlbum(a) {
     var photos = a.photos || [];
     lb.list = photos;
-    return '<a class="back-link reveal" href="#/photowall">← 返回照片墙</a>' +
+    return '<a class="back-link reveal" href="#/photowall">← 返回相册</a>' +
       pageHead(a.title, a.desc, 'ALBUM · ' + photos.length + ' 张') +
       '<div class="photo-grid">' + photos.map(function (p, i) {
         var cap = p.note || '记录这一刻';
@@ -491,7 +492,7 @@
       frame + '</section>';
   }
   /* 关于页简介：旧数据存的是现成 HTML；新数据存 Markdown 源文（空行分段），
-     用站点统一的渲染器输出，创作台预览、SPA 与静态镜像三处一致 */
+     用站点统一的渲染器输出，工坊预览、SPA 与静态镜像三处一致 */
   function aboutIntroHtml() {
     var raw = (CFG.intro != null && CFG.intro !== '') ? String(CFG.intro) : (SITE.about || '');
     if (!raw) return '<p>关于本站。</p>';
@@ -643,10 +644,43 @@
     try { return window.localStorage && window.localStorage.getItem('zb-no-count') === '1'; }
     catch (e) { return false; }
   }
+  /* 「名称意境」开关：开启后导航栏换成意境名；默认关，只保存在本机。
+     工坊入口由 studio.js 动态生成：站长是「墨坊」，游客体验入口是「墨坊 · 冥会」。 */
+  var NAV_POETRY = {
+    home: '星梦', posts: '拾文', timeline: '流年', projects: '造物',
+    photowall: '拾光', moments: '碎语', chatter: '漫谈', friends: '宇友',
+    about: '心源', settings: '道法', studio: '墨坊', 'studio-exp': '墨坊 · 冥会'
+  };
+  var NAV_PLAIN = {
+    home: '首页', posts: '文章', timeline: '归档', projects: '项目',
+    photowall: '相册', moments: '说说', chatter: '杂谈', friends: '友链',
+    about: '关于', settings: '设置', studio: '工坊', 'studio-exp': '工坊 · 体验'
+  };
+  function poetryOn() {
+    try { return window.localStorage && window.localStorage.getItem('zb-nav-poetry') === '1'; }
+    catch (e) { return false; }
+  }
+  function applyNavNames() {
+    var names = poetryOn() ? NAV_POETRY : NAV_PLAIN;
+    Array.prototype.forEach.call(document.querySelectorAll('.nav a[data-nav]'), function (a) {
+      var n = names[a.getAttribute('data-nav')];
+      if (n && a.textContent !== n) a.textContent = n;
+    });
+  }
+  document.addEventListener('zb-nav-sync', applyNavNames);
   document.addEventListener('change', function (e) {
     var t = e.target;
     var k = t && t.getAttribute ? t.getAttribute('data-font-sel') : null;
     if (k) { saveFont(k, t.value); applyFonts(); return; }
+    if (t && t.getAttribute && t.getAttribute('data-nav-poetry') !== null) {
+      try { window.localStorage.setItem('zb-nav-poetry', t.checked ? '1' : '0'); } catch (err) {}
+      applyNavNames();
+      var note = document.getElementById('nav-poetry-state');
+      if (note) note.textContent = t.checked ?
+        '已开启：导航栏换成了意境名，再点一次可换回原名。' :
+        '已关闭：导航栏显示默认名称。';
+      return;
+    }
     if (t && t.getAttribute && t.getAttribute('data-no-count') !== null) {
       try { window.localStorage.setItem('zb-no-count', t.checked ? '1' : '0'); } catch (err) {}
       var note = document.getElementById('no-count-state');
@@ -702,16 +736,25 @@
       '<label class="font-item">LaTeX 字体' + fontSelect('tex', FONT_TEX_OPTS, readFont('tex')) + '</label>' +
       '</div>' +
       '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>' +
+      '<section class="settings-card glass reveal" aria-label="名称意境">' +
+      '<div class="settings-block"><div class="settings-info">' +
+      '<h2>名称意境</h2><p>开启后导航栏会换成一组意境名：星梦、拾文、流年、造物、拾光、碎语、漫谈、宇友、心源、道法、墨坊。偏好只保存在本机。</p></div>' +
+      '<label class="no-count-item"><input type="checkbox" data-nav-poetry' +
+      (poetryOn() ? ' checked' : '') + '><span>启用意境名</span></label></div>' +
+      '<p class="settings-foot" id="nav-poetry-state">' +
+      esc(poetryOn() ? '已开启：导航栏换成了意境名，再点一次可换回原名。' :
+        '已关闭：导航栏显示默认名称。') +
+      '</p></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
       (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner() ?
       '<section class="settings-card glass reveal" aria-label="浏览统计">' +
       '<div class="settings-block"><div class="settings-info">' +
-      '<h2>浏览统计</h2><p>页面只记录匿名访客的浏览次数，不采集身份信息。解锁过创作台的设备与预览态自动不计入；其它设备可在这里手动排除自己。</p></div>' +
+      '<h2>浏览统计</h2><p>页面只记录匿名访客的浏览次数，不采集身份信息。解锁过工坊的设备与预览态自动不计入；其它设备可在这里手动排除自己。</p></div>' +
       '<label class="no-count-item"><input type="checkbox" data-no-count' +
       (noCountOn() ? ' checked' : '') + '><span>本机不计入浏览量</span></label></div>' +
       '<p class="settings-foot" id="no-count-state">' +
       esc(noCountOn() ? '已开启：这台设备浏览页面不会再增加浏览数。' :
-        '未开启：解锁过创作台的设备仍会自动排除，其它设备按普通访客计入。') +
+        '未开启：解锁过工坊的设备仍会自动排除，其它设备按普通访客计入。') +
       '</p></section>' : '');
   }
 
@@ -757,7 +800,7 @@
 
   /* ---------- 首页名片 ----------
      结构仿参考站：圆角头像 + 名字 + 简介，底部三组统计与一排图标按钮；
-     数量和链接都取自 site-data.js，站长在创作台里改数据即可同步。 */
+     数量和链接都取自 site-data.js，站长在工坊里改数据即可同步。 */
   var P_ICONS = {
     github: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2.2a9.8 9.8 0 0 0-3.1 19.1c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c2-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.4 4.6-4.6 4.9.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A9.8 9.8 0 0 0 12 2.2Z"/></svg>',
     archive: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="4.2" width="17.6" height="4" rx="1.2"/><path d="M5 8.2v10.3c0 .9.7 1.5 1.5 1.5h11c.8 0 1.5-.6 1.5-1.5V8.2M9.8 12.2h4.4"/></svg>',
@@ -809,7 +852,7 @@
       '</div>';
   }
   /* ---------- 首页快捷卡片 ----------
-     2×2 网格：文章 / 照片墙(4:3 三图堆叠) / 说说 / 杂谈各占一格。
+     2×2 网格：文章 / 相册(4:3 三图堆叠) / 说说 / 杂谈各占一格。
      文章、说说、杂谈各自轮播最新 3 条；照片卡轮播最新 3 个相册，
      每个相册自带三张等比定格堆叠封面。 */
   function recentByDate(list, n) {
@@ -818,7 +861,7 @@
       return d || b.i - a.i; /* 同一天按发布先后：后添加的排在前面 */
     }).slice(0, n || 3).map(function (o) { return o.v; });
   }
-  /* 首页文章卡的「长摘要」：早期创作台只自动截 90 字，卡片会空出一大片。
+  /* 首页文章卡的「长摘要」：早期工坊只自动截 90 字，卡片会空出一大片。
      对被截断（以……结尾）或过短的摘要，直接从正文重新截 200 字，不必逐篇重存；
      站长手写的完整摘要照原样保留。纯函数，静态镜像与浏览器都能跑。 */
   function homeSummary(p) {
@@ -889,8 +932,8 @@
         'title="' + esc(alt) + '" style="--shot:url(&quot;' + esc(shotUrl(p.src)) + '&quot;)"></div>';
     }).join('');
   }
-  /* 首页照片墙拆成横竖两张卡：相册按「照片横竖多数」归卡——
-     照片带 w / h（创作台上传时记录）直接判定；缺尺寸的本机异步量一次，量完重绘首页。
+  /* 首页相册拆成横竖两张卡：相册按「照片横竖多数」归卡——
+     照片带 w / h（工坊上传时记录）直接判定；缺尺寸的本机异步量一次，量完重绘首页。
      数不出多数时先按横版处理，等测量回调再归位。 */
   var orientMemo = {};
   function photoOrient(p) {
@@ -905,7 +948,7 @@
     im.onload = function () {
       orientMemo[src] = im.naturalWidth >= im.naturalHeight ? 'h' : 'v';
       var h = location.hash || '';
-      /* 首页与照片墙都依赖横竖归卡 / is-v 标记，量完任一页面在场就重绘 */
+      /* 首页与相册都依赖横竖归卡 / is-v 标记，量完任一页面在场就重绘 */
       if (h === '#/' || h === '#' || h === '' || h.indexOf('#/photowall') === 0) route();
     };
     im.onerror = function () { orientMemo[src] = 'h'; };
@@ -1015,11 +1058,11 @@
       ? '<section class="q-card q-post glass sheen reveal" aria-label="最新文章">' +
         postPane(top) + postPane(bot) + '</section>'
       : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
-    /* 照片墙两张小卡（横 4:3 / 竖 3:4 等面积），徽标统一「最新照片墙」；
+    /* 相册两张小卡（横 4:3 / 竖 3:4 等面积），徽标统一「最新相册」；
        归卡仍按相册内照片横竖多数，空态文案区分方向 */
-    var photoH = albumsH.length ? photoCarousel(albumsH, 'q-photo-h', '最新照片墙')
+    var photoH = albumsH.length ? photoCarousel(albumsH, 'q-photo-h', '最新相册')
       : qEmpty('q-photo q-photo-h', '#/photowall', '横版相册还空着', '横版照片会归到这里');
-    var photoV = albumsV.length ? photoCarousel(albumsV, 'q-photo-v', '最新照片墙')
+    var photoV = albumsV.length ? photoCarousel(albumsV, 'q-photo-v', '最新相册')
       : qEmpty('q-photo q-photo-v', '#/photowall', '竖版相册还空着', '竖版照片会归到这里');
     var momentCard = moments.length ? qCard('q-moment', moments.map(function (m) {
       return {
@@ -1165,6 +1208,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
+    applyNavNames();
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
@@ -1178,7 +1222,7 @@
     updateScroll();
   }
   function route() {
-    /* 每次导航都重算文章集合：创作台删除后回首页立即生效 */
+    /* 每次导航都重算文章集合：工坊删除后回首页立即生效 */
     syncPosts();
     var raw = location.hash.replace(/^#\/?/, '');
     var parts = raw.split('/').filter(Boolean).map(decode);
@@ -1203,7 +1247,7 @@
     } else if (parts[0] === 'timeline') {
       html = renderTimeline(); active = 'timeline'; sub = '归档';
     } else if (parts[0] === 'photowall') {
-      html = renderPhotowall(); active = 'photowall'; sub = '照片墙';
+      html = renderPhotowall(); active = 'photowall'; sub = '相册';
     } else if (parts[0] === 'album' && parts[1]) {
       var a = arr('albums').filter(function (x) { return x.id === parts[1]; })[0];
       html = a ? renderAlbum(a) : '<p class="page-note">没找到这个相册。</p>';
@@ -1223,8 +1267,13 @@
     } else if (parts[0] === 'settings') {
       html = renderSettings(); active = 'settings'; sub = '设置';
     } else if (parts[0] === 'studio') {
-      paint('', 'studio', '创作台');
+      paint('', 'studio', '工坊');
       if (window.STUDIO && window.STUDIO.render) window.STUDIO.render(app);
+      return;
+    } else if (parts[0] === 'studio-exp') {
+      /* 游客「工坊 · 体验」：完整工坊界面，但所有改动网站的按钮都被拦截 */
+      paint('', 'studio-exp', '工坊 · 体验');
+      if (window.STUDIO && window.STUDIO.renderExperience) window.STUDIO.renderExperience(app);
       return;
     } else {
       html = '<p class="page-note">页面不存在。</p>';

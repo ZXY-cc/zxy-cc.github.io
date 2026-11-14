@@ -59,7 +59,7 @@ pre.zb-code>code{flex:1 1 auto;padding:0 18px;background:none;border-radius:0;wh
 .back{margin:24px 0 0;font-size:14px}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
 
-/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+/* 公式排版：站点文章、工坊预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
 /* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
    用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
@@ -213,8 +213,9 @@ pre code .tk-cs { color: var(--syn-cs); }
 pre code .tk-fn { color: var(--syn-fn); }
 pre code .tk-cls { color: var(--syn-cls); }
 pre code .tk-pr { color: var(--syn-pr); }
-/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
-pre, pre > code, .article :not(pre) > code {
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈。
+   工坊预览（.desk-preview）的行内代码与正文一致使用设置的代码字体 */
+pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
 }
 
@@ -228,9 +229,9 @@ pre, pre > code, .article :not(pre) > code {
 <p>可以从下面的入口找回去：</p>
 <ul>
   <li><a href="/">回到首页</a></li>
-  <li><a href="/#/photowall">照片墙</a> · <a href="/#/moments">说说</a> · <a href="/#/chatter">杂谈</a> · <a href="/#/friends">友链</a></li>
-  <li><a href="posts/p-mwg23n3vy3gg.html">中期考核的题解与拓展思考</a></li>
+  <li><a href="/#/photowall">相册</a> · <a href="/#/moments">说说</a> · <a href="/#/chatter">杂谈</a> · <a href="/#/friends">友链</a></li>
   <li><a href="posts/blog-changelog.html">博客版本日志</a></li>
+  <li><a href="posts/p-mwg23n3vy3gg.html">中期考核的题解与拓展思考</a></li>
   <li><a href="posts/markdown-extensions.html">本站支持的 Markdown 拓展语法</a></li>
   <li><a href="posts/p-mwbj0maxovr0.html">第1次周报</a></li>
   <li><a href="posts/free-blog.html">（测试）零成本搭一个自己的博客</a></li>

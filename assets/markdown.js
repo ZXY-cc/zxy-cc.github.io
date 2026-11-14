@@ -652,14 +652,14 @@
 
   /* :::cont::: 目录：按整篇文章的标题（含 :::| / ##| 渐变竖线标题）生成带链接的目录。
      扫描时跳过围栏代码块；slug 生成规则与标题渲染完全一致，锚点一一对应。
-     lvls 为允许的标题层级（文章里 ## 记作一级）：null 表示全部（h2~h4）；
-     :::cont{1}::: 只收一级（h2），:::cont{2,3}::: 只收二、三级（h3/h4）。 */
+     lvls 为允许的标题层级（数字 x 直接对应 x 个 # 的标题级，1~6）：null 表示全部（h1~h6）；
+     :::cont{2}::: 只收二级（##），:::cont{2,4}::: 只收二、四级，可填任意多个 1~6 的数字。 */
   function contLevels(opt) {
     if (!opt) return null;
     var lv = [];
     String(opt).split(/[,,，\s]+/).forEach(function (s) {
       var n = parseInt(s, 10);
-      if (n >= 1 && n <= 3 && lv.indexOf(n + 1) < 0) lv.push(n + 1);
+      if (n >= 1 && n <= 6 && lv.indexOf(n) < 0) lv.push(n);
     });
     return lv.length ? lv : null;
   }
@@ -678,7 +678,7 @@
       if (hd && hd[2] && hd[3].indexOf('|') >= 0) hd = null;
       if (hd) {
         var lev = hd[1].length;
-        if (lev >= 2 && lev <= 4 && (!lvls || lvls.indexOf(lev) >= 0)) {
+        if (lev >= 1 && lev <= 6 && (!lvls || lvls.indexOf(lev) >= 0)) {
           var slug = 'h-' + String(hd[3]).toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').slice(0, 40);
           items.push({ lev: lev, text: hd[3], slug: slug });
         }
@@ -976,7 +976,57 @@
      它决定整块缩进与嵌套层级）、连续空行、正文里多余的连续半角空格。
      围栏代码块与 $$ 公式整段原样保留，反引号行内代码与 $…$ 行内公式里的
      空格也不动，所以整理前后预览效果一致。 */
-  function tidy(src) {
+  /* 格式优化：mode 缺省为紧凑（现状：压掉多余空格与连续空行，预览效果不变）；
+     mode='loose'（舒展）在此基础上保证不同内容之间恰好留一个空行，便于阅读编辑。
+     围栏代码块、$$ 公式块内部永远不动；同一段落的连续文本行不会被拆开。 */
+  function loosePass(lines) {
+    function kindOf(ln) {
+      if (/^ {0,3}#{1,6}(\|?)\s+\S/.test(ln)) return 'head';
+      if (/^ {0,3}>/.test(ln)) return 'quote';
+      if (/^ {0,3}:{3,}/.test(ln)) return 'dir';
+      if (/^ {0,3}(?:-\s*){3,}$/.test(ln) || /^ {0,3}(?:\*\s*){3,}$/.test(ln) ||
+          /^ {0,3}(?:_\s*){3,}$/.test(ln)) return 'hr';
+      if (/^ {0,3}([-*+]|\d+[.)])\s/.test(ln)) return 'list';
+      if (/^\s*\|/.test(ln)) return 'table';
+      return 'para';
+    }
+    var out = [], fence = null, math = false, prev = '';
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      var fm = ln.match(/^ {0,3}(`{3,}|~{3,})/);
+      if (fence) {
+        out.push(ln);
+        if (fm && fm[1][0] === fence.ch && fm[1].length >= fence.n) fence = null;
+        continue;
+      }
+      if (fm) {
+        if (prev) out.push('');
+        out.push(ln); fence = { ch: fm[1][0], n: fm[1].length }; prev = 'fence';
+        continue;
+      }
+      if (math) {
+        out.push(ln);
+        if (ln.indexOf('$$') >= 0) { math = false; prev = 'math'; }
+        continue;
+      }
+      if (!ln) { out.push(''); prev = ''; continue; }
+      if (/^ {0,3}\$\$/.test(ln)) {
+        if (prev) out.push('');
+        out.push(ln);
+        if (!/^\s*\$\$(.+)\$\$\s*$/.test(ln)) math = true;
+        prev = 'math';
+        continue;
+      }
+      var k = kindOf(ln);
+      /* 同一段落的续行、同一个列表的连续项不拆开；其余不同内容之间补一个空行 */
+      if (k === 'para' && prev === 'para') { out.push(ln); continue; }
+      if (k === 'list' && prev === 'list') { out.push(ln); continue; }
+      if (prev) out.push('');
+      out.push(ln); prev = k;
+    }
+    return out;
+  }
+  function tidy(src, opts) {
     var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
     var lines = text.split('\n');
     var out = [], fence = null, math = false, blank = 0;
@@ -1022,7 +1072,8 @@
       blank = 0;
       out.push(t);
     }
-    return out.join('\n').replace(/^\n+/, '').replace(/\n+$/, '');
+    var lines = (opts && String(opts.mode || '') === 'loose') ? loosePass(out) : out;
+    return lines.join('\n').replace(/^\n+/, '').replace(/\n+$/, '');
   }
 
   function plain(src) {
@@ -1038,5 +1089,5 @@
   bindCodeTabs();
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.7.0' };
+           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.8.0' };
 });

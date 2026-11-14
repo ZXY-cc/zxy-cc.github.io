@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-11">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.49.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.50.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -69,7 +69,7 @@ pre.zb-code>code{flex:1 1 auto;padding:0 18px;background:none;border-radius:0;wh
 .back{margin:24px 0 0;font-size:14px}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
 
-/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+/* 公式排版：站点文章、工坊预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
 /* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
    用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
@@ -223,8 +223,9 @@ pre code .tk-cs { color: var(--syn-cs); }
 pre code .tk-fn { color: var(--syn-fn); }
 pre code .tk-cls { color: var(--syn-cls); }
 pre code .tk-pr { color: var(--syn-pr); }
-/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
-pre, pre > code, .article :not(pre) > code {
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈。
+   工坊预览（.desk-preview）的行内代码与正文一致使用设置的代码字体 */
+pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
 }
 
@@ -379,12 +380,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/p-mwbj0maxovr0">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.49.0"></script>
-<script src="../assets/comment-archive.js?v=v3.49.0"></script>
-<script src="../assets/interactions-config.js?v=v3.49.0"></script>
-<script src="../assets/interactions.js?v=v3.49.0"></script>
-<script src="../assets/issues-live.js?v=v3.49.0"></script>
-<script src="../assets/likes.js?v=v3.49.0"></script>
+<script src="../assets/comments-data.js?v=v3.50.0"></script>
+<script src="../assets/comment-archive.js?v=v3.50.0"></script>
+<script src="../assets/interactions-config.js?v=v3.50.0"></script>
+<script src="../assets/interactions.js?v=v3.50.0"></script>
+<script src="../assets/issues-live.js?v=v3.50.0"></script>
+<script src="../assets/likes.js?v=v3.50.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("p-mwbj0maxovr0");
 window.ZBLive && window.ZBLive.mount("p-mwbj0maxovr0");
 window.ZBLikes && window.ZBLikes.mount();</script>

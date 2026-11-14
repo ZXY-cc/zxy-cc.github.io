@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>照片墙 · 星梦Staream</title>
-<meta name="description" content="定格时间，也定格当时的天色 —— 星梦Staream 的照片墙页面">
+<title>相册 · 星梦Staream</title>
+<meta name="description" content="定格时间，也定格当时的天色 —— 星梦Staream 的相册页面">
 <link rel="canonical" href="https://zxy-blog.top/photowall.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="星梦Staream">
-<meta property="og:title" content="照片墙 · 星梦Staream">
+<meta property="og:title" content="相册 · 星梦Staream">
 <meta property="og:description" content="定格时间，也定格当时的天色">
 <meta property="og:url" content="https://zxy-blog.top/photowall.html">
 <meta property="og:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="照片墙 · 星梦Staream">
+<meta name="twitter:title" content="相册 · 星梦Staream">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
-<link rel="stylesheet" href="assets/style.css?v=v3.49.0">
+<link rel="stylesheet" href="assets/style.css?v=v3.50.0">
 <style>
 body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 100%);color:#3a4668;
   font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
@@ -31,7 +31,7 @@ body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 1
 img{max-width:100%}
 </style>
 <style>
-/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+/* 公式排版：站点文章、工坊预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
 /* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
    用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
@@ -185,8 +185,9 @@ pre code .tk-cs { color: var(--syn-cs); }
 pre code .tk-fn { color: var(--syn-fn); }
 pre code .tk-cls { color: var(--syn-cls); }
 pre code .tk-pr { color: var(--syn-pr); }
-/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
-pre, pre > code, .article :not(pre) > code {
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈。
+   工坊预览（.desk-preview）的行内代码与正文一致使用设置的代码字体 */
+pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
 }
 </style>
@@ -194,13 +195,13 @@ pre, pre > code, .article :not(pre) > code {
 <body>
 <header class="mirror-head">
   <a class="brand" href="/">星梦Staream</a>
-  <span><a class="mlink" href="projects.html">项目</a> · <a class="mlink" href="timeline.html">归档</a> · <a class="mlink" href="photowall.html">照片墙</a> · <a class="mlink" href="moments.html">说说</a> · <a class="mlink" href="chatter.html">杂谈</a> · <a class="mlink" href="friends.html">友链</a> · <a class="mlink" href="about.html">关于</a></span>
-  <span><a class="mlink" href="posts/p-mwg23n3vy3gg.html">中期考核的题解与拓展思考</a> · <a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/markdown-extensions.html">本站支持的 Markdown 拓展语法</a> · <a class="mlink" href="posts/p-mwbj0maxovr0.html">第1次周报</a> · <a class="mlink" href="posts/free-blog.html">（测试）零成本搭一个自己的博客</a></span>
+  <span><a class="mlink" href="projects.html">项目</a> · <a class="mlink" href="timeline.html">归档</a> · <a class="mlink" href="photowall.html">相册</a> · <a class="mlink" href="moments.html">说说</a> · <a class="mlink" href="chatter.html">杂谈</a> · <a class="mlink" href="friends.html">友链</a> · <a class="mlink" href="about.html">关于</a></span>
+  <span><a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/p-mwg23n3vy3gg.html">中期考核的题解与拓展思考</a> · <a class="mlink" href="posts/markdown-extensions.html">本站支持的 Markdown 拓展语法</a> · <a class="mlink" href="posts/p-mwbj0maxovr0.html">第1次周报</a> · <a class="mlink" href="posts/free-blog.html">（测试）零成本搭一个自己的博客</a></span>
 </header>
 <main class="route-mirror">
-<div class="page-head reveal"><div class="page-kicker">GALLERY</div><h1 class="page-title">照片墙</h1><p class="page-sub">定格时间，也定格当时的天色</p></div><p class="page-note">共 2 个相册 · 3 张照片</p><div class="album-grid"><a class="album-card glass sheen reveal" href="#/album/a-mwcsyoffh3y5"><div class="album-stack"><div class="stack-top" data-stack-layer aria-hidden="true" title="（测试横版）" style="--shot:url(&quot;/assets/photos/p-a8c78ca29358.jpg&quot;)"></div><span class="album-count">1 张</span></div><div class="album-info"><h2>（测试横版）</h2><p>测试用</p><time>2026-11-12</time></div></a><a class="album-card is-v glass sheen reveal" href="#/album/a-mweqopzs46wx"><div class="album-stack"><div class="stack-mid" data-stack-layer aria-hidden="true" title="（测试竖版）" style="--shot:url(&quot;/assets/photos/p-1b45faf9e766.jpg&quot;)"></div><div class="stack-top" data-stack-layer aria-hidden="true" title="（测试竖版）" style="--shot:url(&quot;/assets/photos/p-b51ff49eae8d.jpg&quot;)"></div><span class="album-count">2 张</span></div><div class="album-info"><h2>（测试竖版）</h2><p>测试（竖版）</p><time>2026-11-13</time></div></a></div>
+<div class="page-head reveal"><div class="page-kicker">GALLERY</div><h1 class="page-title">相册</h1><p class="page-sub">定格时间，也定格当时的天色</p></div><p class="page-note">共 2 个相册 · 3 张照片</p><div class="album-grid"><a class="album-card glass sheen reveal" href="#/album/a-mwcsyoffh3y5"><div class="album-stack"><div class="stack-top" data-stack-layer aria-hidden="true" title="（测试横版）" style="--shot:url(&quot;/assets/photos/p-a8c78ca29358.jpg&quot;)"></div><span class="album-count">1 张</span></div><div class="album-info"><h2>（测试横版）</h2><p>测试用</p><time>2026-11-12</time></div></a><a class="album-card is-v glass sheen reveal" href="#/album/a-mweqopzs46wx"><div class="album-stack"><div class="stack-mid" data-stack-layer aria-hidden="true" title="（测试竖版）" style="--shot:url(&quot;/assets/photos/p-1b45faf9e766.jpg&quot;)"></div><div class="stack-top" data-stack-layer aria-hidden="true" title="（测试竖版）" style="--shot:url(&quot;/assets/photos/p-b51ff49eae8d.jpg&quot;)"></div><span class="album-count">2 张</span></div><div class="album-info"><h2>（测试竖版）</h2><p>测试（竖版）</p><time>2026-11-13</time></div></a></div>
 </main>
-<footer class="mirror-foot">这是「星梦Staream」照片墙页的静态镜像，完整交互（搜索、特效、夜间模式）请
+<footer class="mirror-foot">这是「星梦Staream」相册页的静态镜像，完整交互（搜索、特效、夜间模式）请
 <a href="/#/photowall">在站点中打开 →</a></footer>
 <script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态镜像无 ZBMD 时兜底） */
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>

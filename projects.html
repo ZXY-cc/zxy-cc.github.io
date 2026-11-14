@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="项目 · 星梦Staream">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
-<link rel="stylesheet" href="assets/style.css?v=v3.49.0">
+<link rel="stylesheet" href="assets/style.css?v=v3.50.0">
 <style>
 body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 100%);color:#3a4668;
   font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
@@ -31,7 +31,7 @@ body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 1
 img{max-width:100%}
 </style>
 <style>
-/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+/* 公式排版：站点文章、工坊预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
 /* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
    用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
@@ -185,8 +185,9 @@ pre code .tk-cs { color: var(--syn-cs); }
 pre code .tk-fn { color: var(--syn-fn); }
 pre code .tk-cls { color: var(--syn-cls); }
 pre code .tk-pr { color: var(--syn-pr); }
-/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
-pre, pre > code, .article :not(pre) > code {
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈。
+   工坊预览（.desk-preview）的行内代码与正文一致使用设置的代码字体 */
+pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
 }
 </style>
@@ -194,8 +195,8 @@ pre, pre > code, .article :not(pre) > code {
 <body>
 <header class="mirror-head">
   <a class="brand" href="/">星梦Staream</a>
-  <span><a class="mlink" href="projects.html">项目</a> · <a class="mlink" href="timeline.html">归档</a> · <a class="mlink" href="photowall.html">照片墙</a> · <a class="mlink" href="moments.html">说说</a> · <a class="mlink" href="chatter.html">杂谈</a> · <a class="mlink" href="friends.html">友链</a> · <a class="mlink" href="about.html">关于</a></span>
-  <span><a class="mlink" href="posts/p-mwg23n3vy3gg.html">中期考核的题解与拓展思考</a> · <a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/markdown-extensions.html">本站支持的 Markdown 拓展语法</a> · <a class="mlink" href="posts/p-mwbj0maxovr0.html">第1次周报</a> · <a class="mlink" href="posts/free-blog.html">（测试）零成本搭一个自己的博客</a></span>
+  <span><a class="mlink" href="projects.html">项目</a> · <a class="mlink" href="timeline.html">归档</a> · <a class="mlink" href="photowall.html">相册</a> · <a class="mlink" href="moments.html">说说</a> · <a class="mlink" href="chatter.html">杂谈</a> · <a class="mlink" href="friends.html">友链</a> · <a class="mlink" href="about.html">关于</a></span>
+  <span><a class="mlink" href="posts/blog-changelog.html">博客版本日志</a> · <a class="mlink" href="posts/p-mwg23n3vy3gg.html">中期考核的题解与拓展思考</a> · <a class="mlink" href="posts/markdown-extensions.html">本站支持的 Markdown 拓展语法</a> · <a class="mlink" href="posts/p-mwbj0maxovr0.html">第1次周报</a> · <a class="mlink" href="posts/free-blog.html">（测试）零成本搭一个自己的博客</a></span>
 </header>
 <main class="route-mirror">
 <div class="page-head reveal"><div class="page-kicker">PROJECTS</div><h1 class="page-title">项目</h1><p class="page-sub">做过的和正在做的</p></div><div class="card-grid"><article class="x-card glass sheen reveal"><div class="x-card-top"><span class="x-badge">在用</span><time>2026-11-07</time></div><h2>Blog·星梦Staream</h2><p>零依赖的单页博客：hash 路由、玻璃星空、日夜主题、全局搜索与照片灯箱，托管在 GitHub Pages 上，绑自己的域名。</p><div class="x-chips"><span>静态站点</span><span>CSS</span><span>JavaScript</span><span>VibeCoding</span></div><a class="x-link" href="#/about">去看看 →</a></article><article class="x-card glass sheen reveal"><div class="x-card-top"><span class="x-badge">记录</span><time>2026-11-11</time></div><h2>Demo·爱信</h2><p>一个为用户和AI聊天提供机遇的APP，支持定义AI角色的性格、语言特点，角色有心情变化、长期记忆。可以对用户拍一拍和发送表情包、照片等。目前正在尝试优化群聊功能中用户与AI的交流以及AI间交流的逻辑链稳定性。</p><div class="x-chips"><span>VibeCoding</span><span>AI拟人</span><span>长期记忆</span></div><a class="x-link" href="https://my.feishu.cn/file/LqYSbKMiEokao5xjtM6cZEzNnvd">去看看 →</a></article></div>

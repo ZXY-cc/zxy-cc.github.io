@@ -663,7 +663,7 @@ main { min-height: 320px; }
 }
 .article h1 { font-size: 28px; font-weight: 650; line-height: 1.4; margin: 0 0 14px; color: var(--ink-strong); letter-spacing: .5px; }
 .article .post-meta { margin-bottom: 26px; }
-/* 文章正文标题不再带左侧装饰竖条：Markdown 标题在评论预览、创作台预览与
+/* 文章正文标题不再带左侧装饰竖条：Markdown 标题在评论预览、工坊预览与
    正文页保持同一个干净样子（用户要求全站去掉竖线），层级靠字号与字重区分 */
 .article h2 {
   font-size: 22px; font-weight: 650; margin: 40px 0 16px;
@@ -712,7 +712,7 @@ main { min-height: 320px; }
 .article img { display: block; margin-left: auto; margin-right: auto; }
 
 /* 洛谷扩展语法容器：折叠框 / 对齐 / 引言 / Tuack 表格 / 代码行高亮。
-   ZBMD 输出的是全局类，文章、创作台预览与评论 Markdown 共用这一套。 */
+   ZBMD 输出的是全局类，文章、工坊预览与评论 Markdown 共用这一套。 */
 .zb-fold { margin: 20px 0; border-radius: 14px; border: 1px solid var(--glass-line);
   background: var(--glass-strong); overflow: hidden; }
 .zb-fold-head { display: flex; align-items: center; gap: 9px; cursor: pointer;
@@ -957,8 +957,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* ============================================================
    功能扩展层：全部沿用上面的主题变量与 .glass，不改动任何既有 UI 规则。
-   新增页面：首页名片 / 项目 / 归档 / 照片墙 / 相册 / 说说 / 杂谈 / 友链 / 关于 /
-   全局搜索 / 创作台；新增特效：滚动渐显、卡片指针高光、光标柔光、
+   新增页面：首页名片 / 项目 / 归档 / 相册 / 相册 / 说说 / 杂谈 / 友链 / 关于 /
+   全局搜索 / 工坊；新增特效：滚动渐显、卡片指针高光、光标柔光、
    夜间流萤、启动闪屏、图片灯箱。
    ============================================================ */
 
@@ -1034,7 +1034,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .profile-avatar-wrap {
   box-shadow: 0 0 0 1px rgba(208,226,255,.40), 0 10px 30px rgba(8,16,44,.32); }
 :root[data-theme="night"] .p-link { color: var(--accent-text); }
-/* 夜间星标按钮换成创作台 LOGO 同款：主题变量渐变底 + 白色星形柔光 */
+/* 夜间星标按钮换成工坊 LOGO 同款：主题变量渐变底 + 白色星形柔光 */
 :root[data-theme="night"] .p-link.is-accent { color: #fff;
   background: linear-gradient(135deg, var(--accent), var(--accent-3));
   box-shadow: 0 6px 16px rgba(171, 139, 212, .35), var(--glass-inner); }
@@ -1125,7 +1125,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .tl-item > span { grid-column: 2; font-size: 11.5px; color: var(--accent-text); }
 
 /* ---------- 首页快捷卡片（2×2） ----------
-   文章 / 照片墙(4:3) / 说说 / 杂谈各占一格，各自轮播最新三条。 */
+   文章 / 相册(4:3) / 说说 / 杂谈各占一格，各自轮播最新三条。 */
 .home-quick { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px;
   align-items: stretch; margin: 22px 0 44px; }
 .q-card { position: relative; display: block; min-height: 212px; overflow: hidden;
@@ -1140,9 +1140,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: opacity .6s ease, visibility .6s ease; }
 .q-slide.on { opacity: 1; visibility: visible; pointer-events: auto; }
 .q-slide > .q-body { flex: 1 1 auto; }
-/* 错位 bento：文章卡占左侧两行大块（面积最大），两张照片墙小卡在右上相邻纵排
+/* 错位 bento：文章卡占左侧两行大块（面积最大），两张相册小卡在右上相邻纵排
    （面积相近且收窄），第二行说说（5 列）+ 杂谈（7 列，面积更大）收底；
-   视觉面积：文章 > 杂谈 > 说说 > 照片墙两张小卡，整体仍是矩形 */
+   视觉面积：文章 > 杂谈 > 说说 > 相册两张小卡，整体仍是矩形 */
 .q-post { grid-column: 1 / 9; grid-row: 1 / 3; display: flex; flex-direction: column; }
 /* 文章卡一分为二：仍是一张卡，上半轮播第 1/3/5 篇、下半轮播第 2/4/6 篇，
    中缝一条虚线分开，两半各自带圆点、节拍同步翻页 */
@@ -1158,7 +1158,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo-h { aspect-ratio: 4 / 3; align-self: start; }
 /* 竖版卡拉长到 3:4 原比例：竖版照片完整利用卡片空间；文章卡跨两行自动等长 */
 .q-photo-v { aspect-ratio: 3 / 4; align-self: start; }
-/* 首页竖版照片墙封面 cover 铺满：照片占满整个卡片，左右两侧不留空 */
+/* 首页竖版相册封面 cover 铺满：照片占满整个卡片，左右两侧不留空 */
 .q-photo-v .album-stack > [data-stack-layer] { background-size: cover; }
 /* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
@@ -1201,7 +1201,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo .q-dot { background: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .6); }
 .q-photo .q-dot.on { background: #fff; }
 @media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
-/* 中窄屏：文章卡通栏，横竖两张照片墙并排一行错落，说说 / 杂谈再各占半行 */
+/* 中窄屏：文章卡通栏，横竖两张相册并排一行错落，说说 / 杂谈再各占半行 */
 @media (max-width: 1080px) {
   .q-post { grid-column: 1 / 13; grid-row: 1; min-height: 420px; }
   .q-photo-h { grid-column: 1 / 5; grid-row: 2; }
@@ -1214,7 +1214,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 @media (max-width: 760px) {
   .home-quick { grid-template-columns: minmax(0, 1fr); }
   .q-post, .q-photo-h, .q-photo-v, .q-moment, .q-chatter { grid-column: 1; grid-row: auto; }
-  /* 竖版照片墙收窄居中，避免单列下占满整屏高度 */
+  /* 竖版相册收窄居中，避免单列下占满整屏高度 */
   .q-photo-v { width: min(100%, 320px); justify-self: center; }
   /* 单列时没有照片卡撑高：文章卡两半各留足高度，摘要收两行、内边距收紧，不再被裁 */
   .q-post { min-height: 420px; }
@@ -1234,9 +1234,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .post-x-card .x-foot .x-link { margin-top: 0; }
 .post-x-card .x-foot .post-stats { margin: 0; }
 
-/* ---------- 照片墙 / 相册 ---------- */
+/* ---------- 相册 / 相册 ---------- */
 /* 两栏相册（Kirameku 式），窄屏回落单栏 */
-/* 照片墙：三列瀑布流（CSS columns），一行放 3 个照片集，卡片区域整体收窄；
+/* 相册：三列瀑布流（CSS columns），一行放 3 个照片集，卡片区域整体收窄；
    横版 4:3 与竖版 3:4 相册卡错落排布、自动安排，窄屏逐级回落 2 列 / 1 列 */
 .album-grid { columns: 3; column-gap: 18px; margin: 24px 0 40px; }
 .album-card { display: block; break-inside: avoid; margin: 0 0 18px;
@@ -1248,7 +1248,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
    照片直接 contain 等比完整显示；横版相册 4:3、竖版相册 3:4 原比例竖版显示。
    三层同尺寸同向小角度堆叠，底层往上错位，悬停弹性展开。 */
 .album-stack { position: relative; aspect-ratio: 4 / 3; margin: 16px 16px 0; }
-/* 竖版照片集按原比例竖版显示（照片墙页按相册横竖多数加 is-v） */
+/* 竖版照片集按原比例竖版显示（相册页按相册横竖多数加 is-v） */
 .album-card.is-v .album-stack { aspect-ratio: 3 / 4; }
 .album-stack > [data-stack-layer] { position: absolute; inset: 12px;
   border-radius: 14px; overflow: hidden;
@@ -1432,11 +1432,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .related a { font-size: 13px; color: var(--accent-text); padding: 5px 13px; border-radius: 999px;
   border: 1px solid var(--glass-line); }
 
-/* ---------- 创作台 ----------
+/* ---------- 工坊 ----------
    全屏布局后把整块收进居中栏，避免表单在宽屏被拉得过长；
    页头 / 标签条 / 表单三层用统一圆角与渐变竖条，和各分页观感一致。 */
 .studio-wrap { width: 100%; max-width: 72rem; margin: 0 auto; }
-/* 非站长设备访问创作台路由时看到的就是这个 404 卡片，与访问任何不存在路径一致 */
+/* 非站长设备访问工坊路由时看到的就是这个 404 卡片，与访问任何不存在路径一致 */
 .notfound { max-width: 480px; margin: 44px auto; padding: 40px 36px; text-align: center;
   border-radius: var(--radius-lg); border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); }
@@ -1505,7 +1505,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .adm-side-foot { padding: 0 0 0 8px; }
   .adm-side-foot .soft-btn { width: auto; }
 }
-/* 自动同步状态徽标：绿蓝为已开启、粉红为待同步，创作台任意页都能看到 */
+/* 自动同步状态徽标：绿蓝为已开启、粉红为待同步，工坊任意页都能看到 */
 .sync-badge { display: inline-block; padding: 2px 10px; border-radius: 999px;
   font-size: 11.5px; letter-spacing: .3px; color: var(--accent-text);
   background: var(--accent-soft); border: 1px solid var(--glass-line); }
@@ -1928,7 +1928,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
-/* ---------- 创作台：写文章 ----------
+/* ---------- 工坊：写文章 ----------
    与其它分页同一套「玻璃卡片」美术框架与 1080px 定宽比例：
    标题、工具栏、正文编辑区与属性字段都在 .studio-form 卡片里纵向排布。 */
 .post-title { font-size: 17px; font-weight: 650; color: var(--ink-strong); }
@@ -1948,6 +1948,20 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   border-radius: 999px; border: none; background: transparent; color: var(--muted); }
 .mode-switch button.on { color: var(--ink-strong); background: var(--glass-strong);
   box-shadow: 0 2px 10px rgba(112, 138, 190, .14); }
+/* 工坊设置页：格式优化方式 / 代码缩进长度的单选卡片 */
+.settings-block { margin: 18px 0; }
+.settings-block h3 { font-size: 14.5px; color: var(--ink-strong); margin: 0 0 2px; }
+.opt-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 6px; }
+.opt-item { display: flex; align-items: center; gap: 9px; padding: 9px 14px; cursor: pointer;
+  border: 1px solid var(--glass-line); border-radius: 12px; background: var(--glass-strong);
+  color: var(--ink); transition: border-color .18s, box-shadow .18s; }
+.opt-item:hover { border-color: var(--accent); }
+.opt-item input { accent-color: var(--accent); margin: 0; }
+.opt-item:has(input:checked) { border-color: var(--accent);
+  box-shadow: 0 2px 12px var(--accent-soft); color: var(--ink-strong); }
+.opt-item span { display: flex; flex-direction: column; gap: 1px; }
+.opt-item b { font-size: 13.5px; font-weight: 600; }
+.opt-item i { font-style: normal; font-size: 11.5px; color: var(--muted); }
 /* 正文编辑区：卡片里的一个带边框圆角面板，写 / 并排 / 预览三种视图 */
 .desk-body { display: flex; min-height: 0; height: 460px; margin-bottom: 14px;
   border: 1px solid var(--glass-line); border-radius: 14px; overflow: hidden;
@@ -2030,7 +2044,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 
 /* ZB-MATH:START */
-/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+/* 公式排版：站点文章、工坊预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
 /* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
    用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
@@ -2184,8 +2198,9 @@ pre code .tk-cs { color: var(--syn-cs); }
 pre code .tk-fn { color: var(--syn-fn); }
 pre code .tk-cls { color: var(--syn-cls); }
 pre code .tk-pr { color: var(--syn-pr); }
-/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
-pre, pre > code, .article :not(pre) > code {
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈。
+   工坊预览（.desk-preview）的行内代码与正文一致使用设置的代码字体 */
+pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
 }
 /* ZB-MATH:END */

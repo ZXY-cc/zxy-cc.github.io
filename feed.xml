@@ -8,20 +8,20 @@
   <updated>2026-11-14T00:00:00Z</updated>
   <author><name>星梦Staream</name></author>
   <entry>
-    <title>中期考核的题解与拓展思考</title>
-    <id>https://zxy-blog.top/posts/p-mwg23n3vy3gg.html</id>
-    <link rel="alternate" href="https://zxy-blog.top/posts/p-mwg23n3vy3gg.html"/>
-    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/p-mwg23n3vy3gg"/>
-    <updated>2026-11-14T00:00:00Z</updated>
-    <summary>:::cont::: A 奶龙比可爱 https://code.sipc115.com/problem/660 这道题难道只能用时间复杂度为 O n^2 的双重遍历去做吗？其实也可以用树状数组，实现 O nlogn 的解法。我将从这道题引入树状数组，探索树状数组的优势。 :::info 树状数组的魔法 我们有一个数组，比如记录每个&quot;可爱度值&quot;出现了几次： 我们需要 频繁做两件事 ： 操作 含义……</summary>
-  </entry>
-  <entry>
     <title>博客版本日志</title>
     <id>https://zxy-blog.top/posts/blog-changelog.html</id>
     <link rel="alternate" href="https://zxy-blog.top/posts/blog-changelog.html"/>
     <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/blog-changelog"/>
     <updated>2026-11-14T00:00:00Z</updated>
     <summary>每次更新都记在这里：改了什么、什么时候改的。</summary>
+  </entry>
+  <entry>
+    <title>中期考核的题解与拓展思考</title>
+    <id>https://zxy-blog.top/posts/p-mwg23n3vy3gg.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/p-mwg23n3vy3gg.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/p-mwg23n3vy3gg"/>
+    <updated>2026-11-14T00:00:00Z</updated>
+    <summary>:::cont::: A 奶龙比可爱 https://code.sipc115.com/problem/660 这道题难道只能用时间复杂度为 O n^2 的双重遍历去做吗？其实也可以用树状数组，实现 O nlogn 的解法。我将从这道题引入树状数组，探索树状数组的优势。 :::info 树状数组的魔法 我们有一个数组，比如记录每个&quot;可爱度值&quot;出现了几次： 我们需要 频繁做两件事 ： 操作 含义……</summary>
   </entry>
   <entry>
     <title>本站支持的 Markdown 拓展语法</title>
