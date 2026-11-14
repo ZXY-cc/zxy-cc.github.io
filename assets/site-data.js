@@ -1,4 +1,4 @@
-/* 星梦Staream · 由创作台发布生成 */
+/* 星梦Staream · 由工坊发布生成 */
 window.STUDIO_DATA = {
   "version": 1,
   "studioReset": "2026-11-10-a",
