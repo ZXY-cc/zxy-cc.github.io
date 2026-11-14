@@ -363,26 +363,26 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
 <span class="tk-ty">int</span> tree[<span class="tk-nu">105</span>];
 <span class="tk-ty">int</span> <span class="tk-fn">lowbit</span>(<span class="tk-ty">int</span> x) { <span class="tk-kw">return</span> x &amp; (-x); }
 <span class="tk-ty">void</span> <span class="tk-fn">add</span>(<span class="tk-ty">int</span> x, <span class="tk-ty">int</span> v) {
-  <span class="tk-kw">for</span> (; x &lt;= <span class="tk-nu">101</span>; x += <span class="tk-fn">lowbit</span>(x))
-    tree[x] += v;
+    <span class="tk-kw">for</span> (; x &lt;= <span class="tk-nu">101</span>; x += <span class="tk-fn">lowbit</span>(x))
+        tree[x] += v;
 }
 <span class="tk-ty">int</span> <span class="tk-fn">query</span>(<span class="tk-ty">int</span> x) {
-  <span class="tk-ty">int</span> res = <span class="tk-nu">0</span>;
-  <span class="tk-kw">for</span> (; x &gt; <span class="tk-nu">0</span>; x -= <span class="tk-fn">lowbit</span>(x))
-    res += tree[x];
-  <span class="tk-kw">return</span> res;
+    <span class="tk-ty">int</span> res = <span class="tk-nu">0</span>;
+    <span class="tk-kw">for</span> (; x &gt; <span class="tk-nu">0</span>; x -= <span class="tk-fn">lowbit</span>(x))
+        res += tree[x];
+    <span class="tk-kw">return</span> res;
 }
 <span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
-  <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;n);
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-    <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;a[i]);
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
-    ans[i] = <span class="tk-fn">query</span>(a[i]);
-    <span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);
-  }
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-    <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d &quot;</span>, ans[i]);
-  <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+    <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;n);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
+        <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;a[i]);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
+        ans[i] = <span class="tk-fn">query</span>(a[i]);
+        <span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);
+    }
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
+        <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d &quot;</span>, ans[i]);
+    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
 }</code><button class="copy-btn" type="button">复制</button></pre></div>
 <section class="interactions" aria-label="互动区">
 <div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
