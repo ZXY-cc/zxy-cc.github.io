@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中期考核的题解与拓展思考 · 星梦Staream</title>
+<meta name="description" content=":::cont::: A 奶龙比可爱 https://code.sipc115.com/problem/660 这道题难道只能用时间复杂度为 O n^2 的双重遍历去做吗？其实也可以用树状数组，实现 O nlogn 的解法。我将从这道题引入树状数组，探索树状数组的优势。 :::info 树状数组的魔法 我们有一个数组，比如记录每个&quot;可爱度值&quot;出现了几次： 我们需要 频繁做两件事 ： 操作 含义……">
+<link rel="canonical" href="https://zxy-blog.top/posts/p-mwg23n3vy3gg.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="中期考核的题解与拓展思考 · 星梦Staream">
+<meta property="og:description" content=":::cont::: A 奶龙比可爱 https://code.sipc115.com/problem/660 这道题难道只能用时间复杂度为 O n^2 的双重遍历去做吗？其实也可以用树状数组，实现 O nlogn 的解法。我将从这道题引入树状数组，探索树状数组的优势。 :::info 树状数组的魔法 我们有一个数组，比如记录每个&quot;可爱度值&quot;出现了几次： 我们需要 频繁做两件事 ： 操作 含义……">
+<meta property="og:url" content="https://zxy-blog.top/posts/p-mwg23n3vy3gg.html">
+<meta property="og:image" content="https://zxy-blog.top/assets/og-card.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
+<meta property="article:published_time" content="2026-11-14">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.49.0">
+<style>
+:root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#dceafb,#eae6fb 46%,#fdeef5);color:var(--ink);font:15.5px/1.9 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:36px 22px 70px}
+.crumb{font-size:13px;color:var(--muted);margin:0 0 18px}
+.crumb a{color:var(--brand);text-decoration:none}
+article{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;padding:32px 36px;box-shadow:0 10px 30px rgba(112,138,190,.10)}
+h1{font-size:27px;margin:0 0 8px;letter-spacing:.5px}
+.meta{color:var(--muted);font-size:13px;margin:0 0 26px}
+h2{font-size:22px;margin:34px 0 14px}
+.zb-vl{border-left:3px solid transparent;border-image:linear-gradient(180deg,#7897dc,#ab8bd4,#e096bd) 1;padding-left:13px}
+.zb-vl>:first-child{margin-top:0}.zb-vl>:last-child{margin-bottom:0}
+h3{font-size:17px;margin:24px 0 10px}
+p{margin:0 0 18px}
+strong{color:var(--ink)}
+code{background:#eef3ff;border-radius:5px;padding:1px 6px;font-size:13px}
+pre{background:#eef3ff;border-radius:10px;padding:16px;overflow:auto;font-size:13px;line-height:1.7}
+blockquote{margin:20px 0;padding:12px 18px;border-left:3px solid var(--brand);background:#eef3ff;border-radius:0 10px 10px 0}
+table{width:100%;border-collapse:collapse;margin:22px 0;font-size:14px;background:rgba(255,255,255,.5)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
+th{background:#eef3ff}
+ul,ol{padding-left:22px}
+a{color:var(--brand)}
+/* :::truck 三线表：底线画在表格级（rowspan 宿主格停在倒数第二行时右下角也有横线） */
+.zb-tuack{border:none;border-bottom:2px solid #2c3e5c;background:transparent;border-radius:0;overflow:visible}
+.zb-tuack th,.zb-tuack td{border:none;border-bottom:0;background:transparent}
+.zb-tuack thead th{border-top:2px solid #2c3e5c;border-bottom:1.5px solid #2c3e5c;background:transparent}
+/* 新拓展语法：多语言代码标签组、lnum 行号列、l=a-b 行高亮在静态阅读版同样完整；
+   pre.zb-code 改成 flex 后要显式写回 [hidden]，否则被隐藏的语言块仍会显示 */
+pre[hidden]{display:none}
+pre.zb-code{position:relative;display:flex;align-items:stretch;gap:0;padding:16px 0}
+/* 与 pre.zb-code 同处一屏，用更高特异性把被隐藏语言块压回 display:none */
+pre.zb-code[hidden]{display:none}
+pre.zb-code>code{flex:1 1 auto;padding:0 18px;background:none;border-radius:0;white-space:pre}
+.zb-code .zb-lang{position:absolute;right:12px;bottom:6px;font-size:10px;color:var(--muted);pointer-events:none}
+.line-numbers{flex:0 0 auto;padding:0 14px 0 18px;white-space:pre;text-align:right;color:var(--muted);border-right:1px solid var(--line);user-select:none}
+.zb-cline{display:block}
+.zb-cline-hl{background:#e5eeff;box-shadow:inset 2px 0 0 var(--brand)}
+.zb-code-tabs{margin:14px 0}
+.zb-tab-bar{display:flex;flex-wrap:wrap;gap:2px;padding:0 10px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:rgba(255,255,255,.62)}
+.zb-tab{font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:7px 14px 8px;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent}
+.zb-tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
+/* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
+.toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
+.toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
+.toc-list{display:flex;flex-wrap:wrap;gap:6px 16px}
+.toc-item{display:inline-block;border:0;background:none;padding:2px 0;cursor:pointer;color:var(--brand);font:inherit;font-size:13px;text-align:left;text-decoration:none}
+.toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
+.toc-item:hover{text-decoration:underline}
+.back{margin:24px 0 0;font-size:14px}
+@media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+
+/* 公式排版：站点文章、创作台预览、无 JS 静态镜像共用这一段，
+   build.mjs 会原样抽进 posts/*.html 的内联样式。 */
+/* Computer Modern Unicode（SIL OFL 1.1，随站点自带，许可见 assets/fonts/OFL.txt）。
+   用根相对路径，主站样式表与 posts/ 下的静态页内联样式都能取到同一份字体。 */
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-roman.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "ZB Computer Modern";
+  src: url("/assets/fonts/cmu-serif-500-italic.woff2") format("woff2");
+  font-style: italic; font-weight: 400; font-display: swap;
+}
+.zb-math { font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  line-height: 1.55; color: var(--ink-strong, #39436a); }
+/* 设置页选「默认」时回到系统数学字体；静态镜像无该属性，始终用 Computer Modern */
+:root[data-font-tex="default"] .zb-math { font-family: "Cambria Math", "Times New Roman",
+  Georgia, var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif; }
+/* 表格单元格里的公式（含 $$…$$ 写法）显式钉住同一套字体栈：
+   单元格有自己的小字号与通用排版，不能让公式回落到正文默认字体。 */
+th .zb-math, td .zb-math, .zb-mcell .zb-math {
+  font-family: "ZB Computer Modern", "Computer Modern Serif", "CMU Serif",
+  "Latin Modern Roman", "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+  font-size: 1.08em;
+}
+:root[data-font-tex="default"] th .zb-math,
+:root[data-font-tex="default"] td .zb-math,
+:root[data-font-tex="default"] .zb-mcell .zb-math {
+  font-family: "Cambria Math", "Times New Roman", Georgia,
+  var(--font-cn, "PingFang SC", "Microsoft YaHei", sans-serif), serif;
+}
+.zb-math-inline { display: inline; }
+/* KaTeX 字体族（SIL OFL 1.1，随站点自带，来源与许可见 assets/fonts/KaTeX-FONTS-LICENSE.txt）：
+   设置页选「KaTeX（洛谷同款）」时公式用这一族渲染。 */
+@font-face { font-family: "KaTeX_AMS"; src: url("/assets/fonts/KaTeX_AMS-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Caligraphic"; src: url("/assets/fonts/KaTeX_Caligraphic-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Caligraphic"; src: url("/assets/fonts/KaTeX_Caligraphic-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Fraktur"; src: url("/assets/fonts/KaTeX_Fraktur-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Main"; src: url("/assets/fonts/KaTeX_Main-BoldItalic.woff2") format("woff2"); font-style: italic; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_Math"; src: url("/assets/fonts/KaTeX_Math-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Math"; src: url("/assets/fonts/KaTeX_Math-BoldItalic.woff2") format("woff2"); font-style: italic; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Bold.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "KaTeX_SansSerif"; src: url("/assets/fonts/KaTeX_SansSerif-Italic.woff2") format("woff2"); font-style: italic; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Script"; src: url("/assets/fonts/KaTeX_Script-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size1"; src: url("/assets/fonts/KaTeX_Size1-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size2"; src: url("/assets/fonts/KaTeX_Size2-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size3"; src: url("/assets/fonts/KaTeX_Size3-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Size4"; src: url("/assets/fonts/KaTeX_Size4-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "KaTeX_Typewriter"; src: url("/assets/fonts/KaTeX_Typewriter-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+:root[data-font-tex="katex"] .zb-math { font-family: "KaTeX_Main", "KaTeX_Math", "Cambria Math", "Times New Roman", Georgia, serif; }
+:root[data-font-tex="katex"] .zb-math .zb-var { font-family: "KaTeX_Math", "KaTeX_Main"; }
+:root[data-font-tex="katex"] th .zb-math, :root[data-font-tex="katex"] td .zb-math,
+:root[data-font-tex="katex"] .zb-mcell .zb-math { font-family: "KaTeX_Main", "KaTeX_Math", "Cambria Math", "Times New Roman", Georgia, serif; }
+:root[data-font-tex="katex"] .zb-bb { font-family: "KaTeX_AMS", "KaTeX_Main"; font-weight: 400; }
+:root[data-font-tex="katex"] .zb-cal { font-family: "KaTeX_Caligraphic", "Segoe Script", cursive; }
+:root[data-font-tex="katex"] .zb-math .zb-bold { font-family: "KaTeX_Main"; font-weight: 700; }
+.zb-math-block { display: block; margin: 22px 0; padding: 15px 18px; overflow-x: auto;
+  text-align: center; font-size: 18px; border-radius: 14px;
+  border: 1px solid var(--glass-line, rgba(255, 255, 255, .72));
+  background: var(--code-bg, rgba(255, 255, 255, .30)); }
+.zb-var { font-style: italic; }
+.zb-digit, .zb-num, .zb-text, .zb-textchar, .zb-func, .zb-sym { font-style: normal; }
+.zb-op { margin: 0 .1em; }
+.zb-frac { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .18em; font-size: .92em; line-height: 1.2; }
+.zb-frac > .zb-num { display: block; padding: 0 .3em .08em; border-bottom: 1px solid currentColor; }
+.zb-frac > .zb-den { display: block; padding: .08em .3em 0; }
+.zb-binom .zb-frac > .zb-num { border-bottom: none; }
+.zb-sqrt { display: inline-flex; align-items: stretch; vertical-align: middle; margin: 0 .1em; }
+.zb-radical { font-size: 1.25em; line-height: 1; }
+.zb-radicand { border-top: 1px solid currentColor; padding: .06em .18em 0 .06em; }
+.zb-root-deg { font-size: .62em; align-self: flex-start; margin-right: -.25em; }
+.zb-script { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.zb-base { display: inline-flex; align-items: center; }
+.zb-scripts { display: inline-flex; flex-direction: column; justify-content: center;
+  font-size: .68em; line-height: 1.05; margin-left: .05em; }
+.zb-sup, .zb-sub { display: block; min-height: .7em; }
+.zb-bigop { display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 .16em; line-height: 1.05; }
+.zb-bigop > .zb-op { font-size: 1.7em; }
+.zb-bigop .zb-over, .zb-bigop .zb-under { font-size: .66em; }
+.zb-bb { font-weight: 700; }
+.zb-bold { font-weight: 700; }
+.zb-cal { font-family: "Segoe Script", "Brush Script MT", cursive; }
+.zb-quad { display: inline-block; width: 1em; }
+.zb-qquad { display: inline-block; width: 2em; }
+.zb-thinspace { display: inline-block; width: .17em; }
+.zb-nbsp { display: inline-block; width: .3em; }
+.zb-delim { font-size: 1.12em; }
+.zb-unknown { font-style: normal; color: #b0456b; }
+.zb-group { display: inline; }
+.zb-accent { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; }
+.zb-accent-mark { font-size: .7em; height: .55em; }
+.zb-accent-underline { flex-direction: column-reverse; }
+.zb-aligned { display: inline-flex; flex-direction: column; align-items: center; gap: .35em; }
+.zb-line, .zb-cell { display: inline-flex; }
+.zb-mtable { display: inline-flex; flex-direction: column; }
+.zb-mrow { display: inline-flex; }
+.zb-mcell { padding: .1em .4em; text-align: center; }
+.zb-matrix { display: inline-flex; align-items: center; vertical-align: middle; }
+.zb-matrix-pmatrix::before, .zb-matrix-pmatrix::after { font-size: 1.8em; }
+.zb-matrix-pmatrix::before { content: '('; }
+.zb-matrix-pmatrix::after { content: ')'; }
+.zb-matrix-bmatrix::before { content: '['; font-size: 1.8em; }
+.zb-matrix-bmatrix::after { content: ']'; font-size: 1.8em; }
+.zb-matrix-cases::before { content: '\7B'; font-size: 2em; }
+.zb-break { display: block; height: 0; }
+.zb-alignmark { display: inline-block; width: .5em; }
+.zb-task { margin-right: 7px; color: var(--accent-text, #3f5c9c); }
+.zb-task.done { color: var(--accent-3-text, #934268); }
+.zb-code .zb-lang { position: absolute; right: 12px; bottom: 7px; font-size: 10px;
+  letter-spacing: .8px; color: var(--faint, #64708f); pointer-events: none; }
+/* 多语言代码标签组：块组上方一排语言名（C / C++ / Python…），当前项渐变下划线高亮；
+   标签内的代码块不再重复显示右下角语言角标 */
+.zb-code-tabs { margin: 14px 0; }
+.zb-tab-bar { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 10px;
+  border: 1px solid var(--glass-line, rgba(120,140,180,.28)); border-bottom: none;
+  border-radius: 14px 14px 0 0; background: var(--glass-strong, rgba(255,255,255,.5)); }
+.zb-tab { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  padding: 7px 14px 8px; color: var(--muted, #64708f); background: transparent; border: none;
+  border-bottom: 2px solid transparent; transition: color .25s ease, border-color .25s ease; }
+.zb-tab:hover { color: var(--ink-strong, #2c3a5e); }
+.zb-tab.on { color: var(--accent-text, #3f5c9c); border-bottom-color: var(--accent, #7ea6e0); }
+.zb-code-tabs .zb-code { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+:root[data-theme="night"] .zb-math { color: #e8f0ff; }
+:root[data-theme="night"] .zb-unknown { color: #ffb0c8; }
+/* 代码语法配色：参考 Woodfish-Theme（Woodfish Dark，即 Bearded Theme Arc）。
+   夜空直接用原版色值；晴空底色是雾白玻璃，同色相加深保证可读。
+   低画质不上色：全部 token 回退为正文颜色（只动 color，不需重渲染）。 */
+:root {
+  --syn-cm: #6d7fa8; --syn-st: #0d9e5a; --syn-kw: #9a7c17; --syn-ty: #0b98a3;
+  --syn-nu: #bf5a1d; --syn-cs: #bc3d16; --syn-fn: #1972c2; --syn-cls: #8a4ed6; --syn-pr: #b3541b;
+}
+:root[data-theme="night"] {
+  --syn-cm: #4a5e84; --syn-st: #3cec85; --syn-kw: #eacd61; --syn-ty: #22ecdb;
+  --syn-nu: #ff955c; --syn-cs: #e35535; --syn-fn: #69c3ff; --syn-cls: #b78aff; --syn-pr: #ff955c;
+}
+pre code .tk-cm { color: var(--syn-cm); font-style: italic; }
+pre code .tk-st { color: var(--syn-st); }
+pre code .tk-kw { color: var(--syn-kw); }
+pre code .tk-ty { color: var(--syn-ty); }
+pre code .tk-nu { color: var(--syn-nu); }
+pre code .tk-cs { color: var(--syn-cs); }
+pre code .tk-fn { color: var(--syn-fn); }
+pre code .tk-cls { color: var(--syn-cls); }
+pre code .tk-pr { color: var(--syn-pr); }
+/* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈 */
+pre, pre > code, .article :not(pre) > code {
+  font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="crumb"><a href="/">星梦Staream</a> / 静态阅读版</p>
+<article>
+<h1>中期考核的题解与拓展思考</h1>
+<p class="meta" data-view-post="p-mwg23n3vy3gg">2026-11-14 · B / 科协 / 题解 / 拓展 · <span class="mirror-likes"><span data-like-stat="post:p-mwg23n3vy3gg">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwg23n3vy3gg">0</span> 次浏览（不含站长）</span></p>
+<div class="body"><nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--a-奶龙比可爱-https-code-sipc115-com-problem-">[A 奶龙比可爱](https://code.sipc115.com/problem/660)</a></div></nav>
+<h3 class="zb-vl" id="h--a-奶龙比可爱-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/660" target="_blank" rel="noopener noreferrer">A 奶龙比可爱</a></h3>
+<p>这道题难道只能用时间复杂度为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span>的双重遍历去做吗？其实也可以用树状数组，实现<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span>的解法。我将从这道题引入树状数组，探索树状数组的优势。</p>
+<hr>
+<details class="zb-fold zb-fold-info"><summary class="zb-fold-head">树状数组的魔法</summary><div class="zb-fold-body"><p>我们有一个数组，比如记录每个&quot;可爱度值&quot;出现了几次：</p>
+<pre class="zb-code"><code>可爱度值:    <span class="tk-nu">0</span>   <span class="tk-nu">1</span>   <span class="tk-nu">2</span>   <span class="tk-nu">3</span>   <span class="tk-nu">4</span>   <span class="tk-nu">5</span>
+出现次数:    <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span> ← 一开始全是 <span class="tk-nu">0</span></code><button class="copy-btn" type="button">复制</button></pre>
+<p>我们需要<strong>频繁做两件事</strong>：</p>
+<table><thead><tr><th style="text-align:center">操作</th><th style="text-align:center">含义</th><th style="text-align:center">例子</th></tr></thead><tbody><tr><td style="text-align:center"><strong>add(x, v)</strong></td><td style="text-align:center">把位置 x 的值 +v（插入一个新数）</td><td style="text-align:center">来了一个可爱度 4 的奶龙 → <code>add(4, 1)</code></td></tr><tr><td style="text-align:center"><strong>query(x)</strong></td><td style="text-align:center">查询位置 1 到 x 的<strong>总和</strong>（有多少只奶龙可爱度 ≤ x）</td><td style="text-align:center"><code>query(4)</code> = 可爱度 ≤ 4 的奶龙有几只</td></tr></tbody></table>
+<p>如果只是普通做法：add 是 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span>，但 query 要从 1 加到 x，是 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span>。<br>而树状数组的魔法：add 和 query 都是<strong> <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span></strong>，因为它不是傻傻地一个个加，而是<strong>提前把&quot;一段一段的和&quot;存好了</strong>。</p>
+<p>这是理解树状数组<strong>最关键</strong>的一步。<br>树状数组中，<strong>每个位置 i 不仅存自己的值，还管着一段区间</strong>。它管的区间长度，由 <code>lowbit(i)</code> 决定。</p>
+<ul><li>什么是 lowbit？</li></ul>
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-ty">int</span> <span class="tk-fn">lowbit</span>(<span class="tk-ty">int</span> x) {
+    <span class="tk-kw">return</span> x &amp; (-x);
+}</code><button class="copy-btn" type="button">复制</button></pre>
+<p><code>lowbit(x)</code> 提取 x 的二进制表示中<strong>最低位的 1</strong> 所代表的值。</p>
+<p>举个例子：</p>
+<table><thead><tr><th style="text-align:center">x（十进制）</th><th style="text-align:center">x（二进制）</th><th style="text-align:center">lowbit(x)</th><th style="text-align:center">解释</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td style="text-align:center"><code>0001</code></td><td style="text-align:center"><strong>1</strong></td><td style="text-align:center">最低位 1 在第 0 位，2⁰ = 1</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center"><code>0010</code></td><td style="text-align:center"><strong>2</strong></td><td style="text-align:center">最低位 1 在第 1 位，2¹ = 2</td></tr><tr><td style="text-align:center">3</td><td style="text-align:center"><code>0011</code></td><td style="text-align:center"><strong>1</strong></td><td style="text-align:center">最低位 1 在第 0 位，2⁰ = 1</td></tr><tr><td style="text-align:center">4</td><td style="text-align:center"><code>0100</code></td><td style="text-align:center"><strong>4</strong></td><td style="text-align:center">最低位 1 在第 2 位，2² = 4</td></tr><tr><td style="text-align:center">5</td><td style="text-align:center"><code>0101</code></td><td style="text-align:center"><strong>1</strong></td><td style="text-align:center">最低位 1 在第 0 位，2⁰ = 1</td></tr><tr><td style="text-align:center">6</td><td style="text-align:center"><code>0110</code></td><td style="text-align:center"><strong>2</strong></td><td style="text-align:center">最低位 1 在第 1 位，2¹ = 2</td></tr><tr><td style="text-align:center">7</td><td style="text-align:center"><code>0111</code></td><td style="text-align:center"><strong>1</strong></td><td style="text-align:center">最低位 1 在第 0 位，2⁰ = 1</td></tr><tr><td style="text-align:center">8</td><td style="text-align:center"><code>1000</code></td><td style="text-align:center"><strong>8</strong></td><td style="text-align:center">最低位 1 在第 3 位，2³ = 8</td></tr></tbody></table>
+<ul><li>每个位置管多长？</li></ul>
+<p><strong>位置 i 管的区间长度 = lowbit(i)，管的范围是 <code>[i - lowbit(i) + 1, i]</code></strong></p>
+<table><thead><tr><th style="text-align:center">位置 i</th><th style="text-align:center">lowbit(i)</th><th style="text-align:center">管的范围</th><th style="text-align:center">管几个数</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td style="text-align:center">1</td><td style="text-align:center"><code>[1, 1]</code></td><td style="text-align:center">1 个</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center">2</td><td style="text-align:center"><code>[1, 2]</code></td><td style="text-align:center">2 个</td></tr><tr><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center"><code>[3, 3]</code></td><td style="text-align:center">1 个</td></tr><tr><td style="text-align:center">4</td><td style="text-align:center">4</td><td style="text-align:center"><code>[1, 4]</code></td><td style="text-align:center">4 个</td></tr><tr><td style="text-align:center">5</td><td style="text-align:center">1</td><td style="text-align:center"><code>[5, 5]</code></td><td style="text-align:center">1 个</td></tr><tr><td style="text-align:center">6</td><td style="text-align:center">2</td><td style="text-align:center"><code>[5, 6]</code></td><td style="text-align:center">2 个</td></tr><tr><td style="text-align:center">7</td><td style="text-align:center">1</td><td style="text-align:center"><code>[7, 7]</code></td><td style="text-align:center">1 个</td></tr><tr><td style="text-align:center">8</td><td style="text-align:center">8</td><td style="text-align:center"><code>[1, 8]</code></td><td style="text-align:center">8 个</td></tr></tbody></table>
+<blockquote><p>简单发现：偶数位置管得多（因为低位有 0），奇数位置管得少（最低位 1 就在个位，只管自己）。2 的幂次方位置管得最多（如 4 管 1~4，8 管 1~8）。</p></blockquote>
+<p>我们可以把树状数组的&quot;管辖关系&quot;可视化：</p>
+<pre class="zb-code"><code>位置:      <span class="tk-nu">1</span>     <span class="tk-nu">2</span>    <span class="tk-nu">3</span>      <span class="tk-nu">4</span>       <span class="tk-nu">5</span>     <span class="tk-nu">6</span>    <span class="tk-nu">7</span>          <span class="tk-nu">8</span>
+          ┌┴┐  ┌─┴─┐ ┌┴┐  ┌──┴───┐  ┌┴┐  ┌─┴─┐ ┌┴┐  ┌──────┴───────┐
+管辖范围: [<span class="tk-nu">1</span>]  [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>] [<span class="tk-nu">3</span>]  [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>] [<span class="tk-nu">5</span>]  [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] [<span class="tk-nu">7</span>] [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>,<span class="tk-nu">5</span>,<span class="tk-nu">6</span>,<span class="tk-nu">7</span>,<span class="tk-nu">8</span>]</code><button class="copy-btn" type="button">复制</button></pre>
+<hr>
+<p>现在我们的目标是求 <code>[1, x]</code> 的总和<br>我们可以采用以下策略：<strong>从 x 出发，不断跳到&quot;更大的管辖块&quot;，把沿途的值累加起来。</strong></p>
+<p>跳转规则如下：</p>
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-ty">int</span> <span class="tk-fn">query</span>(<span class="tk-ty">int</span> x) {
+    <span class="tk-ty">int</span> res = <span class="tk-nu">0</span>;
+    <span class="tk-kw">for</span> (; x &gt; <span class="tk-nu">0</span>; x -= <span class="tk-fn">lowbit</span>(x))   <span class="tk-cm">// 每次减去 lowbit(x)</span>
+        res += tree[x];              <span class="tk-cm">// 把当前块的和加进来</span>
+    <span class="tk-kw">return</span> res;
+}</code><button class="copy-btn" type="button">复制</button></pre>
+<ul><li>为什么要 <code>x -= lowbit(x)</code>？**</li></ul>
+<p>因为 <code>tree[x]</code> 已经管了 <code>[x - lowbit(x) + 1, x]</code> 这段，剩下的前缀是 <code>[1, x - lowbit(x)]</code>，所以跳到 <code>x - lowbit(x)</code> 继续查。</p>
+<p>为了方便理解这魔法，我们可以手推：query(7)</p>
+<pre class="zb-code"><code><span class="tk-fn">query</span>(<span class="tk-nu">7</span>):
+  ① x=<span class="tk-nu">7</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">7</span>)=<span class="tk-nu">1</span>, tree[<span class="tk-nu">7</span>] 管 [<span class="tk-nu">7</span>,<span class="tk-nu">7</span>]       → res += tree[<span class="tk-nu">7</span>]
+     还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">6</span>]，跳 x = <span class="tk-nu">7</span>-<span class="tk-nu">1</span> = <span class="tk-nu">6</span>
+
+  ② x=<span class="tk-nu">6</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">6</span>)=<span class="tk-nu">2</span>, tree[<span class="tk-nu">6</span>] 管 [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>]       → res += tree[<span class="tk-nu">6</span>]
+     还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">4</span>]，跳 x = <span class="tk-nu">6</span>-<span class="tk-nu">2</span> = <span class="tk-nu">4</span>
+
+  ③ x=<span class="tk-nu">4</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">4</span>)=<span class="tk-nu">4</span>, tree[<span class="tk-nu">4</span>] 管 [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]   → res += tree[<span class="tk-nu">4</span>]
+     还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">0</span>]，跳 x = <span class="tk-nu">4</span>-<span class="tk-nu">4</span> = <span class="tk-nu">0</span>，结束
+
+res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + tree[<span class="tk-nu">4</span>]
+    = [<span class="tk-nu">7</span>] + [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] + [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]
+    = [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>,<span class="tk-nu">5</span>,<span class="tk-nu">6</span>,<span class="tk-nu">7</span>]  ✓ 完美覆盖！</code><button class="copy-btn" type="button">复制</button></pre>
+<p>query(7) 的跳转路径图：</p>
+<pre class="zb-code"><code>  <span class="tk-nu">7</span>  →  <span class="tk-nu">6</span>  →  <span class="tk-nu">4</span>  →  <span class="tk-nu">0</span>(停)
+  ↑     ↑     ↑
+ [<span class="tk-nu">7</span>]  [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]
+ 
+ 合起来正好是 [<span class="tk-nu">1</span>,<span class="tk-nu">7</span>] ！</code><button class="copy-btn" type="button">复制</button></pre>
+<blockquote><p>关键洞察：任意数字 x 都可以拆成若干个 2 的幂次之和（这就是二进制），而树状数组的跳转恰好就是按二进制的每一位来拆的。7 = 4 + 2 + 1，所以 query(7) 刚好跳 3 次。</p></blockquote>
+<hr>
+<p>还有一个目标是把位置 x 的值 +v，同时更新所有&quot;管了 x&quot;的树状数组节点<br>不妨采用这种更新规则</p>
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-ty">void</span> <span class="tk-fn">add</span>(<span class="tk-ty">int</span> x, <span class="tk-ty">int</span> v) {
+    <span class="tk-kw">for</span> (; x &lt;= 最大范围; x += <span class="tk-fn">lowbit</span>(x))  <span class="tk-cm">// 每次加上 lowbit(x)</span>
+        tree[x] += v;                       <span class="tk-cm">// 把当前块的和也 +v</span>
+}</code><button class="copy-btn" type="button">复制</button></pre>
+<ul><li>为什么要 <code>x += lowbit(x)</code>？**</li></ul>
+<p>因为我们要找到<strong>所有管辖范围包含 x 的位置</strong>，把它们都更新。</p>
+<p>为了方便理解这魔法，我们再手推：add(3, 1)</p>
+<p>位置 3 被哪些节点管着？看管辖表：</p>
+<table><thead><tr><th style="text-align:center">位置</th><th style="text-align:center">管的范围</th><th style="text-align:center">包含 3 吗？</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td style="text-align:center">[1,1]</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center">[1,2]</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:center"><strong>3</strong></td><td style="text-align:center">[3,3]</td><td style="text-align:center"><strong>✅</strong></td></tr><tr><td style="text-align:center"><strong>4</strong></td><td style="text-align:center">[1,2,3,4]</td><td style="text-align:center"><strong>✅</strong></td></tr><tr><td style="text-align:center">5</td><td style="text-align:center">[5,5]</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:center"><strong>6</strong></td><td style="text-align:center">[5,6]</td><td style="text-align:center">❌（不管 3）</td></tr><tr><td style="text-align:center"><strong>8</strong></td><td style="text-align:center">[1~8]</td><td style="text-align:center"><strong>✅</strong></td></tr></tbody></table>
+<p>所以 add(3, 1) 需要更新位置 3、4、8：</p>
+<pre class="zb-code"><code><span class="tk-fn">add</span>(<span class="tk-nu">3</span>, <span class="tk-nu">1</span>):
+  ① x=<span class="tk-nu">3</span>, tree[<span class="tk-nu">3</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">3</span>] 管 [<span class="tk-nu">3</span>,<span class="tk-nu">3</span>]，包含 <span class="tk-nu">3</span> ✅）
+     跳 x = <span class="tk-nu">3</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">3</span>) = <span class="tk-nu">3</span> + <span class="tk-nu">1</span> = <span class="tk-nu">4</span>
+
+  ② x=<span class="tk-nu">4</span>, tree[<span class="tk-nu">4</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">4</span>] 管 [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]，包含 <span class="tk-nu">3</span> ✅）
+     跳 x = <span class="tk-nu">4</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">4</span>) = <span class="tk-nu">4</span> + <span class="tk-nu">4</span> = <span class="tk-nu">8</span>
+
+  ③ x=<span class="tk-nu">8</span>, tree[<span class="tk-nu">8</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">8</span>] 管 [<span class="tk-nu">1</span>~<span class="tk-nu">8</span>]，包含 <span class="tk-nu">3</span> ✅）
+     跳 x = <span class="tk-nu">8</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">8</span>) = <span class="tk-nu">8</span> + <span class="tk-nu">8</span> = <span class="tk-nu">16</span>，超出范围，结束</code><button class="copy-btn" type="button">复制</button></pre>
+<p>add(3, 1) 的跳转路径图：</p>
+<pre class="zb-code"><code>  <span class="tk-nu">3</span>  →  <span class="tk-nu">4</span>  →  <span class="tk-nu">8</span>  →  <span class="tk-nu">16</span>(停)
+  ↑     ↑     ↑
+ [<span class="tk-nu">3</span>]  [<span class="tk-nu">1</span>~<span class="tk-nu">4</span>] [<span class="tk-nu">1</span>~<span class="tk-nu">8</span>]
+ 
+ 所有管了位置 <span class="tk-nu">3</span> 的节点都更新了！</code><button class="copy-btn" type="button">复制</button></pre>
+<blockquote><p><strong>为什么 add 和 query 的跳转方向相反？</strong></p>
+<ul><li>query 是<strong>往前拆</strong>（x 减去 lowbit），把前缀拆成若干块。</li><li>add 是<strong>往后传播</strong>（x 加上 lowbit），把自己的变化通知所有&quot;更大的块&quot;。</li></ul></blockquote>
+<hr>
+<p>总结一下：树状数组</p>
+<table><thead><tr><th style="text-align:center">操作</th><th style="text-align:center">方向</th><th style="text-align:left">功能</th></tr></thead><tbody><tr><td style="text-align:center"><strong>query(x)</strong></td><td style="text-align:center"><code>x -= lowbit(x)</code></td><td style="text-align:left"><strong>&quot;往左跳，拆前缀&quot;</strong> — 把 [1,x] 拆成若干块求和</td></tr><tr><td style="text-align:center"><strong>add(x, v)</strong></td><td style="text-align:center"><code>x += lowbit(x)</code></td><td style="text-align:left"><strong>&quot;往右跳，传影响&quot;</strong> — 通知所有管了 x 的大块</td></tr></tbody></table></div></details>
+<p>现在就可以回到本题啦：</p>
+<ul><li>为什么可爱度要 +1 偏移？</li></ul>
+<p>树状数组的索引从 <strong>1</strong> 开始（因为 lowbit(0) = 0，x -= 0 会死循环）。</p>
+<p>但可爱度可能是 0，所以我们把所有可爱度 +1 偏移：</p>
+<p>每一步到底在干什么？</p>
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
+    ans[i] = <span class="tk-fn">query</span>(a[i]);      <span class="tk-cm">// 查询：左边有多少只奶龙可爱度 &lt; a[i]？</span>
+    <span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);          <span class="tk-cm">// 插入：把当前奶龙的可爱度记录进去</span>
+}</code><button class="copy-btn" type="button">复制</button></pre>
+<p>详细拆解：</p>
+<p><strong><code>query(a[i])</code></strong>：</p>
+<ul><li>我们要查的是&quot;严格小于 a[i]&quot;的数量。</li><li>偏移后，a[i] 变成了 <code>a[i]+1</code>。</li><li><code>query(a[i])</code> 查的是偏移后索引 1 到 a[i] 的和，对应原始值 0 到 a[i]-1。</li><li>这恰好就是<strong>严格小于 a[i]</strong> 的数量！</li></ul>
+<p><strong><code>add(a[i] + 1, 1)</code></strong>：</p>
+<ul><li>把偏移后的索引 <code>a[i]+1</code> 位置 +1，表示这个可爱度值出现了一次。</li><li>后面的奶龙查询时就能看到这个记录了。</li></ul></div>
+<section class="interactions" aria-label="互动区">
+<div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
+<h2>留言</h2><p>留言直接显示在这里，写在页面上、用 GitHub 账号确认发布；👍 点赞、在 Issue 下回复，留言会长期存档到本站仓库；无广告、无追踪。</p></div></div>
+<div class="zb-composer" id="zb-composer"><div class="zb-composer-label-row"><label class="zb-composer-label" for="zb-composer-input">写下想说的话</label><button class="zb-composer-md" type="button" id="zb-composer-md" aria-pressed="false" title="支持 Markdown 语法：**加粗**、*斜体*、~~删除线~~、`代码`、[链接](url)、引用、列表等">预览 Markdown</button></div><textarea class="zb-composer-input" id="zb-composer-input" rows="3" maxlength="2000" placeholder="路过、读后感，或者只是打个招呼…（支持 Markdown 语法）"></textarea><div class="zb-composer-preview" id="zb-composer-preview" hidden aria-live="polite"></div><div class="zb-composer-bar"><span class="zb-composer-tip">支持 Markdown · 留言会公开保存在本站仓库 · 发布需 GitHub 账号</span><span class="zb-composer-count" id="zb-composer-count">0 / 2000</span><button class="interactions-btn primary" type="button" id="zb-composer-submit">发布留言</button></div><p class="zb-composer-after" id="zb-composer-after" hidden>已打开 GitHub 发布页，登录后确认提交；回来刷新就能在这里看到。</p></div>
+<div class="zb-slot" id="zb-slot"><div id="zb-live-host"></div>
+<!-- ZB_ARCHIVE:BEGIN -->
+<div class="zb-archive zb-empty" id="zb-archive"><span class="zb-empty-star" aria-hidden="true">✦</span><p class="zb-empty-title">还没有留言</p><p class="zb-empty-note">在上方写下第一句话吧，留言会长期保存在本站仓库里。</p></div>
+<!-- ZB_ARCHIVE:END -->
+<p class="zb-live-note" id="zb-live-note" hidden>实时同步暂不可用 · 已显示站内存档</p>
+</div>
+<p class="interactions-hint" id="interactions-hint" hidden></p>
+<div class="interactions-links"><a href="https://github.com/ZXY-cc/zxy-cc.github.io/issues" target="_blank" rel="noopener nofollow">留言仓库 ↗</a><span aria-hidden="true">·</span><a href="https://github.com/ZXY-cc/zxy-cc.github.io/issues/new?title=%E7%95%99%E8%A8%80%20%7C%20p-mwg23n3vy3gg" target="_blank" rel="noopener nofollow">在 GitHub 写 ↗</a></div>
+</section>
+</article>
+<p class="back"><a href="/#/post/p-mwg23n3vy3gg">在站点中打开 →</a></p>
+</div>
+<script src="../assets/comments-data.js?v=v3.49.0"></script>
+<script src="../assets/comment-archive.js?v=v3.49.0"></script>
+<script src="../assets/interactions-config.js?v=v3.49.0"></script>
+<script src="../assets/interactions.js?v=v3.49.0"></script>
+<script src="../assets/issues-live.js?v=v3.49.0"></script>
+<script src="../assets/likes.js?v=v3.49.0"></script>
+<script>window.ZBInteractions && window.ZBInteractions.mount("p-mwg23n3vy3gg");
+window.ZBLive && window.ZBLive.mount("p-mwg23n3vy3gg");
+window.ZBLikes && window.ZBLikes.mount();</script>
+<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
+</body>
+</html>
