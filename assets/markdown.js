@@ -1032,11 +1032,71 @@
   /* ---------------- 格式优化 ----------------
      只删「渲染时本来就被忽略」的空白：行首行尾空格（列表项行首缩进除外，
      它决定整块缩进与嵌套层级）、连续空行、正文里多余的连续半角空格。
-     围栏代码块与 $$ 公式整段原样保留，反引号行内代码与 $…$ 行内公式里的
-     空格也不动，所以整理前后预览效果一致。 */
+     $$ 公式块整段原样保留，反引号行内代码与公式内部的空格不动；
+     公式与相邻文字之间的空格按紧凑 / 舒展两种模式整理。
+     围栏代码块默认逐字保留，传 indent 时按层统一成设置的缩进长度。 */
+  /* 缩进归一：把一段代码按「层」重排成设置的长度。
+     先取全段最小的非零缩进当一层（Tab 按 4 空格换算），再把每层展开成 n 空格；
+     源缩进是 2 / 4 / 8 空格或 Tab 都能识别，非缩进部分逐字保留。 */
+  function normalizeIndent(src, size) {
+    var n = parseInt(size, 10);
+    var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
+    if (!(n === 2 || n === 4 || n === 8)) return text;
+    var lines = text.split('\n');
+    var leads = lines.map(function (ln) {
+      var lead = (ln.match(/^[ \t]*/) || [''])[0];
+      var sp = 0;
+      for (var i = 0; i < lead.length; i++) sp += lead[i] === '\t' ? 4 : 1;
+      return { lead: lead, sp: sp };
+    });
+    var unit = 0;
+    leads.forEach(function (o) { if (o.sp > 0 && (!unit || o.sp < unit)) unit = o.sp; });
+    if (!unit) return text;
+    return lines.map(function (ln, i) {
+      var o = leads[i];
+      if (!o.lead) return ln;
+      var lv = Math.max(1, Math.round(o.sp / unit));
+      return ' '.repeat(lv * n) + ln.slice(o.lead.length);
+    }).join('\n');
+  }
+
+  /* 公式片段与相邻文字之间的空白：紧凑模式去掉，舒展模式两侧各留一个空格。
+     行内代码、公式内部、标题 / 列表 / 表格所需的结构空格一律不动。 */
+  function mathSpacing(line, loose) {
+    var re = /(`[^`\n]*`|\$\$[^$\n]+\$\$|\$[^$\n]+\$)/g;
+    var parts = [], last = 0, m, hasMath = false;
+    while ((m = re.exec(line))) {
+      parts.push({ t: line.slice(last, m.index), k: 'txt' });
+      var math = m[0].charAt(0) === '$';
+      if (math) hasMath = true;
+      parts.push({ t: m[0], k: math ? 'math' : 'code' });
+      last = re.lastIndex;
+    }
+    if (!hasMath) return line;
+    parts.push({ t: line.slice(last), k: 'txt' });
+    return parts.map(function (p, i) {
+      if (p.k !== 'txt') return p.t;
+      var afterMath = i > 0 && parts[i - 1].k === 'math';
+      var beforeMath = i < parts.length - 1 && parts[i + 1].k === 'math';
+      if (!afterMath && !beforeMath) return p.t;
+      var lead = (p.t.match(/^[ \u3000]*/) || [''])[0];
+      var tail = (p.t.match(/[ \u3000]*$/) || [''])[0];
+      var core = p.t.slice(lead.length, p.t.length - tail.length);
+      var structural = /^(?:#{1,6}|>|[-*+]|\d+[.)]|\||:{3,})$/.test(core) || /^\|/.test(core);
+      function sep(hasBody) { return (loose || structural) && hasBody ? ' ' : ''; }
+      /* 原本有空格的两个公式之间，紧凑模式也留一个，避免 $a$$b$ 被误读成块级公式 */
+      var between = !core && afterMath && beforeMath && (lead || tail);
+      var left = afterMath ? (between ? ' ' : sep(!!core || beforeMath)) : lead;
+      var right = beforeMath ? (between ? ' ' : sep(!!core || afterMath)) : tail;
+      return left + core + right;
+    }).join('');
+  }
+
   /* 格式优化：mode 缺省为紧凑（现状：压掉多余空格与连续空行，预览效果不变）；
      mode='loose'（舒展）在此基础上保证不同内容之间恰好留一个空行，便于阅读编辑。
-     围栏代码块、$$ 公式块内部永远不动；同一段落的连续文本行不会被拆开。 */
+     $$ 公式块内部永远不动；同一段落的连续文本行不会被拆开。
+     opts.indent 给定时，围栏代码块内的缩进统一成该长度；opts.mode 同时决定
+     $…$ / $$…$$ 与相邻文字之间的空格：紧凑去掉、舒展各留一个。 */
   function loosePass(lines) {
     function kindOf(ln) {
       if (/^ {0,3}#{1,6}(\|?)\s+\S/.test(ln)) return 'head';
@@ -1085,23 +1145,35 @@
     return out;
   }
   function tidy(src, opts) {
+    var loose = opts && String(opts.mode || '') === 'loose';
+    var indentN = opts && parseInt(opts.indent, 10);
+    if (!(indentN === 2 || indentN === 4 || indentN === 8)) indentN = 0;
     var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
     var lines = text.split('\n');
-    var out = [], fence = null, math = false, blank = 0;
+    var out = [], fence = null, fenceBuf = [], math = false, blank = 0;
     function collapse(s) {
       /* 双美元行内公式也要整段保护：表格行里的 $$O(n^2)$$ 不会被压掉空格 */
       return s.replace(/(`[^`\n]*`|\$\$[^$\n]+\$\$|\$[^$\n]+\$)|( {2,})/g, function (m, keep) {
         return keep || ' ';
       });
     }
+    function clean(s) { return mathSpacing(collapse(s), loose); }
+    /* 围栏内的行先缓冲，闭合时整段按层统一缩进；不传 indent 时逐字原样保留 */
+    function flushFence() {
+      if (!fenceBuf.length) return;
+      var buf = indentN ? normalizeIndent(fenceBuf.join('\n'), indentN).split('\n') : fenceBuf;
+      for (var j = 0; j < buf.length; j++) out.push(buf[j]);
+      fenceBuf = [];
+    }
     for (var i = 0; i < lines.length; i++) {
       var ln = lines[i], f = fenceInfo(ln);
       if (fence) {
-        out.push(ln);
-        if (fenceClose(ln, fence.ch, fence.n)) fence = null;
+        if (fenceClose(ln, fence.ch, fence.n)) {
+          flushFence(); out.push(ln); fence = null;
+        } else fenceBuf.push(ln);
         blank = 0; continue;
       }
-      if (f) { fence = f; out.push(ln); blank = 0; continue; }
+      if (f) { fence = f; out.push(ln); fenceBuf = []; blank = 0; continue; }
       if (math) {
         out.push(ln);
         if (ln.indexOf('$$') >= 0) math = false;
@@ -1117,10 +1189,10 @@
          且不能被 collapse 压掉；只清行尾、压缩标记之后的内容 */
       var liM = t.match(/^( +)([-*+]|\d+[.)])\s/);
       if (liM) {
-        out.push(liM[1] + collapse(t.slice(liM[1].length).replace(/[ \u3000]+$/, '')));
+        out.push(liM[1] + clean(t.slice(liM[1].length).replace(/[ \u3000]+$/, '')));
         blank = 0; continue;
       }
-      t = collapse(t.replace(/^[ \u3000]+/, '')
+      t = clean(t.replace(/^[ \u3000]+/, '')
         .replace(/[ \u3000]+$/, ''));
       if (!t) {
         blank++;
@@ -1130,7 +1202,8 @@
       blank = 0;
       out.push(t);
     }
-    var lines = (opts && String(opts.mode || '') === 'loose') ? loosePass(out) : out;
+    flushFence();
+    var lines = loose ? loosePass(out) : out;
     return lines.join('\n').replace(/^\n+/, '').replace(/\n+$/, '');
   }
 
@@ -1147,5 +1220,6 @@
   bindCodeTabs();
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.1' };
+           tidy: tidy, normalizeIndent: normalizeIndent,
+           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.2' };
 });

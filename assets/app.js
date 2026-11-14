@@ -645,6 +645,22 @@
           esc(o.name) + '</option>';
       }).join('') + '</select>';
   }
+  /* ---------- 设置：首页卡片轮流数 ----------
+     每张卡轮流展示 1 / 3 / 5 条，默认 3；只保存在本机，切换后首页立即重绘。 */
+  var QUICK_KEY = 'zb-home-quick-count';
+  var QUICK_OPTS = [1, 3, 5];
+  function readQuickCount() {
+    var v = 0;
+    try { v = parseInt(window.localStorage ? window.localStorage.getItem(QUICK_KEY) : null, 10); } catch (e) {}
+    return QUICK_OPTS.indexOf(v) >= 0 ? v : 3;
+  }
+  function saveQuickCount(v) {
+    try { if (window.localStorage) window.localStorage.setItem(QUICK_KEY, String(v)); } catch (e) {}
+  }
+  function quickCountNote(n) {
+    return '当前：每张卡片轮流展示 ' + n + ' 条内容。' +
+      (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
+  }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
     try { return window.localStorage && window.localStorage.getItem('zb-no-count') === '1'; }
@@ -687,6 +703,15 @@
         '已关闭：导航栏显示默认名称。';
       return;
     }
+    if (t && t.getAttribute && t.getAttribute('data-quick-count') !== null) {
+      var qn = parseInt(t.value, 10);
+      if (QUICK_OPTS.indexOf(qn) >= 0) saveQuickCount(qn);
+      var qnote = document.getElementById('quick-count-state');
+      if (qnote) qnote.textContent = quickCountNote(qn);
+      var qh = location.hash || '';
+      if (qh === '' || qh === '#' || qh === '#/') route();
+      return;
+    }
     if (t && t.getAttribute && t.getAttribute('data-no-count') !== null) {
       try { window.localStorage.setItem('zb-no-count', t.checked ? '1' : '0'); } catch (err) {}
       var note = document.getElementById('no-count-state');
@@ -709,7 +734,7 @@
       head + body + '</table></div></div></div>';
   }
   function renderSettings() {
-    var cur = readQuality();
+    var cur = readQuality(), quick = readQuickCount();
     var opts = QUALITY_OPTS.map(function (o) {
       var on = o.id === cur;
       return '<button class="quality-item' + (on ? ' on' : '') + '" type="button" role="radio"' +
@@ -751,6 +776,16 @@
       esc(poetryOn() ? '已开启：导航栏换成了意境名，再点一次可换回原名。' :
         '已关闭：导航栏显示默认名称。') +
       '</p></section>' +
+      '<section class="settings-card glass reveal" aria-label="首页卡片轮流数">' +
+      '<div class="settings-block"><div class="settings-info">' +
+      '<h2>首页卡片轮流数</h2><p>设置首页每张卡片轮流展示几条内容，切换后立即生效；偏好只保存在本机。</p></div>' +
+      '<div class="opt-group" role="radiogroup" aria-label="首页卡片轮流数">' +
+      QUICK_OPTS.map(function (n) {
+        return '<label class="opt-item"><input type="radio" name="zb-quick-count" value="' + n +
+          '" data-quick-count' + (quick === n ? ' checked' : '') +
+          '><span><b>' + n + ' 条</b>' + (n === 3 ? '<i>默认</i>' : '') + '</span></label>';
+      }).join('') + '</div></div>' +
+      '<p class="settings-foot" id="quick-count-state">' + esc(quickCountNote(quick)) + '</p></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
       (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner() ?
       '<section class="settings-card glass reveal" aria-label="浏览统计">' +
@@ -974,7 +1009,7 @@
   }
   /* 首页照片卡轮播的是「相册」而不是单张照片：按相册内最新照片日期倒序取前三个，
      且只取横竖版与卡片一致的相册 */
-  function albumFeed(orient) {
+  function albumFeed(orient, limit) {
     var out = arr('albums').filter(function (a) { return albumOrient(a) === orient; }).map(function (a, i) {
       var latest = String(a.date || '');
       (a.photos || []).forEach(function (p) {
@@ -983,7 +1018,7 @@
       });
       return { date: latest, a: a, i: i };
     });
-    return recentByDate(out, 3);
+    return recentByDate(out, limit || 3);
   }
   function photoCarousel(albums, cls, badge) {
     return '<section class="q-card q-photo ' + cls + ' glass sheen reveal" data-qcarousel aria-label="' + esc(badge) + '">' +
@@ -1004,9 +1039,12 @@
   function renderHome() {
     /* 文章卡一分为二，仍是同一张卡：标签 A 进上半、标签 B 进下半；
        两个标签都没有的文章按时间由近到远交替补进当前较短的一区，
-       每区最多 3 篇，A / B 溢出的落到对侧，保证两区同屏都显示文章。 */
-    var posts = recentByDate(POSTS, 6);
+       每区最多 N 篇（N = 设置页的「首页卡片轮流数」，默认 3），
+       A / B 溢出的落到对侧，保证两区同屏都显示文章。 */
+    var quickN = readQuickCount();
+    var posts = recentByDate(POSTS, quickN * 2);
     function homePanes(list) {
+      var cap = quickN;
       var top = [], bot = [];
       var pinned = [], aList = [], bList = [], rest = [];
       list.forEach(function (p) {
@@ -1018,34 +1056,35 @@
       });
       function put(side, p) {
         var first = side === 'top' ? top : bot, second = side === 'top' ? bot : top;
-        if (first.length < 3) first.push(p);
-        else if (second.length < 3) second.push(p);
+        if (first.length < cap) first.push(p);
+        else if (second.length < cap) second.push(p);
       }
       var over = [];
       /* ⭐ 置顶文章先占卡片（时间近到远），溢出的补到对侧 */
       pinned.forEach(function (p) { put(top.length <= bot.length ? 'top' : 'bot', p); });
-      if (top.length > 3) top.splice(3).forEach(function (p) { over.push(['bot', p]); });
-      if (bot.length > 3) bot.splice(3).forEach(function (p) { over.push(['top', p]); });
+      if (top.length > cap) top.splice(cap).forEach(function (p) { over.push(['bot', p]); });
+      if (bot.length > cap) bot.splice(cap).forEach(function (p) { over.push(['top', p]); });
       aList.forEach(function (p) { put('top', p); });
       bList.forEach(function (p) { put('bot', p); });
-      if (top.length > 3) top.splice(3).forEach(function (p) { over.push(['bot', p]); });
-      if (bot.length > 3) bot.splice(3).forEach(function (p) { over.push(['top', p]); });
+      if (top.length > cap) top.splice(cap).forEach(function (p) { over.push(['bot', p]); });
+      if (bot.length > cap) bot.splice(cap).forEach(function (p) { over.push(['top', p]); });
       rest.forEach(function (p) { put(top.length <= bot.length ? 'top' : 'bot', p); });
       over.forEach(function (it) { put(it[0], it[1]); });
       return { top: top, bot: bot };
     }
     var panes = homePanes(posts);
     var top = panes.top, bot = panes.bot;
-    var albumsH = albumFeed('h');
-    var albumsV = albumFeed('v');
-    var moments = recentByDate(arr('moments'), 3);
-    var chatters = recentByDate(arr('chatter'), 3);
+    var albumsH = albumFeed('h', quickN);
+    var albumsV = albumFeed('v', quickN);
+    var moments = recentByDate(arr('moments'), quickN);
+    var chatters = recentByDate(arr('chatter'), quickN);
     function postSlide(p) {
       return {
         href: '#/post/' + encodeURIComponent(p.slug),
         inner: '<div class="q-head">' + qBadge('最新文章', 'q-post-badge') +
           '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
-          '<h2>' + esc(p.title) + '</h2>' +
+          '<h2>' + ((p.tags || []).indexOf('⭐') >= 0 ? '<span class="q-pin">⭐置顶</span>' : '') +
+          esc(p.title) + '</h2>' +
           '<p class="q-sum">' + esc(homeSummary(p)) + '</p>' +
           '<div class="q-tags">' + orderedTags(p.tags || []).slice(0, 4).map(function (t) {
             return '<span>' + esc(t) + '</span>';

@@ -628,12 +628,13 @@
     }
     if (!ta || !window.ZBMD || !window.ZBMD.tidy) return say('当前没有可整理的正文。', 'warn');
     var loose = readTidyMode() === 'loose';
-    var before = ta.value, after = window.ZBMD.tidy(before, { mode: readTidyMode() });
+    var before = ta.value, after = window.ZBMD.tidy(before, { mode: readTidyMode(), indent: readIndent() });
     if (after === before) return say('格式已经很整齐，没有多余空格或空行。');
     ta.value = after;
     if (ta.id === 'f-body') { syncFromForm(); refreshPreview(); writeDraft(true); }
-    say(loose ? '已按「舒展」方式整理：不同内容之间都留出了空行，便于阅读编辑。'
-              : '格式已整理：去掉 ' + (before.length - after.length) + ' 个多余字符，预览效果不变。');
+    say(loose ? '已按「舒展」方式整理：内容之间留空行、公式两侧各留一个空格，代码块缩进统一。'
+              : '格式已整理：去掉 ' + (before.length - after.length) +
+                ' 个多余字符、去掉公式两侧空格并统一代码块缩进。');
   }
   /* 工具栏：前面是 Markdown，后面是 LaTeX；点击往光标处插入对应源码 */
   var MD_TOOLS = [
@@ -1130,7 +1131,7 @@
   function readTidyMode() { return ls(TIDY_KEY) === 'loose' ? 'loose' : 'compact'; }
   function readIndent() {
     var n = parseInt(ls(INDENT_KEY), 10);
-    return (n === 1 || n === 2 || n === 4 || n === 8) ? n : 4;
+    return (n === 2 || n === 4 || n === 8) ? n : 4;
   }
   function formSettings() {
     var mode = readTidyMode(), ind = readIndent();
@@ -1149,12 +1150,12 @@
       '<p class="f-hint">点击编辑器上方的「格式优化」按钮时，会按这里选择的方式整理正文。</p></div>' +
       '<div class="settings-block"><h3>代码块缩进长度</h3>' +
       '<div class="opt-group" role="radiogroup" aria-label="代码块缩进长度">' +
-      [1, 2, 4, 8].map(function (n) {
+      [2, 4, 8].map(function (n) {
         return radio('zb-indent', String(n), String(ind), n + ' 空格',
           n === 4 ? '默认' : '');
       }).join('') +
       '</div>' +
-      '<p class="f-hint">把自己的代码复制进工坊时，会自动把每行缩进调整成这里选择的长度（原缩进按每 4 空格一层换算）。</p></div>' +
+      '<p class="f-hint">粘贴代码时自动识别原来的缩进层级并换算成这里选择的长度；点击「格式优化」也会把代码块缩进统一成该长度。格式优化还会按上面的方式整理公式两侧的空格。</p></div>' +
       '</div>';
   }
   function formPublish() {
@@ -2123,9 +2124,10 @@
       state.editing.form.notes[t.id] = t.value;
     }
   }
-  /* Tab / Shift+Tab：选区所跨行整体缩进或反缩进两空格（列表嵌套、代码块对齐通用） */
+  /* Tab / Shift+Tab：选区所跨行整体缩进或反缩进工坊设置的缩进长度 */
   var EDITABLE_AREAS = ['f-body', 'f-ch-body', 'f-moment-text'];
   function shiftIndent(ta, back) {
+    var unit = readIndent(), pad = ' '.repeat(unit);
     var v = ta.value, s = ta.selectionStart, e2 = ta.selectionEnd;
     var top = ta.scrollTop || 0;
     var ls = v.lastIndexOf('\n', s - 1) + 1;
@@ -2133,12 +2135,12 @@
     var delta = 0;
     var lines = v.slice(ls, le).split('\n').map(function (l) {
       if (back) {
-        var cut = l.match(/^(\t| {1,2})/);
+        var cut = l.match(new RegExp('^(\\t| {1,' + unit + '})'));
         if (cut) { delta -= cut[0].length; return l.slice(cut[0].length); }
         return l;
       }
-      delta += 2;
-      return '  ' + l;
+      delta += unit;
+      return pad + l;
     });
     ta.value = v.slice(0, ls) + lines.join('\n') + v.slice(le);
     try { ta.setSelectionRange(Math.max(ls, s + delta), Math.max(ls, e2 + delta)); } catch (err) {}
@@ -2184,22 +2186,14 @@
       try { t.dispatchEvent(new Event('input', { bubbles: true })); } catch (err2) {}
       return;
     }
-    /* 粘贴多行代码（光标在 ``` 围栏内）：按工坊设置的缩进长度重排每行缩进。
-       原缩进按「每 4 空格 = 一层、一个 Tab = 一层」换算，再展开为 N 空格。 */
-    if (txt.indexOf('\n') < 0 || !readIndent()) return;
+    /* 粘贴多行代码（光标在 ``` 围栏内）：自动识别原缩进层级，
+       整段换算成工坊设置的缩进长度；2 / 4 / 8 空格与 Tab 都按一层算。 */
+    if (txt.indexOf('\n') < 0 || !window.ZBMD || !window.ZBMD.normalizeIndent) return;
     var st = t.selectionStart;
     var opens = (t.value.slice(0, st).match(/^ {0,3}(?:`{3,}|~{3,})/gm) || []).length;
     if (opens % 2 === 0) return;
     if (e.preventDefault) e.preventDefault();
-    var n = readIndent();
-    var out = txt.replace(/\r\n?/g, '\n').split('\n').map(function (ln) {
-      var lead = (ln.match(/^[ \t]*/) || [''])[0];
-      if (!lead) return ln;
-      var spaces = 0;
-      for (var i = 0; i < lead.length; i++) spaces += lead[i] === '\t' ? 4 : 1;
-      var pad = Math.max(lead.length ? 1 : 0, Math.round(spaces * n / 4));
-      return ' '.repeat(pad) + ln.slice(lead.length);
-    }).join('\n');
+    var out = window.ZBMD.normalizeIndent(txt, readIndent());
     var s0 = t.selectionStart, s1 = t.selectionEnd, v = t.value;
     t.value = v.slice(0, s0) + out + v.slice(s1);
     var caret = s0 + out.length;
