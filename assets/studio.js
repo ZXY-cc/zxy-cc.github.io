@@ -59,7 +59,8 @@
   var DRAFT_KEY = 'zb-studio-draft';
   var TAGLIB_KEY = 'zb-studio-taglib';
   var state = { tab: 'post', msg: '', busy: false, files: [], fileNotes: [], tagDraft: '', dragTag: -1,
-    mode: 'write', draft: null, saveTimer: null, editing: null, pat: '' };
+    mode: 'write', draft: null, saveTimer: null, editing: null, pat: '',
+    manage: { q: '', time: '', tag: '' } };
   /* 自动同步队列：改动先落本机，防抖合并后串行写仓库；失败保留本机内容并重试 */
   var sync = { timer: null, running: false, dirty: false, fails: 0, status: '', warn: true };
 
@@ -524,7 +525,11 @@
   }
   function refreshPreview() {
     var box = document.getElementById('post-preview');
-    if (box) box.innerHTML = mdRender(syncFromForm().markdown);
+    if (box) {
+      box.innerHTML = mdRender(syncFromForm().markdown);
+      /* 预览每敲一次字都重渲染，目录也按这次渲染出的标题实时重建 */
+      if (window.ZBMD && window.ZBMD.refreshToc) window.ZBMD.refreshToc(box);
+    }
     var desk = document.getElementById('desk-body');
     if (desk) desk.setAttribute('data-mode', state.mode);
   }
@@ -568,6 +573,16 @@
     box.innerHTML = tagLibChoices().map(function (t) {
       return '<button type="button" class="tag-history-btn' + (cur.indexOf(t) >= 0 ? ' on' : '') +
         '" data-ch-tag="' + esc(t) + '">' + (cur.indexOf(t) >= 0 ? '✓ ' : '+ ') + esc(t) + '</button>';
+    }).join('') || '<span class="tag-empty">标签库还是空的</span>';
+  }
+  /* 项目表单：技术标签只能从标签管理维护的标签库点选，输入框只读，不再手输 */
+  function renderPjPicker() {
+    var box = document.getElementById('pj-tag-picker');
+    if (!box) return;
+    var cur = splitTags(val('f-pj-tags'));
+    box.innerHTML = tagLibChoices().map(function (t) {
+      return '<button type="button" class="tag-history-btn' + (cur.indexOf(t) >= 0 ? ' on' : '') +
+        '" data-pj-tag="' + esc(t) + '">' + (cur.indexOf(t) >= 0 ? '✓ ' : '+ ') + esc(t) + '</button>';
     }).join('') || '<span class="tag-empty">标签库还是空的</span>';
   }
   function renderCover() {
@@ -947,7 +962,7 @@
   function formMoment() {
     return '<div class="studio-form glass"><h2>发一条说说</h2>' + editingBanner('说说', 'moments') +
       area('这一刻想说什么', 'f-moment-text', '…', 5) +
-      '<div class="f-row">' + field('心情', 'f-mood', '✨ 满足') + field('地点', 'f-place', '书桌前') + '</div>' +
+      '<div class="f-row">' + field('心情', 'f-mood', '') + field('地点', 'f-place', '') + '</div>' +
       '<span class="f-cell"><label class="f-label" for="f-moment-date">发布日期</label>' +
       '<input class="f-input" id="f-moment-date" type="date" value="' + today() + '"></span>' +
       '<label class="file-zone" for="f-moment-img"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#puffy-star"/></svg>点击选择配图 · 可选<input class="f-input f-file" id="f-moment-img" type="file" accept="image/*"></label>' +
@@ -963,7 +978,7 @@
       '<span class="f-cell"><label class="f-label" for="f-ch-tags">标签</label>' +
       '<input class="f-input" id="f-ch-tags" type="text" placeholder="点下面的标签库选择，也可逗号分隔手写">' +
       '<div class="tag-history ch-tag-picker" id="ch-tag-picker"></div></span>' +
-      field('心情', 'f-ch-mood', '🌸 平静') +
+      field('心情', 'f-ch-mood', '') +
       '<span class="f-cell"><label class="f-label" for="f-ch-date">发布日期</label>' +
       '<input class="f-input" id="f-ch-date" type="date" value="' + today() + '"></span>' +
       area('正文', 'f-ch-body', '想到哪写到哪…', 10) +
@@ -976,7 +991,12 @@
     return '<div class="studio-form glass"><h2>' + (editing ? '编辑这个项目' : '添加一个项目') + '</h2>' +
       editingBanner('项目', 'projects') +
       field('名称', 'f-pj-name', '项目名') + area('描述', 'f-pj-desc', '做了什么', 4) +
-      '<div class="f-row">' + field('技术标签（逗号分隔）', 'f-pj-tags', 'Python, 算法') + field('状态', 'f-pj-status', '进行中') + '</div>' +
+      '<div class="f-row">' +
+        '<span class="f-cell"><label class="f-label" for="f-pj-tags">技术标签</label>' +
+        '<input class="f-input" id="f-pj-tags" type="text" readonly ' +
+        'placeholder="从下面的标签库点选">' +
+        '<div class="tag-history pj-tag-picker" id="pj-tag-picker"></div></span>' +
+        field('状态', 'f-pj-status', '') + '</div>' +
       field('链接', 'f-pj-link', '#/about 或 https://…') +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-project">' +
       (editing ? '保存修改' : '保存到本机') + '</button></div></div>';
@@ -1072,10 +1092,43 @@
     if (kind === 'posts') return allPosts().filter(function (x) { return x.slug === id; })[0] || null;
     return (DATA[kind] || []).filter(function (x) { return keyOf(x, kind) === id; })[0] || null;
   }
+  /* 内容管理检索：关键词匹配标题 / 正文 / 标签 / ID，时间按内容所属月份，标签按标签库。
+     只切换行的 display，不重绘表单，输入焦点与已展开的编辑状态都不会丢。 */
+  function manageHay(x, k, name, id, label) {
+    var parts = [name, id, k, label, x.title, x.name, x.text, x.summary, x.desc,
+      (x.tags || []).join(' '), x.status, x.mood, x.place, x.link, x.url,
+      x.markdown, x.body];
+    return String(parts.filter(Boolean).join(' '))
+      .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 4000).toLowerCase();
+  }
+  function applyManageFilter() {
+    var qEl = document.getElementById('f-manage-q');
+    var tEl = document.getElementById('f-manage-time');
+    var gEl = document.getElementById('f-manage-tag');
+    if (!qEl && !tEl && !gEl) return 0;
+    var q = (qEl ? String(qEl.value || '') : state.manage.q).trim().toLowerCase();
+    var tm = tEl ? String(tEl.value || '') : state.manage.time;
+    var tg = gEl ? String(gEl.value || '') : state.manage.tag;
+    state.manage = { q: q, time: tm, tag: tg };
+    var rows = document.querySelectorAll ? document.querySelectorAll('.manage-list .manage-row') : [];
+    var shown = 0;
+    Array.prototype.forEach.call(rows, function (row) {
+      var hay = String(row.getAttribute('data-q') || '');
+      var date = String(row.getAttribute('data-date') || '');
+      var tags = String(row.getAttribute('data-tags') || '').split(',');
+      var hit = (!q || hay.indexOf(q) >= 0) && (!tm || date.slice(0, 7) === tm) &&
+        (!tg || tags.indexOf(tg) >= 0);
+      if (row.style) row.style.display = hit ? '' : 'none';
+      if (hit) shown++;
+    });
+    var info = document.getElementById('manage-filter-info');
+    if (info) info.textContent = '筛选结果：' + shown + ' / ' + rows.length + ' 条';
+    return shown;
+  }
   function formManage() {
     var local = readLocal();
     var labels = { posts: '文章', moments: '说说', chatter: '杂谈', albums: '相册', projects: '项目', friends: '友链' };
-    var rows = [];
+    var rows = [], months = {};
     KINDS.forEach(function (k) {
       var list = k === 'posts' ? allPosts() : (DATA[k] || []);
       list.forEach(function (x) {
@@ -1083,19 +1136,42 @@
         var name = k === 'posts' ? x.title : (x.title || x.name || (x.text || '').slice(0, 22));
         var src = local[k].some(function (y) { return keyOf(y, k) === id; }) ? '本机'
           : (window.POSTS || []).some(function (p) { return p.slug === id; }) ? '基础' : '线上';
-        rows.push('<div class="manage-row"><span class="mr-kind">' + labels[k] + '</span>' +
+        var date = String(x.date || '');
+        if (/^\d{4}-\d{2}/.test(date)) months[date.slice(0, 7)] = 1;
+        rows.push('<div class="manage-row" data-q="' + esc(manageHay(x, k, name, id, labels[k])) +
+          '" data-date="' + esc(date) + '" data-tags="' + esc((x.tags || []).join(',')) +
+          '" data-kind="' + k + '"><span class="mr-kind">' + labels[k] + '</span>' +
           '<b>' + esc(name || '(未命名)') + '</b><span class="mr-src">' + src + '</span>' +
           '<span class="mr-id">' + esc(id) + '</span>' +
           '<button class="mini-btn" type="button" data-edit="' + esc(k + '::' + id) + '">编辑</button>' +
           '<button class="mini-btn" type="button" data-del="' + esc(k + '::' + id) + '">删除</button></div>');
       });
     });
+    var monthList = Object.keys(months).sort().reverse();
     var size = 0;
     try { size = (ls(LOCAL_KEY) || '').length; } catch (e) {}
     return '<div class="studio-form glass"><h2>内容管理</h2>' +
       '<p class="f-hint">文章、说说、杂谈、相册、项目、友链都能载回对应表单重新编辑，也都能删除；' +
       '相册可改名、补充图片或移除单张照片。改动先保存在本机，开启自动同步后立即写进网站，' +
       '访客看到的就是最新状态；已发布内容删除后可在仓库提交历史找回。</p>' +
+      '<div class="manage-filter">' +
+        '<span class="f-cell"><label class="f-label" for="f-manage-q">搜索内容</label>' +
+        '<input class="f-input" id="f-manage-q" type="search" placeholder="标题、正文、标签或 ID…" value="' +
+        esc(state.manage.q) + '"></span>' +
+        '<span class="f-cell"><label class="f-label" for="f-manage-time">时间</label>' +
+        '<select class="f-input" id="f-manage-time"><option value="">全部时间</option>' +
+        monthList.map(function (m) {
+          return '<option value="' + m + '"' + (state.manage.time === m ? ' selected' : '') + '>' +
+            m.slice(0, 4) + ' 年 ' + Number(m.slice(5, 7)) + ' 月</option>';
+        }).join('') + '</select></span>' +
+        '<span class="f-cell"><label class="f-label" for="f-manage-tag">标签</label>' +
+        '<select class="f-input" id="f-manage-tag"><option value="">全部标签</option>' +
+        tagLibChoices().map(function (t) {
+          return '<option value="' + esc(t) + '"' + (state.manage.tag === t ? ' selected' : '') +
+            '>#' + esc(t) + '</option>';
+        }).join('') + '</select></span>' +
+      '</div>' +
+      '<p class="f-hint" id="manage-filter-info">筛选结果：' + rows.length + ' / ' + rows.length + ' 条</p>' +
       '<div class="manage-list">' + (rows.length ? rows.join('') : '<p class="page-note">还没有任何内容。</p>') + '</div>' +
       '<p class="f-hint">本机占用约 ' + (size / 1024).toFixed(0) + ' KB。发布成功后可清空本机副本与草稿，避免浏览器存储被图片占满。</p>' +
       '<div class="f-actions"><button class="soft-btn" type="button" data-act="clear-local">清空本机内容与草稿</button></div></div>';
@@ -1261,7 +1337,7 @@
       ? findItem('moments', state.editing.id) : null;
     var item = {
       id: old ? old.id : uid('m'), date: val('f-moment-date') || (old ? old.date : today()), text: text,
-      mood: val('f-mood') || '✨ 记录', place: val('f-place') || '',
+      mood: val('f-mood'), place: val('f-place'),
       /* 重编辑保留原有配图；选了新图才整组替换 */
       images: (old && old.images && old.images.length && !src) ? old.images.slice() : (src ? [src] : []),
       likes: old ? (old.likes || 0) : 0
@@ -1279,7 +1355,7 @@
     var item = {
       id: old ? old.id : uid('c'), date: val('f-ch-date') || (old ? old.date : today()), title: title,
       summary: val('f-ch-summary') || clipSummary(title, 24), tags: splitTags(val('f-ch-tags')),
-      mood: val('f-ch-mood') || '🌸 平静',
+      mood: val('f-ch-mood'),
       markdown: body, body: htmlOfBody(body), format: 'markdown'
     };
     if (!upsert('chatter', item)) return say('本机存储空间不足，请先发布并清理。', 'warn');
@@ -1294,7 +1370,7 @@
       ? findItem('projects', state.editing.id) : null;
     var item = {
       id: old ? old.id : uid('pj'), name: name, desc: val('f-pj-desc'), tags: splitTags(val('f-pj-tags')),
-      status: val('f-pj-status') || '记录', date: old ? old.date : today(), link: val('f-pj-link')
+      status: val('f-pj-status'), date: old ? old.date : today(), link: val('f-pj-link')
     };
     if (!upsert('projects', item)) return say('保存失败。', 'warn');
     state.editing = null;
@@ -1811,6 +1887,14 @@
     var door = t.closest('#owner-door');
     if (!panel && !door) return;
 
+    /* Markdown 内链接：以 / 开头，点击时把链接文本接在当前站点网址后面 */
+    var innerA = t.closest('a[data-md-link="inner"]');
+    if (innerA) {
+      if (e.preventDefault) e.preventDefault();
+      location.href = location.origin + (innerA.getAttribute('href') || '/');
+      return;
+    }
+
     /* 体验模式（游客）：浏览、切换页面、预览都不受限；
        一切会改动网站内容的按钮（编辑 / 删除 / 发布 / 保存 / 同步…）统一拦截 */
     if (!isOwner() && panel) {
@@ -1846,6 +1930,17 @@
         if (ci >= 0) cur.splice(ci, 1); else cur.push(ct);
         cbox.value = cur.join(', ');
         renderChPicker();
+      }
+      return;
+    }
+    var pjTag = t.closest('[data-pj-tag]');
+    if (pjTag) {
+      var pt = pjTag.getAttribute('data-pj-tag'), pbox = document.getElementById('f-pj-tags');
+      if (pbox) {
+        var pcur = splitTags(pbox.value), pi = pcur.indexOf(pt);
+        if (pi >= 0) pcur.splice(pi, 1); else pcur.push(pt);
+        pbox.value = pcur.join(', ');
+        renderPjPicker();
       }
       return;
     }
@@ -1903,6 +1998,7 @@
         setText('f-pj-name', target.name);
         setText('f-pj-desc', target.desc);
         setText('f-pj-tags', (target.tags || []).join(', '));
+        renderPjPicker();
         setText('f-pj-status', target.status);
         setText('f-pj-link', target.link);
         say('已载入这个项目，改完点「保存修改」。');
@@ -2060,6 +2156,7 @@
     if (sk === 'zb-tidy') { setLs(TIDY_KEY, t.value === 'loose' ? 'loose' : 'compact'); say('格式优化方式已设为「' + (t.value === 'loose' ? '舒展' : '紧凑') + '」。'); return; }
     if (sk === 'zb-indent') { setLs(INDENT_KEY, t.value); say('代码缩进已设为 ' + t.value + ' 空格。'); return; }
     if (!t || !t.id) return;
+    if (t.id === 'f-manage-time' || t.id === 'f-manage-tag') { applyManageFilter(); return; }
     if (t.id === 'f-files' && t.files && t.files.length) {
       state.files = [];
       state.fileNotes = [];
@@ -2103,6 +2200,7 @@
   function onInput(e) {
     var t = e.target;
     if (!t || !t.id) return;
+    if (t.id === 'f-manage-q') { applyManageFilter(); return; }
     if (t.id === 'f-body' || t.id === 'f-title' || t.id === 'f-summary') {
       syncFromForm();
       if (state.mode !== 'write') refreshPreview();
@@ -2300,7 +2398,9 @@
       });
     }
     if (isOwner() && state.tab === 'chatter') renderChPicker();
+    if (state.tab === 'project') renderPjPicker();
     if (isOwner() && state.tab === 'photo') renderFilePreview();
+    if (state.tab === 'manage') applyManageFilter();
     if (isPost) {
       renderTagPills(); renderTagHistory(); renderCover();
       syncFromForm(); setMode(state.mode); paintSaveLabel();

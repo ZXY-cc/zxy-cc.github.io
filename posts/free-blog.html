@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.52.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.53.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -75,8 +75,10 @@ pre code .zb-fmeta{color:var(--muted);opacity:.75}
 .zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
 /* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
 .toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
+nav.toc[hidden]{display:none}
 .toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
 .toc-list{display:flex;flex-wrap:wrap;gap:6px 16px}
+.toc-empty{font-size:12.5px;color:var(--muted)}
 .toc-item{display:inline-block;border:0;background:none;padding:2px 0;cursor:pointer;color:var(--brand);font:inherit;font-size:13px;text-align:left;text-decoration:none}
 .toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
 .toc-item:hover{text-decoration:underline}
@@ -282,16 +284,17 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.52.0"></script>
-<script src="../assets/comment-archive.js?v=v3.52.0"></script>
-<script src="../assets/interactions-config.js?v=v3.52.0"></script>
-<script src="../assets/interactions.js?v=v3.52.0"></script>
-<script src="../assets/issues-live.js?v=v3.52.0"></script>
-<script src="../assets/likes.js?v=v3.52.0"></script>
+<script src="../assets/comments-data.js?v=v3.53.0"></script>
+<script src="../assets/comment-archive.js?v=v3.53.0"></script>
+<script src="../assets/interactions-config.js?v=v3.53.0"></script>
+<script src="../assets/interactions.js?v=v3.53.0"></script>
+<script src="../assets/issues-live.js?v=v3.53.0"></script>
+<script src="../assets/likes.js?v=v3.53.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
 window.ZBLive && window.ZBLive.mount("free-blog");
 window.ZBLikes && window.ZBLikes.mount();</script>
-<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+<script>document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var a=t.closest('a[data-md-link="inner"]');if(!a)return;if(e.preventDefault)e.preventDefault();location.href=location.origin+(a.getAttribute('href')||'/')});
+/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

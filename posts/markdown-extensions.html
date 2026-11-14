@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-13">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.52.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.53.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -75,8 +75,10 @@ pre code .zb-fmeta{color:var(--muted);opacity:.75}
 .zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
 /* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
 .toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
+nav.toc[hidden]{display:none}
 .toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
 .toc-list{display:flex;flex-wrap:wrap;gap:6px 16px}
+.toc-empty{font-size:12.5px;color:var(--muted)}
 .toc-item{display:inline-block;border:0;background:none;padding:2px 0;cursor:pointer;color:var(--brand);font:inherit;font-size:13px;text-align:left;text-decoration:none}
 .toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
 .toc-item:hover{text-decoration:underline}
@@ -254,7 +256,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <h1>本站支持的 Markdown 拓展语法</h1>
 <p class="meta" data-view-post="markdown-extensions">2026-11-13 · Markdown / 拓展 / A / ⭐ · <span class="mirror-likes"><span data-like-stat="post:markdown-extensions">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="markdown-extensions">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法，写法与洛谷 Markdown 手册保持一致。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。</p>
-<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-truck-表格">十、Truck 表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
+<nav class="toc" data-toc-levels="2" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-truck-表格">十、Truck 表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
 <h2 id="h-一-目录">一、目录</h2>
 <p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的）。花括号里写层级号可以只收部分标题：<code>:::cont{1}:::</code> 只收一级标题，<code>:::cont{2,3}:::</code> 只收二、三级标题；不写花括号就是全部标题（一级、二级、三级都收）。</p>
 <pre class="zb-code"><code>:::cont:::
@@ -470,16 +472,17 @@ import java.<span class="tk-pr">util</span>.<span class="tk-pr">Scanner</span>;
 </article>
 <p class="back"><a href="/#/post/markdown-extensions">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.52.0"></script>
-<script src="../assets/comment-archive.js?v=v3.52.0"></script>
-<script src="../assets/interactions-config.js?v=v3.52.0"></script>
-<script src="../assets/interactions.js?v=v3.52.0"></script>
-<script src="../assets/issues-live.js?v=v3.52.0"></script>
-<script src="../assets/likes.js?v=v3.52.0"></script>
+<script src="../assets/comments-data.js?v=v3.53.0"></script>
+<script src="../assets/comment-archive.js?v=v3.53.0"></script>
+<script src="../assets/interactions-config.js?v=v3.53.0"></script>
+<script src="../assets/interactions.js?v=v3.53.0"></script>
+<script src="../assets/issues-live.js?v=v3.53.0"></script>
+<script src="../assets/likes.js?v=v3.53.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("markdown-extensions");
 window.ZBLive && window.ZBLive.mount("markdown-extensions");
 window.ZBLikes && window.ZBLikes.mount();</script>
-<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+<script>document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var a=t.closest('a[data-md-link="inner"]');if(!a)return;if(e.preventDefault)e.preventDefault();location.href=location.origin+(a.getAttribute('href')||'/')});
+/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

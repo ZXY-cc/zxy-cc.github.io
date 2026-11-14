@@ -1248,6 +1248,8 @@
   }
   function paint(html, active, subTitle) {
     app.innerHTML = html;
+    /* 正文刚进 DOM：按真实渲染出来的标题重建 :::cont::: 目录，新增标题立刻进卡片 */
+    if (window.ZBMD && window.ZBMD.refreshToc) window.ZBMD.refreshToc(app);
     initChangelogFrame();
     document.title = (subTitle ? subTitle + ' · ' : '') + TITLE;
     Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {
@@ -1555,6 +1557,13 @@
         if (!t) return;
         var node = t.closest ? t : null;
         if (node && node.closest) {
+          /* Markdown 内链接：以 / 开头，点击时把链接文本接在当前站点网址后面 */
+          var innerA = node.closest('a[data-md-link="inner"]');
+          if (innerA) {
+            if (e.preventDefault) e.preventDefault();
+            location.href = location.origin + (innerA.getAttribute('href') || '/');
+            return;
+          }
           if (node.closest('[data-toc]') && node.closest('[data-toc]').getAttribute('data-toc') !== null) {
             var hs = app.querySelectorAll('.article-body h2');
             var target = hs[Number(node.closest('[data-toc]').getAttribute('data-toc'))];

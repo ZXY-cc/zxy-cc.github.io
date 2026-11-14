@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-11">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.52.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.53.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -75,8 +75,10 @@ pre code .zb-fmeta{color:var(--muted);opacity:.75}
 .zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
 /* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
 .toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
+nav.toc[hidden]{display:none}
 .toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
 .toc-list{display:flex;flex-wrap:wrap;gap:6px 16px}
+.toc-empty{font-size:12.5px;color:var(--muted)}
 .toc-item{display:inline-block;border:0;background:none;padding:2px 0;cursor:pointer;color:var(--brand);font:inherit;font-size:13px;text-align:left;text-decoration:none}
 .toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
 .toc-item:hover{text-decoration:underline}
@@ -254,7 +256,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <h1>第1次周报</h1>
 <p class="meta" data-view-post="p-mwbj0maxovr0">2026-11-11 · 科协 / 随笔 / B · <span class="mirror-likes"><span data-like-stat="post:p-mwbj0maxovr0">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwbj0maxovr0">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><h1 class="zb-vl" id="h-完成事项">完成事项</h1>
-<ul><li>开始继续使用Obsidian，享受关系图谱的视觉直观性</li><li>将配置VSCode时的mingw64换为ucrt64<ul><li>企图解决 <code>long double</code> 的 <code>printf(&quot;%Lf&quot;)</code> 输出错误结果的问题；UTF-8 locale、数学函数、时区处理在旧版本mingw64的遗留问题；……</li></ul></li><li>下载并安装Unity Hub，定位国内支持的最高版本Unity2022LTS、科学上网获取的Unity6.6<ul><li>目前已制定第一个游戏制作项目的框架和市场定位：<em>“随笔驱动型”社交模拟经营沙河建造游戏</em></li></ul></li><li>更新「爱信」项目：<a href="https://my.feishu.cn/file/SFE9bwzOios7LLxneIHcSjd7nSd" target="_blank" rel="noopener noreferrer">aichat-版本日志.html</a><ul><li>新增群聊功能，保证群聊与角色聊天的功能一致性，尝试解决不附带昵称时角色聊天指向对象不明确的问题，尝试让角色之间聊天且保证用户的中心性，修复一系列BUG</li></ul></li></ul>
+<ul><li>开始继续使用Obsidian，享受关系图谱的视觉直观性</li><li>将配置VSCode时的mingw64换为ucrt64<ul><li>企图解决 <code>long double</code> 的 <code>printf(&quot;%Lf&quot;)</code> 输出错误结果的问题；UTF-8 locale、数学函数、时区处理在旧版本mingw64的遗留问题；……</li></ul></li><li>下载并安装Unity Hub，定位国内支持的最高版本Unity2022LTS、科学上网获取的Unity6.6<ul><li>目前已制定第一个游戏制作项目的框架和市场定位：<em>“随笔驱动型”社交模拟经营沙河建造游戏</em></li></ul></li><li>更新「爱信」项目：<a href="https://my.feishu.cn/file/SFE9bwzOios7LLxneIHcSjd7nSd" data-md-link="outer" target="_blank" rel="noopener noreferrer">aichat-版本日志.html</a><ul><li>新增群聊功能，保证群聊与角色聊天的功能一致性，尝试解决不附带昵称时角色聊天指向对象不明确的问题，尝试让角色之间聊天且保证用户的中心性，修复一系列BUG</li></ul></li></ul>
 <hr>
 <ul><li>学习并运用了常见的Markdown语法<ul><li>掌握：段落内部换行、标题、强调、代码块（大段、行内）、区块引用、列表（无序、有序、任务）、分割线、反斜杠</li><li>熟悉：图片、链接、表格</li></ul></li><li>了解Agent对于txt文本赋予格式处理时Markdown轻量化的优势，探索A2UI对于提升智能体回答内容表现力的原理和相比于Markdown的优点</li><li>复习了<strong>排序</strong>（详见知识分享）</li></ul>
 <h1 class="zb-vl" id="h-未完成事项及原因">未完成事项及原因</h1>
@@ -271,7 +273,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <ul><li><span class="zb-task">☐</span>复习线代、高数、英语、程序设计……</li></ul>
 <h1 class="zb-vl" id="h-学习知识的分享">学习知识的分享</h1>
 <ul><li><em>（引用OIWiki、洛谷；参考代码仅为C语言的其一写法,且支持C99标准；以下动图在电脑上观看效果更佳）</em></li></ul>
-<h2 id="h-排序-p1177-模板-排序-https-www-luogu-com-cn-pr">排序Ⅰ <a href="https://www.luogu.com.cn/problem/P1177" target="_blank" rel="noopener noreferrer">P1177 【模板】排序</a></h2>
+<h2 id="h-排序-p1177-模板-排序-https-www-luogu-com-cn-pr">排序Ⅰ <a href="https://www.luogu.com.cn/problem/P1177" data-md-link="outer" target="_blank" rel="noopener noreferrer">P1177 【模板】排序</a></h2>
 <h3 id="h-稳定性">稳定性</h3>
 <p>稳定性是指相等的元素经过排序之后相对顺序是否发生了改变．</p>
 <p>拥有稳定性这一特性的算法会让原本有相等键值的记录维持相对次序，即如果一个排序算法是稳定的，当有两个相等键值的记录<span class="zb-math zb-math-inline"><i class="zb-var">R</i></span>和<span class="zb-math zb-math-inline"><i class="zb-var">S</i></span>，且在原本的列表中R出现在S之前，在排序过的列表中<span class="zb-math zb-math-inline"><i class="zb-var">R</i></span>也将会是在<span class="zb-math zb-math-inline"><i class="zb-var">S</i></span>之前．</p>
@@ -396,16 +398,17 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/p-mwbj0maxovr0">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.52.0"></script>
-<script src="../assets/comment-archive.js?v=v3.52.0"></script>
-<script src="../assets/interactions-config.js?v=v3.52.0"></script>
-<script src="../assets/interactions.js?v=v3.52.0"></script>
-<script src="../assets/issues-live.js?v=v3.52.0"></script>
-<script src="../assets/likes.js?v=v3.52.0"></script>
+<script src="../assets/comments-data.js?v=v3.53.0"></script>
+<script src="../assets/comment-archive.js?v=v3.53.0"></script>
+<script src="../assets/interactions-config.js?v=v3.53.0"></script>
+<script src="../assets/interactions.js?v=v3.53.0"></script>
+<script src="../assets/issues-live.js?v=v3.53.0"></script>
+<script src="../assets/likes.js?v=v3.53.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("p-mwbj0maxovr0");
 window.ZBLive && window.ZBLive.mount("p-mwbj0maxovr0");
 window.ZBLikes && window.ZBLikes.mount();</script>
-<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+<script>document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var a=t.closest('a[data-md-link="inner"]');if(!a)return;if(e.preventDefault)e.preventDefault();location.href=location.origin+(a.getAttribute('href')||'/')});
+/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

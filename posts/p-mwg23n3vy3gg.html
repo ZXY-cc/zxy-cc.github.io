@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-14">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.52.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.53.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -75,8 +75,10 @@ pre code .zb-fmeta{color:var(--muted);opacity:.75}
 .zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
 /* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
 .toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
+nav.toc[hidden]{display:none}
 .toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
 .toc-list{display:flex;flex-wrap:wrap;gap:6px 16px}
+.toc-empty{font-size:12.5px;color:var(--muted)}
 .toc-item{display:inline-block;border:0;background:none;padding:2px 0;cursor:pointer;color:var(--brand);font:inherit;font-size:13px;text-align:left;text-decoration:none}
 .toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
 .toc-item:hover{text-decoration:underline}
@@ -253,8 +255,8 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <article>
 <h1>中期考核的题解与拓展思考</h1>
 <p class="meta" data-view-post="p-mwg23n3vy3gg">2026-11-14 · B / 科协 / 题解 / 拓展 · <span class="mirror-likes"><span data-like-stat="post:p-mwg23n3vy3gg">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwg23n3vy3gg">0</span> 次浏览（不含站长）</span></p>
-<div class="body"><nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--a-奶龙比可爱-https-code-sipc115-com-problem-">[A 奶龙比可爱](https://code.sipc115.com/problem/660)</a></div></nav>
-<h2 class="zb-vl" id="h--a-奶龙比可爱-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/660" target="_blank" rel="noopener noreferrer">A 奶龙比可爱</a></h2>
+<div class="body"><nav class="toc" data-toc-levels="" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--a-奶龙比可爱-https-code-sipc115-com-problem-">[A 奶龙比可爱](https://code.sipc115.com/problem/660)</a></div></nav>
+<h2 class="zb-vl" id="h--a-奶龙比可爱-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/660" data-md-link="outer" target="_blank" rel="noopener noreferrer">A 奶龙比可爱</a></h2>
 <ul><li>这道题难道只能用时间复杂度为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span>的双重遍历去做吗？</li></ul>
 <p>其实也可以用树状数组，实现<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span>的解法。我将从这道题引入树状数组，探索树状数组的优势。</p>
 <hr>
@@ -415,7 +417,7 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
   <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
 }</code><button class="copy-btn" type="button">复制</button></pre></div>
 <hr>
-<h2 class="zb-vl" id="h--b改-奶龙比可爱ii-https-code-sipc115-com-probl"><a href="https://code.sipc115.com/problem/666" target="_blank" rel="noopener noreferrer">B改 奶龙比可爱II</a></h2>
+<h2 class="zb-vl" id="h--b改-奶龙比可爱ii-https-code-sipc115-com-probl"><a href="https://code.sipc115.com/problem/666" data-md-link="outer" target="_blank" rel="noopener noreferrer">B改 奶龙比可爱II</a></h2>
 <p>既然学会了树状数组，我们就可以在加强版数据中发挥我们的优势。</p>
 <p>我们要把可爱度从小到大（0, 1, 2, ...）依次分配给各个位置的奶龙。关键问题是：<strong>每一轮，最小的可爱度应该给谁？</strong></p>
 <p>答案是给那个<strong>左边不需要有任何比它小的奶龙的位置</strong>，即 <code>a[i] == 0</code> 的位置。</p>
@@ -445,7 +447,7 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
   <span class="tk-kw">return</span> res;
 }</code><button class="copy-btn" type="button">复制</button></pre>
 <hr>
-<h2 class="zb-vl" id="h--c-快来帮帮我-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/662" target="_blank" rel="noopener noreferrer">C 快来帮帮我</a></h2>
+<h2 class="zb-vl" id="h--c-快来帮帮我-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/662" data-md-link="outer" target="_blank" rel="noopener noreferrer">C 快来帮帮我</a></h2>
 <p>树状数组需要离散化，所以推荐用归并排序。</p>
 <ul><li>这道题如果不限制只有相邻的才能交换呢？</li></ul></div>
 <section class="interactions" aria-label="互动区">
@@ -464,16 +466,17 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
 </article>
 <p class="back"><a href="/#/post/p-mwg23n3vy3gg">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.52.0"></script>
-<script src="../assets/comment-archive.js?v=v3.52.0"></script>
-<script src="../assets/interactions-config.js?v=v3.52.0"></script>
-<script src="../assets/interactions.js?v=v3.52.0"></script>
-<script src="../assets/issues-live.js?v=v3.52.0"></script>
-<script src="../assets/likes.js?v=v3.52.0"></script>
+<script src="../assets/comments-data.js?v=v3.53.0"></script>
+<script src="../assets/comment-archive.js?v=v3.53.0"></script>
+<script src="../assets/interactions-config.js?v=v3.53.0"></script>
+<script src="../assets/interactions.js?v=v3.53.0"></script>
+<script src="../assets/issues-live.js?v=v3.53.0"></script>
+<script src="../assets/likes.js?v=v3.53.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("p-mwg23n3vy3gg");
 window.ZBLive && window.ZBLive.mount("p-mwg23n3vy3gg");
 window.ZBLikes && window.ZBLikes.mount();</script>
-<script>/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
+<script>document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var a=t.closest('a[data-md-link="inner"]');if(!a)return;if(e.preventDefault)e.preventDefault();location.href=location.origin+(a.getAttribute('href')||'/')});
+/* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
 </html>

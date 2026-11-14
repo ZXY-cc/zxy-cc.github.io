@@ -33,6 +33,19 @@
     if (/^assets\//i.test(s)) return esc(s);
     return '#';
   }
+  /* Markdown 链接的两条规则（工坊里写的链接在前台、预览、静态阅读版一致）：
+     以 / 开头 = 内链接，点击时把这段链接文本接在当前站点网址后面；
+     其余 = 外链接，直接加载链接文本对应的网页，没写协议时补 https://。
+     站内锚点 / 哈希路由（#…）与 mailto: / tel: 保持原样，不被当成外链。 */
+  function linkInfo(raw) {
+    var s = String(raw == null ? '' : raw).trim()
+      .replace(/&amp;/g, '&').replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    if (s.charAt(0) === '/') return { href: esc(s), kind: 'inner' };
+    if (/^(#|mailto:|tel:)/i.test(s)) return { href: esc(s), kind: 'local' };
+    var abs = /^[a-z][a-z0-9+.-]*:/i.test(s) ? s : 'https://' + s;
+    return { href: esc(abs), kind: 'outer' };
+  }
 
   /* ---------------- LaTeX ---------------- */
   var SYM = {
@@ -311,10 +324,11 @@
       });
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)/g,
       function (_m, txt, u, title) {
-        var href = safeUrl(u);
-        var ext = /^https?:\/\//.test(String(u).trim());
-        return stash('<a href="' + href + '"' + (title ? ' title="' + title + '"' : '') +
-          (ext ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + txt + '</a>');
+        var li = linkInfo(u);
+        return stash('<a href="' + li.href + '"' +
+          (li.kind === 'inner' ? ' data-md-link="inner"' : '') +
+          (li.kind === 'outer' ? ' data-md-link="outer" target="_blank" rel="noopener noreferrer"' : '') +
+          (title ? ' title="' + title + '"' : '') + '>' + txt + '</a>');
       });
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
@@ -746,14 +760,53 @@
   }
   /* :::cont::: 输出与前台自动「本页目录」同一张玻璃卡片：标题、星标、
      流式换行排列、蓝色条目全部复用 .toc 样式；条目是锚点链接，静态阅读版
-     也能直接跳转，SPA 里由点击委托拦截成平滑滚动，避免改动 hash 路由。 */
-  function tocHtml(items) {
-    if (!items.length) return '';
-    var html = items.map(function (it) {
+     也能直接跳转，SPA 里由点击委托拦截成平滑滚动，避免改动 hash 路由。
+     data-toc-levels 记下层级条件；没有符合的标题时也留一张隐藏的空卡片，
+     渲染后 refreshToc 会按真实 DOM 标题实时重建并决定显隐。 */
+  function tocHtml(items, opt) {
+    var html = items.length ? items.map(function (it) {
       return '<a class="toc-item" href="#' + esc(it.slug) + '">' + esc(it.text) + '</a>';
-    }).join('');
-    return '<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div>' +
+    }).join('') : tocEmptyHtml();
+    return '<nav class="toc" data-toc-levels="' + esc(opt || '') + '"' +
+      (items.length ? '' : ' hidden') + ' aria-label="本页目录">' +
+      '<div class="toc-title">本 页 目 录</div>' +
       '<div class="toc-list">' + html + '</div></nav>';
+  }
+  function tocEmptyHtml() { return '<span class="toc-empty">还没有符合条件的标题</span>'; }
+  function tocItemHtml(it) {
+    return '<a class="toc-item" href="#' + esc(it.slug) + '">' + esc(it.text) + '</a>';
+  }
+  /* 目录实时刷新：正文渲染进 DOM 之后调用，按「真正渲染出来的标题」重建条目。
+     这样新增 / 删除标题、写在容器或折叠框里的标题、层级条件变化都会立刻反映，
+     且旧文章里烘焙好的 :::cont::: 卡片同样会被刷新。自动目录（button 条目）不碰。 */
+  function refreshToc(root) {
+    if (!root || !root.querySelectorAll) return 0;
+    var navs = root.querySelectorAll('nav.toc');
+    if (!navs || !navs.length) return 0;
+    var heads = [];
+    var hs = root.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');
+    for (var i = 0; i < hs.length; i++) {
+      var h = hs[i], id = h.getAttribute ? h.getAttribute('id') : null;
+      if (!id || id.indexOf('h-') !== 0) continue;
+      heads.push({ lev: parseInt(String(h.tagName || 'h2').slice(1), 10) || 2,
+        slug: id, text: String(h.textContent || '').trim() });
+    }
+    var done = 0;
+    for (var j = 0; j < navs.length; j++) {
+      var nav = navs[j];
+      var list = nav.querySelector ? nav.querySelector('.toc-list') : null;
+      if (!list) continue;
+      var html = String(list.innerHTML || '');
+      /* 只重建 :::cont::: 生成的锚点目录（含空卡片），跳过自动目录的按钮条目 */
+      if (html.indexOf('href="#h-') < 0 && html.indexOf('toc-empty') < 0) continue;
+      var lvls = contLevels(nav.getAttribute ? nav.getAttribute('data-toc-levels') : null);
+      var picked = heads.filter(function (it) { return !lvls || lvls.indexOf(it.lev) >= 0; });
+      list.innerHTML = picked.length ? picked.map(tocItemHtml).join('') : tocEmptyHtml();
+      if (picked.length) { if (nav.removeAttribute) nav.removeAttribute('hidden'); }
+      else if (nav.setAttribute) nav.setAttribute('hidden', '');
+      done++;
+    }
+    return done;
   }
 
   /* opts.truck：:::truck 块内的所有表格套用 truck 三线表样式（可递归进容器与引用） */
@@ -791,7 +844,7 @@
       var contOne = ln.match(/^ {0,3}:::cont(?:\{([^}]*)\})?:::[ \t]*$/);
       if (contOne) {
         flush();
-        out.push(tocHtml(scanToc(lines, contLevels(contOne[1]))));
+        out.push(tocHtml(scanToc(lines, contLevels(contOne[1])), contOne[1]));
         i++;
         continue;
       }
@@ -821,7 +874,7 @@
         /* 目录容器：不包裹内容，直接按全文标题生成目录（也可写成单行 :::cont:::），
            {1} / {2,3} 可只收指定层级的标题 */
         flush();
-        out.push(tocHtml(scanToc(lines, contLevels(dir.opt))));
+        out.push(tocHtml(scanToc(lines, contLevels(dir.opt)), dir.opt));
         if (dir.colons >= 3) {
           var closeCont = new RegExp('^ {0,3}\\:{' + dir.colons + '}[ \\t]*$');
           i++;
@@ -1220,6 +1273,7 @@
   bindCodeTabs();
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, normalizeIndent: normalizeIndent,
-           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.2' };
+           tidy: tidy, normalizeIndent: normalizeIndent, linkInfo: linkInfo,
+           refreshToc: refreshToc,
+           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.3' };
 });
