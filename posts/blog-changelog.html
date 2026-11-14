@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-14">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.48.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.49.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -39,6 +39,10 @@ th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
 th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
+/* :::truck 三线表：底线画在表格级（rowspan 宿主格停在倒数第二行时右下角也有横线） */
+.zb-tuack{border:none;border-bottom:2px solid #2c3e5c;background:transparent;border-radius:0;overflow:visible}
+.zb-tuack th,.zb-tuack td{border:none;border-bottom:0;background:transparent}
+.zb-tuack thead th{border-top:2px solid #2c3e5c;border-bottom:1.5px solid #2c3e5c;background:transparent}
 /* 新拓展语法：多语言代码标签组、lnum 行号列、l=a-b 行高亮在静态阅读版同样完整；
    pre.zb-code 改成 flex 后要显式写回 [hidden]，否则被隐藏的语言块仍会显示 */
 pre[hidden]{display:none}
@@ -316,6 +320,7 @@ pre, pre > code, .article :not(pre) > code {
 <tr><td><span class="ver">v3.46.0</span></td><td>2026-11-14</td><td><span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>从首页卡片进入文章先滚回页顶再注册渐显观察并双帧兜底，进入即显示不用等滚动；补写 pre 代码块的 display:none，多语言标签组恢复单语言切换显示</td></tr>
 <tr><td><span class="ver">v3.47.0</span></td><td>2026-11-14</td><td><span class="chip" style="color:#3c7fb0;background:#3c7fb014;border-color:#3c7fb038">🎨 UI</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>:::cont::: 目录改用与自动本页目录同款的玻璃卡片与星标链接，正文含该卡片时不再重复插入自动目录；静态阅读版补齐同款样式，锚点点击平滑滚动</td></tr>
 <tr><td><span class="ver">v3.48.0</span></td><td>2026-11-14</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#2f7fa8;background:#2f7fa814;border-color:#2f7fa838">📌 需求</span></td><td>文章标签与正文留白，创作台标签恒 ⭐ 前、A / B 末，编辑器底栏文案更新；行号改 lnum、行高亮改 l=a-b 并逐块兼容多语言代码组，主题上色同步；表格改 :::truck 包裹块</td></tr>
+<tr><td><span class="ver">v3.49.0</span></td><td>2026-11-14</td><td><span class="chip" style="color:#2f8f5b;background:#2f8f5b14;border-color:#2f8f5b38">🆕 新增</span> <span class="chip" style="color:#c05555;background:#c0555514;border-color:#c0555538">🔧 修复</span></td><td>多语言代码组改为结束围栏带语言标识续段合并、裸围栏收组；:::cont 新增 {1}、{2,3} 层级参数；修复 truck 三线表右下角横线缺失</td></tr>
 </tbody></table><h2>未决事项与依赖</h2><table class="t-pending"><thead><tr><th>项</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>评论系统</td><td>✅ 已支持</td><td>留言直接显示在文章页，页面内写好内容后由 GitHub 确认发布；回复与 👍 点赞走仓库 Issues，网页后台可管理</td></tr>
 <tr><td>后端与统计</td><td>✅ 已支持</td><td>全站仍是静态文件，评论不依赖任何常驻服务或数据库；零费用、零运维，不采集访问数据</td></tr>
@@ -358,12 +363,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/blog-changelog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.48.0"></script>
-<script src="../assets/comment-archive.js?v=v3.48.0"></script>
-<script src="../assets/interactions-config.js?v=v3.48.0"></script>
-<script src="../assets/interactions.js?v=v3.48.0"></script>
-<script src="../assets/issues-live.js?v=v3.48.0"></script>
-<script src="../assets/likes.js?v=v3.48.0"></script>
+<script src="../assets/comments-data.js?v=v3.49.0"></script>
+<script src="../assets/comment-archive.js?v=v3.49.0"></script>
+<script src="../assets/interactions-config.js?v=v3.49.0"></script>
+<script src="../assets/interactions.js?v=v3.49.0"></script>
+<script src="../assets/issues-live.js?v=v3.49.0"></script>
+<script src="../assets/likes.js?v=v3.49.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("blog-changelog");
 window.ZBLive && window.ZBLive.mount("blog-changelog");
 window.ZBLikes && window.ZBLikes.mount();</script>

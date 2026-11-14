@@ -739,15 +739,18 @@ main { min-height: 320px; }
 .zb-align-right { text-align: right; }
 .zb-epigraph-sign { display: block; text-align: right; font-size: 13px;
   color: var(--muted); margin-top: 10px; font-style: normal; }
-.zb-tuack { border: none; background: transparent; border-radius: 0; }
+/* 三线表底线画在表格级：^ 合并出的 rowspan 宿主格可能停在倒数第二行，
+   画在 tr:last-child td 上会让右下角缺一段横线。
+   .article table 玻璃边框特异性更高且靠后，必须用 .article table.zb-tuack 压回去 */
+.article table.zb-tuack { border: none; border-bottom: 2px solid var(--ink-strong);
+  background: transparent; border-radius: 0; }
 .zb-tuack th, .zb-tuack td { border-bottom: none; background: transparent; }
 .zb-tuack thead th { border-top: 2px solid var(--ink-strong);
   border-bottom: 1.5px solid var(--ink-strong); }
-.zb-tuack tbody tr:last-child td { border-bottom: 2px solid var(--ink-strong); }
 .zb-cline { display: block; }
 .zb-cline-hl { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
-:root[data-theme="night"] .zb-tuack thead th,
-:root[data-theme="night"] .zb-tuack tbody tr:last-child td { border-color: #cfe0ff; }
+:root[data-theme="night"] .article table.zb-tuack { border-bottom-color: #cfe0ff; }
+:root[data-theme="night"] .zb-tuack thead th { border-color: #cfe0ff; }
 
 .article :not(pre) > code {
   background: var(--accent-soft); padding: 2px 7px; border-radius: 6px;

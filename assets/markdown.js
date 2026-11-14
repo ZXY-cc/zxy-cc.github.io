@@ -651,8 +651,19 @@
   }
 
   /* :::cont::: 目录：按整篇文章的标题（含 :::| / ##| 渐变竖线标题）生成带链接的目录。
-     扫描时跳过围栏代码块；slug 生成规则与标题渲染完全一致，锚点一一对应。 */
-  function scanToc(lines) {
+     扫描时跳过围栏代码块；slug 生成规则与标题渲染完全一致，锚点一一对应。
+     lvls 为允许的标题层级（文章里 ## 记作一级）：null 表示全部（h2~h4）；
+     :::cont{1}::: 只收一级（h2），:::cont{2,3}::: 只收二、三级（h3/h4）。 */
+  function contLevels(opt) {
+    if (!opt) return null;
+    var lv = [];
+    String(opt).split(/[,,，\s]+/).forEach(function (s) {
+      var n = parseInt(s, 10);
+      if (n >= 1 && n <= 3 && lv.indexOf(n + 1) < 0) lv.push(n + 1);
+    });
+    return lv.length ? lv : null;
+  }
+  function scanToc(lines, lvls) {
     var items = [], fence = null;
     for (var i = 0; i < lines.length; i++) {
       var ln = lines[i];
@@ -667,7 +678,7 @@
       if (hd && hd[2] && hd[3].indexOf('|') >= 0) hd = null;
       if (hd) {
         var lev = hd[1].length;
-        if (lev >= 2 && lev <= 4) {
+        if (lev >= 2 && lev <= 4 && (!lvls || lvls.indexOf(lev) >= 0)) {
           var slug = 'h-' + String(hd[3]).toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').slice(0, 40);
           items.push({ lev: lev, text: hd[3], slug: slug });
         }
@@ -718,10 +729,11 @@
         continue;
       }
 
-      /* :::cont::: 单行目录标记：按整篇文章标题生成目录 */
-      if (/^ {0,3}:::cont:::[ \t]*$/.test(trim)) {
+      /* :::cont::: / :::cont{1}::: 单行目录标记：按整篇文章标题生成目录 */
+      var contOne = ln.match(/^ {0,3}:::cont(?:\{([^}]*)\})?:::[ \t]*$/);
+      if (contOne) {
         flush();
-        out.push(tocHtml(scanToc(lines)));
+        out.push(tocHtml(scanToc(lines, contLevels(contOne[1]))));
         i++;
         continue;
       }
@@ -748,9 +760,10 @@
          洛谷嵌套规则：最深一层三个冒号，每往外一层多一个；闭合用同等数量的冒号。 */
       var dir = directiveInfo(ln);
       if (dir && dir.name === 'cont') {
-        /* 目录容器：不包裹内容，直接按全文标题生成目录（也可写成单行 :::cont:::） */
+        /* 目录容器：不包裹内容，直接按全文标题生成目录（也可写成单行 :::cont:::），
+           {1} / {2,3} 可只收指定层级的标题 */
         flush();
-        out.push(tocHtml(scanToc(lines)));
+        out.push(tocHtml(scanToc(lines, contLevels(dir.opt))));
         if (dir.colons >= 3) {
           var closeCont = new RegExp('^ {0,3}\\:{' + dir.colons + '}[ \\t]*$');
           i++;
@@ -795,8 +808,9 @@
         continue;
       }
 
-      /* 围栏代码块（支持两种多语言写法，且都支持逐块 lnum / l=a-b）：
-         ① 连续多个带语言的围栏块（之间只隔空行）合并为一组语言标签页；
+      /* 围栏代码块（支持两种多语言写法，且都支持逐段 lnum / l=a-b）：
+         ① 上一段的结束围栏后带语言标识（```cpp l=5-6）即为下一段开始，
+            裸 ``` 收组，各语言段合成一组语言标签页；
          ② 开栏写成 ` cpp lnum l=1-2|python l=3-4`，块内用围栏行分隔各语言的代码段。 */
       var f = fenceInfo(ln);
       if (f) {
@@ -821,31 +835,36 @@
           pipes.forEach(function (mg, k) {
             group.push({ lang: mg.lang, code: secs[k] || '', hl: mg.hl, ln: mg.ln });
           });
+        } else if (f.lang) {
+          /* 多语言标签组：收段时遇到「带语言标识的围栏行」（如 ```cpp l=5-6）
+             表示当前语言段结束、下一段开始；只有裸 ``` 才收整组。
+             每段的 lnum 与 l=a-b 各自独立；只收出一段时仍是普通代码块。 */
+          var secs = [{ meta: f, buf: [] }];
+          i++;
+          while (i < lines.length) {
+            if (fenceClose(lines[i], f.ch, f.n)) {
+              var cf = fenceInfo(lines[i]);
+              if (cf && cf.lang && !cf.pipes) {
+                secs.push({ meta: cf, buf: [] });
+                i++;
+                continue;
+              }
+              i++; /* 裸围栏（或非语言参数围栏）：整组结束 */
+              break;
+            }
+            secs[secs.length - 1].buf.push(lines[i]);
+            i++;
+          }
+          group = secs.map(function (s) {
+            return { lang: s.meta.lang, code: s.buf.join('\n'), hl: s.meta.hl, ln: s.meta.ln };
+          });
         } else {
-          /* 普通写法：先收完本块，再看后面是否紧跟着更多带语言的围栏块（合并成标签组） */
+          /* 无语言纯围栏块：任何同字符围栏行都收块，不做标签组合并 */
           var buf = [];
           i++;
           while (i < lines.length && !fenceClose(lines[i], f.ch, f.n)) { buf.push(lines[i]); i++; }
           if (i < lines.length) i++;
           group.push({ lang: f.lang, code: buf.join('\n'), hl: f.hl, ln: f.ln });
-          /* 只有「首块自己也带语言」才尝试合并：纯文本围栏块 + 后面的代码块
-             不该被合成标签页（否则标签条会出现一个空标签）。 */
-          if (f.lang) {
-            var probe = i;
-            while (probe < lines.length && !lines[probe].trim()) probe++;
-            while (probe < lines.length) {
-              var nf = fenceInfo(lines[probe]);
-              if (!nf || !nf.lang || nf.pipes) break;
-              var b2 = [];
-              probe++;
-              while (probe < lines.length && !fenceClose(lines[probe], nf.ch, nf.n)) { b2.push(lines[probe]); probe++; }
-              if (probe >= lines.length) break;
-              probe++;
-              group.push({ lang: nf.lang, code: b2.join('\n'), hl: nf.hl, ln: nf.ln });
-              while (probe < lines.length && !lines[probe].trim()) probe++;
-            }
-            if (group.length > 1) i = probe;
-          }
         }
         out.push(group.length > 1 ? codeTabsHtml(group)
           : codeHtml(f.lang, group[0].code, group[0].hl, undefined, group[0].ln));

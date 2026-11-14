@@ -533,6 +533,10 @@ th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
 th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
+/* :::truck 三线表：底线画在表格级（rowspan 宿主格停在倒数第二行时右下角也有横线） */
+.zb-tuack{border:none;border-bottom:2px solid #2c3e5c;background:transparent;border-radius:0;overflow:visible}
+.zb-tuack th,.zb-tuack td{border:none;border-bottom:0;background:transparent}
+.zb-tuack thead th{border-top:2px solid #2c3e5c;border-bottom:1.5px solid #2c3e5c;background:transparent}
 /* 新拓展语法：多语言代码标签组、lnum 行号列、l=a-b 行高亮在静态阅读版同样完整；
    pre.zb-code 改成 flex 后要显式写回 [hidden]，否则被隐藏的语言块仍会显示 */
 pre[hidden]{display:none}
