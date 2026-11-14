@@ -163,6 +163,15 @@ window.STUDIO_DATA = {
         "assets/photos/night-voyage.svg"
       ],
       "likes": 0
+    },
+    {
+      "id": "m-mwgfcvijh6we",
+      "date": "2026-11-14",
+      "text": "大家可以在导航栏选择“设置”，在画质里面选择“极高画质”，看一看实时计算的毛玻璃效果会不会导致设备卡顿。事实上我不确定大多数设备对其的支持程度，收集一定数据后我会对此进行优化。",
+      "mood": "-",
+      "place": "-",
+      "images": [],
+      "likes": 0
     }
   ],
   "chatter": [
