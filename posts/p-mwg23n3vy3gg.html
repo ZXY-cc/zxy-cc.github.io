@@ -255,7 +255,8 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <p class="meta" data-view-post="p-mwg23n3vy3gg">2026-11-14 · B / 科协 / 题解 / 拓展 · <span class="mirror-likes"><span data-like-stat="post:p-mwg23n3vy3gg">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwg23n3vy3gg">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--a-奶龙比可爱-https-code-sipc115-com-problem-">[A 奶龙比可爱](https://code.sipc115.com/problem/660)</a></div></nav>
 <h2 class="zb-vl" id="h--a-奶龙比可爱-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/660" target="_blank" rel="noopener noreferrer">A 奶龙比可爱</a></h2>
-<p>这道题难道只能用时间复杂度为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span>的双重遍历去做吗？其实也可以用树状数组，实现<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span>的解法。我将从这道题引入树状数组，探索树状数组的优势。</p>
+<ul><li>这道题难道只能用时间复杂度为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span>的双重遍历去做吗？</li></ul>
+<p>其实也可以用树状数组，实现<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span>的解法。我将从这道题引入树状数组，探索树状数组的优势。</p>
 <hr>
 <details class="zb-fold zb-fold-info"><summary class="zb-fold-head">树状数组的魔法</summary><div class="zb-fold-body"><p>我们有一个数组，比如记录每个&quot;可爱度值&quot;出现了几次：</p>
 <pre class="zb-code"><code>可爱度值:    <span class="tk-nu">0</span>   <span class="tk-nu">1</span>   <span class="tk-nu">2</span>   <span class="tk-nu">3</span>   <span class="tk-nu">4</span>   <span class="tk-nu">5</span>
@@ -443,7 +444,10 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
   }
   <span class="tk-kw">return</span> res;
 }</code><button class="copy-btn" type="button">复制</button></pre>
-<hr></div>
+<hr>
+<h2 class="zb-vl" id="h--c-快来帮帮我-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/662" target="_blank" rel="noopener noreferrer">C 快来帮帮我</a></h2>
+<p>树状数组需要离散化，所以推荐用归并排序。</p>
+<ul><li>这道题如果不限制只有相邻的才能交换呢？</li></ul></div>
 <section class="interactions" aria-label="互动区">
 <div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
 <h2>留言</h2><p>留言直接显示在这里，写在页面上、用 GitHub 账号确认发布；👍 点赞、在 Issue 下回复，留言会长期存档到本站仓库；无广告、无追踪。</p></div></div>
