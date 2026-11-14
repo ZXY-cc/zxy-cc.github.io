@@ -412,7 +412,38 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
   <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
     cout &lt;&lt; ans[i] &lt;&lt; <span class="tk-st">&#39; &#39;</span>;
   <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
-}</code><button class="copy-btn" type="button">复制</button></pre></div></div>
+}</code><button class="copy-btn" type="button">复制</button></pre></div>
+<hr>
+<h2 class="zb-vl" id="h--b改-奶龙比可爱ii-https-code-sipc115-com-probl"><a href="https://code.sipc115.com/problem/666" target="_blank" rel="noopener noreferrer">B改 奶龙比可爱II</a></h2>
+<p>既然学会了树状数组，我们就可以在加强版数据中发挥我们的优势。</p>
+<p>我们要把可爱度从小到大（0, 1, 2, ...）依次分配给各个位置的奶龙。关键问题是：<strong>每一轮，最小的可爱度应该给谁？</strong></p>
+<p>答案是给那个<strong>左边不需要有任何比它小的奶龙的位置</strong>，即 <code>a[i] == 0</code> 的位置。</p>
+<blockquote><p>如果 <code>a[i] == 0</code>，说明位置 i 的奶龙左边一只比它小的都没有。既然我们现在手里拿着当前最小的可爱度，给它正合适——它反正也不需要左边有谁比它小。</p></blockquote>
+<hr>
+<ul><li>为什么从右往左找？</li></ul>
+<p>当有多个 <code>a[i] == 0</code> 时，我们选择<strong>最右边</strong>的那个。原因是：</p>
+<p>最右边 <code>a[i]==0</code> 意味着：<strong>它右边的所有未分配位置，<code>a</code> 值都大于0</strong>，即它们左边都需要有比它们小的奶龙。</p>
+<p>我们先把最小可爱度给这个最右边的位置，它就会成为它右边所有奶龙&quot;左边比它小的那一只&quot;，所以把它们右边的 <code>a</code> 值各减 1。这样一步一步从右往左&quot;消去&quot;需求，才能保证所有位置最终都能被分配。</p>
+<hr>
+<ul><li>为什么分配后要把 i~n 位置的 a 值减 1？</li></ul>
+<p>这是最关键的步骤。假设我们在位置 i 分配了可爱度 <code>cnt</code>（当前最小值）：</p>
+<ul><li>对于位置 <code>j &gt; i</code>（i <strong>右边</strong>的奶龙），位置 i 在它们的<strong>左边</strong>。</li><li>位置 i 的可爱度 <code>cnt</code> 是到目前为止最小的，之后分配给 j 的可贵度一定 <strong>&gt; cnt</strong>。</li><li>所以位置 i 的奶龙<strong>一定</strong>比位置 j 的奶龙可爱度小，且位置 i 在位置 j 的左边。</li><li>这就意味着：位置 i 已经&quot;贡献&quot;了位置 j 的 <code>a[j]</code> 中的一个&quot;左边比它小的奶龙&quot;。</li><li>因此位置 j 还需要的&quot;左边比它小的奶龙&quot;数量就要减 1 → <strong><code>a[j]--</code></strong>。</li></ul>
+<p>而对于位置 <code>k &lt; i</code>（i <strong>左边</strong>的奶龙），位置 i 在它们的<strong>右边</strong>，不构成&quot;左边比它小的奶龙&quot;，所以不需要调整。</p>
+<p>如果再用二分查找去找第k小的数，可以让时间复杂度变为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><span class="zb-script"><span class="zb-base"><i class="zb-var">g</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><i class="zb-var">n</i><span class="zb-textchar">)</span></span></p>
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-ty">int</span> <span class="tk-fn">find</span>(<span class="tk-ty">int</span> k) {
+  <span class="tk-ty">int</span> low = <span class="tk-nu">0</span>, high = n - <span class="tk-nu">1</span>, res = n - <span class="tk-nu">1</span>;
+  <span class="tk-kw">while</span> (low &lt;= high) {
+    <span class="tk-ty">int</span> mid = (low + high) / <span class="tk-nu">2</span>;
+    <span class="tk-kw">if</span> (<span class="tk-fn">query</span>(mid) &gt;= k) {
+      res = mid;
+      high = mid - <span class="tk-nu">1</span>;
+    } <span class="tk-kw">else</span> {
+      low = mid + <span class="tk-nu">1</span>;
+    }
+  }
+  <span class="tk-kw">return</span> res;
+}</code><button class="copy-btn" type="button">复制</button></pre>
+<hr></div>
 <section class="interactions" aria-label="互动区">
 <div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
 <h2>留言</h2><p>留言直接显示在这里，写在页面上、用 GitHub 账号确认发布；👍 点赞、在 Issue 下回复，留言会长期存档到本站仓库；无广告、无追踪。</p></div></div>
