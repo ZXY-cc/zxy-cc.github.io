@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.47.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.48.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -39,6 +39,22 @@ th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
 th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
+/* 新拓展语法：多语言代码标签组、lnum 行号列、l=a-b 行高亮在静态阅读版同样完整；
+   pre.zb-code 改成 flex 后要显式写回 [hidden]，否则被隐藏的语言块仍会显示 */
+pre[hidden]{display:none}
+pre.zb-code{position:relative;display:flex;align-items:stretch;gap:0;padding:16px 0}
+/* 与 pre.zb-code 同处一屏，用更高特异性把被隐藏语言块压回 display:none */
+pre.zb-code[hidden]{display:none}
+pre.zb-code>code{flex:1 1 auto;padding:0 18px;background:none;border-radius:0;white-space:pre}
+.zb-code .zb-lang{position:absolute;right:12px;bottom:6px;font-size:10px;color:var(--muted);pointer-events:none}
+.line-numbers{flex:0 0 auto;padding:0 14px 0 18px;white-space:pre;text-align:right;color:var(--muted);border-right:1px solid var(--line);user-select:none}
+.zb-cline{display:block}
+.zb-cline-hl{background:#e5eeff;box-shadow:inset 2px 0 0 var(--brand)}
+.zb-code-tabs{margin:14px 0}
+.zb-tab-bar{display:flex;flex-wrap:wrap;gap:2px;padding:0 10px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:rgba(255,255,255,.62)}
+.zb-tab{font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:7px 14px 8px;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent}
+.zb-tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
 /* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
 .toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
 .toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
@@ -245,12 +261,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.47.0"></script>
-<script src="../assets/comment-archive.js?v=v3.47.0"></script>
-<script src="../assets/interactions-config.js?v=v3.47.0"></script>
-<script src="../assets/interactions.js?v=v3.47.0"></script>
-<script src="../assets/issues-live.js?v=v3.47.0"></script>
-<script src="../assets/likes.js?v=v3.47.0"></script>
+<script src="../assets/comments-data.js?v=v3.48.0"></script>
+<script src="../assets/comment-archive.js?v=v3.48.0"></script>
+<script src="../assets/interactions-config.js?v=v3.48.0"></script>
+<script src="../assets/interactions.js?v=v3.48.0"></script>
+<script src="../assets/issues-live.js?v=v3.48.0"></script>
+<script src="../assets/likes.js?v=v3.48.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
 window.ZBLive && window.ZBLive.mount("free-blog");
 window.ZBLikes && window.ZBLikes.mount();</script>

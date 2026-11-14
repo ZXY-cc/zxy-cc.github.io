@@ -186,6 +186,27 @@
     });
     return tagLibNormalize(out);
   }
+  /* 选择标签时的显示顺序：⭐ 恒最前、A / B 恒最后，其余按标签库顺序，
+     成员一个不少一个不多——候选按钮与已选标签胶囊都走这一套排序。 */
+  function tagLibOrder(list) {
+    var lib = tagLib(), seen = {}, out = [];
+    (list || []).forEach(function (t) {
+      t = String(t == null ? '' : t).trim().replace(/^#/, '');
+      if (t && !seen[t]) { seen[t] = 1; out.push(t); }
+    });
+    function rank(t) { return t === '⭐' ? 0 : (t === 'A' ? 2 : (t === 'B' ? 3 : 1)); }
+    return out.sort(function (a, b) {
+      var ra = rank(a), rb = rank(b);
+      if (ra !== rb) return ra - rb;
+      if (ra === 0) return 0;
+      var ia = lib.indexOf(a), ib = lib.indexOf(b);
+      if (ia < 0 && ib < 0) return String(a).localeCompare(String(b), 'zh');
+      if (ia < 0) return 1;
+      if (ib < 0) return -1;
+      return ia - ib;
+    });
+  }
+  function tagLibChoices() { return tagLibOrder(tagLibAll()); }
   function applyTagLibLocal() {
     var lib = null;
     try { lib = JSON.parse(ls(TAGLIB_KEY) || 'null'); } catch (e) { lib = null; }
@@ -477,12 +498,13 @@
     var box = document.getElementById('tag-pills');
     if (!box) return;
     var d = state.draft || blankDraft();
-    box.innerHTML = d.tags.length ? d.tags.map(function (t) {
+    var chosen = tagLibOrder(d.tags);
+    box.innerHTML = chosen.length ? chosen.map(function (t) {
       return '<span class="zb-tag-pill">#' + esc(t) +
         '<button type="button" data-tag-del="' + esc(t) + '" aria-label="移除标签">×</button></span>';
     }).join('') : '<span class="tag-empty">还没有标签</span>';
   }
-  function historyTags() { return tagLibAll(); }
+  function historyTags() { return tagLibChoices(); }
   function renderTagHistory() {
     var box = document.getElementById('tag-history');
     if (!box) return;
@@ -497,7 +519,7 @@
     var box = document.getElementById('ch-tag-picker');
     if (!box) return;
     var cur = splitTags(val('f-ch-tags'));
-    box.innerHTML = tagLibAll().map(function (t) {
+    box.innerHTML = tagLibChoices().map(function (t) {
       return '<button type="button" class="tag-history-btn' + (cur.indexOf(t) >= 0 ? ' on' : '') +
         '" data-ch-tag="' + esc(t) + '">' + (cur.indexOf(t) >= 0 ? '✓ ' : '+ ') + esc(t) + '</button>';
     }).join('') || '<span class="tag-empty">标签库还是空的</span>';
@@ -767,7 +789,7 @@
           esc(d.markdown) + '</textarea>' +
         '<div id="post-preview" class="desk-preview article-body"></div>' +
       '</div>' +
-      '<div class="desk-foot"><span>支持 Markdown 与 LaTeX · ##| 标题 或 :::vl 可加渐变竖线 · 自动保存在本机</span>' +
+      '<div class="desk-foot"><span>支持Markdown及本站拓展，与LaTeX · 自动保存在本机</span>' +
         '<span class="desk-saved" id="draft-saved">' + esc(savedLabel()) + '</span>' +
         '<span id="word-count">0 字</span></div>' +
       '<div class="f-row post-attr-row">' +

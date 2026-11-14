@@ -42,15 +42,17 @@
   function decode(s) { try { return decodeURIComponent(s); } catch (e) { return s; } }
   /* 旧文章的 body 是预渲染 HTML（无 Markdown 原文），里面的代码块没有高亮标记。
      把每个 zb-code 的 <code> 原文取出（剥掉旧标记、还原实体）后用渲染引擎重新上色；
-     对已高亮的新渲染结果同样幂等。 */
+     对已高亮的新渲染结果同样幂等。多语言标签组逐块取自己的 data-code-lang，
+     旧文章只有显示名时由引擎还原成同一套语言词表。 */
   function rehlHtml(html) {
     var s = String(html || '');
     if (s.indexOf('<pre') < 0 || !window.ZBMD) return s;
     return s.replace(/<pre[^>]*>[\s\S]*?<\/pre>/g, function (blk) {
       if (blk.indexOf('<code') < 0) return blk;
-      /* lines=a-b 的行高亮块已逐行分词，重刷会拍平 zb-cline 结构，跳过 */
+      /* l=a-b 的行高亮块已逐行分词，重刷会拍平 zb-cline 结构，跳过 */
       if (blk.indexOf('zb-cline') >= 0) return blk;
-      var lang = (blk.match(/data-lang="([^"]*)"/) || [])[1] ||
+      var lang = (blk.match(/data-code-lang="([^"]*)"/) || [])[1] ||
+        (blk.match(/data-lang="([^"]*)"/) || [])[1] ||
         (blk.match(/class="zb-lang">([^<]*)</) || [])[1] || '';
       return blk.replace(/<code[^>]*>[\s\S]*?<\/code>/, function (cm) {
         var gt = cm.indexOf('>'), end = cm.lastIndexOf('</code>');

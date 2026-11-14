@@ -350,7 +350,9 @@
   };
   var SYN_CS = ' true false null undefined None True False NULL nullptr nil this self super NaN Infinity ';
   function highlightCode(code, lang) {
-    var l = String(lang || '').toLowerCase();
+    /* 静态旧文章的 data-lang 存的是显示名（C++ / C# / Python），统一还原成语言标识，
+       多语言标签组里每个代码块才会拿到与首次渲染完全相同的分词词表与上色结果 */
+    var l = langIdOf(lang);
     var fam = /^(py|python|sh|bash|shell|zsh|yaml|yml|ruby|rb|toml)$/.test(l) ? 'py'
       : /^(css|scss|less)$/.test(l) ? 'css'
       : /^(html|xml|svg|vue)$/.test(l) ? 'html'
@@ -400,6 +402,20 @@
     yaml: 'YAML', yml: 'YAML', toml: 'TOML', sql: 'SQL',
     md: 'Markdown', markdown: 'Markdown', r: 'R', matlab: 'MATLAB', vb: 'VB'
   };
+  /* 显示名 → 语言标识：C++ → cpp、C# → cs、Python → python。
+     旧文章的 data-lang 是显示名，重刷上色时靠这张表还原成同一套词表。 */
+  var LANG_ID_BY_LABEL = (function () {
+    var map = {};
+    Object.keys(LANG_NAMES).forEach(function (k) {
+      var n = LANG_NAMES[k].toLowerCase();
+      if (!map[n]) map[n] = k;
+    });
+    return map;
+  })();
+  function langIdOf(lang) {
+    var l = String(lang || '').trim().toLowerCase();
+    return LANG_ID_BY_LABEL[l] || l;
+  }
   function langLabel(id) {
     var k = String(id || '').trim().toLowerCase();
     if (!k) return '';
@@ -410,9 +426,9 @@
     var lines = text.split('\n');
     var tag = (lang && !noTag) ? '<span class="zb-lang">' + esc(langLabel(lang)) + '</span>' : '';
     var body;
-    /* 洛谷 lines=a-b 指定行高亮：此时逐行分词包裹，跨行字符串与块注释的
+    /* l=a-b 指定行高亮：此时逐行分词包裹，跨行字符串与块注释的
        上色会有损失（内容仍逐字保留），用来换取任意行精确高亮。 */
-    if (hl && hl[0] >= 1 && hl[0] <= hl[1] && hl[0] <= lines.length) {
+    if (hl && hl[0] >= 1 && hl[0] <= hl[1]) {
       body = lines.map(function (ln2, n) {
         var cls = (n + 1 >= hl[0] && n + 1 <= hl[1]) ? ' zb-cline-hl' : '';
         return '<span class="zb-cline' + cls + '">' + (highlightCode(ln2, lang) || '&nbsp;') + '</span>';
@@ -420,10 +436,12 @@
     } else {
       body = highlightCode(text, lang);
     }
-    /* 洛谷 line-numbers 关键字：显式声明才显示行号列 */
+    /* lnum 关键字：显式声明才显示行号列；只写 l=a-b 时仅高亮不显示行号 */
     var gutter = ln ? '<span class="line-numbers" aria-hidden="true">' +
       lines.map(function (_, n) { return n + 1; }).join('\n') + '</span>' : '';
-    return '<pre class="zb-code"' + (lang ? ' data-lang="' + esc(langLabel(lang)) + '"' : '') + '>' +
+    var langAttrs = lang ? ' data-lang="' + esc(langLabel(lang)) +
+      '" data-code-lang="' + esc(String(lang).toLowerCase()) + '"' : '';
+    return '<pre class="zb-code"' + langAttrs + '>' +
       tag + gutter +
       '<code>' + body + '</code>' +
       '<button class="copy-btn" type="button">复制</button></pre>';
@@ -506,15 +524,30 @@
     }
     return '<' + tag + '>' + html + '</' + tag + '>';
   }
+  /* 开栏参数：语言名 + lnum（显示行号列）+ l=a-b（高亮第 a 到 b 行）。
+     lnum 与 l=a-b 彼此独立，只写 l=a-b 也能高亮，只是不显示行号列；
+     line-numbers / lines=a-b 是旧写法，保留兼容。 */
+  function parseFenceMeta(meta) {
+    var m = String(meta || '').trim();
+    var hm = m.match(/\bl=(\d+)-(\d+)\b/) || m.match(/\blines=(\d+)-(\d+)\b/);
+    return {
+      lang: m.split(/\s+/)[0] || '',
+      hl: hm ? [Number(hm[1]), Number(hm[2])] : null,
+      ln: /\blnum\b|\bline-numbers\b/.test(m)
+    };
+  }
   function fenceInfo(line) {
     var m = line.match(/^ {0,3}(`{3,}|~{3,})[ \t]*([^\n]*)$/);
     if (!m) return null;
     var meta = (m[2] || '').trim();
-    var hl = meta.match(/\blines=(\d+)-(\d+)\b/);
-    return { ch: m[1][0], n: m[1].length,
-      lang: meta.split(/\s+/)[0] || '',
-      hl: hl ? [Number(hl[1]), Number(hl[2])] : null,
-      ln: /\bline-numbers\b/.test(meta) };
+    var info = parseFenceMeta(meta);
+    /* 声明式多语言组：cpp lnum l=1-2|python l=3-4|java lnum l=5-6，
+       竖线两边各自是一段完整的开栏参数，逐段独立控制行号与高亮 */
+    var pipes = meta.indexOf('|') >= 0
+      ? meta.split('|').map(parseFenceMeta) : null;
+    return { ch: m[1][0], n: m[1].length, meta: meta,
+      lang: info.lang, hl: info.hl, ln: info.ln,
+      pipes: pipes && pipes.length > 1 ? pipes : null };
   }
   function fenceClose(line, ch, n) {
     var m = line.trim().match(/^(`{3,}|~{3,})/);
@@ -654,7 +687,8 @@
       '<div class="toc-list">' + html + '</div></nav>';
   }
 
-  function render(src) {
+  /* opts.truck：:::truck 块内的所有表格套用 truck 三线表样式（可递归进容器与引用） */
+  function render(src, opts) {
     reset();
     var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n').replace(/\t/g, '  ');
     var lines = text.split('\n');
@@ -692,6 +726,23 @@
         continue;
       }
 
+      /* :::truck … ::: 包裹块：只有块内的表格做成 truck 三线表，块外保持普通表格。
+         冒号数量配对决定闭合行，块内可放多张表格、段落与其它容器。 */
+      var truckOpen = ln.match(/^ {0,3}(:{3,})truck[ \t]*$/);
+      if (truckOpen) {
+        flush();
+        var truckClose = new RegExp('^ {0,3}\\:{' + truckOpen[1].length + '}[ \\t]*$');
+        var tbuf = [];
+        i++;
+        while (i < lines.length && !truckClose.test(lines[i])) { tbuf.push(lines[i]); i++; }
+        if (i < lines.length) i++;
+        var tkStore = store, tkSeq = seq;
+        var tInner = render(tbuf.join('\n'), { truck: true });
+        store = tkStore; seq = tkSeq;
+        out.push(tInner);
+        continue;
+      }
+
       /* 洛谷扩展容器：:::info[标题]{open} / :::align{c|center} / :::epig[——署名] /
          :::| … :::（渐变竖线）。嵌套 render 前保存占位符表、返回后还原。
          洛谷嵌套规则：最深一层三个冒号，每往外一层多一个；闭合用同等数量的冒号。 */
@@ -725,7 +776,7 @@
           if (vcut > 0) { i = i - (dbuf.length - vcut); dbuf = dbuf.slice(0, vcut); }
         }
         var keepStore = store, keepSeq = seq;
-        var dInner = render(dbuf.join('\n'));
+        var dInner = render(dbuf.join('\n'), opts);
         store = keepStore; seq = keepSeq;
         out.push(containerHtml(dir, dInner));
         continue;
@@ -744,17 +795,17 @@
         continue;
       }
 
-      /* 围栏代码块（支持两种多语言写法）：
+      /* 围栏代码块（支持两种多语言写法，且都支持逐块 lnum / l=a-b）：
          ① 连续多个带语言的围栏块（之间只隔空行）合并为一组语言标签页；
-         ② 开栏写成 `​```c|cpp|python`，块内用围栏行分隔各语言的代码段。 */
+         ② 开栏写成 ` cpp lnum l=1-2|python l=3-4`，块内用围栏行分隔各语言的代码段。 */
       var f = fenceInfo(ln);
       if (f) {
         flush();
-        var pipes = String(f.lang || '').indexOf('|') >= 0
-          ? f.lang.split('|').map(function (s) { return s.trim(); }).filter(Boolean) : null;
+        var pipes = f.pipes;
         var group = [];
-        if (pipes && pipes.length > 1) {
-          /* 竖线写法：语言数量已知，围栏行当段分隔符，收满 N 段后由末尾围栏收块 */
+        if (pipes) {
+          /* 声明式写法：竖线两边各是一段完整开栏参数，围栏行当段分隔符，
+             收满 N 段后由末尾围栏收块；每段的行号列与高亮范围各自独立 */
           var secs = [], cur = [];
           i++;
           while (i < lines.length) {
@@ -767,8 +818,8 @@
             cur.push(lines[i]); i++;
           }
           if (cur.length || secs.length < pipes.length) secs.push(cur.join('\n'));
-          pipes.forEach(function (lg, k) {
-            group.push({ lang: lg, code: secs[k] || '', hl: null, ln: f.ln });
+          pipes.forEach(function (mg, k) {
+            group.push({ lang: mg.lang, code: secs[k] || '', hl: mg.hl, ln: mg.ln });
           });
         } else {
           /* 普通写法：先收完本块，再看后面是否紧跟着更多带语言的围栏块（合并成标签组） */
@@ -784,7 +835,7 @@
             while (probe < lines.length && !lines[probe].trim()) probe++;
             while (probe < lines.length) {
               var nf = fenceInfo(lines[probe]);
-              if (!nf || !nf.lang || String(nf.lang).indexOf('|') >= 0) break;
+              if (!nf || !nf.lang || nf.pipes) break;
               var b2 = [];
               probe++;
               while (probe < lines.length && !fenceClose(lines[probe], nf.ch, nf.n)) { b2.push(lines[probe]); probe++; }
@@ -844,7 +895,7 @@
       if (trim.indexOf('|') >= 0 && i + 1 < lines.length &&
           /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+/.test(lines[i + 1])) {
         flush();
-        var t = renderTable(ln, lines[i + 1], lines, i + 2, false);
+        var t = renderTable(ln, lines[i + 1], lines, i + 2, !!(opts && opts.truck));
         out.push(t.html); i = t.next;
         continue;
       }
@@ -856,7 +907,7 @@
         while (i < lines.length && /^ {0,3}>/.test(lines[i])) {
           q.push(lines[i].replace(/^ {0,3}>\s?/, '')); i++;
         }
-        out.push('<blockquote>' + render(q.join('\n')) + '</blockquote>');
+        out.push('<blockquote>' + render(q.join('\n'), opts) + '</blockquote>');
         continue;
       }
 
@@ -968,5 +1019,5 @@
   bindCodeTabs();
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.6.0' };
+           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.7.0' };
 });

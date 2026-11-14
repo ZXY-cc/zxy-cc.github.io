@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>本站支持的 Markdown 拓展语法 · 星梦Staream</title>
-<meta name="description" content="写法与洛谷 Markdown 手册一致的拓展语法清单：目录、渐变竖线、折叠框、对齐、署名、行号与行高亮、多语言代码组、表格合并与 Tuack 表格，每条写法都配一个代码块与紧跟其后的真实预览。">
+<meta name="description" content="写法与洛谷 Markdown 手册一致的拓展语法清单：目录、渐变竖线、折叠框、对齐、署名、lnum 行号与 l=a-b 行高亮、多语言代码组、表格合并与 Truck 表格，每条写法都配一个代码块与紧跟其后的真实预览。">
 <link rel="canonical" href="https://zxy-blog.top/posts/markdown-extensions.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="本站支持的 Markdown 拓展语法 · 星梦Staream">
-<meta property="og:description" content="写法与洛谷 Markdown 手册一致的拓展语法清单：目录、渐变竖线、折叠框、对齐、署名、行号与行高亮、多语言代码组、表格合并与 Tuack 表格，每条写法都配一个代码块与紧跟其后的真实预览。">
+<meta property="og:description" content="写法与洛谷 Markdown 手册一致的拓展语法清单：目录、渐变竖线、折叠框、对齐、署名、lnum 行号与 l=a-b 行高亮、多语言代码组、表格合并与 Truck 表格，每条写法都配一个代码块与紧跟其后的真实预览。">
 <meta property="og:url" content="https://zxy-blog.top/posts/markdown-extensions.html">
 <meta property="og:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-13">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.47.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.48.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -39,6 +39,22 @@ th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
 th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
+/* 新拓展语法：多语言代码标签组、lnum 行号列、l=a-b 行高亮在静态阅读版同样完整；
+   pre.zb-code 改成 flex 后要显式写回 [hidden]，否则被隐藏的语言块仍会显示 */
+pre[hidden]{display:none}
+pre.zb-code{position:relative;display:flex;align-items:stretch;gap:0;padding:16px 0}
+/* 与 pre.zb-code 同处一屏，用更高特异性把被隐藏语言块压回 display:none */
+pre.zb-code[hidden]{display:none}
+pre.zb-code>code{flex:1 1 auto;padding:0 18px;background:none;border-radius:0;white-space:pre}
+.zb-code .zb-lang{position:absolute;right:12px;bottom:6px;font-size:10px;color:var(--muted);pointer-events:none}
+.line-numbers{flex:0 0 auto;padding:0 14px 0 18px;white-space:pre;text-align:right;color:var(--muted);border-right:1px solid var(--line);user-select:none}
+.zb-cline{display:block}
+.zb-cline-hl{background:#e5eeff;box-shadow:inset 2px 0 0 var(--brand)}
+.zb-code-tabs{margin:14px 0}
+.zb-tab-bar{display:flex;flex-wrap:wrap;gap:2px;padding:0 10px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:rgba(255,255,255,.62)}
+.zb-tab{font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:7px 14px 8px;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent}
+.zb-tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
 /* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
 .toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
 .toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
@@ -217,16 +233,16 @@ pre, pre > code, .article :not(pre) > code {
 <h1>本站支持的 Markdown 拓展语法</h1>
 <p class="meta" data-view-post="markdown-extensions">2026-11-13 · Markdown / 拓展 / A / ⭐ · <span class="mirror-likes"><span data-like-stat="post:markdown-extensions">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="markdown-extensions">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法，写法与洛谷 Markdown 手册保持一致。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。</p>
+<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-带渐变竖线的小标题">带渐变竖线的小标题</a><a class="toc-item" href="#h-普通小标题">普通小标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-truck-表格">十、Truck 表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
 <h2 id="h-一-目录">一、目录</h2>
-<p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题。</p>
+<p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的）。</p>
 <pre class="zb-code"><code>:::cont:::</code><button class="copy-btn" type="button">复制</button></pre>
-<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-带渐变竖线的小标题">带渐变竖线的小标题</a><a class="toc-item" href="#h-普通小标题">普通小标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-更像-tuack-的表格">十、更像 Tuack 的表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
 <h2 id="h-二-渐变竖线标题">二、渐变竖线标题</h2>
 <p>井号后紧跟一个竖线，只给这一个标题加蓝→粉渐变竖线；普通 <code>## 标题</code> 保持干净。</p>
-<pre class="zb-code"><code>###| 带渐变竖线的小标题
-### 普通小标题</code><button class="copy-btn" type="button">复制</button></pre>
-<h3 class="zb-vl" id="h-带渐变竖线的小标题">带渐变竖线的小标题</h3>
-<h3 id="h-普通小标题">普通小标题</h3>
+<pre class="zb-code"><code>##| 带渐变竖线的小标题
+## 普通小标题</code><button class="copy-btn" type="button">复制</button></pre>
+<h2 class="zb-vl" id="h-带渐变竖线的小标题">带渐变竖线的小标题</h2>
+<h2 id="h-普通小标题">普通小标题</h2>
 <h2 id="h-三-渐变竖线区块">三、渐变竖线区块</h2>
 <p>用 <code>:::| … :::</code> 包住整段内容，区块左侧是一整条渐变竖线；外层多写一个冒号就能嵌套。</p>
 <pre class="zb-code"><code>:::|
@@ -268,8 +284,8 @@ pre, pre > code, .article :not(pre) > code {
 :::</code><button class="copy-btn" type="button">复制</button></pre>
 <blockquote class="zb-epigraph"><p>大家好啊，这里是签名。</p><footer class="zb-epigraph-sign">——otto</footer></blockquote>
 <h2 id="h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</h2>
-<p>开栏写三个反引号加语言名，再接 <code>line-numbers lines=起-止</code>：<code>line-numbers</code> 显示行号列，<code>lines=a-b</code> 把指定行高亮。</p>
-<pre class="zb-code"><code><span class="tk-st">``</span><span class="tk-st">`cpp line-numbers lines=5-6
+<p>开栏写三个反引号加语言名，再接 <code>lnum l=起-止</code>：<code>lnum</code> 显示行号列，<code>l=a-b</code> 把第 a 到 b 行高亮。两个参数各自独立，只写 <code>l=a-b</code> 也能高亮，只是不显示行号列；<code>line-numbers</code>、<code>lines=a-b</code> 是旧写法，同样兼容。</p>
+<pre class="zb-code"><code><span class="tk-st">``</span><span class="tk-st">`cpp lnum l=5-6
 #include &lt;bits/stdc++.h&gt;
 using namespace std;
 
@@ -281,7 +297,7 @@ int main(){
     return 0;
 }
 `</span><span class="tk-st">``</span></code><button class="copy-btn" type="button">复制</button></pre>
-<pre class="zb-code" data-lang="C++"><span class="zb-lang">C++</span><span class="line-numbers" aria-hidden="true">1
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><span class="line-numbers" aria-hidden="true">1
 2
 3
 4
@@ -290,93 +306,71 @@ int main(){
 7
 8
 9
-10</span><code><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;<span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;&amp;nbsp;<span class="tk-ty">int</span> <span class="tk-fn">main</span>(){    ios :: <span class="tk-fn">sync_with_stdio</span>(<span class="tk-cs">false</span>);    <span class="tk-ty">int</span> a, b;    cin &gt;&gt; a &gt;&gt; b;    cout &lt;&lt; a + b &lt;&lt; endl;    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;}</code><button class="copy-btn" type="button">复制</button></pre>
-<h2 id="h-八-多语言代码标签组">八、多语言代码标签组</h2>
-<p>两种写法都能把多个语言的同一份代码合成一组标签页，点击标签即可切换：</p>
-<ul><li>写法一：连续多个带语言的代码块（之间只隔空行）自动合并；</li><li>写法二：开栏写成三个反引号加 <code>cpp|python|java</code>，块内用围栏行分隔各语言段落。</li></ul>
-<p>写法一（连续代码块自动合并）：</p>
-<pre class="zb-code"><code><span class="tk-st">``</span><span class="tk-st">`cpp
-void f_cpp();
-`</span><span class="tk-st">``</span>
-
-<span class="tk-st">``</span><span class="tk-st">`python
-def f_py(): ...
-`</span><span class="tk-st">``</span>
-
-<span class="tk-st">``</span><span class="tk-st">`java
-static void f_java();
+10</span><code><span class="zb-cline"><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;</span><span class="zb-cline"><span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;</span><span class="zb-cline">&nbsp;</span><span class="zb-cline"><span class="tk-ty">int</span> <span class="tk-fn">main</span>(){</span><span class="zb-cline zb-cline-hl">    ios :: <span class="tk-fn">sync_with_stdio</span>(<span class="tk-cs">false</span>);</span><span class="zb-cline zb-cline-hl">    <span class="tk-ty">int</span> a, b;</span><span class="zb-cline">    cin &gt;&gt; a &gt;&gt; b;</span><span class="zb-cline">    cout &lt;&lt; a + b &lt;&lt; endl;</span><span class="zb-cline">    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;</span><span class="zb-cline">}</span></code><button class="copy-btn" type="button">复制</button></pre>
+<p>只写 <code>l=2-3</code> 不写 <code>lnum</code>：第 2、3 行照样高亮，左侧没有行号列。</p>
+<pre class="zb-code"><code><span class="tk-st">``</span><span class="tk-st">`cpp l=2-3
+int a;
+int b;
+int c;
+int d;
 `</span><span class="tk-st">``</span></code><button class="copy-btn" type="button">复制</button></pre>
-<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C++</button><button class="zb-tab" type="button" data-zbtab="1">Python</button><button class="zb-tab" type="button" data-zbtab="2">Java</button></div><pre class="zb-code" data-zbpre="0" data-lang="C++"><code><span class="tk-kw">#include</span> &lt;utility&gt;
-<span class="tk-ty">void</span> <span class="tk-fn">selection_sort</span>(<span class="tk-ty">int</span>* a, <span class="tk-ty">int</span> n) {
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt; n; ++i) {
-    <span class="tk-ty">int</span> ith = i;
-    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> j = i + <span class="tk-nu">1</span>; j &lt;= n; ++j) {
-      <span class="tk-kw">if</span> (a[j] &lt; a[ith]) {
-        ith = j;
-      }
-    }
-    std::<span class="tk-fn">swap</span>(a[i], a[ith]);
-  }
-}</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="Python"><code><span class="tk-ty">def</span> <span class="tk-fn">selection_sort</span>(a, n):
-    <span class="tk-kw">for</span> i <span class="tk-kw">in</span> <span class="tk-fn">range</span>(<span class="tk-nu">1</span>, n):
-        ith = i
-        <span class="tk-kw">for</span> j <span class="tk-kw">in</span> <span class="tk-fn">range</span>(i + <span class="tk-nu">1</span>, n + <span class="tk-nu">1</span>):
-            <span class="tk-kw">if</span> a[j] &lt; a[ith]:
-                ith = j
-        a[i], a[ith] = a[ith], a[i]</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java"><code><span class="tk-cm">// arr 数组的下标从 1 开始</span>
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">selection_sort</span>(<span class="tk-ty">int</span>[] arr, <span class="tk-ty">int</span> n) {
-    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt; n; i++) {
-        <span class="tk-ty">int</span> ith = i;
-        <span class="tk-kw">for</span> (<span class="tk-ty">int</span> j = i + <span class="tk-nu">1</span>; j &lt;= n; j++) {
-            <span class="tk-kw">if</span> (arr[j] &lt; arr[ith]) {
-                ith = j;
-            }
-        }
-        <span class="tk-cm">// swap</span>
-        <span class="tk-ty">int</span> temp = arr[i];
-        arr[i] = arr[ith];
-        arr[ith] = temp;
-    }
-}</code><button class="copy-btn" type="button">复制</button></pre></div>
-<p>写法二（声明式 <code>cpp|python|java</code>）的效果：</p>
-<pre class="zb-code"><code><span class="tk-st">``</span><span class="tk-st">`cpp|python|java
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="zb-cline"><span class="tk-ty">int</span> a;</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> b;</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> c;</span><span class="zb-cline"><span class="tk-ty">int</span> d;</span></code><button class="copy-btn" type="button">复制</button></pre>
+<h2 id="h-八-多语言代码标签组">八、多语言代码标签组</h2>
+<p>同一份代码的多个语言版本可以合成一组标签页，点击标签切换；行号与行高亮参数逐块独立，两种写法都能精确控制每个语言块。</p>
+<ul><li>写法一：连续多个带语言的代码块（之间只隔空行）自动合并，每块在开栏写自己的 <code>lnum</code> 与 <code>l=a-b</code>；</li><li>写法二：开栏用 <code>|</code> 分隔多段完整参数，块内用围栏行分隔各语言段落，最后用围栏收尾。</li></ul>
+<p>写法一（连续代码块自动合并：C++ 显示行号并高亮 1-2 行，Python 不显示行号并高亮 3-4 行，Java 显示行号并高亮 5-6 行）：</p>
+<pre class="zb-code"><code><span class="tk-st">``</span><span class="tk-st">`cpp lnum l=1-2
 void f_cpp();
+int g_cpp();
 `</span><span class="tk-st">``</span>
-def <span class="tk-fn">f_py</span>(): ...
+
+<span class="tk-st">``</span><span class="tk-st">`python l=3-4
+a_py = 1
+b_py = 2
+c_py = 3
+d_py = 4
+`</span><span class="tk-st">``</span>
+
+<span class="tk-st">``</span><span class="tk-st">`java lnum l=5-6
+static void f_java();
+static void g_java();
+static void h_java();
+static void i_java();
+static void j_java();
+static void k_java();
+`</span><span class="tk-st">``</span></code><button class="copy-btn" type="button">复制</button></pre>
+<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C++</button><button class="zb-tab" type="button" data-zbtab="1">Python</button><button class="zb-tab" type="button" data-zbtab="2">Java</button></div><pre class="zb-code" data-zbpre="0" data-lang="C++" data-code-lang="cpp"><span class="line-numbers" aria-hidden="true">1
+2</span><code><span class="zb-cline zb-cline-hl"><span class="tk-ty">void</span> <span class="tk-fn">f_cpp</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> <span class="tk-fn">g_cpp</span>();</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="Python" data-code-lang="python"><code><span class="zb-cline">a_py = <span class="tk-nu">1</span></span><span class="zb-cline">b_py = <span class="tk-nu">2</span></span><span class="zb-cline zb-cline-hl">c_py = <span class="tk-nu">3</span></span><span class="zb-cline zb-cline-hl">d_py = <span class="tk-nu">4</span></span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java" data-code-lang="java"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6</span><code><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">f_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">g_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">h_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">i_java</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">j_java</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">k_java</span>();</span></code><button class="copy-btn" type="button">复制</button></pre></div>
+<p>写法二（声明式开栏，效果完全一致）：</p>
+<pre class="zb-code"><code><span class="tk-st">``</span><span class="tk-st">`cpp lnum l=1-2|python l=3-4|java lnum l=5-6
+void f_cpp();
+int g_cpp();
+`</span><span class="tk-st">``</span>
+a_py = <span class="tk-nu">1</span>
+b_py = <span class="tk-nu">2</span>
+c_py = <span class="tk-nu">3</span>
+d_py = <span class="tk-nu">4</span>
 <span class="tk-st">``</span><span class="tk-st">`
 static void f_java();
+static void g_java();
+static void h_java();
+static void i_java();
+static void j_java();
+static void k_java();
 `</span><span class="tk-st">``</span></code><button class="copy-btn" type="button">复制</button></pre>
-<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C++</button><button class="zb-tab" type="button" data-zbtab="1">Python</button><button class="zb-tab" type="button" data-zbtab="2">Java</button></div><pre class="zb-code" data-zbpre="0" data-lang="C++"><code><span class="tk-ty">void</span> <span class="tk-fn">selection_sort</span>(<span class="tk-ty">int</span>* a, <span class="tk-ty">int</span> n) {
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt; n; ++i) {
-    <span class="tk-ty">int</span> ith = i;
-    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> j = i + <span class="tk-nu">1</span>; j &lt;= n; ++j) {
-      <span class="tk-kw">if</span> (a[j] &lt; a[ith]) {
-        ith = j;
-      }
-    }
-    std::<span class="tk-fn">swap</span>(a[i], a[ith]);
-  }
-}</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="Python"><code><span class="tk-ty">def</span> <span class="tk-fn">selection_sort</span>(a, n):
-    <span class="tk-kw">for</span> i <span class="tk-kw">in</span> <span class="tk-fn">range</span>(<span class="tk-nu">1</span>, n):
-        ith = i
-        <span class="tk-kw">for</span> j <span class="tk-kw">in</span> <span class="tk-fn">range</span>(i + <span class="tk-nu">1</span>, n + <span class="tk-nu">1</span>):
-            <span class="tk-kw">if</span> a[j] &lt; a[ith]:
-                ith = j
-        a[i], a[ith] = a[ith], a[i]</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java"><code><span class="tk-cm">// arr 数组的下标从 1 开始</span>
-<span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">selection_sort</span>(<span class="tk-ty">int</span>[] arr, <span class="tk-ty">int</span> n) {
-    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt; n; i++) {
-        <span class="tk-ty">int</span> ith = i;
-        <span class="tk-kw">for</span> (<span class="tk-ty">int</span> j = i + <span class="tk-nu">1</span>; j &lt;= n; j++) {
-            <span class="tk-kw">if</span> (arr[j] &lt; arr[ith]) {
-                ith = j;
-            }
-        }
-        <span class="tk-cm">// swap</span>
-        <span class="tk-ty">int</span> temp = arr[i];
-        arr[i] = arr[ith];
-        arr[ith] = temp;
-    }
-}</code><button class="copy-btn" type="button">复制</button></pre></div>
+<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C++</button><button class="zb-tab" type="button" data-zbtab="1">Python</button><button class="zb-tab" type="button" data-zbtab="2">Java</button></div><pre class="zb-code" data-zbpre="0" data-lang="C++" data-code-lang="cpp"><span class="line-numbers" aria-hidden="true">1
+2</span><code><span class="zb-cline zb-cline-hl"><span class="tk-ty">void</span> <span class="tk-fn">f_cpp</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">int</span> <span class="tk-fn">g_cpp</span>();</span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="Python" data-code-lang="python"><code><span class="zb-cline">a_py = <span class="tk-nu">1</span></span><span class="zb-cline">b_py = <span class="tk-nu">2</span></span><span class="zb-cline zb-cline-hl">c_py = <span class="tk-nu">3</span></span><span class="zb-cline zb-cline-hl">d_py = <span class="tk-nu">4</span></span></code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="2" hidden data-lang="Java" data-code-lang="java"><span class="line-numbers" aria-hidden="true">1
+2
+3
+4
+5
+6</span><code><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">f_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">g_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">h_java</span>();</span><span class="zb-cline"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">i_java</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">j_java</span>();</span><span class="zb-cline zb-cline-hl"><span class="tk-ty">static</span> <span class="tk-ty">void</span> <span class="tk-fn">k_java</span>();</span></code><button class="copy-btn" type="button">复制</button></pre></div>
+<p>两种写法里每个语言块都按自己的语言上色，行号列与高亮范围互不干扰。</p>
 <h2 id="h-九-表格合并单元格">九、表格合并单元格</h2>
 <p>在正常 Markdown 表格的基础上，结合 <code>^</code> 向上合并单元格，结合 <code>&lt;</code> 向左合并单元格。在同一个表格内可混用这两种方式。合并标记必须是单元格内唯一的纯文本内容，不能与其他文字或 Markdown 格式混用。</p>
 <pre class="zb-code"><code>| 标题 <span class="tk-nu">1</span> | 标题 <span class="tk-nu">2</span> | 标题 <span class="tk-nu">3</span> | 标题 <span class="tk-nu">4</span> |
@@ -392,9 +386,9 @@ static void f_java();
 | <span class="tk-nu">9</span> | ^ | 跨列合并 <span class="tk-nu">1</span> | &lt; |
 | <span class="tk-nu">10</span> | 跨列合并 <span class="tk-nu">2</span> | &lt; | 无 |</code><button class="copy-btn" type="button">复制</button></pre>
 <table><thead><tr><th style="text-align:center">标题 1</th><th style="text-align:center">标题 2</th><th style="text-align:center">标题 3</th><th style="text-align:center">标题 4</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td rowspan="3" style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-sym">≤</span><span class="zb-digit">1</span><span class="zb-digit">0</span></span></td><td rowspan="5" style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-sym">≤</span><span class="zb-digit">1</span><span class="zb-digit">0</span></span></td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">3</td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">4</td><td rowspan="6" style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-sym">≤</span><span class="zb-digit">3</span><span class="zb-sym">×</span><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">5</span></span><span class="zb-sub"></span></span></span></span></td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">5</td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">6</td><td rowspan="3" style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-sym">≤</span><span class="zb-digit">3</span><span class="zb-sym">×</span><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">5</span></span><span class="zb-sub"></span></span></span></span></td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">7</td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">8</td><td style="text-align:center">无</td></tr><tr><td style="text-align:center">9</td><td colspan="2" style="text-align:center">跨列合并 1</td></tr><tr><td style="text-align:center">10</td><td colspan="2" style="text-align:center">跨列合并 2</td><td style="text-align:center">无</td></tr></tbody></table>
-<h2 id="h-十-更像-tuack-的表格">十、更像 Tuack 的表格</h2>
-<p>使用 <code>:::cute-table{tuack}</code> 来创建更像 Tuack 的表格，可以结合上一节的表格合并语法使用。</p>
-<pre class="zb-code"><code>:::cute-table{tuack}
+<h2 id="h-十-truck-表格">十、Truck 表格</h2>
+<p>用 <code>:::truck … :::</code> 包住一段内容，只有块里的表格会做成 truck 三线表；块外的表格保持普通样式。块内可以放多张表格，也能结合上一节的 <code>^</code> / <code>&lt;</code> 合并语法。</p>
+<pre class="zb-code"><code>:::truck
 
 | 测试点编号 | $n, m \leq$ | $k \leq$ | 特殊性质 |
 | :-: | :-: | :-: | :-: |
@@ -405,8 +399,18 @@ static void f_java();
 | $11, <span class="tk-nu">12</span>$ | ^ | ^ | <span class="tk-cls">A</span> |
 | $13 \sim <span class="tk-nu">15</span>$ | ^ | ^ | <span class="tk-cls">C</span> |
 | $16 \sim <span class="tk-nu">18</span>$ | ^ | ^ | 无 |
-| $19, <span class="tk-nu">20</span>$ | $3 \times <span class="tk-nu">10</span>^<span class="tk-nu">5</span>$ | $2.<span class="tk-nu">5</span> \times <span class="tk-nu">10</span>^<span class="tk-nu">5</span>$ | ^ |</code><button class="copy-btn" type="button">复制</button></pre>
+| $19, <span class="tk-nu">20</span>$ | $3 \times <span class="tk-nu">10</span>^<span class="tk-nu">5</span>$ | $2.<span class="tk-nu">5</span> \times <span class="tk-nu">10</span>^<span class="tk-nu">5</span>$ | ^ |
+
+| 测试点 | 分值 | 说明 |
+| :-: | :-: | :-: |
+| <span class="tk-nu">1</span> | <span class="tk-nu">10</span> | 样例 |
+| <span class="tk-nu">2</span> | <span class="tk-nu">20</span> | ^ |
+
+:::</code><button class="copy-btn" type="button">复制</button></pre>
 <table class="zb-tuack"><thead><tr><th style="text-align:center">测试点编号</th><th style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">n</i><span class="zb-textchar">,</span><i class="zb-var">m</i><span class="zb-sym">≤</span></span></th><th style="text-align:center"><span class="zb-math zb-math-inline"><i class="zb-var">k</i><span class="zb-sym">≤</span></span></th><th style="text-align:center">特殊性质</th></tr></thead><tbody><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-textchar">,</span><span class="zb-digit">2</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">6</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">6</span></span></td><td rowspan="2" style="text-align:center">C</td></tr><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">3</span><span class="zb-sym">∼</span><span class="zb-digit">5</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">3</span></span><span class="zb-sub"></span></span></span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">3</span></span><span class="zb-sub"></span></span></span></span></td></tr><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">6</span><span class="zb-sym">∼</span><span class="zb-digit">8</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">5</span><span class="zb-sym">×</span><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">4</span></span><span class="zb-sub"></span></span></span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span></span></td><td style="text-align:center">无</td></tr><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">9</span><span class="zb-textchar">,</span><span class="zb-digit">1</span><span class="zb-digit">0</span></span></td><td rowspan="4" style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">5</span></span><span class="zb-sub"></span></span></span></span></td><td rowspan="4" style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">5</span></span><span class="zb-sub"></span></span></span></span></td><td style="text-align:center">AB</td></tr><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-digit">1</span><span class="zb-textchar">,</span><span class="zb-digit">1</span><span class="zb-digit">2</span></span></td><td style="text-align:center">A</td></tr><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-digit">3</span><span class="zb-sym">∼</span><span class="zb-digit">1</span><span class="zb-digit">5</span></span></td><td style="text-align:center">C</td></tr><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-digit">6</span><span class="zb-sym">∼</span><span class="zb-digit">1</span><span class="zb-digit">8</span></span></td><td rowspan="2" style="text-align:center">无</td></tr><tr><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">1</span><span class="zb-digit">9</span><span class="zb-textchar">,</span><span class="zb-digit">2</span><span class="zb-digit">0</span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">3</span><span class="zb-sym">×</span><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">5</span></span><span class="zb-sub"></span></span></span></span></td><td style="text-align:center"><span class="zb-math zb-math-inline"><span class="zb-digit">2</span><span class="zb-textchar">.</span><span class="zb-digit">5</span><span class="zb-sym">×</span><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">5</span></span><span class="zb-sub"></span></span></span></span></td></tr></tbody></table>
+<table class="zb-tuack"><thead><tr><th style="text-align:center">测试点</th><th style="text-align:center">分值</th><th style="text-align:center">说明</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td style="text-align:center">10</td><td rowspan="2" style="text-align:center">样例</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center">20</td></tr></tbody></table>
+<p>块外的普通表格：</p>
+<table><thead><tr><th style="text-align:left">甲</th><th style="text-align:left">乙</th></tr></thead><tbody><tr><td style="text-align:left">1</td><td style="text-align:left">2</td></tr></tbody></table>
 <h2 id="h-十一-图片显式尺寸">十一、图片显式尺寸</h2>
 <p>图片链接后写 <code>=宽x高</code>，可以只给一边。</p>
 <pre class="zb-code"><code>![星梦头像](/assets/avatar.<span class="tk-pr">jpg</span> =100x100)
@@ -436,12 +440,12 @@ static void f_java();
 </article>
 <p class="back"><a href="/#/post/markdown-extensions">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.47.0"></script>
-<script src="../assets/comment-archive.js?v=v3.47.0"></script>
-<script src="../assets/interactions-config.js?v=v3.47.0"></script>
-<script src="../assets/interactions.js?v=v3.47.0"></script>
-<script src="../assets/issues-live.js?v=v3.47.0"></script>
-<script src="../assets/likes.js?v=v3.47.0"></script>
+<script src="../assets/comments-data.js?v=v3.48.0"></script>
+<script src="../assets/comment-archive.js?v=v3.48.0"></script>
+<script src="../assets/interactions-config.js?v=v3.48.0"></script>
+<script src="../assets/interactions.js?v=v3.48.0"></script>
+<script src="../assets/issues-live.js?v=v3.48.0"></script>
+<script src="../assets/likes.js?v=v3.48.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("markdown-extensions");
 window.ZBLive && window.ZBLive.mount("markdown-extensions");
 window.ZBLikes && window.ZBLikes.mount();</script>

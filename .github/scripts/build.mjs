@@ -54,11 +54,15 @@ const newIssueLink = (slug) => {
 };
 
 /* 旧文章 body 是预渲染 HTML，代码块没有高亮标记；剥掉旧标记、还原实体后
-   用同一套渲染引擎重新上色（对 markdown 新渲染的结果幂等） */
+   用同一套渲染引擎重新上色（对 markdown 新渲染的结果幂等）。
+   多语言标签组逐块取自己的 data-code-lang；l=a-b 行高亮块已逐行分词，
+   重刷会拍平 zb-cline，必须整块跳过，静态阅读版才能保留行号与高亮。 */
 const rehlHtml = (html) =>
   String(html || '').replace(/<pre[^>]*>[\s\S]*?<\/pre>/g, (blk) => {
     if (!blk.includes('<code')) return blk;
-    let lang = (blk.match(/data-lang="([^"]*)"/) || [])[1] ||
+    if (blk.includes('zb-cline')) return blk;
+    let lang = (blk.match(/data-code-lang="([^"]*)"/) || [])[1] ||
+      (blk.match(/data-lang="([^"]*)"/) || [])[1] ||
       (blk.match(/class="zb-lang">([^<]*)</) || [])[1] || '';
     return blk.replace(/<code[^>]*>[\s\S]*?<\/code>/, (cm) => {
       const gt = cm.indexOf('>'), end = cm.lastIndexOf('</code>');
@@ -529,6 +533,22 @@ th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
 th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
+/* 新拓展语法：多语言代码标签组、lnum 行号列、l=a-b 行高亮在静态阅读版同样完整；
+   pre.zb-code 改成 flex 后要显式写回 [hidden]，否则被隐藏的语言块仍会显示 */
+pre[hidden]{display:none}
+pre.zb-code{position:relative;display:flex;align-items:stretch;gap:0;padding:16px 0}
+/* 与 pre.zb-code 同处一屏，用更高特异性把被隐藏语言块压回 display:none */
+pre.zb-code[hidden]{display:none}
+pre.zb-code>code{flex:1 1 auto;padding:0 18px;background:none;border-radius:0;white-space:pre}
+.zb-code .zb-lang{position:absolute;right:12px;bottom:6px;font-size:10px;color:var(--muted);pointer-events:none}
+.line-numbers{flex:0 0 auto;padding:0 14px 0 18px;white-space:pre;text-align:right;color:var(--muted);border-right:1px solid var(--line);user-select:none}
+.zb-cline{display:block}
+.zb-cline-hl{background:#e5eeff;box-shadow:inset 2px 0 0 var(--brand)}
+.zb-code-tabs{margin:14px 0}
+.zb-tab-bar{display:flex;flex-wrap:wrap;gap:2px;padding:0 10px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:rgba(255,255,255,.62)}
+.zb-tab{font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:7px 14px 8px;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent}
+.zb-tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.zb-code-tabs pre{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
 /* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
 .toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
 .toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}

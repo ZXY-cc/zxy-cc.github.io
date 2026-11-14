@@ -636,6 +636,8 @@ main { min-height: 320px; }
 .like-home { font-size: 13px; padding: 3px 6px; border: 0; background: none; }
 
 .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+/* 文章页：标签与正文（或本页目录卡片）之间留一段呼吸，列表卡片里的标签不受影响 */
+.article .tags { margin-bottom: 28px; }
 .tag {
   display: inline-block; padding: 3px 12px; border-radius: 999px;
   background: var(--glass-sheen), var(--glass-strong); color: var(--accent-text);
