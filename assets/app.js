@@ -196,6 +196,9 @@
     }).join('') + '</div>';
   }
   function tocHtml(body) {
+    /* 正文已经用 :::cont::: 生成同款目录卡片时不重复插入自动目录，
+       这样文章里写的目录就是页面上唯一那张「本页目录」 */
+    if (body.indexOf('class="toc"') >= 0) return '';
     var heads = [], re = /<h2[^>]*>([\s\S]*?)<\/h2>/g, m;
     while ((m = re.exec(body))) heads.push(m[1].replace(/<[^>]+>/g, '').trim());
     if (heads.length < 2) return '';
@@ -1460,6 +1463,16 @@
             var hs = app.querySelectorAll('.article-body h2');
             var target = hs[Number(node.closest('[data-toc]').getAttribute('data-toc'))];
             if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          /* :::cont::: 的目录条目是锚点链接：SPA 里必须拦下默认跳转，
+             否则 #h-xxx 会被当成路由把文章页换掉；静态阅读版仍可用原生锚点 */
+          var tocA = node.closest('.toc-list a[href^="#h-"]');
+          if (tocA) {
+            if (e.preventDefault) e.preventDefault();
+            var slug = tocA.getAttribute('href').slice(1);
+            var dest = document.getElementById(slug);
+            if (dest && dest.scrollIntoView) dest.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
           }
           var photo = node.closest('[data-photo]');
           if (photo) { lbShow(Number(photo.getAttribute('data-photo'))); return; }

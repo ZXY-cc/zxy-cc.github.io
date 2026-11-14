@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-13">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.46.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.47.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -39,6 +39,13 @@ th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
 th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
+/* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
+.toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
+.toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
+.toc-list{display:flex;flex-wrap:wrap;gap:6px 16px}
+.toc-item{display:inline-block;border:0;background:none;padding:2px 0;cursor:pointer;color:var(--brand);font:inherit;font-size:13px;text-align:left;text-decoration:none}
+.toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
+.toc-item:hover{text-decoration:underline}
 .back{margin:24px 0 0;font-size:14px}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
 
@@ -210,9 +217,9 @@ pre, pre > code, .article :not(pre) > code {
 <h1>本站支持的 Markdown 拓展语法</h1>
 <p class="meta" data-view-post="markdown-extensions">2026-11-13 · Markdown / 拓展 / A · <span class="mirror-likes"><span data-like-stat="post:markdown-extensions">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="markdown-extensions">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法，写法与洛谷 Markdown 手册保持一致。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。</p>
-<nav class="zb-toc" aria-label="目录"><div class="zb-toc-title">目录</div><ul><li class="zb-toc-l2"><a href="#h-一-目录">一、目录</a></li><li class="zb-toc-l2"><a href="#h-二-渐变竖线标题">二、渐变竖线标题</a></li><li class="zb-toc-l2"><a href="#h-带渐变竖线的小标题">带渐变竖线的小标题</a></li><li class="zb-toc-l2"><a href="#h-普通小标题">普通小标题</a></li><li class="zb-toc-l2"><a href="#h-三-渐变竖线区块">三、渐变竖线区块</a></li><li class="zb-toc-l2"><a href="#h-四-四色折叠框">四、四色折叠框</a></li><li class="zb-toc-l2"><a href="#h-五-对齐容器">五、对齐容器</a></li><li class="zb-toc-l2"><a href="#h-六-引言与署名">六、引言与署名</a></li><li class="zb-toc-l2"><a href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a></li><li class="zb-toc-l2"><a href="#h-八-多语言代码标签组">八、多语言代码标签组</a></li><li class="zb-toc-l2"><a href="#h-九-表格合并单元格">九、表格合并单元格</a></li><li class="zb-toc-l2"><a href="#h-十-更像-tuack-的表格">十、更像 Tuack 的表格</a></li><li class="zb-toc-l2"><a href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a></li><li class="zb-toc-l2"><a href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></li></ul></nav>
+<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-带渐变竖线的小标题">带渐变竖线的小标题</a><a class="toc-item" href="#h-普通小标题">普通小标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-更像-tuack-的表格">十、更像 Tuack 的表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
 <h2 id="h-一-目录">一、目录</h2>
-<p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题自动生成目录，点击条目可以直达对应标题（本文开头的效果就是它生成的）。</p>
+<p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的）。</p>
 <pre class="zb-code"><code>:::cont:::</code><button class="copy-btn" type="button">复制</button></pre>
 <h2 id="h-二-渐变竖线标题">二、渐变竖线标题</h2>
 <p>井号后紧跟一个竖线，只给这一个标题加蓝→粉渐变竖线；普通 <code>## 标题</code> 保持干净。</p>
@@ -429,12 +436,12 @@ static void f_java();
 </article>
 <p class="back"><a href="/#/post/markdown-extensions">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.46.0"></script>
-<script src="../assets/comment-archive.js?v=v3.46.0"></script>
-<script src="../assets/interactions-config.js?v=v3.46.0"></script>
-<script src="../assets/interactions.js?v=v3.46.0"></script>
-<script src="../assets/issues-live.js?v=v3.46.0"></script>
-<script src="../assets/likes.js?v=v3.46.0"></script>
+<script src="../assets/comments-data.js?v=v3.47.0"></script>
+<script src="../assets/comment-archive.js?v=v3.47.0"></script>
+<script src="../assets/interactions-config.js?v=v3.47.0"></script>
+<script src="../assets/interactions.js?v=v3.47.0"></script>
+<script src="../assets/issues-live.js?v=v3.47.0"></script>
+<script src="../assets/likes.js?v=v3.47.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("markdown-extensions");
 window.ZBLive && window.ZBLive.mount("markdown-extensions");
 window.ZBLikes && window.ZBLikes.mount();</script>

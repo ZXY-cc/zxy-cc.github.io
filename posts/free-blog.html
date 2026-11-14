@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-07">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.46.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.47.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -39,6 +39,13 @@ th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
 th{background:#eef3ff}
 ul,ol{padding-left:22px}
 a{color:var(--brand)}
+/* :::cont::: 目录：与前台自动「本页目录」同款玻璃卡片（静态阅读版无 style.css，这里自带一套） */
+.toc{margin:24px 0 32px;padding:17px 22px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line);box-shadow:0 10px 30px rgba(112,138,190,.10)}
+.toc-title{font-size:12.5px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
+.toc-list{display:flex;flex-wrap:wrap;gap:6px 16px}
+.toc-item{display:inline-block;border:0;background:none;padding:2px 0;cursor:pointer;color:var(--brand);font:inherit;font-size:13px;text-align:left;text-decoration:none}
+.toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
+.toc-item:hover{text-decoration:underline}
 .back{margin:24px 0 0;font-size:14px}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
 
@@ -238,12 +245,12 @@ pre, pre > code, .article :not(pre) > code {
 </article>
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 </div>
-<script src="../assets/comments-data.js?v=v3.46.0"></script>
-<script src="../assets/comment-archive.js?v=v3.46.0"></script>
-<script src="../assets/interactions-config.js?v=v3.46.0"></script>
-<script src="../assets/interactions.js?v=v3.46.0"></script>
-<script src="../assets/issues-live.js?v=v3.46.0"></script>
-<script src="../assets/likes.js?v=v3.46.0"></script>
+<script src="../assets/comments-data.js?v=v3.47.0"></script>
+<script src="../assets/comment-archive.js?v=v3.47.0"></script>
+<script src="../assets/interactions-config.js?v=v3.47.0"></script>
+<script src="../assets/interactions.js?v=v3.47.0"></script>
+<script src="../assets/issues-live.js?v=v3.47.0"></script>
+<script src="../assets/likes.js?v=v3.47.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
 window.ZBLive && window.ZBLive.mount("free-blog");
 window.ZBLikes && window.ZBLikes.mount();</script>

@@ -709,20 +709,8 @@ main { min-height: 320px; }
 .article img, .desk-preview img { max-width: 100%; height: auto; }
 .article img { display: block; margin-left: auto; margin-right: auto; }
 
-/* 洛谷扩展语法容器：折叠框 / 对齐 / 引言 / Tuack 表格 / 代码行高亮 / 目录。
+/* 洛谷扩展语法容器：折叠框 / 对齐 / 引言 / Tuack 表格 / 代码行高亮。
    ZBMD 输出的是全局类，文章、创作台预览与评论 Markdown 共用这一套。 */
-/* :::cont::: 目录：按文章标题生成，链接直达对应锚点 */
-.zb-toc { margin: 20px 0; border-radius: 14px; border: 1px solid var(--glass-line);
-  background: var(--glass-strong); padding: 14px 20px 12px; }
-.zb-toc-title { font-weight: 700; color: var(--ink-strong); font-size: 14px;
-  letter-spacing: .08em; margin-bottom: 6px; }
-.zb-toc ul { list-style: none; margin: 0; padding: 0; }
-.zb-toc li { margin: 0; }
-.zb-toc li a { display: inline-block; padding: 4px 0; color: var(--ink);
-  text-decoration: none; border-bottom: 1px dashed transparent; }
-.zb-toc li a:hover { color: var(--accent-text); border-bottom-color: var(--accent); }
-.zb-toc-l3 { padding-left: 20px; }
-.zb-toc-l4 { padding-left: 40px; }
 .zb-fold { margin: 20px 0; border-radius: 14px; border: 1px solid var(--glass-line);
   background: var(--glass-strong); overflow: hidden; }
 .zb-fold-head { display: flex; align-items: center; gap: 9px; cursor: pointer;
@@ -769,7 +757,7 @@ main { min-height: 320px; }
 .toc { margin: 24px 0 32px; padding: 17px 22px; border-radius: var(--radius); background: var(--glass-sheen), var(--glass-strong);  border: 1px solid var(--glass-line); box-shadow: var(--glass-inner); }
 .toc-title { font-size: 12.5px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
 .toc-list { display: flex; flex-wrap: wrap; gap: 6px 16px; }
-.toc-item { border: 0; background: none; padding: 2px 0; cursor: pointer; color: var(--accent-text); font: inherit; font-size: 13px; text-align: left; }
+.toc-item { border: 0; background: none; padding: 2px 0; cursor: pointer; color: var(--accent-text); font: inherit; font-size: 13px; text-align: left; text-decoration: none; }
 .toc-item::before {
   content: ''; display: inline-block; vertical-align: middle;
   width: 10px; height: 10px; margin-right: 7px;

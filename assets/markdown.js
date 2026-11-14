@@ -642,12 +642,16 @@
     }
     return items;
   }
+  /* :::cont::: 输出与前台自动「本页目录」同一张玻璃卡片：标题、星标、
+     流式换行排列、蓝色条目全部复用 .toc 样式；条目是锚点链接，静态阅读版
+     也能直接跳转，SPA 里由点击委托拦截成平滑滚动，避免改动 hash 路由。 */
   function tocHtml(items) {
     if (!items.length) return '';
     var html = items.map(function (it) {
-      return '<li class="zb-toc-l' + it.lev + '"><a href="#' + esc(it.slug) + '">' + esc(it.text) + '</a></li>';
+      return '<a class="toc-item" href="#' + esc(it.slug) + '">' + esc(it.text) + '</a>';
     }).join('');
-    return '<nav class="zb-toc" aria-label="目录"><div class="zb-toc-title">目录</div><ul>' + html + '</ul></nav>';
+    return '<nav class="toc" aria-label="本页目录"><div class="toc-title">本 页 目 录</div>' +
+      '<div class="toc-list">' + html + '</div></nav>';
   }
 
   function render(src) {
