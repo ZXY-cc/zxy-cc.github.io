@@ -723,8 +723,7 @@ main { min-height: 320px; }
 .zb-fold-head::before { content: '▸'; color: var(--fold-color, var(--accent));
   transition: transform .25s ease; flex: 0 0 auto; }
 .zb-fold[open] > .zb-fold-head::before { transform: rotate(90deg); }
-.zb-fold-body { padding: 2px 20px 14px 22px; border-left: 3px solid var(--fold-color, var(--accent));
-  margin-left: 18px; }
+.zb-fold-body { padding: 2px 20px 14px 18px; border-left: 3px solid var(--fold-color, var(--accent)); }
 .zb-fold-body > :first-child { margin-top: 8px; }
 .zb-fold-body > :last-child { margin-bottom: 0; }
 .zb-fold-info { --fold-color: #4c7dd0; }
@@ -2198,6 +2197,8 @@ pre code .tk-cs { color: var(--syn-cs); }
 pre code .tk-fn { color: var(--syn-fn); }
 pre code .tk-cls { color: var(--syn-cls); }
 pre code .tk-pr { color: var(--syn-pr); }
+/* 块内多语言源码：围栏行弱色（highlightMulti 输出） */
+pre code .zb-fmeta { color: var(--muted); opacity: .75; }
 /* 代码字体：主站由 :root 定义 --font-code；静态镜像无该变量时回退到 Maple 默认栈。
    工坊预览（.desk-preview）的行内代码与正文一致使用设置的代码字体 */
 pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {

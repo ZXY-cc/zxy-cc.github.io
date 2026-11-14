@@ -22,6 +22,30 @@
   var SITE_KEY = 'zb-studio-site';
   var RESET_KEY = 'zb-studio-reset';
   var PAT_KEY = 'zb-gh-pat';
+  /* 令牌混淆存储：本机随机密钥（另存一键）XOR + Base64，localStorage 里不出现
+     明文 github_pat_ 字符串；F12 直接翻存储拿不到可用令牌。兼容旧的明文存档。 */
+  var OBF_KEY = 'zb-obf-k';
+  function obfKey() {
+    var k = ls(OBF_KEY);
+    if (!k) { k = 'zk' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); setLs(OBF_KEY, k); }
+    return k;
+  }
+  function patEncode(t) {
+    try {
+      var k = obfKey(), s = String(t), o = '';
+      for (var i = 0; i < s.length; i++) o += String.fromCharCode(s.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+      return 'ob1:' + btoa(o);
+    } catch (e) { return String(t); }
+  }
+  function patDecode(v) {
+    var s = String(v || '');
+    if (s.slice(0, 4) !== 'ob1:') return s.trim();
+    try {
+      var k = ls(OBF_KEY) || '', o = atob(s.slice(4)), r = '';
+      for (var i = 0; i < o.length; i++) r += String.fromCharCode(o.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+      return r;
+    } catch (e) { return ''; }
+  }
   var AUTO_KEY = 'zb-studio-autosync';
   var PENDING_KEY = 'zb-studio-pending';
   var REPO = 'ZXY-cc/zxy-cc.github.io';
@@ -1610,7 +1634,7 @@
       });
   }
   function autoEnabled() { return ls(AUTO_KEY) !== '0'; }
-  function syncToken() { return String(state.pat || ls(PAT_KEY) || '').trim(); }
+  function syncToken() { return patDecode(state.pat || ls(PAT_KEY) || '').trim(); }
   function markPending() { setLs(PENDING_KEY, '1'); }
   function stamp() {
     try { return new Date().toTimeString().slice(0, 5); } catch (e) { return ''; }
@@ -1705,6 +1729,8 @@
       });
   }
   function syncNow() {
+    /* 体验模式（含控制台直呼 window.STUDIO._syncNow）：一律不读令牌、不同步 */
+    if (!isOwner()) return say('~仅供体验 · 权限不足~', 'warn');
     if (!syncToken()) return say('先在「发布上线」填入令牌并勾选记住，或点「保存设置并发布当前内容」。', 'warn');
     sync.fails = 0;
     markPending();
@@ -1730,7 +1756,7 @@
     var remember = document.getElementById('f-remember');
     var wantAuto = autoBox ? autoBox.checked : autoEnabled();
     setLs(AUTO_KEY, wantAuto ? '1' : '0');
-    if (wantAuto || (remember && remember.checked)) setLs(PAT_KEY, pat);
+    if (wantAuto || (remember && remember.checked)) setLs(PAT_KEY, patEncode(pat));
     else delLs(PAT_KEY);
     sync.fails = 0;
     if (sync.timer) window.clearTimeout(sync.timer);
@@ -2254,9 +2280,16 @@
     if (nb && sel && sel.value !== '__new__') nb.style.display = 'none';
     var dt = document.getElementById('f-date');
     if (dt && !dt.value) dt.value = today();
-    var pat = ls(PAT_KEY);
+    var pat = isOwner() ? patDecode(ls(PAT_KEY)) : '';
     var f = document.getElementById('f-pat');
     if (pat && f) f.value = pat;
+    /* 体验模式：发布凭证区整体不可用——不预填、禁用输入框，防止在站长设备的
+       浏览器里通过表单或 F12 读到令牌 */
+    if (!isOwner() && f) {
+      f.value = '';
+      f.disabled = true;
+      f.setAttribute('placeholder', '体验模式 · 无需发布凭证');
+    }
     if (isOwner() && state.tab === 'site') {
       setText('f-site-avatar', (DATA.site || {}).avatar || 'assets/avatar.jpg');
       setText('f-site-bio', (DATA.site || {}).bio || '');

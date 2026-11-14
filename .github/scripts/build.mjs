@@ -69,6 +69,12 @@ const rehlHtml = (html) =>
       const raw = cm.slice(gt + 1, end).replace(/<[^>]+>/g, '')
         .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+      /* 无语言标识的块：优先按块内多语言结构逐段上色（示例块里的
+         ```python … ```cpp … 源码），识别不出再回退通用/启发式上色 */
+      if (!lang && ZBMD.highlightMulti) {
+        const mh = ZBMD.highlightMulti(raw);
+        if (mh) return `<code>${mh}</code>`;
+      }
       if (!lang && /#include|#define\b/.test(raw)) lang = 'c';
       return `<code>${ZBMD.highlight(raw, lang)}</code>`;
     });
@@ -266,6 +272,24 @@ for (const b of blocks) {
 }
 const articleHtml = rehlHtml(blocksHtml(blocks.filter((b) => b !== metaBlock), { skipH1: true, quoteClass: 'note' }));
 
+/* ---------- 版本日志文章的 Markdown 原文本 ----------
+   工坊里查看/编辑版本日志文章时看到的就是这份源文本；由同一份 blocks 生成，
+   ZBMD.render 后与文章页预览一致（标题与「最后更新」引言由页面骨架另绘，不重复）。 */
+const changelogMd = blocks.filter((b) => b !== metaBlock && b.type !== 'h1').map((b) => {
+  if (b.type === 'h2') return '## ' + b.text;
+  if (b.type === 'h3') return '### ' + b.text;
+  if (b.type === 'p') return b.text;
+  if (b.type === 'hr') return '---';
+  if (b.type === 'ul') return b.items.map((x) => '- ' + x).join('\n');
+  if (b.type === 'quote') return b.paras.map((p) => '> ' + p).join('\n>\n');
+  if (b.type === 'table') {
+    return '| ' + b.header.join(' | ') + ' |\n' +
+      '| ' + b.header.map(() => '---').join(' | ') + ' |\n' +
+      b.rows.map((r) => '| ' + r.join(' | ') + ' |').join('\n');
+  }
+  return '';
+}).filter(Boolean).join('\n\n') + '\n';
+
 /* ---------- 同名 HTML 镜像 ---------- */
 const STANDALONE_CSS = `
 :root{--panel:#fff;--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#8fb1ee;--brand-deep:#3f5c9c;--chip-bg:#f4f7ff;--page:#eff4ff;--shadow:0 1px 3px rgba(20,30,70,.05)}
@@ -461,7 +485,8 @@ const changelogPost = {
   date: LOG_DATE,
   tags: ['版本日志', '站点', 'A'],
   summary: '每次更新都记在这里：改了什么、什么时候改的。',
-  body: articleHtml
+  body: articleHtml,
+  markdown: changelogMd
 };
 const frontend = [
   '/* 本文件由 scripts/build.mjs 从 博客版本日志.md 生成，请勿手改。',
@@ -549,6 +574,20 @@ pre.zb-code>code{flex:1 1 auto;padding:0 18px;background:none;border-radius:0;wh
 .line-numbers{flex:0 0 auto;padding:0 14px 0 18px;white-space:pre;text-align:right;color:var(--muted);border-right:1px solid var(--line);user-select:none}
 .zb-cline{display:block}
 .zb-cline-hl{background:#e5eeff;box-shadow:inset 2px 0 0 var(--brand)}
+pre code .zb-fmeta{color:var(--muted);opacity:.75}
+/* 折叠框（succ/warn/err）：竖线连通、内容与标题左缘对齐 */
+.zb-fold{margin:14px 0;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.5);overflow:hidden}
+.zb-fold summary.zb-fold-head{display:flex;align-items:center;gap:9px;cursor:pointer;padding:10px 18px;font-weight:650;color:var(--ink);border-left:3px solid var(--fold-color,var(--brand));list-style:none;user-select:none}
+.zb-fold-head::-webkit-details-marker{display:none}
+.zb-fold-head::before{content:'▸';color:var(--fold-color,var(--brand));transition:transform .25s ease;flex:0 0 auto}
+.zb-fold[open]>.zb-fold-head::before{transform:rotate(90deg)}
+.zb-fold-body{padding:2px 18px 12px;border-left:3px solid var(--fold-color,var(--brand))}
+.zb-fold-body>:first-child{margin-top:6px}
+.zb-fold-body>:last-child{margin-bottom:0}
+.zb-fold-info{--fold-color:#4c7dd0}
+.zb-fold-success{--fold-color:#2f9e5f}
+.zb-fold-warning{--fold-color:#d08a1d}
+.zb-fold-error{--fold-color:#c94f4f}
 .zb-code-tabs{margin:14px 0}
 .zb-tab-bar{display:flex;flex-wrap:wrap;gap:2px;padding:0 10px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:rgba(255,255,255,.62)}
 .zb-tab{font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:7px 14px 8px;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent}

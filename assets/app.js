@@ -59,6 +59,12 @@
         var raw = cm.slice(gt + 1, end).replace(/<[^>]+>/g, '')
           .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
           .replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+        /* 无语言标识的块：优先按块内多语言结构逐段上色（示例块里的
+           ```python … ```cpp … 源码），识别不出再回退通用/启发式上色 */
+        if (!lang && window.ZBMD.highlightMulti) {
+          var mh = window.ZBMD.highlightMulti(raw);
+          if (mh) return '<code>' + mh + '</code>';
+        }
         if (!lang && /#include|#define\b/.test(raw)) lang = 'c';
         return '<code>' + window.ZBMD.highlight(raw, lang) + '</code>';
       });

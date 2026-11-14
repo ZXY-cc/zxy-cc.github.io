@@ -386,6 +386,64 @@
     return out;
   }
 
+  /* ---------------- 块内多语言源码上色 ---------------- */
+  /* 示例块（无语言的围栏块）里常包含多语言源码与围栏行。按多语言代码组的两种
+     写法识别结构，逐段用对应语言的词表上色，围栏行用 zb-fmeta 弱色标记：
+     ① 续段式：每个带语言的围栏行开始新段（```python lnum l=1-2 … ```cpp l=5-6 … ```）；
+     ② 声明式：首个围栏 meta 含 |（```cpp lnum l=1-2|python l=3-4|java lnum l=5-6），
+        裸围栏分段，按声明顺序取语言。
+     文本逐字保留（只包裹 span）；识别不出结构时返回 null，由调用方回退通用上色。 */
+  function highlightMulti(code) {
+    var lines = String(code).split('\n');
+    var fenceRe = /^ {0,3}(`{3,}|~{3,})[ \t]*(.*)$/;
+    var first = null;
+    for (var i = 0; i < lines.length; i++) {
+      var m0 = lines[i].match(fenceRe);
+      if (m0) { first = m0[2] || ''; break; }
+    }
+    if (first === null) return null;
+    var meta0 = first.trim();
+    var langs = null, cur = '';
+    if (meta0.indexOf('|') >= 0) {
+      langs = meta0.split('|').map(function (s) {
+        var t = s.trim().split(/\s+/)[0] || '';
+        return /^[a-zA-Z0-9+#]+$/.test(t) ? langIdOf(t) : '';
+      });
+      if (!langs.some(Boolean)) return null;
+    } else {
+      var t0 = meta0.split(/\s+/)[0] || '';
+      if (!/^[a-zA-Z0-9+#]+$/.test(t0)) return null;
+      cur = langIdOf(t0);
+    }
+    var out = [], buf = [], sec = 0, started = false;
+    function flush() {
+      if (!buf.length) return;
+      var lg = langs ? (langs[sec] || '') : cur;
+      out.push(highlightCode(buf.join('\n'), lg || ''));
+      buf = [];
+    }
+    for (var j = 0; j < lines.length; j++) {
+      var fm = lines[j].match(fenceRe);
+      if (fm) {
+        flush();
+        out.push('<span class="zb-fmeta">' + esc(lines[j]) + '</span>');
+        if (langs) {
+          if (!started) { started = true; sec = 0; }
+          else sec++;
+        } else {
+          var mt = (fm[2] || '').trim();
+          var t = mt.split(/\s+/)[0] || '';
+          cur = (/^[a-zA-Z0-9+#]+$/.test(t) && mt.indexOf('|') < 0) ? langIdOf(t) : '';
+        }
+        continue;
+      }
+      if (langs ? started : cur) buf.push(lines[j]);
+      else out.push(esc(lines[j]));
+    }
+    flush();
+    return out.join('\n');
+  }
+
   /* ---------------- 代码块 ---------------- */
   /* 围栏标识符 → 语言名称（不是文件类型），首字母大写：cpp → C++、py → Python。
      映射表没收录的标识符按「首字母大写」兜底显示。 */
@@ -1089,5 +1147,5 @@
   bindCodeTabs();
 
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
-           tidy: tidy, highlight: highlightCode, langLabel: langLabel, version: '1.8.0' };
+           tidy: tidy, highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.1' };
 });
