@@ -552,13 +552,18 @@
   }
   function renderTagPills() {
     var box = document.getElementById('tag-pills');
-    if (!box) return;
     var d = state.draft || blankDraft();
     var chosen = tagLibOrder(d.tags);
-    box.innerHTML = chosen.length ? chosen.map(function (t) {
-      return '<span class="zb-tag-pill">#' + esc(t) +
-        '<button type="button" data-tag-del="' + esc(t) + '" aria-label="移除标签">×</button></span>';
-    }).join('') : '<span class="tag-empty">还没有标签</span>';
+    if (box) {
+      box.innerHTML = chosen.length ? chosen.map(function (t) {
+        return '<span class="zb-tag-pill">#' + esc(t) +
+          '<button type="button" data-tag-del="' + esc(t) + '" aria-label="移除标签">×</button></span>';
+      }).join('') : '<span class="tag-empty">还没有标签</span>';
+    }
+    /* 首页两区只认 A / B：实时告诉站长这篇文章会不会出现在首页、在哪一栏 */
+    var note = document.getElementById('f-home-pane-note');
+    if (note) note.textContent = '首页展示：' + (chosen.indexOf('A') >= 0 ? '上半栏（A）'
+      : chosen.indexOf('B') >= 0 ? '下半栏（B）' : '不展示 · 仅「文章」页');
   }
   function historyTags() { return tagLibChoices(); }
   function renderTagHistory() {
@@ -904,7 +909,8 @@
           '<div class="tag-pills" id="tag-pills"></div>' +
           '<input class="f-input" id="f-tag-input" type="text" placeholder="+ 输入标签后按回车">' +
           '<div class="tag-history" id="tag-history"></div>' +
-          '<p class="meta-note">下面列出标签库全部标签，点一下即可添加；A / B 是首页文章卡分区标签，恒排在最后。</p>' +
+          '<p class="meta-note">下面列出标签库全部标签，点一下即可添加；A / B 是首页文章卡分区标签：选 A 只进首页上半栏、选 B 只进下半栏，都不选则只在「文章」页展示。</p>' +
+          '<p class="meta-note home-pane-note" id="f-home-pane-note" aria-live="polite"></p>' +
         '</span>' +
       '</div>' +
       '<span class="f-cell"><label class="f-label" for="f-date">发布日期</label>' +
@@ -1217,7 +1223,8 @@
     return '<div class="studio-form glass"><h2>标签</h2>' +
       '<p class="f-hint">标签库里的标签按顺序显示在文章、标签页、筛选条与写作表单里；' +
       '写文章和写杂谈时可直接点选。按住一行拖动即可调整顺序。⭐ 是置顶标签（固定在最前，' +
-      '带它的内容排在其它内容前面），A / B 两个分区标签恒排在最后。</p>' +
+      '带它的内容排在其它内容前面），A / B 两个分区标签恒排在最后；写文章时选 A 只进首页上半栏、' +
+      '选 B 只进下半栏，都不选则只在「文章」页展示。</p>' +
       '<div class="taglib-list">' + (list.length ? list.map(function (t, i) {
         var fixed = t === '⭐' || t === 'A' || t === 'B';
         var fixNote = t === '⭐' ? '置顶标签 · 固定在最前'
@@ -2402,7 +2409,7 @@
     if (exp === true) state.exp = true;
     var owner = isOwner();
     var expMode = !!state.exp && !owner;
-    var isPost = owner && state.tab === 'post';
+    var isPost = (owner || expMode) && state.tab === 'post';
     if (owner && !state.draft) state.draft = readDraft();
     if (expMode && !state.draft) state.draft = blankDraft();
     el.innerHTML = (owner || expMode) ? studioHtml(expMode) : lockHtml();

@@ -543,12 +543,12 @@
   var QUALITY_OPTS = [
     { id: 'ultra', name: '高', desc: '全部美术效果：108 星 / 16 花瓣、常驻 10 + 快速 8 流星、8 个游走花朵、实时毛玻璃、鼠标斥力与光幕（默认档）' },
     { id: 'high', name: '中', desc: '保留多数效果，只省下最耗性能的实时毛玻璃：108 星 / 14 花瓣、流星 7 + 5、斥力与光幕全开' },
-    { id: 'mid', name: '低', desc: '阅读优先：72 颗静止星点 / 10 片静止花瓣 / 6 个静止花朵，无流星、流萤、斥力、光幕与启动闪屏' }
+    { id: 'mid', name: '低', desc: '阅读优先：背景不放任何花瓣、星星、花朵与流星，也没有流萤、斥力、光幕、卡片高光与启动闪屏，只留静态水彩天空' }
   ];
   var QUALITY_SPEC = [
-    ['星星 / 花瓣', '108 / 16', '108 / 14', '72 / 10'],
-    ['星点漂移', '开启', '开启', '关闭'],
-    ['花朵与爱心', '8 个 · 游走', '8 个 · 游走', '6 个 · 静止'],
+    ['星星 / 花瓣', '108 / 16', '108 / 14', '无 / 无'],
+    ['星点漂移', '开启', '开启', '无'],
+    ['花朵与爱心', '8 个 · 游走', '8 个 · 游走', '无'],
     ['流星', '常驻 10 + 快速 8', '常驻 7 + 快速 5', '无'],
     ['流萤', '夜间 8 只', '夜间 8 只', '无'],
     ['鼠标斥力', '开启', '开启', '关闭'],
@@ -764,7 +764,7 @@
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 首次访问默认高画质，展现全部美术效果；中画质保留多数效果、只省下最耗性能的实时毛玻璃；低画质是阅读档，背景装饰全部静止，不留流星、斥力与跟随鼠标的光效。</p></section>' +
+      '</b> · 首次访问默认高画质，展现全部美术效果；中画质保留多数效果、只省下最耗性能的实时毛玻璃；低画质是阅读档，花瓣、星星、花朵与流星全部清除，只留静态水彩天空。</p></section>' +
       '<section class="settings-card glass reveal" aria-label="字体设置">' +
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>字体</h2><p>设置网页的中英文字体、代码字体与 LaTeX 公式字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
@@ -1045,40 +1045,25 @@
       '</section>';
   }
   function renderHome() {
-    /* 文章卡一分为二，仍是同一张卡：标签 A 进上半、标签 B 进下半；
-       两个标签都没有的文章按时间由近到远交替补进当前较短的一区，
-       每区最多 N 篇（N = 设置页的「首页卡片轮流数」，默认 3），
-       A / B 溢出的落到对侧，保证两区同屏都显示文章。 */
+    /* 首页「最新文章」上下两区只收带 A / B 分区标签的文章：
+       选 A = 只在上半栏按时间排序展示，选 B = 只在下半栏按时间排序展示；
+       两个标签都没选的文章视为站长不打算让最新文章进首页，只在「文章」页展示。
+       每区最多 N 篇（N = 设置页的「首页卡片轮流数」，默认 3），⭐ 在本区内置顶，
+       A / B 各自独立取满，不串到对侧，也不让无分区标签的文章补位。 */
     var quickN = readQuickCount();
-    var posts = recentByDate(POSTS, quickN * 2);
+    var posts = recentByDate(POSTS, POSTS.length);
     function homePanes(list) {
       var cap = quickN;
-      var top = [], bot = [];
-      var pinned = [], aList = [], bList = [], rest = [];
+      var aList = [], bList = [];
       list.forEach(function (p) {
         var ts = p.tags || [];
-        if (ts.indexOf('⭐') >= 0) pinned.push(p);
-        else if (ts.indexOf('A') >= 0) aList.push(p);
+        if (ts.indexOf('A') >= 0) aList.push(p);
         else if (ts.indexOf('B') >= 0) bList.push(p);
-        else rest.push(p);
       });
-      function put(side, p) {
-        var first = side === 'top' ? top : bot, second = side === 'top' ? bot : top;
-        if (first.length < cap) first.push(p);
-        else if (second.length < cap) second.push(p);
-      }
-      var over = [];
-      /* ⭐ 置顶文章先占卡片（时间近到远），溢出的补到对侧 */
-      pinned.forEach(function (p) { put(top.length <= bot.length ? 'top' : 'bot', p); });
-      if (top.length > cap) top.splice(cap).forEach(function (p) { over.push(['bot', p]); });
-      if (bot.length > cap) bot.splice(cap).forEach(function (p) { over.push(['top', p]); });
-      aList.forEach(function (p) { put('top', p); });
-      bList.forEach(function (p) { put('bot', p); });
-      if (top.length > cap) top.splice(cap).forEach(function (p) { over.push(['bot', p]); });
-      if (bot.length > cap) bot.splice(cap).forEach(function (p) { over.push(['top', p]); });
-      rest.forEach(function (p) { put(top.length <= bot.length ? 'top' : 'bot', p); });
-      over.forEach(function (it) { put(it[0], it[1]); });
-      return { top: top, bot: bot };
+      return {
+        top: pinnedFirst(aList).slice(0, cap),
+        bot: pinnedFirst(bList).slice(0, cap)
+      };
     }
     var panes = homePanes(posts);
     var top = panes.top, bot = panes.bot;
@@ -1107,10 +1092,10 @@
         (list.length > 1 ? '<div class="q-dots">' + qDots(list.length) + '</div>' : '') +
         '</div>';
     }
-    var postCard = posts.length
+    var postCard = (top.length + bot.length)
       ? '<section class="q-card q-post glass sheen reveal" aria-label="最新文章">' +
         postPane(top) + postPane(bot) + '</section>'
-      : qEmpty('q-post', '#/posts', '还没有文章', '第一篇正在路上');
+      : qEmpty('q-post', '#/posts', '还没有文章', '给文章选上 A / B 标签后会显示在这里');
     /* 相册两张小卡（横 4:3 / 竖 3:4 等面积），徽标统一「最新相册」；
        归卡仍按相册内照片横竖多数，空态文案区分方向 */
     var photoH = albumsH.length ? photoCarousel(albumsH, 'q-photo-h', '最新相册')
@@ -1369,8 +1354,8 @@
       var warm = !puffy && i % 13 === 5;
       var still = !puffy && !warm;
       var s = document.createElement('span');
-      /* 按生成顺序标注档位：前 36 颗低画质也保留，前 72 颗中画质保留，
-         108 颗是高与极高画质共同的最佳密度（约 1 颗 / 2 万 px²） */
+      /* 按生成顺序标注档位：q-core / q-mid / q-high 是历史密度分级；
+         v3.57 起低画质整组隐藏星空，这些标注只服务于中 / 高画质的增量显示 */
       var tier = i < 36 ? ' q-core' : (i < 72 ? ' q-mid' : ' q-high');
       s.className = (puffy ? 'star is-puffy' : (warm ? 'star is-warm' : 'star is-still')) + tier;
       var size = puffy ? (11 + rnd() * 10).toFixed(1) + 'px' : (1 + rnd() * 2.1).toFixed(1) + 'px';

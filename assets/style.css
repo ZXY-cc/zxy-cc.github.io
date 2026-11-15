@@ -1739,27 +1739,15 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-quality="ultra"] .petals .petal.q-ultra,
 :root[data-quality="ultra"] .meteors .meteor.q-ultra,
 :root[data-quality="ultra"] .shoots .shoot.q-ultra { display: block; }
-/* 低（内部 mid）：密度沿用原中档 72 星 / 10 花瓣 / 6 花朵，只隐藏 q-high / q-ultra 增量 */
-:root[data-quality="mid"] .stars .star.q-high,
-:root[data-quality="mid"] .petals .petal.q-high,
-:root[data-quality="mid"] .petals .petal.q-ultra,
-:root[data-quality="mid"] .meteors .meteor.q-high,
-:root[data-quality="mid"] .meteors .meteor.q-ultra,
-:root[data-quality="mid"] .shoots .shoot.q-high,
-:root[data-quality="mid"] .shoots .shoot.q-ultra,
-:root[data-quality="mid"] .blooms .sky-deco.q-high { display: none; }
-/* 低：阅读优先——流星、流萤、启动闪屏整组关闭，星点 / 花瓣 / 花朵全部静止；
-   背景里不再有任何移动物，鼠标斥力也只在 ultra / high 两档由 JS 启用 */
+/* 低（内部 mid）：阅读档——花瓣、星星、花朵、流星连同流萤与启动闪屏整组清除，
+   背景只剩静态水彩天空；斥力与逐帧光幕只在 ultra / high（高 / 中）两档由 JS 启用 */
+:root[data-quality="mid"] .stars,
+:root[data-quality="mid"] .petals,
+:root[data-quality="mid"] .blooms,
 :root[data-quality="mid"] .meteors,
 :root[data-quality="mid"] .shoots,
 :root[data-quality="mid"] .fireflies,
 :root[data-quality="mid"] .splash { display: none !important; }
-:root[data-quality="mid"] .stars .star,
-:root[data-quality="mid"] .stars .star.is-puffy::before,
-:root[data-quality="mid"] .petals .petal,
-:root[data-quality="mid"] .blooms .sky-deco { animation: none !important; }
-:root[data-quality="mid"] .stars .star { opacity: .62; }
-:root[data-quality="mid"] .petals .petal { opacity: var(--op, .42); }
 /* 低：取消跟随鼠标的光幕、尾迹与卡片高光 */
 :root[data-quality="mid"] .cursor-glow,
 :root[data-quality="mid"] .mouse-trail { display: none !important; }
@@ -2093,6 +2081,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .tag-history-btn.on, .cat-pills button.on { color: var(--ink-strong); border-color: var(--accent-2);
   background: var(--accent-soft); }
 .meta-note { font-size: 10.5px; color: var(--faint); margin: 7px 0 0; }
+.meta-note.home-pane-note { font-size: 11px; color: var(--accent-text); font-weight: 600; }
 :root[data-theme="night"] .post-form .desk-toolbar { background: rgba(18, 28, 66, .24); }
 @media (max-width: 980px) {
   .desk-body { height: 420px; }
