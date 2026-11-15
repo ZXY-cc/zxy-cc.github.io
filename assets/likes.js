@@ -120,25 +120,27 @@
       throw e;
     });
   }
-  /* 排队器：所有 Abacus 请求走同一条队，并发 ≤ Q_MAX、出队间隔 Q_GAP */
+  /* 排队器：所有 Abacus 请求走同一条队，并发 ≤ Q_MAX、出队间隔 Q_GAP。
+     注意每个出队项要用 IIFE 单独捕获，否则 var 共享变量会让先完成的
+     请求把结果 resolve 到别的排队者上（首页浏览量会显示成点赞数）。 */
   var qWait = [], qActive = 0, qTimer = null;
   function qPump() {
     if (qTimer) return;
     qTimer = window.setTimeout(function () {
       qTimer = null;
       while (qActive < Q_MAX && qWait.length) {
-        var it = qWait.shift();
-        qActive++;
-        rawFetch(it.url).then(function (v) {
-          qActive--;
-          it.resolve(v);
-          qPump();
-        }, function (e) {
-          qActive--;
-          it.reject(e);
-          qPump();
-        });
-        if (qActive >= Q_MAX) break;
+        (function (it) {
+          qActive++;
+          rawFetch(it.url).then(function (v) {
+            qActive--;
+            it.resolve(v);
+            qPump();
+          }, function (e) {
+            qActive--;
+            it.reject(e);
+            qPump();
+          });
+        }(qWait.shift()));
       }
       if (qWait.length && qActive < Q_MAX) qPump();
     }, qActive ? Q_GAP : 0);
