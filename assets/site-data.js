@@ -280,6 +280,23 @@ window.STUDIO_DATA = {
       "body": "<h1 class=\"zb-vl\" id=\"h-完成事项\">完成事项</h1>\n<ul><li>先搭建了基于dpdns的免费博客，确认了基本主题和框架，做出了基本雏形。（……一系列版本迭代……）然后买了个top域名，把所有原域名的内容全部转移，弃用原域名，（……一系列版本迭代……），现在的精彩内容尽在<a href=\"https://zxy-blog.top/\" data-md-link=\"outer\" target=\"_blank\" rel=\"noopener noreferrer\">https://zxy-blog.top/</a></li></ul>\n<ul><li>更新内容太多了，这里写不下。具体见<a href=\"https://zxy-blog.top/#/about\" data-md-link=\"outer\" target=\"_blank\" rel=\"noopener noreferrer\">https://zxy-blog.top/#/about</a></li></ul>\n<ul><li>我在工坊上投入了很多，为了方便我写文章，我加入了部分飞书和洛谷支持的Markdown拓展语法并且结合我自身习惯做出了一些调整。同时我自己也加入了部分拓展语法。具体见<a href=\"https://zxy-blog.top/#/post/markdown-extensions\" data-md-link=\"outer\" target=\"_blank\" rel=\"noopener noreferrer\">本站支持的 Markdown 拓展语法</a></li></ul>\n<ul><li>差点忘了，我还自习研究了中期考核的题目，进行了一定的思考和拓展。具体见<a href=\"https://zxy-blog.top/#/post/p-mwg23n3vy3gg\" data-md-link=\"outer\" target=\"_blank\" rel=\"noopener noreferrer\">中期考核的题解与拓展思考</a></li></ul>\n<h1 class=\"zb-vl\" id=\"h-未完成事项及原因\">未完成事项及原因</h1>\n<ul><li>复习文化课<ul><li>不过我现在就开始复习</li></ul></li></ul>\n<h1 class=\"zb-vl\" id=\"h-所思所想\">所思所想</h1>\n<p>原谅我这周时间紧，大多数时间都投入到博客搭建以及里面的内容细节和优化上了。我只能说搭建博客很有成就感，感觉像是自己搭建了一个“家”。它可以作为别人快速了解我的渠道，同时它又可以作为笔记本和日记本，我觉得这是一件非常有意义的事。</p>\n<h1 class=\"zb-vl\" id=\"h-学习计划\">学习计划</h1>\n<ul><li><span class=\"zb-task\">☐</span>具体更新迭代博客，功能和美术优化。</li></ul>\n<ul><li><span class=\"zb-task\">☐</span>完成计算机系统导论报告</li></ul>\n<ul><li><span class=\"zb-task\">☐</span>复习高数、英语、程序设计……</li></ul>\n<h1 class=\"zb-vl\" id=\"h-学习知识的分享\">学习知识的分享</h1>\n<ul><li><a href=\"https://zxy-blog.top/#/post/p-mwg23n3vy3gg\" data-md-link=\"outer\" target=\"_blank\" rel=\"noopener noreferrer\">中期考核的题解与拓展思考</a></li></ul>",
       "format": "markdown",
       "status": "published"
+    },
+    {
+      "slug": "p-mwhi1swpqqae",
+      "title": "博客食用说明！ฅ^•~•^ฅ",
+      "date": "2026-11-15",
+      "tags": [
+        "⭐",
+        "A",
+        "站点",
+        "引导"
+      ],
+      "cover": "",
+      "summary": "电脑体验网站视觉效果最佳！真的！ 您可以点击右上角的太阳/月亮按钮切换晴天模式和星夜模式哦。 当您在阅读内容时想要快速回到最上端，可以点击右下角的星星按钮嗖一下回去！ 如果您不希望背景元素干扰您的阅读体验，您可以点击“设置”把画质切换为低画质。 您可以点击“工坊·体验”体验站长如何创作，但没有权限改动网站内容。 本站支持拓展 Markdown 语法，你可以在看完 本站支持的 Markdown……",
+      "markdown": "- 电脑体验网站视觉效果最佳！真的！\n- 您可以点击右上角的太阳/月亮按钮切换晴天模式和星夜模式哦。\n- 当您在阅读内容时想要快速回到最上端，可以点击右下角的星星按钮嗖一下回去！\n- 如果您不希望背景元素干扰您的阅读体验，您可以点击“设置”把画质切换为低画质。\n- 您可以点击“工坊·体验”体验站长如何创作，但没有权限改动网站内容。\n    - 本站支持拓展 Markdown 语法，你可以在看完**[本站支持的 Markdown 语法](https://zxy-blog.top/#/post/markdown-extensions)**后再“工坊·体验”写文章中试一试效果。\n- 想知道站长有多努力吗？可以看**[博客版本日志](https://zxy-blog.top/#/post/blog-changelog)**，也可以在“关于”中查看html文件。\n\n说说和杂谈都会更新的，相册之后也会补多一些照片的！评论区功能还正在调试过程中……",
+      "body": "<ul><li>电脑体验网站视觉效果最佳！真的！</li><li>您可以点击右上角的太阳/月亮按钮切换晴天模式和星夜模式哦。</li><li>当您在阅读内容时想要快速回到最上端，可以点击右下角的星星按钮嗖一下回去！</li><li>如果您不希望背景元素干扰您的阅读体验，您可以点击“设置”把画质切换为低画质。</li><li>您可以点击“工坊·体验”体验站长如何创作，但没有权限改动网站内容。<ul><li>本站支持拓展 Markdown 语法，你可以在看完<strong><a href=\"https://zxy-blog.top/#/post/markdown-extensions\" data-md-link=\"outer\" target=\"_blank\" rel=\"noopener noreferrer\">本站支持的 Markdown 语法</a></strong>后再“工坊·体验”写文章中试一试效果。</li></ul></li><li>想知道站长有多努力吗？可以看<strong><a href=\"https://zxy-blog.top/#/post/blog-changelog\" data-md-link=\"outer\" target=\"_blank\" rel=\"noopener noreferrer\">博客版本日志</a></strong>，也可以在“关于”中查看html文件。</li></ul>\n<p>说说和杂谈都会更新的，相册之后也会补多一些照片的！评论区功能还正在调试过程中……</p>",
+      "format": "markdown",
+      "status": "published"
     }
   ],
   "deleted": {
