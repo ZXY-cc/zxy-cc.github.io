@@ -76,7 +76,7 @@ window.STUDIO_DATA = {
         "accent": true
       }
     ],
-    "footerNote": "纯静态 · 无追踪 · 无依赖 · 有一点点星光",
+    "footerNote": "静态页面 · 无追踪 · 轻量交互 · 有星光、有梦想",
     "homeViewsVer": 2
   },
   "projects": [

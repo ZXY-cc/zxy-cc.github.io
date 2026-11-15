@@ -325,8 +325,10 @@ body {
   animation: petal-fall var(--dur, 26s) linear var(--delay, 0s) infinite;
 }
 .petal svg { display: block; width: 100%; height: 100%; fill: var(--petal-fill, rgba(250, 205, 225, .72)); }
-/* 极高画质追加的最后 2 片花瓣：默认不占位（同屏 14 → 16 片封顶） */
-.petals .petal.q-ultra { display: none; }
+/* 极高画质追加的最后 2 片花瓣与独占流星：默认不占位 */
+.petals .petal.q-ultra,
+.meteors .meteor.q-ultra,
+.shoots .shoot.q-ultra { display: none; }
 
 /* 少量模糊流星：头部在行进前方（左端 / 左下），光迹只留在走过的后方（右上） */
 .meteors { position: absolute; inset: 0; }
@@ -360,8 +362,12 @@ body {
 .meteor-a { top: 14%; left: 72%; --len: 180px; --angle: -26deg; --tx: -370px; --ty: 185px; --dur: 21s; --delay: 5s; --peak: .76; }
 .meteor-b { top: 40%; left: 90%; --len: 140px; --angle: -21deg; --tx: -300px; --ty: 135px; --dur: 29s; --delay: 14s; --peak: .56; }
 .meteor-c { top: 7%;  left: 46%; --len: 120px; --angle: -31deg; --tx: -280px; --ty: 175px; --dur: 37s; --delay: 24s; --peak: .44; }
-/* 高画质追加的第 4 条常驻流星：轨迹更靠下、节拍与前三颗错开 */
+/* 追加的常驻流星：轨迹分区、长度与节拍彼此错开，不会挤在同一条线上 */
 .meteor-d { top: 24%; left: 80%; --len: 165px; --angle: -23deg; --tx: -340px; --ty: 162px; --dur: 26s; --delay: 9s;  --peak: .62; }
+.meteor-e { top: 62%; left: 88%; --len: 132px; --angle: -29deg; --tx: -290px; --ty: 150px; --dur: 33s; --delay: 18s; --peak: .48; }
+.meteor-f { top: 48%; left: 58%; --len: 150px; --angle: -19deg; --tx: -320px; --ty: 118px; --dur: 23s; --delay: 3s;  --peak: .58; }
+.meteor-g { top: 78%; left: 70%; --len: 118px; --angle: -34deg; --tx: -260px; --ty: 172px; --dur: 41s; --delay: 30s; --peak: .40; }
+.meteor-h { top: 32%; left: 36%; --len: 175px; --angle: -25deg; --tx: -360px; --ty: 176px; --dur: 31s; --delay: 12s; --peak: .54; }
 
 /* ---------- 偶尔掠过的流星：从右上到左下，头部出屏后才熄灭 ----------
    光迹右端永远锚在头部（left:-tlen + width:tlen => 右端在 x=0），
@@ -404,8 +410,11 @@ body {
 }
 .shoot-a { top: 10%; left: 84%; --sangle: 156deg; --tlen: 36vw; --sdist: 124vw; --scycle: 19s; --sdelay: -2s; --speak: .92; --shold: .66; }
 .shoot-b { top: 34%; left: 96%; --sangle: 150deg; --tlen: 32vw; --sdist: 122vw; --scycle: 27s; --sdelay: -9s; --speak: .76; --shold: .52; }
-/* 高画质追加的第 3 条快速流星：角度与周期与前两条错开 */
-.shoot-c { top: 4%;  left: 68%; --sangle: 160deg; --tlen: 28vw; --sdist: 108vw; --scycle: 34s; --sdelay: -5s; --speak: .62; --shold: .42; }
+/* 追加的快速流星：角度与周期彼此错开，同一时刻最多只掠过一两条 */
+.shoot-c { top: 4%;  left: 68%; --sangle: 160deg; --tlen: 28vw; --sdist: 108vw; --scycle: 34s; --sdelay: -5s;  --speak: .62; --shold: .42; }
+.shoot-d { top: 56%; left: 92%; --sangle: 152deg; --tlen: 30vw; --sdist: 118vw; --scycle: 23s; --sdelay: -14s; --speak: .70; --shold: .48; }
+.shoot-e { top: 20%; left: 76%; --sangle: 158deg; --tlen: 34vw; --sdist: 126vw; --scycle: 29s; --sdelay: -19s; --speak: .66; --shold: .45; }
+.shoot-f { top: 70%; left: 84%; --sangle: 148deg; --tlen: 26vw; --sdist: 104vw; --scycle: 37s; --sdelay: -26s; --speak: .52; --shold: .36; }
 
 @keyframes shoot-head {
   0%, 43.9%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.8); }
@@ -1692,36 +1701,33 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* ---------- 画质档位：高 = 完整效果（默认档），极高 = 高 + 实时毛玻璃，中 / 低 逐层减负 ----------
    只作用于根节点带 data-quality 的情况，高画质（默认、无该属性）一行都不改。
    CSS 负责静态装饰与渲染开销，脚本负责跳过逐帧的光幕与卡片高光。 */
-/* 极高：在「高」之上独占实时毛玻璃与最后 2 片花瓣；以后新增的画质细节都挂在这一档 */
+/* 极高：在「高」之上独占实时毛玻璃、最后 2 片花瓣与 1+1 条流星 */
 :root[data-quality="ultra"] { --glass-blur: blur(10px) saturate(128%); }
-:root[data-quality="ultra"] .petals .petal.q-ultra { display: block; }
-/* 中：密度降一档 —— 72 星 / 10 花瓣 / 常驻 3 + 快速 2 流星 / 6 花朵游走，
-   只隐去高档追加的最后几档密度 */
+:root[data-quality="ultra"] .petals .petal.q-ultra,
+:root[data-quality="ultra"] .meteors .meteor.q-ultra,
+:root[data-quality="ultra"] .shoots .shoot.q-ultra { display: block; }
+/* 中：72 星 / 10 花瓣 / 常驻 5 + 快速 4 流星 / 6 花朵游走 */
 :root[data-quality="mid"] .stars .star.q-high,
 :root[data-quality="mid"] .petals .petal.q-high,
 :root[data-quality="mid"] .petals .petal.q-ultra,
 :root[data-quality="mid"] .meteors .meteor.q-high,
+:root[data-quality="mid"] .meteors .meteor.q-ultra,
 :root[data-quality="mid"] .shoots .shoot.q-high,
+:root[data-quality="mid"] .shoots .shoot.q-ultra,
 :root[data-quality="mid"] .blooms .sky-deco.q-high { display: none; }
-/* 低 = 静态精简：36 星 / 4 花瓣 / 常驻 1 + 快速 1 流星 / 4 花朵静止 / 流萤 4，
-   关闭鼠标光幕与卡片高光，保留主要动效 */
+/* 低 = 阅读优先：只留 36 颗静止星点，花瓣、流星、花朵爱心、流萤与启动闪屏整组关闭，
+   背景里不再有任何移动物或杂物干扰阅读 */
 :root[data-quality="low"] .stars .star.q-high,
 :root[data-quality="low"] .stars .star.q-mid { display: none; }
-:root[data-quality="low"] .petals .petal.q-high,
-:root[data-quality="low"] .petals .petal.q-mid,
-:root[data-quality="low"] .petals .petal.q-ultra { display: none; }
-:root[data-quality="low"] .meteors .meteor.q-high,
-:root[data-quality="low"] .meteors .meteor.q-mid,
-:root[data-quality="low"] .shoots .shoot.q-high,
-:root[data-quality="low"] .shoots .shoot.q-mid,
-:root[data-quality="low"] .blooms .sky-deco.q-mid,
-:root[data-quality="low"] .blooms .sky-deco.q-high,
-:root[data-quality="low"] .fireflies .firefly:nth-child(n+5) { display: none; }
-/* 低：花朵 / 爱心 / 装饰星停止旋转与移动，保留静态摆位 */
-:root[data-quality="low"] .blooms .sky-deco {
-  animation: none !important;
-  transform: rotate(var(--dir0, 0deg)) !important;
-}
+:root[data-quality="low"] .petals,
+:root[data-quality="low"] .meteors,
+:root[data-quality="low"] .shoots,
+:root[data-quality="low"] .blooms,
+:root[data-quality="low"] .fireflies,
+:root[data-quality="low"] .splash { display: none !important; }
+/* 低：星点也停止漂移与呼吸，成为完全静止的背景 */
+:root[data-quality="low"] .stars .star,
+:root[data-quality="low"] .stars .star.is-puffy::before { animation: none !important; opacity: .62; }
 /* 低：取消跟随鼠标的光幕与尾迹，以及鼠标停在卡片上时发出的高光 */
 :root[data-quality="low"] .cursor-glow,
 :root[data-quality="low"] .mouse-trail { display: none !important; }
@@ -1920,7 +1926,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .shoot-c, .meteor-c { display: none; }
   /* 高 / 极高画质追加的流星与花瓣在窄屏同样减负（窄屏不追求满特效） */
   .petal.q-ultra,
-  .shoot.q-high, .meteor.q-high, .petal.q-high { display: none !important; }
+  .shoot.q-high, .shoot.q-ultra, .meteor.q-high, .meteor.q-ultra,
+  .petal.q-high { display: none !important; }
 }
 
 /* 更窄的屏幕：继续收窄卡片内边距，保住正文有效行宽 */

@@ -738,7 +738,9 @@
   function scanToc(lines, lvls) {
     var items = [], fence = null;
     for (var i = 0; i < lines.length; i++) {
-      var ln = lines[i];
+      /* 引用块里的标题也会渲染出锚点（render 递归前会剥掉 > 前缀），
+         扫描时同步剥掉，静态阅读版烘焙的目录才不会漏掉这类标题。 */
+      var ln = String(lines[i]).replace(/^ {0,3}(?:>\s?)+/, '');
       var fm = ln.match(/^ {0,3}(`{3,}|~{3,})/);
       if (fm) {
         if (fence && fm[1][0] === fence.ch && fm[1].length >= fence.n) fence = null;
@@ -1275,5 +1277,5 @@
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
            tidy: tidy, normalizeIndent: normalizeIndent, linkInfo: linkInfo,
            refreshToc: refreshToc,
-           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.3' };
+           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.4' };
 });

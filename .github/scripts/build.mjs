@@ -439,7 +439,7 @@ function standaloneHtml() {
 <div class="wrap">
 <header class="hero">
   <h1>${esc(docTitle)}</h1>
-  <div class="sub">纯静态个人博客 · 版本记录镜像 · <a href="${ORIGIN}/" target="_top">返回站点 ↗</a></div>
+  <div class="sub">静态页面博客 · 版本记录镜像 · <a href="${ORIGIN}/" target="_top">返回站点 ↗</a></div>
   <div class="tagsearch">
     <div class="ts-row">
       <div class="ts-box" id="ts-box" tabindex="0" title="选择日期或标签，可多选">
@@ -502,6 +502,10 @@ write('assets/changelog.js', frontend);
 const base = loadWindowJs('assets/posts.js');
 const overlay = loadWindowJs('assets/site-data.js');
 const generated = loadWindowJs('assets/changelog.js');
+/* 页面本身是静态文件，但点赞/浏览、留言、工坊发布要调用外部接口，
+   所以底栏不再自称「纯静态 / 无依赖」；所有 SPA 页与静态镜像共用同一句标识。 */
+const FOOT_NOTE = ((overlay.STUDIO_DATA || {}).site || {}).footerNote ||
+  '静态页面 · 无追踪 · 轻量交互 · 有星光、有梦想';
 const POSTS = (base.POSTS || []).slice();
 /* 版本日志文章先合并：站长在工坊里编辑/删除它时，site-data 覆盖层与墓碑随后生效 */
 if (generated.CHANGELOG_POST) {
@@ -603,11 +607,15 @@ nav.toc[hidden]{display:none}
 .toc-item::before{content:'★';display:inline-block;vertical-align:middle;width:10px;height:10px;margin-right:7px;font-size:9px;line-height:1;color:#e9b45c;opacity:.75}
 .toc-item:hover{text-decoration:underline}
 .back{margin:24px 0 0;font-size:14px}
+.mirror-badge{margin:26px 0 0;padding-top:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:12.5px;letter-spacing:.4px;text-align:center}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
 ${ZB_MATH_CSS}
 `;
 /* 静态阅读版 / 路由镜像：Markdown 内链接以 / 开头，点击时把链接文本接在当前站点网址后面 */
 const MIRROR_LINK_JS = `document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var a=t.closest('a[data-md-link="inner"]');if(!a)return;if(e.preventDefault)e.preventDefault();location.href=location.origin+(a.getAttribute('href')||'/')});`;
+/* 静态阅读版不加载前台 SPA，但 :::cont::: 目录同样按页面真实标题重建一次：
+   容器、引用、折叠框里的标题以及层级条件都会反映，逻辑与 ZBMD.refreshToc 同款。 */
+const MIRROR_TOC_JS = `(function(){var navs=document.querySelectorAll('nav.toc[data-toc-levels]');if(!navs.length)return;var hs=document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]'),all=[];var e=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};for(var i=0;i<hs.length;i++){var id=hs[i].getAttribute('id');if(id&&id.indexOf('h-')===0)all.push({lev:parseInt(String(hs[i].tagName||'h2').slice(1),10)||2,id:id,text:String(hs[i].textContent||'').trim()})}for(var j=0;j<navs.length;j++){var nav=navs[j],list=nav.querySelector('.toc-list');if(!list)continue;var raw=String(nav.getAttribute('data-toc-levels')||'').split(/[,,，\\s]+/),lv=[];for(var k=0;k<raw.length;k++){var n=parseInt(raw[k],10);if(n>=1&&n<=6&&lv.indexOf(n)<0)lv.push(n)}var picked=all.filter(function(it){return !lv.length||lv.indexOf(it.lev)>=0});list.innerHTML=picked.length?picked.map(function(it){return '<a class="toc-item" href="#'+e(it.id)+'">'+e(it.text)+'</a>'}).join(''):'<span class="toc-empty">还没有符合条件的标题</span>';if(picked.length)nav.removeAttribute('hidden');else nav.setAttribute('hidden','')}})();`;
 function mirrorHtml(p) {
   const url = ORIGIN + '/posts/' + encodeURIComponent(p.slug) + '.html';
   return `<!DOCTYPE html>
@@ -651,6 +659,7 @@ ${INTERACTIONS_READY ? `<div class="interactions-links"><a href="${esc(INTERACTI
 </section>
 </article>
 <p class="back"><a href="/#/post/${encodeURIComponent(p.slug)}">在站点中打开 →</a></p>
+<footer class="mirror-badge">${esc(FOOT_NOTE)}</footer>
 </div>
 <script src="../assets/comments-data.js"></script>
 <script src="../assets/comment-archive.js"></script>
@@ -662,6 +671,7 @@ ${INTERACTIONS_READY ? `<div class="interactions-links"><a href="${esc(INTERACTI
 window.ZBLive && window.ZBLive.mount(${JSON.stringify(String(p.slug))});
 window.ZBLikes && window.ZBLikes.mount();</script>
 <script>${MIRROR_LINK_JS}
+${MIRROR_TOC_JS}
 /* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态阅读版无 ZBMD 时兜底） */
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
@@ -800,6 +810,7 @@ body{margin:0;background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 55%,#fdeef4 1
 .route-mirror .page-head,.route-mirror .section-head{max-width:none}
 .mirror-foot{max-width:1080px;margin:0 auto;padding:0 24px 40px;color:#8a93ad;font-size:12.5px}
 .mirror-foot a{color:#3f5c9c}
+.mirror-badge{margin-top:14px;padding-top:12px;border-top:1px dashed #dfe6f6;color:#8a93ad;font-size:12.5px;letter-spacing:.4px;text-align:center}
 .reveal{opacity:1 !important;transform:none !important;transition:none !important}
 img{max-width:100%}
 `;
@@ -837,8 +848,10 @@ ${ZB_MATH_CSS ? '<style>' + ZB_MATH_CSS + '</style>' : ''}
 ${data.html}
 </main>
 <footer class="mirror-foot">这是「${esc(SITE_TITLE)}」${esc(label)}页的静态镜像，完整交互（搜索、特效、夜间模式）请
-<a href="/#/${name}">在站点中打开 →</a></footer>
+<a href="/#/${name}">在站点中打开 →</a>
+<div class="mirror-badge">${esc(FOOT_NOTE)}</div></footer>
 <script>${MIRROR_LINK_JS}
+${MIRROR_TOC_JS}
 /* 多语言代码标签组切换（与 markdown.js bindCodeTabs 同款委托，静态镜像无 ZBMD 时兜底） */
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var b=t.closest('.zb-tab');if(!b)return;var bar=b.parentNode,box=bar&&bar.parentNode;if(!box)return;var k=b.getAttribute('data-zbtab');Array.prototype.forEach.call(box.children,function(el){if(!el||el.tagName!=='PRE')return;if(el.getAttribute('data-zbpre')===k)el.removeAttribute('hidden');else el.setAttribute('hidden','')});Array.prototype.forEach.call(bar.children,function(el){if(el.classList)el.classList.toggle('on',el===b)})});</script>
 </body>
@@ -890,7 +903,7 @@ const feedEntries = POSTS.map((p) => `  <entry>
 write('feed.xml', `<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>${esc(SITE_TITLE)}</title>
-  <subtitle>一个关于算法、代码、建站与日常随想的纯静态个人博客</subtitle>
+  <subtitle>一个关于算法、代码、建站与日常随想的静态页面个人博客</subtitle>
   <id>${ORIGIN}/</id>
   <link rel="self" href="${ORIGIN}/feed.xml"/>
   <link href="${ORIGIN}/"/>
@@ -928,7 +941,7 @@ const ld = {
   '@type': 'Blog',
   name: SITE_TITLE,
   url: ORIGIN + '/',
-  description: '一个关于算法、代码、建站与日常随想的纯静态个人博客',
+  description: '一个关于算法、代码、建站与日常随想的静态页面个人博客',
   inLanguage: 'zh-CN',
   blogPost: POSTS.map((p) => ({
     '@type': 'BlogPosting',

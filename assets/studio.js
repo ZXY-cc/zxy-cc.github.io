@@ -1,8 +1,8 @@
 /* 星梦Staream · 站长工坊
    静态站没有账号系统，因此「是不是我」由两层凭证判定：
-   1) 设备凭证：工坊入口不再公开。持有 128 位密钥链接的设备首次访问 ?o=<密钥>
-      时通过 SHA-256 校验并写入本机 90 天签名标记；之后导航才会出现工坊入口，
-      其它设备的 #/studio 渲染为「页面不存在」，源码中只保留摘要（明码永不入库）。
+   1) 设备凭证：工坊入口不再公开。持有密钥链接 ?key=<密钥>#/vip 的设备首次访问时
+      通过 SHA-256 校验并写入本机 90 天签名标记；之后导航才会出现工坊入口，
+      其它设备的 #/vip 渲染为「页面不存在」，源码中只保留摘要（明码永不入库）。
    2) 发布凭证：真正把内容写上线时，用 GitHub 细粒度令牌，
       由 GitHub 服务器确认「你确实是这个仓库的所有者」，前端说了不算；
       开启自动同步时令牌保存在这台设备，关闭则只存在内存里。
@@ -13,9 +13,10 @@
   var DATA = window.STUDIO_DATA;
   if (!DATA) return;
 
-  var SALT = 'paper-blank::owner::v1';
-  var GATE_SALT = 'star-dream::owner-gate::v2';
-  var OWNER_HASH = '6808eb10040f5bd56dd8de543b3ef4a0e9b5b3e3635ccf65ed1e5aa703d41d47';
+  var GATE_SALT = 'star-dream::owner-gate::v3';
+  /* 只存「盐 + 密钥」的 SHA-256 摘要。密钥本身不写进任何站点文件、DOM、
+     存储或网络请求，地址栏在校验通过的同一帧就被清理干净。 */
+  var OWNER_HASH = '3b1513d52540c3e0f04385c95decbff72df25182141f15ff7962178cc80ca7a0';
   var DEVICE_KEY = 'zb-owner-device';
   var LOCAL_KEY = 'zb-studio-local';
   var DEAD_KEY = 'zb-studio-dead';
@@ -381,15 +382,15 @@
   function revoke() { delLs(DEVICE_KEY); }
   function gateCheck(key) { return sha256(GATE_SALT + String(key || '').trim()) === OWNER_HASH; }
   /* 密钥只可能通过 URL 参数送进来：校验通过即写本机 90 天标记，
-     随后立刻把地址栏清理成不含密钥的干净 URL。 */
+     随后立刻把地址栏清理成不含密钥的干净 URL。旧参数 o= 一并清掉且不再校验。 */
   function gateBoot() {
     var q = null;
     try { q = new URLSearchParams(String(window.location.search || '')); } catch (e) { q = null; }
-    var key = q ? (q.get('o') || '') : '';
-    var unlocked = !!(q && q.has('o') && gateCheck(key));
+    var key = q ? (q.get('key') || '') : '';
+    var unlocked = !!(q && q.has('key') && gateCheck(key));
     if (unlocked) grant();
     /* 密钥与「发布完成」的临时参数都不留在地址栏；后者只用来触发一次整页刷新 */
-    if (q && (q.has('o') || q.has('published'))) {
+    if (q && (q.has('key') || q.has('o') || q.has('published'))) {
       try {
         window.history.replaceState(null, '',
           String(window.location.pathname || '/') + String(window.location.hash || ''));
@@ -405,7 +406,7 @@
     if (isOwner()) {
       if (!a) {
         var el = document.createElement('a');
-        el.setAttribute('href', '#/studio');
+        el.setAttribute('href', '#/vip');
         el.setAttribute('data-nav', 'studio');
         el.textContent = '工坊';
         nav.appendChild(el);
@@ -754,21 +755,21 @@
      data-tab 委托与旧的 .stab 完全一致，切换逻辑不变。 */
   var ADM_TABS = [
     { group: '内容创作', items: [
-      ['post', '写文章', 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'],
-      ['photo', '发图片', 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 12.5l2.5 3.01L14.5 12l4.5 6H5l3.5-5.5z'],
-      ['moment', '发说说', 'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'],
-      ['chatter', '发杂谈', 'M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z']
-    ] },
-    { group: '内容管理', items: [
-      ['manage', '内容管理', 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'],
-      ['taglib', '标签管理', 'M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z'],
+      ['post', '文章', 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'],
+      ['photo', '相册', 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 12.5l2.5 3.01L14.5 12l4.5 6H5l3.5-5.5z'],
+      ['moment', '说说', 'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'],
+      ['chatter', '杂谈', 'M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z'],
       ['project', '项目', 'M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z'],
       ['friend', '友链', 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z']
     ] },
+    { group: '内容', items: [
+      ['manage', '内容', 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'],
+      ['taglib', '标签', 'M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z']
+    ] },
     { group: '站点与发布', items: [
       ['settings', '设置', 'M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'],
-      ['site', '名片设置', 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-9 7H5V9h6v2zm0-4H5V5h6v2zm9 10h-8v-2h8v2zm0-4h-8v-2h8v2z'],
-      ['about', '关于页', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'],
+      ['site', '名片', 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-9 7H5V9h6v2zm0-4H5V5h6v2zm9 10h-8v-2h8v2zm0-4h-8v-2h8v2z'],
+      ['about', '关于', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'],
       ['publish', '发布 / 同步', 'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z']
     ] }
   ];
@@ -776,7 +777,7 @@
     for (var g = 0; g < ADM_TABS.length; g++)
       for (var i = 0; i < ADM_TABS[g].items.length; i++)
         if (ADM_TABS[g].items[i][0] === tab) return ADM_TABS[g].items[i][1];
-    return '写文章';
+    return '文章';
   }
   function admMenu() {
     return ADM_TABS.map(function (g) {
@@ -835,7 +836,7 @@
     var d = state.draft || readDraft();
     var editing = !!(state.editing && state.editing.kind === 'posts');
     var modes = [['write', '写作'], ['split', '并排'], ['preview', '预览']];
-    return '<div class="studio-form glass post-form"><h2>写文章</h2>' +
+    return '<div class="studio-form glass post-form"><h2>文章</h2>' +
       editingBanner('文章', 'posts') +
       '<span class="f-cell"><label class="f-label" for="f-title">标题</label>' +
       '<input class="f-input post-title" id="f-title" type="text" placeholder="文章大标题…" ' +
@@ -938,7 +939,7 @@
         }).join('') + '</div></div>'
       : '';
     var preview = '<div id="file-preview" class="file-preview"></div>';
-    return '<div class="studio-form glass"><h2>' + (ed ? '编辑相册' : '发图片') + '</h2>' +
+    return '<div class="studio-form glass"><h2>' + (ed ? '编辑相册' : '相册') + '</h2>' +
       editingBanner('相册', 'albums') +
       '<p class="f-hint">' + (ed
         ? '可以改相册标题与说明、移除已有照片，也可以继续往这个相册补充图片；改完点「保存修改」。'
@@ -960,7 +961,7 @@
       '<button class="mini-btn" type="button" data-act="cancel-edit">退出编辑</button></div>';
   }
   function formMoment() {
-    return '<div class="studio-form glass"><h2>发一条说说</h2>' + editingBanner('说说', 'moments') +
+    return '<div class="studio-form glass"><h2>说说</h2>' + editingBanner('说说', 'moments') +
       area('这一刻想说什么', 'f-moment-text', '…', 5) +
       '<div class="f-row">' + field('心情', 'f-mood', '') + field('地点', 'f-place', '') + '</div>' +
       '<span class="f-cell"><label class="f-label" for="f-moment-date">发布日期</label>' +
@@ -972,7 +973,7 @@
       (state.editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
   function formChatter() {
-    return '<div class="studio-form glass"><h2>写一则杂谈</h2>' + editingBanner('杂谈', 'chatter') +
+    return '<div class="studio-form glass"><h2>杂谈</h2>' + editingBanner('杂谈', 'chatter') +
       field('标题', 'f-ch-title', '比文章短一点的标题') +
       field('摘要', 'f-ch-summary', '一句话') +
       '<span class="f-cell"><label class="f-label" for="f-ch-tags">标签</label>' +
@@ -1026,7 +1027,7 @@
         '<button class="soft-btn so-del" type="button" data-act="about-so-del" data-i="' + i +
         '" aria-label="删除这条入口">删除</button></div>';
     }).join('');
-    return '<div class="studio-form glass"><h2>关于页</h2>' +
+    return '<div class="studio-form glass"><h2>关于</h2>' +
       '<p class="f-hint">这里逐项编辑「关于」页面的内容：名片文字、简介正文（支持 Markdown 扩展语法）' +
       '与底部入口。保存后立即更新页面，并自动同步到网站与静态镜像。</p>' +
       area('签名（关于页名字下面的那行文字）', 'f-about-tagline', '记录一些想法，和把它们弄明白的过程。', 2) +
@@ -1041,7 +1042,7 @@
   }
   function formSite() {
     var s = DATA.site || {};
-    return '<div class="studio-form glass"><h2>名片设置</h2>' +
+    return '<div class="studio-form glass"><h2>名片</h2>' +
       '<p class="f-hint">这里改的是首页上方名片的头像，以及名字下面的那行签名。' +
       '先保存在这台设备，开启自动同步后会立即写进网站，对所有访客生效。</p>' +
       '<div class="site-avatar-row">' +
@@ -1150,7 +1151,7 @@
     var monthList = Object.keys(months).sort().reverse();
     var size = 0;
     try { size = (ls(LOCAL_KEY) || '').length; } catch (e) {}
-    return '<div class="studio-form glass"><h2>内容管理</h2>' +
+    return '<div class="studio-form glass"><h2>内容</h2>' +
       '<p class="f-hint">文章、说说、杂谈、相册、项目、友链都能载回对应表单重新编辑，也都能删除；' +
       '相册可改名、补充图片或移除单张照片。改动先保存在本机，开启自动同步后立即写进网站，' +
       '访客看到的就是最新状态；已发布内容删除后可在仓库提交历史找回。</p>' +
@@ -1179,7 +1180,7 @@
   /* 标签管理：增删标签库、拖拽调整顺序；A / B 是首页分区标签，恒排在最后不可删 */
   function formTagLib() {
     var list = tagLib();
-    return '<div class="studio-form glass"><h2>标签管理</h2>' +
+    return '<div class="studio-form glass"><h2>标签</h2>' +
       '<p class="f-hint">标签库里的标签按顺序显示在文章、标签页、筛选条与写作表单里；' +
       '写文章和写杂谈时可直接点选。按住一行拖动即可调整顺序。⭐ 是置顶标签（固定在最前，' +
       '带它的内容排在其它内容前面），A / B 两个分区标签恒排在最后。</p>' +
@@ -1806,7 +1807,7 @@
       });
   }
   function syncNow() {
-    /* 体验模式（含控制台直呼 window.STUDIO._syncNow）：一律不读令牌、不同步 */
+    /* 体验模式一律不读令牌、不同步；同步函数不再挂到 window 上，控制台无从直呼 */
     if (!isOwner()) return say('~仅供体验 · 权限不足~', 'warn');
     if (!syncToken()) return say('先在「发布上线」填入令牌并勾选记住，或点「保存设置并发布当前内容」。', 'warn');
     sync.fails = 0;
@@ -2352,7 +2353,7 @@
     door.addEventListener('click', function () {
       /* 只有已授权设备才能通过小门进入工坊；其它设备点了没有任何反应 */
       if (!isOwner()) return;
-      location.hash = '#/studio';
+      location.hash = '#/vip';
     });
   }
 
@@ -2432,18 +2433,13 @@
     }
   }
 
+  /* 安全检查：只暴露界面与发布所需的最小接口。门禁盐值、摘要、SHA 实现
+     一律不挂到 window 上，控制台里翻不到任何可用于推导密钥的材料。 */
   window.STUDIO = {
-    /* 正门：直接访问 #/studio 时清掉可能残留的体验标记 */
+    /* 正门：直接访问 #/vip 时清掉可能残留的体验标记 */
     render: function (el) { state.exp = false; render(el); },
     renderExperience: function (el) { state.exp = true; render(el); },
-    isOwner: isOwner,
-    _sha256: sha256,
-    _salt: SALT,
-    _gateSalt: GATE_SALT,
-    _hash: OWNER_HASH,
-    _dataFile: dataFile,
-    _mergeLocal: mergeLocal,
-    _syncNow: syncNow
+    isOwner: isOwner
   };
   syncNav();
   bindDoor();

@@ -153,7 +153,10 @@
   document.getElementById('foot-left').textContent =
     '© ' + (SITE.since || new Date().getFullYear()) + ' ' + (CFG.author || SITE.author || '');
   var footNote = document.getElementById('foot-note');
-  if (footNote) footNote.textContent = CFG.footerNote || '纯静态 · 无追踪 · 无依赖';
+  /* 页面是静态文件，但点赞/浏览、留言与工坊发布需要调用外部接口，
+     底栏不再自称「纯静态 / 无依赖」；所有 SPA 页与静态镜像共用同一句标识。 */
+  if (footNote) footNote.textContent = CFG.footerNote ||
+    '静态页面 · 无追踪 · 轻量交互 · 有星光、有梦想';
   /* 导航头像与首页名片共用同一份站点数据；工坊改名后即时同步 */
   function syncBrandAvatar() {
     var el = document.querySelector && document.querySelector('.avatar-brand');
@@ -408,7 +411,7 @@
         }).join('') + '</div>' : '';
         return '<article class="moment glass reveal">' +
           '<div class="moment-head">' + avatarImg('avatar avatar-sm') +
-          '<div><b>' + esc(CFG.author || SITE.author || '我') + '</b>' +
+          '<div><b>' + esc(CFG.displayName || CFG.author || SITE.author || '星梦Staream') + '</b>' +
           '<time>' + esc(String(m.date || '').slice(0, 10)) + '</time></div>' +
           (m.mood ? '<span class="mood">' + esc(m.mood) + '</span>' : '') + '</div>' +
           '<p class="moment-text">' + esc(m.text) + '</p>' + imgs +
@@ -534,16 +537,17 @@
      qualityNow 供脚本判断是否需要跑逐帧光幕；切换即时生效，无需刷新。 */
   var QUALITY_KEY = 'zb-quality';
   var QUALITY_OPTS = [
-    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上开启实时毛玻璃，花瓣补到 16 片封顶；以后新增的画质细节都会出现在这一档' },
-    { id: 'high', name: '高', desc: '最佳观感密度：108 星 / 14 花瓣 / 常驻流星 4 + 快速 3，光幕与卡片高光全开（默认档）' },
-    { id: 'mid', name: '中', desc: '密度略降一档：72 星 / 10 花瓣 / 流星 3+2，花朵爱心静止；保留光幕与主要动效' },
-    { id: 'low', name: '低', desc: '静态精简：36 星 / 4 花瓣 / 流星各 1，花朵爱心静止；关闭鼠标光幕与卡片高光' }
+    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上开启实时毛玻璃，花瓣补到 16 片、流星加到 8 + 6；以后新增的画质细节都会出现在这一档' },
+    { id: 'high', name: '高', desc: '最佳观感密度：108 星 / 14 花瓣 / 常驻流星 7 + 快速 5，光幕与卡片高光全开（默认档）' },
+    { id: 'mid', name: '中', desc: '密度略降一档：72 星 / 10 花瓣 / 流星 5+4，花朵爱心游走；保留光幕与主要动效' },
+    { id: 'low', name: '低', desc: '阅读优先：只留 36 颗静止星点，无花瓣、流星、花朵与流萤，关闭光幕、卡片高光与启动闪屏' }
   ];
   var QUALITY_SPEC = [
-    ['星星 / 花瓣', '108 / 16', '108 / 14', '72 / 10', '36 / 4'],
-    ['花朵与爱心', '8 个 · 游走', '8 个 · 游走', '6 个 · 游走', '4 个 · 静止'],
-    ['流星', '常驻 4 + 快速 3', '常驻 4 + 快速 3', '常驻 3 + 快速 2', '常驻 1 + 快速 1'],
-    ['流萤', '夜间 8 只', '夜间 8 只', '夜间 8 只', '夜间 4 只'],
+    ['星星 / 花瓣', '108 / 16', '108 / 14', '72 / 10', '36 / 0'],
+    ['星点漂移', '开启', '开启', '开启', '关闭'],
+    ['花朵与爱心', '8 个 · 游走', '8 个 · 游走', '6 个 · 游走', '无'],
+    ['流星', '常驻 8 + 快速 6', '常驻 7 + 快速 5', '常驻 5 + 快速 4', '无'],
+    ['流萤', '夜间 8 只', '夜间 8 只', '夜间 8 只', '无'],
     ['鼠标光幕 / 尾迹', '开启', '开启', '开启', '关闭'],
     ['卡片高光', '开启', '开启', '开启', '关闭'],
     ['实时毛玻璃', '开启', '关闭', '关闭', '关闭'],
@@ -756,7 +760,7 @@
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 首次访问默认高画质；中档保留完整动效、低档减少装饰，均为原「高 / 中」档效果整体下移；「极高」额外开启实时毛玻璃并再加一档星空密度。</p></section>' +
+      '</b> · 首次访问默认高画质；流星数量随档位递增，极高额外开启实时毛玻璃并再加一档密度；低档是阅读档，背景里不留任何移动物或装饰。</p></section>' +
       '<section class="settings-card glass reveal" aria-label="字体设置">' +
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>字体</h2><p>设置网页的中英文字体、代码字体与 LaTeX 公式字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
@@ -767,15 +771,6 @@
       '<label class="font-item">LaTeX 字体' + fontSelect('tex', FONT_TEX_OPTS, readFont('tex')) + '</label>' +
       '</div>' +
       '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>' +
-      '<section class="settings-card glass reveal" aria-label="名称意境">' +
-      '<div class="settings-block"><div class="settings-info">' +
-      '<h2>名称意境</h2><p>开启后导航栏会换成一组意境名：星梦、拾文、流年、造物、拾光、碎语、漫谈、宇友、心源、道法、墨坊。偏好只保存在本机。</p></div>' +
-      '<label class="no-count-item"><input type="checkbox" data-nav-poetry' +
-      (poetryOn() ? ' checked' : '') + '><span>启用意境名</span></label></div>' +
-      '<p class="settings-foot" id="nav-poetry-state">' +
-      esc(poetryOn() ? '已开启：导航栏换成了意境名，再点一次可换回原名。' :
-        '已关闭：导航栏显示默认名称。') +
-      '</p></section>' +
       '<section class="settings-card glass reveal" aria-label="首页卡片轮流数">' +
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>首页卡片轮流数</h2><p>设置首页每张卡片轮流展示几条内容，切换后立即生效；偏好只保存在本机。</p></div>' +
@@ -786,6 +781,15 @@
           '><span><b>' + n + ' 条</b>' + (n === 3 ? '<i>默认</i>' : '') + '</span></label>';
       }).join('') + '</div></div>' +
       '<p class="settings-foot" id="quick-count-state">' + esc(quickCountNote(quick)) + '</p></section>' +
+      '<section class="settings-card glass reveal" aria-label="名称意境">' +
+      '<div class="settings-block"><div class="settings-info">' +
+      '<h2>名称意境</h2><p>开启后导航栏会换成一组意境名：星梦、拾文、流年、造物、拾光、碎语、漫谈、宇友、心源、道法、墨坊。偏好只保存在本机。</p></div>' +
+      '<label class="no-count-item"><input type="checkbox" data-nav-poetry' +
+      (poetryOn() ? ' checked' : '') + '><span>启用意境名</span></label></div>' +
+      '<p class="settings-foot" id="nav-poetry-state">' +
+      esc(poetryOn() ? '已开启：导航栏换成了意境名，再点一次可换回原名。' :
+        '已关闭：导航栏显示默认名称。') +
+      '</p></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
       (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner() ?
       '<section class="settings-card glass reveal" aria-label="浏览统计">' +
@@ -1313,9 +1317,19 @@
       html = renderAbout(); active = 'about'; sub = '关于';
     } else if (parts[0] === 'settings') {
       html = renderSettings(); active = 'settings'; sub = '设置';
+    } else if (parts[0] === 'vip') {
+      /* 新站长入口：只有持有效设备凭证的设备才渲染工坊，其余设备与不存在页面完全一致 */
+      var vipOwner = !!(window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner());
+      if (!vipOwner) paint('<p class="page-note">页面不存在。</p>', '', '页面不存在');
+      else {
+        paint('', 'studio', '工坊');
+        if (window.STUDIO && window.STUDIO.render) window.STUDIO.render(app);
+      }
+      return;
     } else if (parts[0] === 'studio') {
-      paint('', 'studio', '工坊');
-      if (window.STUDIO && window.STUDIO.render) window.STUDIO.render(app);
+      /* 旧入口已停用：已授权设备平滑切到 #/vip，其余设备显示页面不存在 */
+      if (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner()) location.hash = '#/vip';
+      else paint('<p class="page-note">页面不存在。</p>', '', '页面不存在');
       return;
     } else if (parts[0] === 'studio-exp') {
       /* 游客「工坊 · 体验」：完整工坊界面，但所有改动网站的按钮都被拦截 */
