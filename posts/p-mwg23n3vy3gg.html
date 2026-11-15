@@ -256,7 +256,8 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <article>
 <h1>中期考核的题解与拓展思考</h1>
 <p class="meta" data-view-post="p-mwg23n3vy3gg">2026-11-14 · B / 科协 / 题解 / 拓展 · <span class="mirror-likes"><span data-like-stat="post:p-mwg23n3vy3gg">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwg23n3vy3gg">0</span> 次浏览（不含站长）</span></p>
-<div class="body"><nav class="toc" data-toc-levels="" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--a-奶龙比可爱-https-code-sipc115-com-problem-">[A 奶龙比可爱](https://code.sipc115.com/problem/660)</a></div></nav>
+<div class="body"><p><em>声明：本篇不对所有题目完整解答。C语言写法为C99</em></p>
+<nav class="toc" data-toc-levels="" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--a-奶龙比可爱-https-code-sipc115-com-problem-">[A 奶龙比可爱](https://code.sipc115.com/problem/660)</a></div></nav>
 <h2 class="zb-vl" id="h--a-奶龙比可爱-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/660" data-md-link="outer" target="_blank" rel="noopener noreferrer">A 奶龙比可爱</a></h2>
 <ul><li>这道题难道只能用时间复杂度为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">n</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><span class="zb-textchar">)</span></span>的双重遍历去做吗？</li></ul>
 <p>其实也可以用树状数组，实现<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span>的解法。我将从这道题引入树状数组，探索树状数组的优势。</p>
@@ -363,34 +364,6 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
 <ul><li>把偏移后的索引 <code>a[i]+1</code> 位置 +1，表示这个可爱度值出现了一次。</li><li>后面的奶龙查询时就能看到这个记录了。</li></ul>
 <div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C</button><button class="zb-tab" type="button" data-zbtab="1">C++</button></div><pre class="zb-code" data-zbpre="0" data-lang="C" data-code-lang="c"><code><span class="tk-kw">#include</span> &lt;stdio.<span class="tk-pr">h</span>&gt;
 <span class="tk-kw">#define</span> <span class="tk-cls">MAX</span> <span class="tk-nu">105</span>
-<span class="tk-ty">int</span> n,i;
-<span class="tk-ty">int</span> a[<span class="tk-cls">MAX</span>], ans[<span class="tk-cls">MAX</span>];
-<span class="tk-ty">int</span> tree[<span class="tk-cls">MAX</span>];
-<span class="tk-ty">int</span> <span class="tk-fn">lowbit</span>(<span class="tk-ty">int</span> x) { <span class="tk-kw">return</span> x &amp; (-x); }
-<span class="tk-ty">void</span> <span class="tk-fn">add</span>(<span class="tk-ty">int</span> x, <span class="tk-ty">int</span> v) {
-    <span class="tk-kw">for</span> (; x &lt;= <span class="tk-cls">MAX</span>; x += <span class="tk-fn">lowbit</span>(x))
-        tree[x] += v;
-}
-<span class="tk-ty">int</span> <span class="tk-fn">query</span>(<span class="tk-ty">int</span> x) {
-    <span class="tk-ty">int</span> res = <span class="tk-nu">0</span>;
-    <span class="tk-kw">for</span> (; x &gt; <span class="tk-nu">0</span>; x -= <span class="tk-fn">lowbit</span>(x))
-        res += tree[x];
-    <span class="tk-kw">return</span> res;
-}
-<span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
-    <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;n);
-    <span class="tk-kw">for</span> (i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-        <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;a[i]);
-    <span class="tk-kw">for</span> (i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
-        ans[i] = <span class="tk-fn">query</span>(a[i]);
-        <span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);
-    }
-    <span class="tk-kw">for</span> (i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-        <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d &quot;</span>, ans[i]);
-    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
-}</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="C++" data-code-lang="cpp"><code><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;
-<span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;
-<span class="tk-ty">const</span> <span class="tk-ty">int</span> <span class="tk-cls">MAX</span> = <span class="tk-nu">105</span>;
 <span class="tk-ty">int</span> n;
 <span class="tk-ty">int</span> a[<span class="tk-cls">MAX</span>], ans[<span class="tk-cls">MAX</span>];
 <span class="tk-ty">int</span> tree[<span class="tk-cls">MAX</span>];
@@ -406,16 +379,44 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
     <span class="tk-kw">return</span> res;
 }
 <span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
-    cin &gt;&gt; n;
+    <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;n);
     <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-        cin &gt;&gt; a[i];
+        <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;a[i]);
     <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
         ans[i] = <span class="tk-fn">query</span>(a[i]);
         <span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);
     }
     <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-        cout &lt;&lt; ans[i] &lt;&lt; <span class="tk-st">&#39; &#39;</span>;
+        <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d &quot;</span>, ans[i]);
     <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+}</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="C++" data-code-lang="cpp"><code><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;
+<span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;
+<span class="tk-ty">const</span> <span class="tk-ty">int</span> <span class="tk-cls">MAX</span> = <span class="tk-nu">105</span>;
+<span class="tk-ty">int</span> n;
+<span class="tk-ty">int</span> a[<span class="tk-cls">MAX</span>], ans[<span class="tk-cls">MAX</span>];
+<span class="tk-ty">int</span> tree[<span class="tk-cls">MAX</span>];
+<span class="tk-ty">int</span> <span class="tk-fn">lowbit</span>(<span class="tk-ty">int</span> x) { <span class="tk-kw">return</span> x &amp; (-x); }
+<span class="tk-ty">void</span> <span class="tk-fn">add</span>(<span class="tk-ty">int</span> x, <span class="tk-ty">int</span> v) {
+<span class="tk-kw">for</span> (; x &lt;= <span class="tk-cls">MAX</span>; x += <span class="tk-fn">lowbit</span>(x))
+tree[x] += v;
+}
+<span class="tk-ty">int</span> <span class="tk-fn">query</span>(<span class="tk-ty">int</span> x) {
+<span class="tk-ty">int</span> res = <span class="tk-nu">0</span>;
+<span class="tk-kw">for</span> (; x &gt; <span class="tk-nu">0</span>; x -= <span class="tk-fn">lowbit</span>(x))
+res += tree[x];
+<span class="tk-kw">return</span> res;
+}
+<span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
+cin &gt;&gt; n;
+<span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
+cin &gt;&gt; a[i];
+<span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
+ans[i] = <span class="tk-fn">query</span>(a[i]);
+<span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);
+}
+<span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
+cout &lt;&lt; ans[i] &lt;&lt; <span class="tk-st">&#39; &#39;</span>;
+<span class="tk-kw">return</span> <span class="tk-nu">0</span>;
 }</code><button class="copy-btn" type="button">复制</button></pre></div>
 <hr>
 <h2 class="zb-vl" id="h--b改-奶龙比可爱ii-https-code-sipc115-com-probl"><a href="https://code.sipc115.com/problem/666" data-md-link="outer" target="_blank" rel="noopener noreferrer">B改 奶龙比可爱II</a></h2>
@@ -423,34 +424,146 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
 <p>我们要把可爱度从小到大（0, 1, 2, ...）依次分配给各个位置的奶龙。关键问题是：<strong>每一轮，最小的可爱度应该给谁？</strong></p>
 <p>答案是给那个<strong>左边不需要有任何比它小的奶龙的位置</strong>，即 <code>a[i] == 0</code> 的位置。</p>
 <blockquote><p>如果 <code>a[i] == 0</code>，说明位置 i 的奶龙左边一只比它小的都没有。既然我们现在手里拿着当前最小的可爱度，给它正合适——它反正也不需要左边有谁比它小。</p></blockquote>
-<hr>
 <ul><li>为什么从右往左找？</li></ul>
 <p>当有多个 <code>a[i] == 0</code> 时，我们选择<strong>最右边</strong>的那个。原因是：</p>
 <p>最右边 <code>a[i]==0</code> 意味着：<strong>它右边的所有未分配位置，<code>a</code> 值都大于0</strong>，即它们左边都需要有比它们小的奶龙。</p>
 <p>我们先把最小可爱度给这个最右边的位置，它就会成为它右边所有奶龙&quot;左边比它小的那一只&quot;，所以把它们右边的 <code>a</code> 值各减 1。这样一步一步从右往左&quot;消去&quot;需求，才能保证所有位置最终都能被分配。</p>
-<hr>
 <ul><li>为什么分配后要把 i~n 位置的 a 值减 1？</li></ul>
 <p>这是最关键的步骤。假设我们在位置 i 分配了可爱度 <code>cnt</code>（当前最小值）：</p>
 <ul><li>对于位置 <code>j &gt; i</code>（i <strong>右边</strong>的奶龙），位置 i 在它们的<strong>左边</strong>。</li><li>位置 i 的可爱度 <code>cnt</code> 是到目前为止最小的，之后分配给 j 的可贵度一定 <strong>&gt; cnt</strong>。</li><li>所以位置 i 的奶龙<strong>一定</strong>比位置 j 的奶龙可爱度小，且位置 i 在位置 j 的左边。</li><li>这就意味着：位置 i 已经&quot;贡献&quot;了位置 j 的 <code>a[j]</code> 中的一个&quot;左边比它小的奶龙&quot;。</li><li>因此位置 j 还需要的&quot;左边比它小的奶龙&quot;数量就要减 1 → <strong><code>a[j]--</code></strong>。</li></ul>
 <p>而对于位置 <code>k &lt; i</code>（i <strong>左边</strong>的奶龙），位置 i 在它们的<strong>右边</strong>，不构成&quot;左边比它小的奶龙&quot;，所以不需要调整。</p>
 <p>如果再用二分查找去找第k小的数，可以让时间复杂度变为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><span class="zb-script"><span class="zb-base"><i class="zb-var">g</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><i class="zb-var">n</i><span class="zb-textchar">)</span></span></p>
 <pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-ty">int</span> <span class="tk-fn">find</span>(<span class="tk-ty">int</span> k) {
-    <span class="tk-ty">int</span> low = <span class="tk-nu">0</span>, high = n - <span class="tk-nu">1</span>, res = n - <span class="tk-nu">1</span>;
-    <span class="tk-kw">while</span> (low &lt;= high) {
-        <span class="tk-ty">int</span> mid = (low + high) / <span class="tk-nu">2</span>;
-        <span class="tk-kw">if</span> (<span class="tk-fn">query</span>(mid) &gt;= k) {
-            res = mid;
-            high = mid - <span class="tk-nu">1</span>;
-        } <span class="tk-kw">else</span> {
-            low = mid + <span class="tk-nu">1</span>;
-        }
-    }
-    <span class="tk-kw">return</span> res;
+<span class="tk-ty">int</span> low = <span class="tk-nu">0</span>, high = n - <span class="tk-nu">1</span>, res = n - <span class="tk-nu">1</span>;
+<span class="tk-kw">while</span> (low &lt;= high) {
+<span class="tk-ty">int</span> mid = (low + high) / <span class="tk-nu">2</span>;
+<span class="tk-kw">if</span> (<span class="tk-fn">query</span>(mid) &gt;= k) {
+res = mid;
+high = mid - <span class="tk-nu">1</span>;
+} <span class="tk-kw">else</span> {
+low = mid + <span class="tk-nu">1</span>;
+}
+}
+<span class="tk-kw">return</span> res;
 }</code><button class="copy-btn" type="button">复制</button></pre>
 <hr>
 <h2 class="zb-vl" id="h--c-快来帮帮我-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/662" data-md-link="outer" target="_blank" rel="noopener noreferrer">C 快来帮帮我</a></h2>
 <p>树状数组需要离散化，所以推荐用归并排序。</p>
-<ul><li>这道题如果不限制只有相邻的才能交换呢？</li></ul></div>
+<ul><li>这道题如果不限制只有相邻的才能交换呢？</li></ul>
+<p>事实上，如果允许任意交换两个位置的数（不再限于相邻），最少交换次数就变成了一个排列的<strong>循环分解</strong>问题。</p>
+<p>设总交换次数为<span class="zb-math zb-math-inline"><i class="zb-var">t</i></span>，则<strong><span class="zb-math zb-math-inline"><span class="zb-script"><span class="zb-base"><i class="zb-var">t</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">m</i><i class="zb-var">i</i><i class="zb-var">n</i></span></span></span><span class="zb-op">=</span><i class="zb-var">n</i><span class="zb-op">-</span><i class="zb-var">c</i></span></strong>，其中 <span class="zb-math zb-math-inline"><i class="zb-var">c</i></span> 是数组构成的置换中<strong>循环（环）的个数</strong>。</p>
+<p>假设数组排序后每个元素都有一个&quot;目标位置&quot;。我们从某个位置出发，把该位置的元素送到它的目标位置，再把被挤走的元素送到它的目标位置……最终一定会回到起点，形成一个&quot;环&quot;。</p>
+<p>一个长度为 <span class="zb-math zb-math-inline"><i class="zb-var">L</i></span> 的环，只需要 <span class="zb-math zb-math-inline"><i class="zb-var">L</i><span class="zb-op">-</span><span class="zb-digit">1</span></span> 次交换就能全部归位。所以：</p>
+<div class="zb-math zb-math-block"><i class="zb-var">t</i><span class="zb-op">=</span><span class="zb-bigop"><span class="zb-over"></span><span class="zb-op">∑</span><span class="zb-under"></span></span><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">L</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">i</i></span></span></span><span class="zb-op">-</span><span class="zb-digit">1</span><span class="zb-textchar">)</span><span class="zb-op">=</span><i class="zb-var">n</i><span class="zb-op">-</span><i class="zb-var">c</i></div>
+<p>我们可以验证一下样例：</p>
+<p>原数组：<code>3 1 4 2 5</code>，排序后：<code>1 2 3 4 5</code></p>
+<table><thead><tr><th style="text-align:center">当前位置</th><th style="text-align:center">当前元素</th><th style="text-align:center">应该在的位置</th></tr></thead><tbody><tr><td style="text-align:center">0</td><td style="text-align:center">3</td><td style="text-align:center">2</td></tr><tr><td style="text-align:center">1</td><td style="text-align:center">1</td><td style="text-align:center">0</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center">4</td><td style="text-align:center">3</td></tr><tr><td style="text-align:center">3</td><td style="text-align:center">2</td><td style="text-align:center">1</td></tr><tr><td style="text-align:center">4</td><td style="text-align:center">5</td><td style="text-align:center">4</td></tr></tbody></table>
+<p>找环：</p>
+<ul><li>从位置 0 出发：<strong>0 → 2 → 3 → 1 → 0</strong>，形成长度为 4 的环</li><li>位置 4：<strong>4 → 4</strong>，自环，长度为 1</li></ul>
+<p>共 <strong>2 个环</strong>，最少交换 = 5 - 2 = <strong>3 次</strong>。</p>
+<p>实际操作：</p>
+<ol><li>交换位置 0 和 2：<code>4 1 3 2 5</code></li><li>交换位置 0 和 3：<code>2 1 3 4 5</code></li><li>交换位置 0 和 1：<code>1 2 3 4 5</code> </li></ol>
+<ul><li>有重复元素怎么办？</li></ul>
+<p>题目中 <span class="zb-math zb-math-inline"><span class="zb-script"><span class="zb-base"><i class="zb-var">a</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">i</i></span></span></span></span> 可能重复（<span class="zb-math zb-math-inline"><span class="zb-digit">0</span><span class="zb-sym">≤</span><span class="zb-script"><span class="zb-base"><i class="zb-var">a</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">i</i></span></span></span><span class="zb-sym">≤</span><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">9</span></span><span class="zb-sub"></span></span></span></span>）。对于相同值的元素，它们之间可以任意排列，因此我们要<strong>最大化环的数量</strong>。</p>
+<p>贪心策略：<strong>相同值的元素按照原来的相对顺序分配目标位置</strong>（即稳定排序）。这样相同值的元素尽量留在原位形成自环，环数最多，交换最少。</p>
+<div class="zb-code-tabs"><div class="zb-tab-bar"><button class="zb-tab on" type="button" data-zbtab="0">C</button><button class="zb-tab" type="button" data-zbtab="1">C++</button></div><pre class="zb-code" data-zbpre="0" data-lang="C" data-code-lang="c"><code><span class="tk-kw">#include</span> &lt;stdio.<span class="tk-pr">h</span>&gt;
+<span class="tk-kw">#include</span> &lt;stdlib.<span class="tk-pr">h</span>&gt;
+<span class="tk-kw">#define</span> <span class="tk-cls">MAX</span> <span class="tk-nu">300005</span>
+<span class="tk-ty">int</span> n;
+<span class="tk-ty">struct</span> <span class="tk-cls">Num</span> {
+    <span class="tk-ty">int</span> val; <span class="tk-cm">// 数值</span>
+    <span class="tk-ty">int</span> pos; <span class="tk-cm">// 原来在第几个位置（0 到 n-1）</span>
+} a[<span class="tk-cls">MAX</span>], _a[<span class="tk-cls">MAX</span>];
+<span class="tk-ty">int</span> target[<span class="tk-cls">MAX</span>];  <span class="tk-cm">// 记录每个位置上的数，排序后应该去哪个位置</span>
+<span class="tk-ty">int</span> visited[<span class="tk-cls">MAX</span>]; <span class="tk-cm">// 记录每个位置是否已经找过环</span>
+<span class="tk-cm">// 比较函数，给 qsort 排序用</span>
+<span class="tk-ty">int</span> <span class="tk-fn">cmp</span>(<span class="tk-ty">const</span> <span class="tk-ty">void</span> *x, <span class="tk-ty">const</span> <span class="tk-ty">void</span> *y) {
+    <span class="tk-ty">struct</span> <span class="tk-cls">Num</span> *p1 = (<span class="tk-ty">struct</span> <span class="tk-cls">Num</span> *)x;
+    <span class="tk-ty">struct</span> <span class="tk-cls">Num</span> *p2 = (<span class="tk-ty">struct</span> <span class="tk-cls">Num</span> *)y;
+    <span class="tk-kw">if</span> (p1-&gt;val != p2-&gt;val)
+        <span class="tk-kw">return</span> p1-&gt;val - p2-&gt;val; <span class="tk-cm">// 优先按数值从小到大排</span>
+    <span class="tk-kw">return</span> p1-&gt;pos - p2-&gt;pos;    <span class="tk-cm">// 数值相同时，按原位置顺序排</span>
+}
+<span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
+    <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;n);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++) {
+        <span class="tk-fn">scanf</span>(<span class="tk-st">&quot;%d&quot;</span>, &amp;a[i].<span class="tk-pr">val</span>);
+        a[i].<span class="tk-pr">pos</span> = i;
+    }
+    <span class="tk-cm">// 排序（直接拷贝到另一个数组，保留原数组用于找环）</span>
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++)
+        _a[i] = a[i];
+    <span class="tk-fn">qsort</span>(_a, n, <span class="tk-fn">sizeof</span>(<span class="tk-ty">struct</span> <span class="tk-cls">Num</span>), cmp);
+    <span class="tk-cm">// 建立映射：原来在第 i 个位置的数，排序后应该去 target_pos[i]</span>
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++)
+        target[_a[i].<span class="tk-pr">pos</span>] = i;
+    <span class="tk-cm">// 找环</span>
+    <span class="tk-ty">int</span> cnt = <span class="tk-nu">0</span>; <span class="tk-cm">// 环的个数</span>
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++)
+        visited[i] = <span class="tk-nu">0</span>; <span class="tk-cm">// 初始都标记为没走过</span>
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++) {
+        <span class="tk-kw">if</span> (!visited[i]) {
+            cnt++; <span class="tk-cm">// 发现一个新环</span>
+            <span class="tk-ty">int</span> cur = i;
+            <span class="tk-cm">// 沿着环一直走，直到走回已经标记过的位置</span>
+            <span class="tk-kw">while</span> (!visited[cur]) {
+                visited[cur] = <span class="tk-nu">1</span>;  <span class="tk-cm">// 标记当前位置已走过</span>
+                cur = target[cur]; <span class="tk-cm">// 走到它应该去的下一个位置</span>
+            }
+        }
+    }
+    <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d\n&quot;</span>, n - cnt);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++)
+        <span class="tk-fn">printf</span>(<span class="tk-st">&quot;%d &quot;</span>, _a[i].<span class="tk-pr">val</span>);
+    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+}</code><button class="copy-btn" type="button">复制</button></pre><pre class="zb-code" data-zbpre="1" hidden data-lang="C++" data-code-lang="cpp"><code><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;
+<span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;
+<span class="tk-ty">int</span> n;
+<span class="tk-ty">struct</span> <span class="tk-cls">Num</span> {
+    <span class="tk-ty">int</span> val; <span class="tk-cm">// 数值</span>
+    <span class="tk-ty">int</span> pos; <span class="tk-cm">// 原来在第几个位置（0 到 n-1）</span>
+};
+<span class="tk-ty">bool</span> <span class="tk-fn">cmp</span>(<span class="tk-ty">const</span> <span class="tk-cls">Num</span> &amp;p1, <span class="tk-ty">const</span> <span class="tk-cls">Num</span> &amp;p2) {
+    <span class="tk-kw">if</span> (p1.<span class="tk-pr">val</span> != p2.<span class="tk-pr">val</span>)
+        <span class="tk-kw">return</span> p1.<span class="tk-pr">val</span> &lt; p2.<span class="tk-pr">val</span>; <span class="tk-cm">// 优先按数值从小到大排</span>
+    <span class="tk-kw">return</span> p1.<span class="tk-pr">pos</span> &lt; p2.<span class="tk-pr">pos</span>;    <span class="tk-cm">// 数值相同时，按原位置顺序排</span>
+}
+<span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
+    ios::<span class="tk-fn">sync_with_stdio</span>(<span class="tk-cs">false</span>);
+    cin.<span class="tk-fn">tie</span>(<span class="tk-cs">nullptr</span>);
+    cin &gt;&gt; n;
+    vector&lt;<span class="tk-cls">Num</span>&gt; <span class="tk-fn">a</span>(n), <span class="tk-fn">_a</span>(n);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++) {
+        cin &gt;&gt; a[i].<span class="tk-pr">val</span>;
+        a[i].<span class="tk-pr">pos</span> = i;
+    }
+    <span class="tk-cm">// 排序（直接拷贝到另一个数组，保留原数组用于找环）</span>
+    _a = a;
+    <span class="tk-fn">sort</span>(_a.<span class="tk-fn">begin</span>(), _a.<span class="tk-fn">end</span>(), cmp);
+    <span class="tk-cm">// 建立映射：原来在第 i 个位置的数，排序后应该去 target_pos[i]</span>
+    vector&lt;<span class="tk-ty">int</span>&gt; <span class="tk-fn">target</span>(n);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++)
+        target[_a[i].<span class="tk-pr">pos</span>] = i;
+    <span class="tk-cm">// 找环</span>
+    <span class="tk-ty">int</span> cnt = <span class="tk-nu">0</span>; <span class="tk-cm">// 环的个数</span>
+    vector&lt;<span class="tk-ty">int</span>&gt; <span class="tk-fn">visited</span>(n, <span class="tk-nu">0</span>);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++) {
+        <span class="tk-kw">if</span> (!visited[i]) {
+            cnt++; <span class="tk-cm">// 发现一个新环</span>
+            <span class="tk-ty">int</span> cur = i;
+            <span class="tk-cm">// 沿着环一直走，直到走回已经标记过的位置</span>
+            <span class="tk-kw">while</span> (!visited[cur]) {
+                visited[cur] = <span class="tk-nu">1</span>;  <span class="tk-cm">// 标记当前位置已走过</span>
+                cur = target[cur]; <span class="tk-cm">// 走到它应该去的下一个位置</span>
+            }
+        }
+    }
+    cout &lt;&lt; n - cnt &lt;&lt; endl;
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; i++)
+        cout &lt;&lt; _a[i].<span class="tk-pr">val</span> &lt;&lt; <span class="tk-st">&quot; &quot;</span>;
+    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+}</code><button class="copy-btn" type="button">复制</button></pre></div>
+<hr></div>
 <section class="interactions" aria-label="互动区">
 <div class="interactions-head"><span class="interactions-star" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M 44.3 14.0 Q 50.0 6.0 55.7 14.0 L 61.1 21.5 Q 65.9 28.2 73.7 30.6 L 82.5 33.4 Q 91.8 36.4 86.0 44.3 L 80.5 51.8 Q 75.7 58.3 75.7 66.5 L 75.8 75.8 Q 75.9 85.6 66.6 82.5 L 57.8 79.6 Q 50.0 77.0 42.2 79.6 L 33.4 82.5 Q 24.1 85.6 24.2 75.8 L 24.3 66.5 Q 24.3 58.3 19.5 51.8 L 14.0 44.3 Q 8.2 36.4 17.5 33.4 L 26.3 30.6 Q 34.1 28.2 38.9 21.5 Z"/></svg></span><div>
 <h2>留言</h2><p>留言直接显示在这里，写在页面上、用 GitHub 账号确认发布；👍 点赞、在 Issue 下回复，留言会长期存档到本站仓库；无广告、无追踪。</p></div></div>
