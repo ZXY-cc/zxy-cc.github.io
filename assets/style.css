@@ -369,6 +369,8 @@ body {
 .meteor-f { top: 48%; left: 58%; --len: 150px; --angle: -19deg; --tx: -320px; --ty: 118px; --dur: 23s; --delay: 3s;  --peak: .58; }
 .meteor-g { top: 78%; left: 70%; --len: 118px; --angle: -34deg; --tx: -260px; --ty: 172px; --dur: 41s; --delay: 30s; --peak: .40; }
 .meteor-h { top: 32%; left: 36%; --len: 175px; --angle: -25deg; --tx: -360px; --ty: 176px; --dur: 31s; --delay: 12s; --peak: .54; }
+.meteor-i { top: 14%; left: 52%; --len: 148px; --angle: -22deg; --tx: -300px; --ty: 138px; --dur: 37s; --delay: 24s; --peak: .46; }
+.meteor-j { top: 86%; left: 22%; --len: 128px; --angle: -31deg; --tx: -275px; --ty: 160px; --dur: 43s; --delay: 7s;  --peak: .42; }
 
 /* ---------- 偶尔掠过的流星：从右上到左下，头部出屏后才熄灭 ----------
    光迹右端永远锚在头部（left:-tlen + width:tlen => 右端在 x=0），
@@ -416,6 +418,8 @@ body {
 .shoot-d { top: 56%; left: 92%; --sangle: 152deg; --tlen: 30vw; --sdist: 118vw; --scycle: 23s; --sdelay: -14s; --speak: .70; --shold: .48; }
 .shoot-e { top: 20%; left: 76%; --sangle: 158deg; --tlen: 34vw; --sdist: 126vw; --scycle: 29s; --sdelay: -19s; --speak: .66; --shold: .45; }
 .shoot-f { top: 70%; left: 84%; --sangle: 148deg; --tlen: 26vw; --sdist: 104vw; --scycle: 37s; --sdelay: -26s; --speak: .52; --shold: .36; }
+.shoot-g { top: 38%; left: 92%; --sangle: 154deg; --tlen: 30vw; --sdist: 112vw; --scycle: 31s; --sdelay: -9s;  --speak: .58; --shold: .40; }
+.shoot-h { top: 88%; left: 58%; --sangle: 144deg; --tlen: 24vw; --sdist: 98vw;  --scycle: 43s; --sdelay: -33s; --speak: .48; --shold: .34; }
 
 @keyframes shoot-head {
   0%, 43.9%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.8); }
@@ -1673,7 +1677,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 .settings-info p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--muted); }
 .quality-group { flex: 2 1 420px; display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .quality-item {
   position: relative; display: flex; flex-direction: column; gap: 6px;
   padding: 18px 16px 16px; text-align: left; cursor: pointer; font: inherit;
@@ -1726,15 +1730,16 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-spec tbody tr:last-child th, .q-spec tbody tr:last-child td { border-bottom: none; }
 .q-spec tbody tr:hover td { background: var(--accent-soft); }
 
-/* ---------- 画质档位：高 = 完整效果（默认档），极高 = 高 + 实时毛玻璃，中 / 低 逐层减负 ----------
-   只作用于根节点带 data-quality 的情况，高画质（默认、无该属性）一行都不改。
+/* ---------- 画质档位：高 = 全部美术效果（默认），中 = 省下实时毛玻璃，低 = 阅读档 ----------
+   内部 id 沿用 ultra / high / mid：v3.56 起 ultra→新高、high→新中、mid→新低，原低档取消。
+   只作用于根节点带 data-quality 的情况，中画质（内部 high、无该属性）一行都不改。
    CSS 负责静态装饰与渲染开销，脚本负责跳过逐帧的光幕与卡片高光。 */
-/* 极高：在「高」之上独占实时毛玻璃、最后 2 片花瓣与 1+1 条流星 */
+/* 高（内部 ultra）：独占实时毛玻璃、最后 2 片花瓣与 3+3 条加密流星 */
 :root[data-quality="ultra"] { --glass-blur: blur(10px) saturate(128%); }
 :root[data-quality="ultra"] .petals .petal.q-ultra,
 :root[data-quality="ultra"] .meteors .meteor.q-ultra,
 :root[data-quality="ultra"] .shoots .shoot.q-ultra { display: block; }
-/* 中：72 星 / 10 花瓣 / 常驻 5 + 快速 4 流星 / 6 花朵游走 */
+/* 低（内部 mid）：密度沿用原中档 72 星 / 10 花瓣 / 6 花朵，只隐藏 q-high / q-ultra 增量 */
 :root[data-quality="mid"] .stars .star.q-high,
 :root[data-quality="mid"] .petals .petal.q-high,
 :root[data-quality="mid"] .petals .petal.q-ultra,
@@ -1743,25 +1748,24 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-quality="mid"] .shoots .shoot.q-high,
 :root[data-quality="mid"] .shoots .shoot.q-ultra,
 :root[data-quality="mid"] .blooms .sky-deco.q-high { display: none; }
-/* 低 = 阅读优先：只留 36 颗静止星点，花瓣、流星、花朵爱心、流萤与启动闪屏整组关闭，
-   背景里不再有任何移动物或杂物干扰阅读 */
-:root[data-quality="low"] .stars .star.q-high,
-:root[data-quality="low"] .stars .star.q-mid { display: none; }
-:root[data-quality="low"] .petals,
-:root[data-quality="low"] .meteors,
-:root[data-quality="low"] .shoots,
-:root[data-quality="low"] .blooms,
-:root[data-quality="low"] .fireflies,
-:root[data-quality="low"] .splash { display: none !important; }
-/* 低：星点也停止漂移与呼吸，成为完全静止的背景 */
-:root[data-quality="low"] .stars .star,
-:root[data-quality="low"] .stars .star.is-puffy::before { animation: none !important; opacity: .62; }
-/* 低：取消跟随鼠标的光幕与尾迹，以及鼠标停在卡片上时发出的高光 */
-:root[data-quality="low"] .cursor-glow,
-:root[data-quality="low"] .mouse-trail { display: none !important; }
-:root[data-quality="low"] .sheen::after { display: none !important; }
-/* 低：关闭实时毛玻璃，只留静态水彩天空 */
-:root[data-quality="low"] { --glass-blur: none; }
+/* 低：阅读优先——流星、流萤、启动闪屏整组关闭，星点 / 花瓣 / 花朵全部静止；
+   背景里不再有任何移动物，鼠标斥力也只在 ultra / high 两档由 JS 启用 */
+:root[data-quality="mid"] .meteors,
+:root[data-quality="mid"] .shoots,
+:root[data-quality="mid"] .fireflies,
+:root[data-quality="mid"] .splash { display: none !important; }
+:root[data-quality="mid"] .stars .star,
+:root[data-quality="mid"] .stars .star.is-puffy::before,
+:root[data-quality="mid"] .petals .petal,
+:root[data-quality="mid"] .blooms .sky-deco { animation: none !important; }
+:root[data-quality="mid"] .stars .star { opacity: .62; }
+:root[data-quality="mid"] .petals .petal { opacity: var(--op, .42); }
+/* 低：取消跟随鼠标的光幕、尾迹与卡片高光 */
+:root[data-quality="mid"] .cursor-glow,
+:root[data-quality="mid"] .mouse-trail { display: none !important; }
+:root[data-quality="mid"] .sheen::after { display: none !important; }
+/* 低：关闭毛玻璃，只留静态水彩天空 */
+:root[data-quality="mid"] { --glass-blur: none; }
 
 /* ---------- 启动闪屏 / 光标柔光 / 流萤 ---------- */
 .splash { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;

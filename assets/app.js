@@ -533,32 +533,33 @@
   }
 
   /* ---------- 设置：画质档位 ----------
-     中 = 站点原本的完整效果（旧「高」档整体下移一档）；极高 = 高的全部效果 + 实时毛玻璃
-     + 更密一档星空，以后新增的画质细节都挂在极高上；低 = 旧「中」档（星点减半、装饰静止）。
+     v3.56 起只有高 / 中 / 低三档：原「极高」的全部配置平移为「高」并成为默认，
+     原「高」平移为「中」，原「中」平移为「低」并按「阅读优先」静态化；原「低」档取消。
+     内部档位 id 保持不变（ultra / high / mid），只是显示名与配置定位重新对齐，
+     这样 CSS 分级与 DOM 的 q-core/q-mid/q-high/q-ultra 标注都不必重写。
      根节点 data-quality 驱动 CSS（首屏由 index.html 里的内联脚本预置，避免闪烁），
      qualityNow 供脚本判断是否需要跑逐帧光幕；切换即时生效，无需刷新。 */
   var QUALITY_KEY = 'zb-quality';
   var QUALITY_OPTS = [
-    { id: 'ultra', name: '极高', desc: '「高」的全部效果之上开启实时毛玻璃，花瓣补到 16 片、流星加到 8 + 6；以后新增的画质细节都会出现在这一档' },
-    { id: 'high', name: '高', desc: '最佳观感密度：108 星 / 14 花瓣 / 常驻流星 7 + 快速 5，光幕与卡片高光全开（默认档）' },
-    { id: 'mid', name: '中', desc: '密度略降一档：72 星 / 10 花瓣 / 流星 5+4，花朵爱心游走；保留光幕与主要动效' },
-    { id: 'low', name: '低', desc: '阅读优先：只留 36 颗静止星点，无花瓣、流星、花朵与流萤，关闭光幕、卡片高光与启动闪屏' }
+    { id: 'ultra', name: '高', desc: '全部美术效果：108 星 / 16 花瓣、常驻 10 + 快速 8 流星、8 个游走花朵、实时毛玻璃、鼠标斥力与光幕（默认档）' },
+    { id: 'high', name: '中', desc: '保留多数效果，只省下最耗性能的实时毛玻璃：108 星 / 14 花瓣、流星 7 + 5、斥力与光幕全开' },
+    { id: 'mid', name: '低', desc: '阅读优先：72 颗静止星点 / 10 片静止花瓣 / 6 个静止花朵，无流星、流萤、斥力、光幕与启动闪屏' }
   ];
   var QUALITY_SPEC = [
-    ['星星 / 花瓣', '108 / 16', '108 / 14', '72 / 10', '36 / 0'],
-    ['星点漂移', '开启', '开启', '开启', '关闭'],
-    ['花朵与爱心', '8 个 · 游走', '8 个 · 游走', '6 个 · 游走', '无'],
-    ['流星', '常驻 8 + 快速 6', '常驻 7 + 快速 5', '常驻 5 + 快速 4', '无'],
-    ['流萤', '夜间 8 只', '夜间 8 只', '夜间 8 只', '无'],
-    ['鼠标斥力', '开启', '开启', '关闭', '关闭'],
-    ['鼠标光幕 / 尾迹', '开启', '开启', '开启', '关闭'],
-    ['卡片高光', '开启', '开启', '开启', '关闭'],
-    ['实时毛玻璃', '开启', '关闭', '关闭', '关闭'],
-    ['代码高亮', 'Woodfish 配色', 'Woodfish 配色', 'Woodfish 配色', 'Woodfish 配色'],
-    ['入场动画', '开启', '开启', '开启', '开启']
+    ['星星 / 花瓣', '108 / 16', '108 / 14', '72 / 10'],
+    ['星点漂移', '开启', '开启', '关闭'],
+    ['花朵与爱心', '8 个 · 游走', '8 个 · 游走', '6 个 · 静止'],
+    ['流星', '常驻 10 + 快速 8', '常驻 7 + 快速 5', '无'],
+    ['流萤', '夜间 8 只', '夜间 8 只', '无'],
+    ['鼠标斥力', '开启', '开启', '关闭'],
+    ['鼠标光幕 / 尾迹', '开启', '开启', '关闭'],
+    ['卡片高光', '开启', '开启', '关闭'],
+    ['实时毛玻璃', '开启', '关闭', '关闭'],
+    ['代码高亮', 'Woodfish 配色', 'Woodfish 配色', 'Woodfish 配色'],
+    ['入场动画', '开启', '开启', '开启']
   ];
-  var qualityNow = 'high';
-  /* 用户没选过画质时，按设备能力自动降档：内存/核心极少直接给静态档，
+  var qualityNow = 'ultra';
+  /* 用户没选过画质时，按设备能力自动降档：内存/核心极少直接给阅读档，
      与 index.html 首屏内联脚本保持同一套判断，避免首帧闪烁。 */
   function autoQuality() {
     var m = 8, c = 8;
@@ -566,9 +567,9 @@
       if (navigator.deviceMemory) m = navigator.deviceMemory;
       if (navigator.hardwareConcurrency) c = navigator.hardwareConcurrency;
     } catch (e) {}
-    if (m <= 2 || c <= 2) return 'low';
-    if (m <= 4 || c <= 4) return 'mid';
-    return 'high';
+    if (m <= 2 || c <= 2) return 'mid';
+    if (m <= 4 || c <= 4) return 'high';
+    return 'ultra';
   }
   function readQuality() {
     var v = null;
@@ -728,11 +729,11 @@
     }
   });
   function qualitySpecHtml() {
-    var head = '<thead><tr><th scope="col">效果</th><th scope="col">极高</th>' +
-      '<th scope="col">高</th><th scope="col">中</th><th scope="col">低</th></tr></thead>';
+    var head = '<thead><tr><th scope="col">效果</th><th scope="col">高</th>' +
+      '<th scope="col">中</th><th scope="col">低</th></tr></thead>';
     var body = '<tbody>' + QUALITY_SPEC.map(function (r) {
       return '<tr><th scope="row">' + esc(r[0]) + '</th><td>' + esc(r[1]) +
-        '</td><td>' + esc(r[2]) + '</td><td>' + esc(r[3]) + '</td><td>' + esc(r[4]) + '</td></tr>';
+        '</td><td>' + esc(r[2]) + '</td><td>' + esc(r[3]) + '</td></tr>';
     }).join('') + '</tbody>';
     /* 效果对照表默认折叠：外层用 0fr → 1fr 的网格行高过渡（等价于 height 0 → auto），
        同时淡入淡出，动画节奏参考 Kirameku 说说页的 0.3s 展开/收起 */
@@ -758,12 +759,12 @@
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>画质<button class="q-help" type="button" data-qspec-toggle aria-expanded="false" ' +
-      'aria-controls="q-spec-panel" aria-label="展开画质效果对照表" title="查看四档效果对照">?</button></h2>' +
+      'aria-controls="q-spec-panel" aria-label="展开画质效果对照表" title="查看三档效果对照">?</button></h2>' +
       '<p>选择画面呈现的档位，切换后立即生效。偏好保存在本机浏览器里，不会上传到任何地方。</p></div>' +
       '<div class="quality-group" role="radiogroup" aria-label="画质档位">' + opts + '</div></div>' +
       qualitySpecHtml() +
       '<p class="settings-foot">当前画质：<b id="quality-current">' + esc(qualityName(cur)) +
-      '</b> · 首次访问默认高画质；流星数量随档位递增，极高额外开启实时毛玻璃并再加一档密度；低档是阅读档，背景里不留任何移动物或装饰。</p></section>' +
+      '</b> · 首次访问默认高画质，展现全部美术效果；中画质保留多数效果、只省下最耗性能的实时毛玻璃；低画质是阅读档，背景装饰全部静止，不留流星、斥力与跟随鼠标的光效。</p></section>' +
       '<section class="settings-card glass reveal" aria-label="字体设置">' +
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>字体</h2><p>设置网页的中英文字体、代码字体与 LaTeX 公式字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
@@ -1846,7 +1847,7 @@
       }, { passive: true });
       document.addEventListener('pointermove', function (e) {
         /* 低画质不再跑逐帧光幕与卡片高光（极高 / 高 / 中一致） */
-        if (qualityNow === 'low') return;
+        if (qualityNow === 'mid') return;
         px = e.clientX; py = e.clientY;
         /* 尾迹直接在事件里落段、不等 rAF：刷新后入场动画占住帧队列时也不会跳段断线 */
         if (!trailOn) { trailX = px; trailY = py; trailOn = true; }

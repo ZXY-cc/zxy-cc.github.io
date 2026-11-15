@@ -1031,6 +1031,8 @@
         '<div class="tag-history pj-tag-picker" id="pj-tag-picker"></div></span>' +
         field('状态', 'f-pj-status', '') + '</div>' +
       field('链接', 'f-pj-link', '#/about 或 https://…') +
+      '<span class="f-cell"><label class="f-label" for="f-pj-date">发布日期</label>' +
+      '<input class="f-input" id="f-pj-date" type="date" value="' + esc(today()) + '"></span>' +
       '<div class="f-actions"><button class="primary-btn" type="button" data-act="save-project">' +
       (editing ? '保存修改' : '保存到本机') + '</button></div></div>';
   }
@@ -1339,9 +1341,9 @@
     if (asDraft) return say('草稿已保存到本机，下次打开工坊会继续这一篇。');
     var editing = (state.editing && state.editing.kind === 'posts') ? state.editing : null;
     var item = {
-      /* 重编辑保留原来的 slug / 日期，避免生成一篇新文章 */
+      /* 重编辑保留原来的 slug；日期一律以表单为准（编辑载入时默认当日，可随时改） */
       slug: editing ? editing.id : (d.slug || uid('p')), title: d.title,
-      date: editing ? (findItem('posts', editing.id) || {}).date || d.date : (d.date || today()),
+      date: d.date || today(),
       tags: d.tags.slice(), cover: d.cover || '',
       summary: d.summary || clipSummary(window.ZBMD ? window.ZBMD.plain(d.markdown) : '', 200) || d.title,
       markdown: d.markdown, body: mdRender(d.markdown),
@@ -1398,12 +1400,12 @@
   function saveProject() {
     var name = val('f-pj-name');
     if (!name) return say('项目名不能为空。', 'warn');
-    /* 重编辑保留原 id 与日期，避免变成一条新项目 */
+    /* 重编辑保留原 id；日期以表单为准（编辑载入时默认当日，可随时改） */
     var old = (state.editing && state.editing.kind === 'projects')
       ? findItem('projects', state.editing.id) : null;
     var item = {
       id: old ? old.id : uid('pj'), name: name, desc: val('f-pj-desc'), tags: splitTags(val('f-pj-tags')),
-      status: val('f-pj-status'), date: old ? old.date : today(), link: val('f-pj-link')
+      status: val('f-pj-status'), date: val('f-pj-date') || (old ? old.date : today()), link: val('f-pj-link')
     };
     if (!upsert('projects', item)) return say('保存失败。', 'warn');
     state.editing = null;
@@ -1988,7 +1990,8 @@
         d.markdown = target.markdown || htmlToMd(target.body);
         d.tags = (target.tags || []).slice(); d.cover = target.cover || '';
         d.summary = target.summary || '';
-        d.date = target.date || today(); d.status = target.status || 'published';
+        /* 编辑载入时日期默认当日，不再是原发布日期；改完保存即以表单日期为准 */
+        d.date = today(); d.status = target.status || 'published';
         state.draft = d;
         state.editing = { kind: 'posts', id: target.slug };
         state.tab = 'post';
@@ -2004,7 +2007,7 @@
         setText('f-moment-text', target.text);
         setText('f-mood', target.mood);
         setText('f-place', target.place);
-        setText('f-moment-date', target.date || today());
+        setText('f-moment-date', today());
         var mp = document.getElementById('moment-img-preview');
         if (mp && target.images && target.images.length) {
           mp.innerHTML = target.images.map(function (s) {
@@ -2021,7 +2024,7 @@
         setText('f-ch-tags', (target.tags || []).join(', '));
         renderChPicker();
         setText('f-ch-mood', target.mood);
-        setText('f-ch-date', target.date || today());
+        setText('f-ch-date', today());
         setText('f-ch-body', target.markdown || htmlToMd(target.body));
         say('已载入这则杂谈，改完点「保存修改」。');
       } else if (ep[0] === 'projects') {
@@ -2034,6 +2037,7 @@
         renderPjPicker();
         setText('f-pj-status', target.status);
         setText('f-pj-link', target.link);
+        setText('f-pj-date', today());
         say('已载入这个项目，改完点「保存修改」。');
       } else if (ep[0] === 'friends') {
         state.editing = { kind: 'friends', id: target.id };
@@ -2244,6 +2248,8 @@
       var img = document.getElementById('site-avatar-preview');
       if (img) img.src = t.value;
     } else if (t.id === 'f-date') {
+      /* 日期改动立刻写回草稿，避免「改了日期但保存仍是旧时间」 */
+      syncFromForm();
       scheduleSave();
     } else if (t.id === 'f-taglib-new') {
       state.tagDraft = t.value;
