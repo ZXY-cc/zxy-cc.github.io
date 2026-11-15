@@ -266,7 +266,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 出现次数:    <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span>   <span class="tk-nu">0</span> ← 一开始全是 <span class="tk-nu">0</span></code><button class="copy-btn" type="button">复制</button></pre>
 <p>我们需要<strong>频繁做两件事</strong>：</p>
 <table><thead><tr><th style="text-align:center">操作</th><th style="text-align:center">含义</th><th style="text-align:center">例子</th></tr></thead><tbody><tr><td style="text-align:center"><strong>add(x, v)</strong></td><td style="text-align:center">把位置 x 的值 +v（插入一个新数）</td><td style="text-align:center">来了一个可爱度 4 的奶龙 → <code>add(4, 1)</code></td></tr><tr><td style="text-align:center"><strong>query(x)</strong></td><td style="text-align:center">查询位置 1 到 x 的<strong>总和</strong>（有多少只奶龙可爱度 ≤ x）</td><td style="text-align:center"><code>query(4)</code> = 可爱度 ≤ 4 的奶龙有几只</td></tr></tbody></table>
-<p>如果只是普通做法：add 是 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span>，但 query 要从 1 加到 x，是 <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span>。<br>而树状数组的魔法：add 和 query 都是<strong> <span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span></strong>，因为它不是傻傻地一个个加，而是<strong>提前把&quot;一段一段的和&quot;存好了</strong>。</p>
+<p>如果只是普通做法：add 是<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><span class="zb-digit">1</span><span class="zb-textchar">)</span></span>，但 query 要从 1 加到 x，是<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><span class="zb-textchar">)</span></span>。<br>而树状数组的魔法：add 和 query 都是<strong><span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">l</i><i class="zb-var">o</i><i class="zb-var">g</i><i class="zb-var">n</i><span class="zb-textchar">)</span></span></strong>，因为它不是傻傻地一个个加，而是<strong>提前把&quot;一段一段的和&quot;存好了</strong>。</p>
 <p>这是理解树状数组<strong>最关键</strong>的一步。<br>树状数组中，<strong>每个位置 i 不仅存自己的值，还管着一段区间</strong>。它管的区间长度，由 <code>lowbit(i)</code> 决定。</p>
 <ul><li>什么是 lowbit？</li></ul>
 <pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-ty">int</span> <span class="tk-fn">lowbit</span>(<span class="tk-ty">int</span> x) {
@@ -281,7 +281,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <blockquote><p>简单发现：偶数位置管得多（因为低位有 0），奇数位置管得少（最低位 1 就在个位，只管自己）。2 的幂次方位置管得最多（如 4 管 1~4，8 管 1~8）。</p></blockquote>
 <p>我们可以把树状数组的&quot;管辖关系&quot;可视化：</p>
 <pre class="zb-code"><code>位置:      <span class="tk-nu">1</span>     <span class="tk-nu">2</span>    <span class="tk-nu">3</span>      <span class="tk-nu">4</span>       <span class="tk-nu">5</span>     <span class="tk-nu">6</span>    <span class="tk-nu">7</span>          <span class="tk-nu">8</span>
-          ┌┴┐  ┌─┴─┐ ┌┴┐  ┌──┴───┐  ┌┴┐  ┌─┴─┐ ┌┴┐  ┌──────┴───────┐
+    ┌┴┐  ┌─┴─┐ ┌┴┐  ┌──┴───┐  ┌┴┐  ┌─┴─┐ ┌┴┐  ┌──────┴───────┐
 管辖范围: [<span class="tk-nu">1</span>]  [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>] [<span class="tk-nu">3</span>]  [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>] [<span class="tk-nu">5</span>]  [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] [<span class="tk-nu">7</span>] [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>,<span class="tk-nu">5</span>,<span class="tk-nu">6</span>,<span class="tk-nu">7</span>,<span class="tk-nu">8</span>]</code><button class="copy-btn" type="button">复制</button></pre>
 <hr>
 <p>现在我们的目标是求 <code>[1, x]</code> 的总和<br>我们可以采用以下策略：<strong>从 x 出发，不断跳到&quot;更大的管辖块&quot;，把沿途的值累加起来。</strong></p>
@@ -296,24 +296,24 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <p>因为 <code>tree[x]</code> 已经管了 <code>[x - lowbit(x) + 1, x]</code> 这段，剩下的前缀是 <code>[1, x - lowbit(x)]</code>，所以跳到 <code>x - lowbit(x)</code> 继续查。</p>
 <p>为了方便理解这魔法，我们可以手推：query(7)</p>
 <pre class="zb-code"><code><span class="tk-fn">query</span>(<span class="tk-nu">7</span>):
-  ① x=<span class="tk-nu">7</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">7</span>)=<span class="tk-nu">1</span>, tree[<span class="tk-nu">7</span>] 管 [<span class="tk-nu">7</span>,<span class="tk-nu">7</span>]       → res += tree[<span class="tk-nu">7</span>]
-     还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">6</span>]，跳 x = <span class="tk-nu">7</span>-<span class="tk-nu">1</span> = <span class="tk-nu">6</span>
+    ① x=<span class="tk-nu">7</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">7</span>)=<span class="tk-nu">1</span>, tree[<span class="tk-nu">7</span>] 管 [<span class="tk-nu">7</span>,<span class="tk-nu">7</span>]       → res += tree[<span class="tk-nu">7</span>]
+            还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">6</span>]，跳 x = <span class="tk-nu">7</span>-<span class="tk-nu">1</span> = <span class="tk-nu">6</span>
 
-  ② x=<span class="tk-nu">6</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">6</span>)=<span class="tk-nu">2</span>, tree[<span class="tk-nu">6</span>] 管 [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>]       → res += tree[<span class="tk-nu">6</span>]
-     还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">4</span>]，跳 x = <span class="tk-nu">6</span>-<span class="tk-nu">2</span> = <span class="tk-nu">4</span>
+    ② x=<span class="tk-nu">6</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">6</span>)=<span class="tk-nu">2</span>, tree[<span class="tk-nu">6</span>] 管 [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>]       → res += tree[<span class="tk-nu">6</span>]
+            还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">4</span>]，跳 x = <span class="tk-nu">6</span>-<span class="tk-nu">2</span> = <span class="tk-nu">4</span>
 
-  ③ x=<span class="tk-nu">4</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">4</span>)=<span class="tk-nu">4</span>, tree[<span class="tk-nu">4</span>] 管 [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]   → res += tree[<span class="tk-nu">4</span>]
-     还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">0</span>]，跳 x = <span class="tk-nu">4</span>-<span class="tk-nu">4</span> = <span class="tk-nu">0</span>，结束
+    ③ x=<span class="tk-nu">4</span>, <span class="tk-fn">lowbit</span>(<span class="tk-nu">4</span>)=<span class="tk-nu">4</span>, tree[<span class="tk-nu">4</span>] 管 [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]   → res += tree[<span class="tk-nu">4</span>]
+            还剩 [<span class="tk-nu">1</span>,<span class="tk-nu">0</span>]，跳 x = <span class="tk-nu">4</span>-<span class="tk-nu">4</span> = <span class="tk-nu">0</span>，结束
 
 res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + tree[<span class="tk-nu">4</span>]
-    = [<span class="tk-nu">7</span>] + [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] + [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]
-    = [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>,<span class="tk-nu">5</span>,<span class="tk-nu">6</span>,<span class="tk-nu">7</span>]  ✓ 完美覆盖！</code><button class="copy-btn" type="button">复制</button></pre>
+        = [<span class="tk-nu">7</span>] + [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] + [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]
+        = [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>,<span class="tk-nu">5</span>,<span class="tk-nu">6</span>,<span class="tk-nu">7</span>]  ✓ 完美覆盖！</code><button class="copy-btn" type="button">复制</button></pre>
 <p>query(7) 的跳转路径图：</p>
-<pre class="zb-code"><code>  <span class="tk-nu">7</span>  →  <span class="tk-nu">6</span>  →  <span class="tk-nu">4</span>  →  <span class="tk-nu">0</span>(停)
-  ↑     ↑     ↑
- [<span class="tk-nu">7</span>]  [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]
- 
- 合起来正好是 [<span class="tk-nu">1</span>,<span class="tk-nu">7</span>] ！</code><button class="copy-btn" type="button">复制</button></pre>
+<pre class="zb-code"><code>        <span class="tk-nu">7</span>  →  <span class="tk-nu">6</span>  →  <span class="tk-nu">4</span>  →  <span class="tk-nu">0</span>(停)
+        ↑     ↑     ↑
+    [<span class="tk-nu">7</span>]  [<span class="tk-nu">5</span>,<span class="tk-nu">6</span>] [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]
+    
+    合起来正好是 [<span class="tk-nu">1</span>,<span class="tk-nu">7</span>] ！</code><button class="copy-btn" type="button">复制</button></pre>
 <blockquote><p>关键洞察：任意数字 x 都可以拆成若干个 2 的幂次之和（这就是二进制），而树状数组的跳转恰好就是按二进制的每一位来拆的。7 = 4 + 2 + 1，所以 query(7) 刚好跳 3 次。</p></blockquote>
 <hr>
 <p>还有一个目标是把位置 x 的值 +v，同时更新所有&quot;管了 x&quot;的树状数组节点<br>不妨采用这种更新规则</p>
@@ -328,20 +328,20 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
 <table><thead><tr><th style="text-align:center">位置</th><th style="text-align:center">管的范围</th><th style="text-align:center">包含 3 吗？</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td style="text-align:center">[1,1]</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center">[1,2]</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:center"><strong>3</strong></td><td style="text-align:center">[3,3]</td><td style="text-align:center"><strong>✅</strong></td></tr><tr><td style="text-align:center"><strong>4</strong></td><td style="text-align:center">[1,2,3,4]</td><td style="text-align:center"><strong>✅</strong></td></tr><tr><td style="text-align:center">5</td><td style="text-align:center">[5,5]</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:center"><strong>6</strong></td><td style="text-align:center">[5,6]</td><td style="text-align:center">❌（不管 3）</td></tr><tr><td style="text-align:center"><strong>8</strong></td><td style="text-align:center">[1~8]</td><td style="text-align:center"><strong>✅</strong></td></tr></tbody></table>
 <p>所以 add(3, 1) 需要更新位置 3、4、8：</p>
 <pre class="zb-code"><code><span class="tk-fn">add</span>(<span class="tk-nu">3</span>, <span class="tk-nu">1</span>):
-  ① x=<span class="tk-nu">3</span>, tree[<span class="tk-nu">3</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">3</span>] 管 [<span class="tk-nu">3</span>,<span class="tk-nu">3</span>]，包含 <span class="tk-nu">3</span> ✅）
-     跳 x = <span class="tk-nu">3</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">3</span>) = <span class="tk-nu">3</span> + <span class="tk-nu">1</span> = <span class="tk-nu">4</span>
+    ① x=<span class="tk-nu">3</span>, tree[<span class="tk-nu">3</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">3</span>] 管 [<span class="tk-nu">3</span>,<span class="tk-nu">3</span>]，包含 <span class="tk-nu">3</span> ✅）
+            跳 x = <span class="tk-nu">3</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">3</span>) = <span class="tk-nu">3</span> + <span class="tk-nu">1</span> = <span class="tk-nu">4</span>
 
-  ② x=<span class="tk-nu">4</span>, tree[<span class="tk-nu">4</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">4</span>] 管 [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]，包含 <span class="tk-nu">3</span> ✅）
-     跳 x = <span class="tk-nu">4</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">4</span>) = <span class="tk-nu">4</span> + <span class="tk-nu">4</span> = <span class="tk-nu">8</span>
+    ② x=<span class="tk-nu">4</span>, tree[<span class="tk-nu">4</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">4</span>] 管 [<span class="tk-nu">1</span>,<span class="tk-nu">2</span>,<span class="tk-nu">3</span>,<span class="tk-nu">4</span>]，包含 <span class="tk-nu">3</span> ✅）
+            跳 x = <span class="tk-nu">4</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">4</span>) = <span class="tk-nu">4</span> + <span class="tk-nu">4</span> = <span class="tk-nu">8</span>
 
-  ③ x=<span class="tk-nu">8</span>, tree[<span class="tk-nu">8</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">8</span>] 管 [<span class="tk-nu">1</span>~<span class="tk-nu">8</span>]，包含 <span class="tk-nu">3</span> ✅）
-     跳 x = <span class="tk-nu">8</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">8</span>) = <span class="tk-nu">8</span> + <span class="tk-nu">8</span> = <span class="tk-nu">16</span>，超出范围，结束</code><button class="copy-btn" type="button">复制</button></pre>
+    ③ x=<span class="tk-nu">8</span>, tree[<span class="tk-nu">8</span>] += <span class="tk-nu">1</span>（tree[<span class="tk-nu">8</span>] 管 [<span class="tk-nu">1</span>~<span class="tk-nu">8</span>]，包含 <span class="tk-nu">3</span> ✅）
+            跳 x = <span class="tk-nu">8</span> + <span class="tk-fn">lowbit</span>(<span class="tk-nu">8</span>) = <span class="tk-nu">8</span> + <span class="tk-nu">8</span> = <span class="tk-nu">16</span>，超出范围，结束</code><button class="copy-btn" type="button">复制</button></pre>
 <p>add(3, 1) 的跳转路径图：</p>
-<pre class="zb-code"><code>  <span class="tk-nu">3</span>  →  <span class="tk-nu">4</span>  →  <span class="tk-nu">8</span>  →  <span class="tk-nu">16</span>(停)
-  ↑     ↑     ↑
- [<span class="tk-nu">3</span>]  [<span class="tk-nu">1</span>~<span class="tk-nu">4</span>] [<span class="tk-nu">1</span>~<span class="tk-nu">8</span>]
- 
- 所有管了位置 <span class="tk-nu">3</span> 的节点都更新了！</code><button class="copy-btn" type="button">复制</button></pre>
+<pre class="zb-code"><code>        <span class="tk-nu">3</span>  →  <span class="tk-nu">4</span>  →  <span class="tk-nu">8</span>  →  <span class="tk-nu">16</span>(停)
+        ↑     ↑     ↑
+    [<span class="tk-nu">3</span>]  [<span class="tk-nu">1</span>~<span class="tk-nu">4</span>] [<span class="tk-nu">1</span>~<span class="tk-nu">8</span>]
+    
+    所有管了位置 <span class="tk-nu">3</span> 的节点都更新了！</code><button class="copy-btn" type="button">复制</button></pre>
 <blockquote><p><strong>为什么 add 和 query 的跳转方向相反？</strong></p>
 <ul><li>query 是<strong>往前拆</strong>（x 减去 lowbit），把前缀拆成若干块。</li><li>add 是<strong>往后传播</strong>（x 加上 lowbit），把自己的变化通知所有&quot;更大的块&quot;。</li></ul></blockquote>
 <hr>
@@ -396,26 +396,26 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
 <span class="tk-ty">int</span> tree[<span class="tk-cls">MAX</span>];
 <span class="tk-ty">int</span> <span class="tk-fn">lowbit</span>(<span class="tk-ty">int</span> x) { <span class="tk-kw">return</span> x &amp; (-x); }
 <span class="tk-ty">void</span> <span class="tk-fn">add</span>(<span class="tk-ty">int</span> x, <span class="tk-ty">int</span> v) {
-  <span class="tk-kw">for</span> (; x &lt;= <span class="tk-cls">MAX</span>; x += <span class="tk-fn">lowbit</span>(x))
-    tree[x] += v;
+    <span class="tk-kw">for</span> (; x &lt;= <span class="tk-cls">MAX</span>; x += <span class="tk-fn">lowbit</span>(x))
+        tree[x] += v;
 }
 <span class="tk-ty">int</span> <span class="tk-fn">query</span>(<span class="tk-ty">int</span> x) {
-  <span class="tk-ty">int</span> res = <span class="tk-nu">0</span>;
-  <span class="tk-kw">for</span> (; x &gt; <span class="tk-nu">0</span>; x -= <span class="tk-fn">lowbit</span>(x))
-    res += tree[x];
-  <span class="tk-kw">return</span> res;
+    <span class="tk-ty">int</span> res = <span class="tk-nu">0</span>;
+    <span class="tk-kw">for</span> (; x &gt; <span class="tk-nu">0</span>; x -= <span class="tk-fn">lowbit</span>(x))
+        res += tree[x];
+    <span class="tk-kw">return</span> res;
 }
 <span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
-  cin &gt;&gt; n;
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-    cin &gt;&gt; a[i];
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
-    ans[i] = <span class="tk-fn">query</span>(a[i]);
-    <span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);
-  }
-  <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
-    cout &lt;&lt; ans[i] &lt;&lt; <span class="tk-st">&#39; &#39;</span>;
-  <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+    cin &gt;&gt; n;
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
+        cin &gt;&gt; a[i];
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++) {
+        ans[i] = <span class="tk-fn">query</span>(a[i]);
+        <span class="tk-fn">add</span>(a[i] + <span class="tk-nu">1</span>, <span class="tk-nu">1</span>);
+    }
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">1</span>; i &lt;= n; i++)
+        cout &lt;&lt; ans[i] &lt;&lt; <span class="tk-st">&#39; &#39;</span>;
+    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
 }</code><button class="copy-btn" type="button">复制</button></pre></div>
 <hr>
 <h2 class="zb-vl" id="h--b改-奶龙比可爱ii-https-code-sipc115-com-probl"><a href="https://code.sipc115.com/problem/666" data-md-link="outer" target="_blank" rel="noopener noreferrer">B改 奶龙比可爱II</a></h2>
@@ -435,17 +435,17 @@ res = tree[<span class="tk-nu">7</span>] + tree[<span class="tk-nu">6</span>] + 
 <p>而对于位置 <code>k &lt; i</code>（i <strong>左边</strong>的奶龙），位置 i 在它们的<strong>右边</strong>，不构成&quot;左边比它小的奶龙&quot;，所以不需要调整。</p>
 <p>如果再用二分查找去找第k小的数，可以让时间复杂度变为<span class="zb-math zb-math-inline"><i class="zb-var">O</i><span class="zb-textchar">(</span><i class="zb-var">n</i><i class="zb-var">l</i><i class="zb-var">o</i><span class="zb-script"><span class="zb-base"><i class="zb-var">g</i></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">2</span></span><span class="zb-sub"></span></span></span><i class="zb-var">n</i><span class="zb-textchar">)</span></span></p>
 <pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-ty">int</span> <span class="tk-fn">find</span>(<span class="tk-ty">int</span> k) {
-  <span class="tk-ty">int</span> low = <span class="tk-nu">0</span>, high = n - <span class="tk-nu">1</span>, res = n - <span class="tk-nu">1</span>;
-  <span class="tk-kw">while</span> (low &lt;= high) {
-    <span class="tk-ty">int</span> mid = (low + high) / <span class="tk-nu">2</span>;
-    <span class="tk-kw">if</span> (<span class="tk-fn">query</span>(mid) &gt;= k) {
-      res = mid;
-      high = mid - <span class="tk-nu">1</span>;
-    } <span class="tk-kw">else</span> {
-      low = mid + <span class="tk-nu">1</span>;
+    <span class="tk-ty">int</span> low = <span class="tk-nu">0</span>, high = n - <span class="tk-nu">1</span>, res = n - <span class="tk-nu">1</span>;
+    <span class="tk-kw">while</span> (low &lt;= high) {
+        <span class="tk-ty">int</span> mid = (low + high) / <span class="tk-nu">2</span>;
+        <span class="tk-kw">if</span> (<span class="tk-fn">query</span>(mid) &gt;= k) {
+            res = mid;
+            high = mid - <span class="tk-nu">1</span>;
+        } <span class="tk-kw">else</span> {
+            low = mid + <span class="tk-nu">1</span>;
+        }
     }
-  }
-  <span class="tk-kw">return</span> res;
+    <span class="tk-kw">return</span> res;
 }</code><button class="copy-btn" type="button">复制</button></pre>
 <hr>
 <h2 class="zb-vl" id="h--c-快来帮帮我-https-code-sipc115-com-problem-"><a href="https://code.sipc115.com/problem/662" data-md-link="outer" target="_blank" rel="noopener noreferrer">C 快来帮帮我</a></h2>
