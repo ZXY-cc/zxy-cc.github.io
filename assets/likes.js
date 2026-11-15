@@ -7,14 +7,18 @@
  *       每个浏览器会话、每篇文章（以及整站首页）只 +1 次，避免刷新刷屏；
  *       countView 由文章页的 [data-view-post] 触发，整站首页由
  *       [data-view-home] 触发，首页文章卡片的 [data-view] 只读不写。
- * 数字一致性：页面显示的点赞数与浏览量只认服务端 /get 的真实总数。
- *   本机是否已赞、本机上次看到的旧数字都不再参与显示，
+ * 数字一致性：页面显示的点赞数与浏览量只认服务端 /get 的真实总数，
  *   所有设备在同一时刻读到的都是同一个服务端值。
- *   读数缓存只用于同一次渲染的并发去重（3 秒），过期立即重新拉取；
- *   读取失败不再回落到各设备私有的旧值，统一保留页面里的静态基准数。
+ * 抗抖动（接口偶发变慢 / 超时，避免全站显示 0）：
+ *   1. 请求统一排队（并发 ≤3、间隔 250ms），不再一拥而上挤爆 6 连接；
+ *   2. 单次超时 15s，失败自动重试一次；
+ *   3. 会话内读数缓存 5 分钟，翻页不再重复打接口；
+ *   4. 部署时由构建脚本把服务端各键的当时总数烘进 data/counts.json，
+ *      页面先加载这份「全站统一基线」立即显示，接口成功后用真值覆盖；
+ *      接口彻底失联时，所有设备显示的都是同一份基线，不再各显各的 0。
  *   错误响应一律按失败处理（绝不把错误当成 0 缓存展示）；
  *   /hit 失败的浏览与点赞进本地补账队列（zb-hitq），下次 mount 时
- *   静默重打（每页最多 5 笔、间隔 400ms，防触发 30 次/10 秒限速）。 */
+ *   静默重打（每页最多 5 笔、间隔 400ms，防触发限速）。 */
 (function () {
   'use strict';
   var NS_LIKE = 'zxy-blog-heart';
@@ -25,13 +29,18 @@
   var LIKE_KEY = 'zb-likes';
   var OWNER_KEY = 'zb-owner-device';
   var NO_COUNT_KEY = 'zb-no-count';
-  /* v3 缓存：只保留 3 秒并发去重。v2 的 120 秒会话缓存与本机持久旧值
-     会让部分设备长期停在先前的数据上，升级键位让旧缓存立即失效。 */
-  var CACHE_KEY = 'zb-count:v3:';
+  /* v4 缓存：会话内 5 分钟。翻页 / 回首页不再对每个卡片重复打接口，
+     新会话仍然立即拉服务端真值，过期自动重拉。 */
+  var CACHE_KEY = 'zb-count:v4:';
   var QUEUE_KEY = 'zb-hitq:v1';
   var VIEWED_KEY = 'zb-viewed:v1:';
-  var TTL = 3000;
-  var TIMEOUT = 5000;
+  var TTL = 5 * 60 * 1000;
+  var TIMEOUT = 15000;
+  var RETRY_WAIT = 1200;
+  /* API 请求排队：并发 ≤3、出队间隔 250ms。首页一次要拉几十个键，
+     并发打满浏览器 6 连接后，慢接口会把后面的请求全部拖到超时。 */
+  var Q_MAX = 3, Q_GAP = 250;
+  var BASELINE_URL = 'data/counts.json';
   var DRAIN_MAX = 5, DRAIN_GAP = 400;
 
   function esc(s) {
@@ -89,7 +98,7 @@
       if (s) s.setItem(CACHE_KEY + k, JSON.stringify({ t: Date.now(), n: n }));
     } catch (e) { /* 忽略 */ }
   }
-  function fetchJson(url) {
+  function rawFetch(url) {
     var f = window.fetch || (typeof fetch === 'function' ? fetch : null);
     if (!f) return Promise.reject(new Error('fetch 不可用'));
     var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
@@ -109,6 +118,45 @@
     }, function (e) {
       clearTimeout(timer);
       throw e;
+    });
+  }
+  /* 排队器：所有 Abacus 请求走同一条队，并发 ≤ Q_MAX、出队间隔 Q_GAP */
+  var qWait = [], qActive = 0, qTimer = null;
+  function qPump() {
+    if (qTimer) return;
+    qTimer = window.setTimeout(function () {
+      qTimer = null;
+      while (qActive < Q_MAX && qWait.length) {
+        var it = qWait.shift();
+        qActive++;
+        rawFetch(it.url).then(function (v) {
+          qActive--;
+          it.resolve(v);
+          qPump();
+        }, function (e) {
+          qActive--;
+          it.reject(e);
+          qPump();
+        });
+        if (qActive >= Q_MAX) break;
+      }
+      if (qWait.length && qActive < Q_MAX) qPump();
+    }, qActive ? Q_GAP : 0);
+  }
+  function apiFetch(path) {
+    return new Promise(function (resolve, reject) {
+      qWait.push({ url: API + path, resolve: resolve, reject: reject });
+      qPump();
+    });
+  }
+  /* 单键请求：失败自动重试一次（接口偶发抖动不直接判死） */
+  function fetchJson(path) {
+    return apiFetch(path).then(null, function () {
+      return new Promise(function (resolve, reject) {
+        window.setTimeout(function () {
+          apiFetch(path).then(resolve, reject);
+        }, RETRY_WAIT);
+      });
     });
   }
   function cacheKey(ns, k) { return ns + ':' + k; }
@@ -131,23 +179,88 @@
     var s = ns + '/' + k, q = readQueue(), i = q.indexOf(s);
     if (i >= 0) { q.splice(i, 1); writeQueue(q); }
   }
-  /* 只读服务端真值。失败时不再回落到本机「最后一次已知值」：
-     那种旧值是每台设备各自保存的，会让部分设备长期停在先前的数据上。
-     统一让调用方保留页面里的静态基准数，所有设备显示一致。 */
+  /* 全站统一基线：部署时构建脚本把各键的服务端总数写进 data/counts.json。
+     接口失联时所有设备回落到同一份数字；基线到达后立即补画到还没拿到
+     真值的槽位上（已显示真值的不覆盖）。 */
+  var BASE = null, BASE_P = null;
+  function baselineFile() {
+    try {
+      var p = String(window.location && window.location.pathname || '/');
+      return /\/posts\//.test(p) ? '../' + BASELINE_URL : BASELINE_URL;
+    } catch (e) { return BASELINE_URL; }
+  }
+  function baselineLoad() {
+    if (BASE_P) return BASE_P;
+    BASE_P = new Promise(function (resolve) {
+      var f = window.fetch || (typeof fetch === 'function' ? fetch : null);
+      if (!f) { BASE = {}; return resolve(BASE); }
+      f.call(window, baselineFile()).then(function (r) {
+        if (!r || !r.ok) throw new Error('基线 HTTP ' + (r && r.status));
+        return r.json();
+      }).then(function (v) {
+        BASE = (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+      }).catch(function () {
+        BASE = {};
+      }).then(function () { resolve(BASE); });
+    });
+    return BASE_P;
+  }
+  function baseVal(ns, kind, id) {
+    if (!BASE) return null;
+    var v = BASE[(ns === NS_LIKE ? 'like:' : 'view:') + kind + ':' + id];
+    return (typeof v === 'number' && v >= 0) ? v : null;
+  }
+  /* 基线补画：只填还停在初始占位（没有 data-live 标记）的槽位 */
+  function paintBaseline(root) {
+    if (!BASE) return;
+    function paint(el, v) {
+      if (el.getAttribute('data-live')) return;
+      var target = el.tagName === 'BUTTON' ? el.querySelector('span') : el;
+      if (target) target.textContent = String(v);
+    }
+    Array.prototype.forEach.call(root.querySelectorAll('[data-like]'), function (btn) {
+      var kind = btn.getAttribute('data-like-kind') || 'moment';
+      var id = btn.getAttribute('data-like-id') || '';
+      var v = baseVal(NS_LIKE, kind, id);
+      if (v != null) paint(btn, v);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-like-stat]'), function (el) {
+      var v0 = String(el.getAttribute('data-like-stat') || '').split(':');
+      if (v0.length < 2) return;
+      var v = baseVal(NS_LIKE, v0[0], v0.slice(1).join(':'));
+      if (v != null) paint(el, v);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-view]'), function (el) {
+      var v = baseVal(NS_VIEW, 'post', el.getAttribute('data-view'));
+      if (v != null) paint(el, v);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-view-home]'), function (el) {
+      var v = baseVal(NS_VIEW, HOME_KIND, homeCounterId());
+      if (v != null) paint(el, v);
+    });
+  }
+  /* 只读服务端真值；接口失败回落到部署基线（全站同一份数字），
+     成功的槽位带 data-live 标记，基线补画不会覆盖。 */
   function readCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
     var ck = cacheKey(ns, k), c = cacheGet(ck);
     if (c != null) return Promise.resolve(c);
-    return fetchJson(API + '/get/' + ns + '/' + k).then(function (n) {
+    return fetchJson('/get/' + ns + '/' + k).then(function (n) {
       cacheSet(ck, n);
       return n;
+    }, function () {
+      return baselineLoad().then(function () {
+        var v = baseVal(ns, kind, id);
+        if (v == null) throw new Error('接口失败且无基线');
+        return v;
+      });
     });
   }
   function bumpCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
-    return fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) {
+    return fetchJson('/hit/' + ns + '/' + k).then(function (n) {
       cacheSet(cacheKey(ns, k), n);
       dequeue(ns, k);
       return n;
@@ -167,7 +280,7 @@
       if (!q.length || done >= DRAIN_MAX) { draining = false; return; }
       var s = q[0], slash = s.indexOf('/');
       var ns = s.slice(0, slash), k = s.slice(slash + 1);
-      fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) {
+      fetchJson('/hit/' + ns + '/' + k).then(function (n) {
         cacheSet(cacheKey(ns, k), n);
         dequeue(ns, k);
         done++;
@@ -206,8 +319,10 @@
         s.setItem(mark, '1');
       }
     } catch (e) { /* 记不住就按每次打开计一次 */ }
-    /* 打点失败会自动入补账队列；读数失败时所有设备统一保留静态基准 */
-    return bumpCount(NS_VIEW, kind, id).catch(function () { return getViewCount(kind, id); });
+    /* 打点失败会自动入补账队列；读数失败时所有设备统一回落部署基线 */
+    return bumpCount(NS_VIEW, kind, id).catch(function () {
+      return getViewCount(kind, id);
+    });
   }
   function getViews(slug) { return getViewCount(VIEW_KIND_POST, slug); }
   function countView(slug) { return countViewOnce(VIEW_KIND_POST, slug); }
@@ -231,7 +346,10 @@
   }
   function setCount(btn, n) {
     var span = btn.querySelector('span');
-    if (span && typeof n === 'number') span.textContent = String(n);
+    if (span && typeof n === 'number') {
+      span.textContent = String(n);
+      btn.setAttribute('data-live', '1');
+    }
   }
   /* 只读统计位（首页卡片、文章页署名行的点赞数）：与爱心按钮共用同一个总数 */
   function statSlots(kind, id) {
@@ -242,10 +360,13 @@
   }
   function setStat(kind, id, n) {
     if (typeof n !== 'number') return;
-    statSlots(kind, id).forEach(function (el) { el.textContent = String(n); });
+    statSlots(kind, id).forEach(function (el) {
+      el.textContent = String(n);
+      el.setAttribute('data-live', '1');
+    });
   }
   /* 点击：本机只赞一次；先本机点亮并乐观 +1，再以 /hit 返回的服务端值为准。
-     打点失败回滚到所有设备共用的静态基准，不保留本机私有 +1。 */
+     打点失败回滚到部署基线（没有就退回静态基准），不保留本机私有 +1。 */
   function onLike(btn) {
     var kind = btn.getAttribute('data-like-kind') || 'moment';
     var id = btn.getAttribute('data-like-id') || '';
@@ -255,17 +376,20 @@
     btn.setAttribute('aria-pressed', 'true');
     btn.setAttribute('title', '已点赞，谢谢你喜欢');
     var base = Number(btn.getAttribute('data-like-base') || 0);
-    setCount(btn, base + 1);
-    setStat(kind, id, base + 1);
+    var fallback = baseVal(NS_LIKE, kind, id);
+    if (fallback == null) fallback = base;
+    setCount(btn, fallback + 1);
+    setStat(kind, id, fallback + 1);
     hitCount(kind, id).then(function (v) {
       setCount(btn, v); setStat(kind, id, v);
     }).catch(function () {
-      setCount(btn, base); setStat(kind, id, base);
+      setCount(btn, fallback); setStat(kind, id, fallback);
     });
   }
   /* 每次渲染后补拉服务端真实总数。服务器有数时以它为准（包括 0），
-     本机已赞状态只决定按钮亮不亮；失败时保留页面里的静态基准。 */
+     本机已赞状态只决定按钮亮不亮；失败时回落到部署基线。 */
   function mountLikes(root) {
+    baselineLoad().then(function () { paintBaseline(root); });
     var btns = root.querySelectorAll('[data-like]');
     Array.prototype.forEach.call(btns, function (btn) {
       if (btn.getAttribute('data-like-done')) return;
@@ -275,7 +399,7 @@
       getCount(kind, id).then(function (n) {
         if (typeof n !== 'number') return;
         setCount(btn, n); setStat(kind, id, n);
-      }).catch(function () { /* 保留所有设备共用的静态基准 */ });
+      }).catch(function () { /* 基线补画兜底 */ });
     });
   }
   /* 首页卡片与文章页署名行上的只读点赞数 */
@@ -285,12 +409,13 @@
       if (v.length < 2) return;
       var kind = v[0], id = v.slice(1).join(':');
       getCount(kind, id).then(function (n) {
-        if (typeof n === 'number') el.textContent = String(n);
-      }).catch(function () { /* 保留占位 0 */ });
+        if (typeof n === 'number') { el.textContent = String(n); el.setAttribute('data-live', '1'); }
+      }).catch(function () { /* 基线补画兜底 */ });
     });
   }
   /* 浏览数：所有 [data-view] 显示槽统一填数，文章页的 [data-view-post] 触发计数 */
   function mountViews(root) {
+    baselineLoad().then(function () { paintBaseline(root); });
     var slots = {}, hits = {};
     Array.prototype.forEach.call(root.querySelectorAll('[data-view]'), function (el) {
       var s = el.getAttribute('data-view');
@@ -306,8 +431,11 @@
       catch (e) { p = Promise.resolve(null); }
       Promise.resolve(p).then(function (n) {
         if (typeof n !== 'number') return;
-        slots[s].forEach(function (el) { el.textContent = String(n); });
-      }).catch(function () { /* 保留占位 0，所有设备一致 */ });
+        slots[s].forEach(function (el) {
+          el.textContent = String(n);
+          el.setAttribute('data-live', '1');
+        });
+      }).catch(function () { /* 基线补画兜底 */ });
     });
     /* 首页底部：整站首页的匿名浏览数，与文章同样每会话只 +1 */
     var homeSlots = root.querySelectorAll('[data-view-home]');
@@ -316,8 +444,11 @@
       try { hp = countHomeView(); } catch (e) { hp = Promise.resolve(null); }
       Promise.resolve(hp).then(function (n) {
         if (typeof n !== 'number') return;
-        Array.prototype.forEach.call(homeSlots, function (el) { el.textContent = String(n); });
-      }).catch(function () { /* 保留占位 0，所有设备一致 */ });
+        Array.prototype.forEach.call(homeSlots, function (el) {
+          el.textContent = String(n);
+          el.setAttribute('data-live', '1');
+        });
+      }).catch(function () { /* 基线补画兜底 */ });
     }
   }
   function mount() {

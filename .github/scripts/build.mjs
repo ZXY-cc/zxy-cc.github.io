@@ -17,6 +17,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 /* 本地构建时脚本在 blog/scripts/ 下，仓库内自动重建时放在 .github/scripts/ 下，
    用 ZB_ROOT 指定站点根目录，保证两份脚本是同一份实现、输出不分叉。 */
@@ -546,6 +547,91 @@ if (DEAD_POSTS.length) {
     if (fs.existsSync(f)) fs.rmSync(f);
   });
 }
+
+/* ---------- 计数基线快照：data/counts.json ----------
+   Abacus 接口偶发变慢甚至失联，前端 15 秒超时 + 重试也救不了整个页面。
+   构建时把各键的服务端当时总数抓下来烘进站点：页面先显示这份全站统一
+   基线，接口成功后用真值覆盖；接口失联时所有设备显示同一份基线，
+   不再各显各的 0。抓取失败时沿用上一份快照，构建绝不因此中断。 */
+const NS_LIKE = 'zxy-blog-heart', NS_VIEW = 'zxy-blog-views2';
+const ABACUS_API = 'https://abacus.jasoncameron.dev';
+const countKeys = [];
+POSTS.forEach((p) => countKeys.push(['like', 'post', p.slug], ['view', 'post', p.slug]));
+((overlay.STUDIO_DATA || {}).moments || []).forEach((m) => countKeys.push(['like', 'moment', m.id]));
+((overlay.STUDIO_DATA || {}).chatter || []).forEach((c) => countKeys.push(['like', 'chatter', c.id]));
+countKeys.push(['like', 'site', 'home']);
+const HOME_VER = Number(((overlay.STUDIO_DATA || {}).site || {}).homeViewsVer) || 1;
+countKeys.push(['view', 'site', HOME_VER <= 1 ? 'home' : 'home-v' + HOME_VER]);
+
+const COUNTS_CHILD = `
+const list = JSON.parse(process.env.COUNT_KEYS);
+const API = ${JSON.stringify(ABACUS_API)};
+const NS = { like: ${JSON.stringify(NS_LIKE)}, view: ${JSON.stringify(NS_VIEW)} };
+const out = {};
+let fail = 0;
+const one = async (ns, k) => {
+  /* 接口偶发抖动：每键最多试 3 次，间隔 1.2s */
+  let err = null;
+  for (let a = 0; a < 3; a++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const r = await fetch(API + '/get/' + NS[ns] + '/' + k, { signal: ctrl.signal });
+      if (r.status === 404) return 0;
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const v = await r.json();
+      const n = Number(v && v.value);
+      if (!Number.isFinite(n) || n < 0) throw new Error('bad value');
+      return n;
+    } catch (e) { err = e; await new Promise((r) => setTimeout(r, 1200)); }
+    finally { clearTimeout(t); }
+  }
+  throw err || new Error('unreachable');
+};
+(async () => {
+  /* 并发 4、间隔 250ms：接口变慢时不至于串行拖满整个构建超时 */
+  const queue = list.slice();
+  const worker = async () => {
+    while (queue.length) {
+      const [ns, kind, id] = queue.shift();
+      const k = kind + '-' + id;
+      try { out[ns + ':' + kind + ':' + id] = await one(ns, k); }
+      catch (e) { out[ns + ':' + kind + ':' + id] = null; fail++; }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  process.stdout.write(JSON.stringify({ counts: out, fail }));
+  process.exit(0);
+})();
+`;
+
+function fetchCountBaseline() {
+  const oldPath = path.join(ROOT, 'data', 'counts.json');
+  let old = {};
+  try { old = JSON.parse(fs.readFileSync(oldPath, 'utf8')); } catch (e) { old = {}; }
+  let fresh = null, fail = -1;
+  try {
+    const out = execFileSync(process.execPath, ['-e', COUNTS_CHILD], {
+      encoding: 'utf8', timeout: 240000, env: { ...process.env, COUNT_KEYS: JSON.stringify(countKeys) },
+    });
+    const j = JSON.parse(out);
+    fresh = j.counts; fail = j.fail;
+  } catch (e) { fresh = null; }
+  const merged = {};
+  let live = 0;
+  countKeys.forEach(([ns, kind, id]) => {
+    const key = ns + ':' + kind + ':' + id;
+    const v = fresh ? fresh[key] : null;
+    if (typeof v === 'number' && v >= 0) { merged[key] = v; live++; }
+    else if (typeof old[key] === 'number' && old[key] >= 0) merged[key] = old[key];
+  });
+  return { merged, live, fail };
+}
+const countSnap = fetchCountBaseline();
+write('data/counts.json', JSON.stringify(countSnap.merged, null, 1) + '\n');
+console.log('  data/counts.json      (计数基线：' + countSnap.live + '/' + countKeys.length +
+  ' 键实时抓取' + (countSnap.fail > 0 ? '，' + countSnap.fail + ' 键失败' : '') + ')');
 
 /* ---------- 静态文章镜像：无 JS 可读、爬虫可索引 ----------
    ZB-MATH / ZB-FONT 段在文件开头统一抽取，这里直接复用。 */
