@@ -527,7 +527,11 @@
   function refreshPreview() {
     var box = document.getElementById('post-preview');
     if (box) {
-      box.innerHTML = mdRender(syncFromForm().markdown);
+      /* 与线上文章阅读同一套重刷上色：多语言示例块逐段上色、
+         data-code-lang 语言标识优先，保证预览与发布后的效果一致 */
+      var html = mdRender(syncFromForm().markdown);
+      if (window.ZBRehl) html = window.ZBRehl(html);
+      box.innerHTML = html;
       /* 预览每敲一次字都重渲染，目录也按这次渲染出的标题实时重建 */
       if (window.ZBMD && window.ZBMD.refreshToc) window.ZBMD.refreshToc(box);
     }
@@ -694,6 +698,34 @@
     state.msg = msg;
     var box = document.getElementById('studio-msg');
     if (box) { box.textContent = msg; box.className = 'studio-msg ' + (kind || 'ok'); }
+  }
+  /* 体验模式权限弹窗：居中玻璃卡 + 猫猫颜文字，自动淡出、点击即关；
+     替代旧面包屑下的一行小字提示 */
+  function expDenied() {
+    if (!document.body || !document.createElement) return;
+    var old = document.querySelector('.exp-modal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var box = document.createElement('div');
+    box.className = 'exp-modal';
+    box.innerHTML = '<div class="exp-modal-card"><b>仅供体验 · 权限不足</b>' +
+      '<span class="exp-modal-face">ฅ^•~•^ฅ</span></div>';
+    document.body.appendChild(box);
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () { box.classList.add('show'); });
+    }
+    /* rAF 在个别环境（无头首帧前）可能不调度，40ms 定时兜底保证弹入动画必然开始 */
+    window.setTimeout(function () { box.classList.add('show'); }, 40);
+    var closed = false;
+    var close = function () {
+      if (closed) return;
+      closed = true;
+      box.classList.remove('show');
+      window.setTimeout(function () {
+        if (box.parentNode) box.parentNode.removeChild(box);
+      }, 320);
+    };
+    box.addEventListener('click', close);
+    window.setTimeout(close, 1700);
   }
   function reloadSoon(msg) {
     say(msg + ' · 正在刷新…');
@@ -1808,7 +1840,7 @@
   }
   function syncNow() {
     /* 体验模式一律不读令牌、不同步；同步函数不再挂到 window 上，控制台无从直呼 */
-    if (!isOwner()) return say('~仅供体验 · 权限不足~', 'warn');
+    if (!isOwner()) return expDenied();
     if (!syncToken()) return say('先在「发布上线」填入令牌并勾选记住，或点「保存设置并发布当前内容」。', 'warn');
     sync.fails = 0;
     markPending();
@@ -1904,7 +1936,7 @@
         var da = deny.getAttribute('data-act');
         if (da !== 'exit-exp' && da !== 'preview-post' &&
             da !== 'export-js' && da !== 'export-json') {
-          say('~仅供体验 · 权限不足~');
+          expDenied();
           return;
         }
       }

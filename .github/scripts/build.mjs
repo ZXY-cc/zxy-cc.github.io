@@ -583,8 +583,10 @@ pre code .zb-fmeta{color:var(--muted);opacity:.75}
 .zb-fold{margin:14px 0;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.5);overflow:hidden}
 .zb-fold summary.zb-fold-head{display:flex;align-items:center;gap:9px;cursor:pointer;padding:10px 18px;font-weight:650;color:var(--ink);border-left:3px solid var(--fold-color,var(--brand));list-style:none;user-select:none}
 .zb-fold-head::-webkit-details-marker{display:none}
-.zb-fold-head::before{content:'▸';color:var(--fold-color,var(--brand));transition:transform .25s ease;flex:0 0 auto}
+.zb-fold-head::before{content:'';width:10px;height:12px;flex:0 0 auto;background:var(--fold-color,var(--brand));-webkit-mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'><path d='M2.5 1.9 Q1.1 1.5 1.1 2.9 L1.1 9.1 Q1.1 10.5 2.5 10.1 L8.6 6.9 Q10 6 8.6 5.1 Z'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'><path d='M2.5 1.9 Q1.1 1.5 1.1 2.9 L1.1 9.1 Q1.1 10.5 2.5 10.1 L8.6 6.9 Q10 6 8.6 5.1 Z'/></svg>") center/contain no-repeat;transition:transform .25s ease}
 .zb-fold[open]>.zb-fold-head::before{transform:rotate(90deg)}
+.zb-fold::details-content{interpolate-size:allow-keywords;height:0;overflow:hidden;opacity:0;transition:height .34s cubic-bezier(.22,.68,.28,1),opacity .3s ease,content-visibility .34s allow-discrete}
+.zb-fold[open]::details-content{height:auto;opacity:1}
 .zb-fold-body{padding:2px 18px 12px;border-left:3px solid var(--fold-color,var(--brand))}
 .zb-fold-body>:first-child{margin-top:6px}
 .zb-fold-body>:last-child{margin-bottom:0}

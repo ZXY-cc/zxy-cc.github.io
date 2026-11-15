@@ -293,7 +293,8 @@ body {
   animation: star-drift var(--dur, 34s) ease-in-out var(--delay, 0s) infinite;
 }
 /* 极小小星：不位移、不旋转，只保留静态明暗层次；动感交给大胖星与暖光星 */
-.star.is-still { animation: none; opacity: var(--sop, .72); }
+.star.is-still { animation: none; opacity: var(--sop, .72);
+  transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0); }
 /* 少量暖金光点：把黄色光效散到整片天空里 */
 .star.is-warm {
   background: var(--star-soft);
@@ -435,25 +436,25 @@ body {
    白花 / 爱心仍缓慢旋转，白花用 --spin-boost 放大，五角星装饰 boost=0 只留初始朝向。
    只走 transform / opacity 合成；中途点由脚本注入（装饰用放大后的默认兜底）。 */
 @keyframes star-drift {
-  0%   { transform: translate3d(0, 0, 0) rotate(var(--spin0, 0deg)); opacity: .30; }
-  25%  { transform: translate3d(var(--dx2, 12px), var(--dy2, 8px), 0) rotate(var(--spin0, 0deg)); opacity: .64; }
-  50%  { transform: translate3d(var(--dx, 24px), var(--dy, -20px), 0) rotate(var(--spin0, 0deg)); opacity: .94; }
-  75%  { transform: translate3d(var(--dx3, 9px), var(--dy3, -24px), 0) rotate(var(--spin0, 0deg)); opacity: .66; }
-  100% { transform: translate3d(0, 0, 0) rotate(var(--spin0, 0deg)); opacity: .30; }
+  0%   { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(0, 0, 0) rotate(var(--spin0, 0deg)); opacity: .30; }
+  25%  { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(var(--dx2, 12px), var(--dy2, 8px), 0) rotate(var(--spin0, 0deg)); opacity: .64; }
+  50%  { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(var(--dx, 24px), var(--dy, -20px), 0) rotate(var(--spin0, 0deg)); opacity: .94; }
+  75%  { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(var(--dx3, 9px), var(--dy3, -24px), 0) rotate(var(--spin0, 0deg)); opacity: .66; }
+  100% { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(0, 0, 0) rotate(var(--spin0, 0deg)); opacity: .30; }
 }
 @keyframes deco-drift {
-  0%   { transform: translate3d(0, 0, 0) rotate(var(--dir0, 0deg)); }
-  25%  { transform: translate3d(var(--dx2, 18px), var(--dy2, 10px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin2, 9deg) * var(--spin-boost, 1))); }
-  50%  { transform: translate3d(var(--dx, 32px), var(--dy, -22px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin, 20deg) * var(--spin-boost, 1))); }
-  75%  { transform: translate3d(var(--dx3, 14px), var(--dy3, -27px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin3, 14deg) * var(--spin-boost, 1))); }
-  100% { transform: translate3d(0, 0, 0) rotate(var(--dir0, 0deg)); }
+  0%   { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(0, 0, 0) rotate(var(--dir0, 0deg)); }
+  25%  { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(var(--dx2, 18px), var(--dy2, 10px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin2, 9deg) * var(--spin-boost, 1))); }
+  50%  { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(var(--dx, 32px), var(--dy, -22px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin, 20deg) * var(--spin-boost, 1))); }
+  75%  { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(var(--dx3, 14px), var(--dy3, -27px), 0) rotate(calc(var(--dir0, 0deg) + var(--spin3, 14deg) * var(--spin-boost, 1))); }
+  100% { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(0, 0, 0) rotate(var(--dir0, 0deg)); }
 }
 @keyframes puff { from { opacity: .44; transform: scale(.92); } to { opacity: .82; transform: scale(1.06); } }
 @keyframes petal-fall {
-  0% { transform: translate3d(0, -14vh, 0) rotate(0deg); opacity: 0; }
+  0% { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(0, -14vh, 0) rotate(0deg); opacity: 0; }
   10% { opacity: var(--op, .5); }
   88% { opacity: var(--op, .5); }
-  100% { transform: translate3d(7vw, 112vh, 0) rotate(240deg); opacity: 0; }
+  100% { transform: translate3d(var(--fx, 0px), var(--fy, 0px), 0) translate3d(7vw, 112vh, 0) rotate(240deg); opacity: 0; }
 }
 @keyframes meteor {
   0%   { opacity: 0; transform: translate(0, 0) rotate(var(--angle, -26deg)); }
@@ -729,9 +730,21 @@ main { min-height: 320px; }
   border-left: 3px solid var(--fold-color, var(--accent));
   list-style: none; user-select: none; }
 .zb-fold-head::-webkit-details-marker { display: none; }
-.zb-fold-head::before { content: '▸'; color: var(--fold-color, var(--accent));
-  transition: transform .25s ease; flex: 0 0 auto; }
+/* 折叠标识：圆角三角（mask 上色，随 --fold-color 变色），尖角全部改圆润 */
+.zb-fold-head::before { content: ''; width: 10px; height: 12px; flex: 0 0 auto;
+  background: var(--fold-color, var(--accent));
+  -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'><path d='M2.5 1.9 Q1.1 1.5 1.1 2.9 L1.1 9.1 Q1.1 10.5 2.5 10.1 L8.6 6.9 Q10 6 8.6 5.1 Z'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'><path d='M2.5 1.9 Q1.1 1.5 1.1 2.9 L1.1 9.1 Q1.1 10.5 2.5 10.1 L8.6 6.9 Q10 6 8.6 5.1 Z'/></svg>") center / contain no-repeat;
+  transition: transform .25s ease; }
 .zb-fold[open] > .zb-fold-head::before { transform: rotate(90deg); }
+/* 展开 / 折叠动画：与设置页画质对照表同一条曲线（0fr→1fr 的 details 等价实现：
+   ::details-content 高度 0→auto 需 interpolate-size:allow-keywords；
+   不支持该伪元素的浏览器自动退回瞬时展开，无副作用） */
+.zb-fold::details-content { interpolate-size: allow-keywords;
+  height: 0; overflow: hidden; opacity: 0;
+  transition: height .34s cubic-bezier(.22,.68,.28,1), opacity .3s ease,
+              content-visibility .34s allow-discrete; }
+.zb-fold[open]::details-content { height: auto; opacity: 1; }
 .zb-fold-body { padding: 2px 20px 14px 18px; border-left: 3px solid var(--fold-color, var(--accent)); }
 .zb-fold-body > :first-child { margin-top: 8px; }
 .zb-fold-body > :last-child { margin-bottom: 0; }
@@ -1532,6 +1545,21 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .sync-badge.warn { color: var(--accent-3-text); background: rgba(240, 158, 190, .18); }
 .studio-msg { min-height: 20px; font-size: 13px; color: var(--accent-text); margin: 0 0 12px; }
 .studio-msg.warn { color: var(--accent-3-text); }
+/* 体验模式权限弹窗：居中玻璃卡弹入弹出，替代面包屑下的一行小字提示 */
+.exp-modal { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;
+  background: rgba(58, 70, 104, .16); opacity: 0; pointer-events: none;
+  transition: opacity .26s ease; }
+.exp-modal.show { opacity: 1; pointer-events: auto; }
+.exp-modal-card { padding: 26px 42px; border-radius: 18px; text-align: center;
+  border: 1px solid var(--glass-line); background: var(--glass-strong);
+  box-shadow: 0 18px 46px rgba(58, 70, 104, .22);
+  transform: translateY(10px) scale(.92);
+  transition: transform .3s cubic-bezier(.34, 1.35, .4, 1); }
+.exp-modal.show .exp-modal-card { transform: none; }
+.exp-modal-card b { font-size: 15px; color: var(--accent-text); letter-spacing: 1px; }
+.exp-modal-face { display: block; margin-top: 10px; font-size: 20px;
+  color: var(--muted); text-align: center; letter-spacing: 2px; }
+:root[data-theme="night"] .exp-modal { background: rgba(12, 18, 40, .38); }
 .studio-form { border-radius: var(--radius); padding: 26px 30px 30px; margin-bottom: 40px;
   border: 1px solid var(--glass-line); box-shadow: var(--glass-shadow), var(--glass-inner); }
 .studio-form h2 { display: flex; align-items: center; gap: 11px;
@@ -1834,7 +1862,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   margin-top: 20px; border: 1px solid var(--glass-line); border-radius: 14px;
   background: transparent; color-scheme: light dark;
 }
-:root[data-theme="night"] .cl-frame { border-color: rgba(208,226,255,.28); background: rgba(18,28,72,.20); }
+:root[data-theme="night"] .cl-frame { border-color: rgba(208,226,255,.28); background: transparent; }
 
 @media (max-width: 640px) {
   .changelog-preview { padding: 20px 16px; }

@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-14">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.54.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.55.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -59,8 +59,10 @@ pre code .zb-fmeta{color:var(--muted);opacity:.75}
 .zb-fold{margin:14px 0;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.5);overflow:hidden}
 .zb-fold summary.zb-fold-head{display:flex;align-items:center;gap:9px;cursor:pointer;padding:10px 18px;font-weight:650;color:var(--ink);border-left:3px solid var(--fold-color,var(--brand));list-style:none;user-select:none}
 .zb-fold-head::-webkit-details-marker{display:none}
-.zb-fold-head::before{content:'▸';color:var(--fold-color,var(--brand));transition:transform .25s ease;flex:0 0 auto}
+.zb-fold-head::before{content:'';width:10px;height:12px;flex:0 0 auto;background:var(--fold-color,var(--brand));-webkit-mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'><path d='M2.5 1.9 Q1.1 1.5 1.1 2.9 L1.1 9.1 Q1.1 10.5 2.5 10.1 L8.6 6.9 Q10 6 8.6 5.1 Z'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'><path d='M2.5 1.9 Q1.1 1.5 1.1 2.9 L1.1 9.1 Q1.1 10.5 2.5 10.1 L8.6 6.9 Q10 6 8.6 5.1 Z'/></svg>") center/contain no-repeat;transition:transform .25s ease}
 .zb-fold[open]>.zb-fold-head::before{transform:rotate(90deg)}
+.zb-fold::details-content{interpolate-size:allow-keywords;height:0;overflow:hidden;opacity:0;transition:height .34s cubic-bezier(.22,.68,.28,1),opacity .3s ease,content-visibility .34s allow-discrete}
+.zb-fold[open]::details-content{height:auto;opacity:1}
 .zb-fold-body{padding:2px 18px 12px;border-left:3px solid var(--fold-color,var(--brand))}
 .zb-fold-body>:first-child{margin-top:6px}
 .zb-fold-body>:last-child{margin-bottom:0}
@@ -599,12 +601,12 @@ cout &lt;&lt; ans[i] &lt;&lt; <span class="tk-st">&#39; &#39;</span>;
 <p class="back"><a href="/#/post/p-mwg23n3vy3gg">在站点中打开 →</a></p>
 <footer class="mirror-badge">静态页面 · 无追踪 · 轻量交互 · 有星光、有梦想</footer>
 </div>
-<script src="../assets/comments-data.js?v=v3.54.0"></script>
-<script src="../assets/comment-archive.js?v=v3.54.0"></script>
-<script src="../assets/interactions-config.js?v=v3.54.0"></script>
-<script src="../assets/interactions.js?v=v3.54.0"></script>
-<script src="../assets/issues-live.js?v=v3.54.0"></script>
-<script src="../assets/likes.js?v=v3.54.0"></script>
+<script src="../assets/comments-data.js?v=v3.55.0"></script>
+<script src="../assets/comment-archive.js?v=v3.55.0"></script>
+<script src="../assets/interactions-config.js?v=v3.55.0"></script>
+<script src="../assets/interactions.js?v=v3.55.0"></script>
+<script src="../assets/issues-live.js?v=v3.55.0"></script>
+<script src="../assets/likes.js?v=v3.55.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("p-mwg23n3vy3gg");
 window.ZBLive && window.ZBLive.mount("p-mwg23n3vy3gg");
 window.ZBLikes && window.ZBLikes.mount();</script>

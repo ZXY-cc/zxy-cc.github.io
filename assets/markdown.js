@@ -1091,8 +1091,10 @@
      公式与相邻文字之间的空格按紧凑 / 舒展两种模式整理。
      围栏代码块默认逐字保留，传 indent 时按层统一成设置的缩进长度。 */
   /* 缩进归一：把一段代码按「层」重排成设置的长度。
-     先取全段最小的非零缩进当一层（Tab 按 4 空格换算），再把每层展开成 n 空格；
-     源缩进是 2 / 4 / 8 空格或 Tab 都能识别，非缩进部分逐字保留。 */
+     「一层」的推断优先 4 空格（主流 IDE 默认）：所有缩进都是 4 的倍数按 4；
+     否则都是 2 的倍数按 2；再退化取最小值。Tab 缩进按「个」计层、
+     不参与空格单位推断（Tab 与空格混写的代码层级也保持稳定，
+     不会再因为最小的 2 空格把 Tab / 4 空格行翻倍）。 */
   function normalizeIndent(src, size) {
     var n = parseInt(size, 10);
     var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
@@ -1100,17 +1102,26 @@
     var lines = text.split('\n');
     var leads = lines.map(function (ln) {
       var lead = (ln.match(/^[ \t]*/) || [''])[0];
-      var sp = 0;
-      for (var i = 0; i < lead.length; i++) sp += lead[i] === '\t' ? 4 : 1;
-      return { lead: lead, sp: sp };
+      var sp = 0, tabs = 0;
+      for (var i = 0; i < lead.length; i++) {
+        if (lead[i] === '\t') { tabs++; sp += 4; }
+        else sp++;
+      }
+      return { lead: lead, sp: sp, tabs: tabs };
     });
-    var unit = 0;
-    leads.forEach(function (o) { if (o.sp > 0 && (!unit || o.sp < unit)) unit = o.sp; });
-    if (!unit) return text;
+    var unit = 0, sps = [];
+    leads.forEach(function (o) { if (o.sp > o.tabs * 4) sps.push(o.sp - o.tabs * 4); });
+    if (sps.length) {
+      if (sps.every(function (s) { return s % 4 === 0; })) unit = 4;
+      else if (sps.every(function (s) { return s % 2 === 0; })) unit = 2;
+      else unit = Math.min.apply(null, sps);
+    }
+    if (!unit && !leads.some(function (o) { return o.tabs > 0; })) return text;
     return lines.map(function (ln, i) {
       var o = leads[i];
       if (!o.lead) return ln;
-      var lv = Math.max(1, Math.round(o.sp / unit));
+      var spOnly = o.sp - o.tabs * 4;
+      var lv = o.tabs + (unit && spOnly > 0 ? Math.max(1, Math.round(spOnly / unit)) : 0);
       return ' '.repeat(lv * n) + ln.slice(o.lead.length);
     }).join('\n');
   }
@@ -1277,5 +1288,5 @@
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
            tidy: tidy, normalizeIndent: normalizeIndent, linkInfo: linkInfo,
            refreshToc: refreshToc,
-           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.4' };
+           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.5' };
 });

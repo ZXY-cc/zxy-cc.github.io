@@ -70,6 +70,8 @@
       });
     });
   }
+  /* 工坊预览与线上文章阅读共用同一套重刷上色（多语言示例块逐段上色等），保证两边一致 */
+  try { window.ZBRehl = rehlHtml; } catch (e) {}
   function avatarImg(cls) {
     return '<img class="' + (cls || 'avatar') + '" src="' + esc(CFG.avatar || 'assets/avatar.jpg') +
       '" alt="' + esc(CFG.author || SITE.author || '我') + '的头像" decoding="async">';
@@ -548,6 +550,7 @@
     ['花朵与爱心', '8 个 · 游走', '8 个 · 游走', '6 个 · 游走', '无'],
     ['流星', '常驻 8 + 快速 6', '常驻 7 + 快速 5', '常驻 5 + 快速 4', '无'],
     ['流萤', '夜间 8 只', '夜间 8 只', '夜间 8 只', '无'],
+    ['鼠标斥力', '开启', '开启', '关闭', '关闭'],
     ['鼠标光幕 / 尾迹', '开启', '开启', '开启', '关闭'],
     ['卡片高光', '开启', '开启', '开启', '关闭'],
     ['实时毛玻璃', '开启', '关闭', '关闭', '关闭'],
@@ -1234,7 +1237,10 @@
   function initChangelogFrame() {
     var frame = document.getElementById('cl-frame');
     if (!frame || !window.CHANGELOG_HTML || !frame.setAttribute) return;
-    frame.setAttribute('srcdoc', window.CHANGELOG_HTML);
+    /* iframe 内展示 HTML 文件时背景置为透明，让网站的星空背景透出来；
+       单独打开这个 HTML 文件仍然是完整的渐变背景，不受影响 */
+    frame.setAttribute('srcdoc', String(window.CHANGELOG_HTML).replace(/<\/head>/i,
+      '<style>html,body{background:transparent!important}</style></head>'));
     if (frame.addEventListener) frame.addEventListener('load', postChangelogTheme);
   }
   function initChangelogSync() {
@@ -1413,6 +1419,90 @@
         petalBox.appendChild(p);
       }
     }
+  }
+
+  /* ---------- 高画质鼠标斥力：花 / 花瓣 / 星星被指针轻轻推开 ----------
+     位移通过 CSS 变量 --fx/--fy 注入三个游走动画（star-drift / deco-drift /
+     petal-fall）每帧的 transform 与原动画叠加：靠近时按距离快速推开，
+     指针移走后以很小的速率缓缓回到原位，背景分布保持均匀。
+     中低画质不启用；触屏没有 mousemove 自然不触发。 */
+  var rep = { on: false, bound: false, items: [], raf: 0,
+              mx: -9999, my: -9999, lastMove: 0 };
+  function repCollect() {
+    var els = document.querySelectorAll('.petals .petal, .stars .star, .blooms .sky-deco');
+    rep.items = [];
+    for (var i = 0; i < els.length; i++) {
+      if (els[i].offsetParent === null) continue; /* 本档位隐藏的装饰不参与 */
+      rep.items.push({ el: els[i], fx: 0, fy: 0 });
+    }
+  }
+  function repReset() {
+    for (var i = 0; i < rep.items.length; i++) {
+      var it = rep.items[i];
+      it.fx = 0; it.fy = 0;
+      it.el.style.setProperty('--fx', '0px');
+      it.el.style.setProperty('--fy', '0px');
+    }
+  }
+  function repFrame() {
+    rep.raf = 0;
+    var active = Date.now() - rep.lastMove < 220;   /* 指针刚动过：即使已回位也保持响应 */
+    var settled = true;
+    var R = 150, AMP = 46;
+    for (var i = 0; i < rep.items.length; i++) {
+      var it = rep.items[i], el = it.el;
+      var r = el.getBoundingClientRect();
+      if (!r.width && !r.height) continue;
+      var dx = r.left + r.width / 2 - rep.mx, dy = r.top + r.height / 2 - rep.my;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      var tx = 0, ty = 0, near = false;
+      if (d < R && d > .01) {
+        near = true;
+        var f = (1 - d / R) * AMP;
+        tx = dx / d * f; ty = dy / d * f;
+      }
+      /* 靠近时快速避让，离开后用小速率缓缓回原位 */
+      var k = near ? .22 : .045;
+      it.fx += (tx - it.fx) * k;
+      it.fy += (ty - it.fy) * k;
+      if (Math.abs(it.fx) > .08 || Math.abs(it.fy) > .08) {
+        settled = false;
+        el.style.setProperty('--fx', it.fx.toFixed(2) + 'px');
+        el.style.setProperty('--fy', it.fy.toFixed(2) + 'px');
+      } else if (it.fx || it.fy) {
+        it.fx = 0; it.fy = 0;
+        el.style.setProperty('--fx', '0px');
+        el.style.setProperty('--fy', '0px');
+      }
+    }
+    if (!settled || active) rep.raf = requestAnimationFrame(repFrame);
+  }
+  function repSet(on) {
+    if (rep.on === on) return;
+    rep.on = on;
+    if (on) {
+      repCollect();
+      if (!rep.bound) {
+        rep.bound = true;
+        if (window.addEventListener) {
+          window.addEventListener('mousemove', function (e) {
+            rep.mx = e.clientX; rep.my = e.clientY; rep.lastMove = Date.now();
+            if (rep.on && !rep.raf) rep.raf = requestAnimationFrame(repFrame);
+          }, { passive: true });
+        }
+      }
+    } else {
+      if (rep.raf) { cancelAnimationFrame(rep.raf); rep.raf = 0; }
+      repReset();
+    }
+  }
+  function initSkyRepulsion() {
+    try {
+      document.addEventListener('zb:quality', function (e) {
+        repSet(e.detail === 'high' || e.detail === 'ultra');
+      });
+    } catch (err) {}
+    repSet(qualityNow === 'high' || qualityNow === 'ultra');
   }
 
   /* ---------- 晴空 / 星夜 ---------- */
@@ -1892,6 +1982,7 @@
   applyFonts();
   initEffects();
   initSky();
+  initSkyRepulsion();
   initTheme();
   initSearch();
   initInteractions();
