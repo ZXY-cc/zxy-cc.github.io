@@ -833,29 +833,48 @@ pre > code {
    低画质不上色：全部 token 回退为正文颜色（只动 color，不需重渲染）。
    这一段在 ZB-MATH 复用段内，静态文章镜像同步获得同样配色。 */
 
-/* 字体设置：设置页写入 data-font-en / data-font-cn / data-font-code。
-   代码字体选 JetBrains Maple Mono 时中文走 Maple 自带中文字形；
-   选 Consolas 或默认时，代码里的中文回落到「中文字体」的设置。 */
+/* ZB-FONT:START */
+/* 字体设置：设置页写入 data-font-en / data-font-cn / data-font-code / data-font-tex。
+   随站点自带 SIL OFL 的等宽字形（许可见 assets/fonts/JetBrainsMono-OFL.txt）：
+   手机、平板与没装本机字体的设备加载同一份 woff2，不再整页回落到默认字体；
+   拉丁字形由随站字体提供，中文回落到系统中文栈。 */
+@font-face {
+  font-family: "ZB Mono";
+  src: url("/assets/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "ZB Mono";
+  src: url("/assets/fonts/jetbrains-mono-latin-700-normal.woff2") format("woff2");
+  font-style: normal; font-weight: 700; font-display: swap;
+}
+:root {
+  --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-code: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
+}
 :root[data-font-code="default"] {
-  --font-code: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", var(--font-cn), monospace;
+  --font-code: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", var(--font-cn), monospace;
 }
 :root[data-font-code="consolas"] {
-  --font-code: Consolas, "Liberation Mono", var(--font-cn), monospace;
+  --font-code: "ZB Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", var(--font-cn), monospace;
 }
 :root[data-font-code="maple"] {
-  --font-code: "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
+  --font-code: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
 }
 /* 英文字体：选了具体字体则放到栈最前（拉丁字形生效；自带中文的字体也会覆盖页面中文） */
 :root[data-font-en="consolas"] body {
-  font-family: Consolas, -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+  font-family: "ZB Mono", Consolas, -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
 }
 :root[data-font-en="maple"] body {
-  font-family: "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+  font-family: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
 }
 /* JetBrains Mono 只有英文字形：拉丁字形生效，中文自然回落到 var(--font-cn) */
 :root[data-font-en="jbmono"] body {
-  font-family: "JetBrains Mono", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+  font-family: "ZB Mono", "JetBrains Mono", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
 }
+/* 静态阅读版没有主样式表，这里补一条通用代码字体，让镜像页取到同一套变量 */
+code, pre, pre code { font-family: var(--font-code, "ZB Mono", monospace); }
+/* ZB-FONT:END */
 /* 设置页的字体选项 */
 .font-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 4px; }
 .font-item { display: block; font-size: 12.5px; color: var(--muted); }

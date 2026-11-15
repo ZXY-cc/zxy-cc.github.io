@@ -754,6 +754,7 @@
       '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。' +
       '英文字体里的 JetBrains Mono 只有英文字形，选它时页面中文仍按「中文字体」显示；' +
       '英文字体初始默认为 JetBrains Mono；选项按字典序排列。' +
+      '等宽字形随站点自带，手机、平板等没装本机字体的设备也会显示同一套字体；' +
       'LaTeX 字体只作用于公式：默认 Computer Modern（随站点自带的开源字体），选「默认」则改用系统数学字体。';
     return pageHead('设置', '把偏好留在这台设备上', 'SETTINGS') +
       '<section class="settings-card glass reveal" aria-label="站点设置">' +
@@ -767,7 +768,7 @@
       '</b> · 首次访问默认高画质，展现全部美术效果；中画质保留多数效果、只省下最耗性能的实时毛玻璃；低画质是阅读档，花瓣、星星、花朵与流星全部清除，只留静态水彩天空。</p></section>' +
       '<section class="settings-card glass reveal" aria-label="字体设置">' +
       '<div class="settings-block"><div class="settings-info">' +
-      '<h2>字体</h2><p>设置网页的中英文字体、代码字体与 LaTeX 公式字体。切换后立即生效，偏好同样只保存在本机。</p></div>' +
+      '<h2>字体</h2><p>设置网页的中英文字体、代码字体与 LaTeX 公式字体。切换后立即生效，字体随站点自带，任何设备都能显示；偏好只保存在本机。</p></div>' +
       '<div class="font-group">' +
       '<label class="font-item">中文字体' + fontSelect('cn', FONT_CN_OPTS, readFont('cn')) + '</label>' +
       '<label class="font-item">英文字体' + fontSelect('en', FONT_EN_OPTS, readFont('en')) + '</label>' +

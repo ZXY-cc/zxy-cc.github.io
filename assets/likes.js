@@ -7,15 +7,14 @@
  *       每个浏览器会话、每篇文章（以及整站首页）只 +1 次，避免刷新刷屏；
  *       countView 由文章页的 [data-view-post] 触发，整站首页由
  *       [data-view-home] 触发，首页文章卡片的 [data-view] 只读不写。
- * 读数带 sessionStorage 缓存（120 秒）；接口不可用时回落为数据基础数
- * （字段 likes）+ 本机状态，爱心与浏览显示都不因接口掉线而失效。
- * 接口有间歇性故障窗口（错误 JSON / 超时），因此：
- * 1. 错误响应一律按失败处理（绝不把错误当成 0 缓存展示）；
- * 2. 读取失败回落到「最后一次已知服务端值」（localStorage 持久保存），
- *    所有设备收敛到同一个数字，而不是各显各的基础数；
- * 3. /hit 失败的浏览与点赞进本地补账队列（zb-hitq），下次 mount 时
- *    静默重打（每页最多 5 笔、间隔 400ms，防触发 30 次/10 秒限速），
- *    点赞和浏览最终都会落到服务器，不再永久丢失。 */
+ * 数字一致性：页面显示的点赞数与浏览量只认服务端 /get 的真实总数。
+ *   本机是否已赞、本机上次看到的旧数字都不再参与显示，
+ *   所有设备在同一时刻读到的都是同一个服务端值。
+ *   读数缓存只用于同一次渲染的并发去重（3 秒），过期立即重新拉取；
+ *   读取失败不再回落到各设备私有的旧值，统一保留页面里的静态基准数。
+ *   错误响应一律按失败处理（绝不把错误当成 0 缓存展示）；
+ *   /hit 失败的浏览与点赞进本地补账队列（zb-hitq），下次 mount 时
+ *   静默重打（每页最多 5 笔、间隔 400ms，防触发 30 次/10 秒限速）。 */
 (function () {
   'use strict';
   var NS_LIKE = 'zxy-blog-heart';
@@ -26,12 +25,12 @@
   var LIKE_KEY = 'zb-likes';
   var OWNER_KEY = 'zb-owner-device';
   var NO_COUNT_KEY = 'zb-no-count';
-  /* 读数缓存升到 v2：浏览计数归零后，旧会话里的旧数字不会继续显示 */
-  var CACHE_KEY = 'zb-count:v2:';
-  var LAST_KEY = 'zb-last:v1:';
+  /* v3 缓存：只保留 3 秒并发去重。v2 的 120 秒会话缓存与本机持久旧值
+     会让部分设备长期停在先前的数据上，升级键位让旧缓存立即失效。 */
+  var CACHE_KEY = 'zb-count:v3:';
   var QUEUE_KEY = 'zb-hitq:v1';
   var VIEWED_KEY = 'zb-viewed:v1:';
-  var TTL = 120000;
+  var TTL = 3000;
   var TIMEOUT = 5000;
   var DRAIN_MAX = 5, DRAIN_GAP = 400;
 
@@ -103,7 +102,7 @@
       return r.json();
     }).then(function (v) {
       /* 服务端故障窗口会返回 200 + 错误 JSON（如 Failed to get data），
-         这不是 0——按失败处理，调用方回落到最近已知值或基础数。 */
+         这不是 0——按失败处理，绝不缓存或显示成 0。 */
       var n = v && Number(v.value);
       if (Number.isFinite(n) && n >= 0) return n;
       throw new Error('接口返回异常');
@@ -113,18 +112,6 @@
     });
   }
   function cacheKey(ns, k) { return ns + ':' + k; }
-  /* 最近已知服务端值：只有成功响应才写入；读取失败时用它回落，
-     让所有设备在接口故障期间显示同一个「最后一次真实数字」。 */
-  function lastGet(k) {
-    try {
-      var box = JSON.parse(window.localStorage.getItem(LAST_KEY + k) || 'null');
-      return box && typeof box.n === 'number' ? box.n : null;
-    } catch (e) { return null; }
-  }
-  function lastSet(k, n) {
-    try { window.localStorage.setItem(LAST_KEY + k, JSON.stringify({ t: Date.now(), n: n })); }
-    catch (e) { /* 隐私模式记不住，不影响本次显示 */ }
-  }
   /* 补账队列：/hit 失败的浏览与点赞先记下，下次页面加载静默补打 */
   function readQueue() {
     try {
@@ -144,26 +131,24 @@
     var s = ns + '/' + k, q = readQueue(), i = q.indexOf(s);
     if (i >= 0) { q.splice(i, 1); writeQueue(q); }
   }
+  /* 只读服务端真值。失败时不再回落到本机「最后一次已知值」：
+     那种旧值是每台设备各自保存的，会让部分设备长期停在先前的数据上。
+     统一让调用方保留页面里的静态基准数，所有设备显示一致。 */
   function readCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
     var ck = cacheKey(ns, k), c = cacheGet(ck);
     if (c != null) return Promise.resolve(c);
     return fetchJson(API + '/get/' + ns + '/' + k).then(function (n) {
-      cacheSet(ck, n); lastSet(ck, n);
+      cacheSet(ck, n);
       return n;
-    }, function () {
-      /* 接口故障：回落到最后一次已知值（跨设备一致），没有才让调用方用基础数 */
-      var l = lastGet(ck);
-      if (l != null) return l;
-      throw new Error('读取失败');
     });
   }
   function bumpCount(ns, kind, id) {
     var k = counterKey(kind, id);
     if (!k) return Promise.resolve(null);
     return fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) {
-      cacheSet(cacheKey(ns, k), n); lastSet(cacheKey(ns, k), n);
+      cacheSet(cacheKey(ns, k), n);
       dequeue(ns, k);
       return n;
     }, function (e) {
@@ -183,7 +168,7 @@
       var s = q[0], slash = s.indexOf('/');
       var ns = s.slice(0, slash), k = s.slice(slash + 1);
       fetchJson(API + '/hit/' + ns + '/' + k).then(function (n) {
-        cacheSet(cacheKey(ns, k), n); lastSet(cacheKey(ns, k), n);
+        cacheSet(cacheKey(ns, k), n);
         dequeue(ns, k);
         done++;
         window.setTimeout(step, DRAIN_GAP);
@@ -221,7 +206,7 @@
         s.setItem(mark, '1');
       }
     } catch (e) { /* 记不住就按每次打开计一次 */ }
-    /* 打点失败会自动入补账队列；这里回落为最近已知值，不让页面显示成 0 */
+    /* 打点失败会自动入补账队列；读数失败时所有设备统一保留静态基准 */
     return bumpCount(NS_VIEW, kind, id).catch(function () { return getViewCount(kind, id); });
   }
   function getViews(slug) { return getViewCount(VIEW_KIND_POST, slug); }
@@ -229,10 +214,12 @@
   function getHomeViews() { return getViewCount(HOME_KIND, homeCounterId()); }
   function countHomeView() { return countViewOnce(HOME_KIND, homeCounterId()); }
 
-  /* 按钮结构：与说说页原有的爱心完全同款（灰 → 粉，点击放大） */
+  /* 按钮结构：与说说页原有的爱心完全同款（灰 → 粉，点击放大）。
+     数字只放站点静态基准，服务端真值由 mountLikes 统一覆盖；
+     本机已赞不再 +1，避免同一篇文章在不同设备显示不同总数。 */
   function html(kind, id, base, extra) {
     var on = liked(kind, id);
-    var n = Number(base || 0) + (on ? 1 : 0);
+    var n = Number(base || 0);
     return '<button class="like like-inline' + (on ? ' on' : '') +
       (extra ? ' ' + extra : '') + '" type="button" data-like="' + esc(kind + ':' + id) +
       '" data-like-kind="' + esc(kind) + '" data-like-id="' + esc(id) +
@@ -257,7 +244,8 @@
     if (typeof n !== 'number') return;
     statSlots(kind, id).forEach(function (el) { el.textContent = String(n); });
   }
-  /* 点击：本机只赞一次；先本机点亮 +1，再请求 /hit 以服务器返回为准 */
+  /* 点击：本机只赞一次；先本机点亮并乐观 +1，再以 /hit 返回的服务端值为准。
+     打点失败回滚到所有设备共用的静态基准，不保留本机私有 +1。 */
   function onLike(btn) {
     var kind = btn.getAttribute('data-like-kind') || 'moment';
     var id = btn.getAttribute('data-like-id') || '';
@@ -266,16 +254,17 @@
     btn.classList.add('on');
     btn.setAttribute('aria-pressed', 'true');
     btn.setAttribute('title', '已点赞，谢谢你喜欢');
-    var n = Number((btn.querySelector('span') || {}).textContent || 0) + 1;
-    setCount(btn, n);
-    setStat(kind, id, n);
+    var base = Number(btn.getAttribute('data-like-base') || 0);
+    setCount(btn, base + 1);
+    setStat(kind, id, base + 1);
     hitCount(kind, id).then(function (v) {
       setCount(btn, v); setStat(kind, id, v);
-    }).catch(function () { /* 保留本机 +1 */ });
+    }).catch(function () {
+      setCount(btn, base); setStat(kind, id, base);
+    });
   }
-  /* 每次渲染后补拉真实总数（带缓存；接口挂了就停在回落值）。
-     服务器有数时以它为准（本机已赞过的话服务器数里已经含这一次）；
-     服务器为 0 而本机亮着时保留 1，接口失败时用「基础数 + 本机状态」回落。 */
+  /* 每次渲染后补拉服务端真实总数。服务器有数时以它为准（包括 0），
+     本机已赞状态只决定按钮亮不亮；失败时保留页面里的静态基准。 */
   function mountLikes(root) {
     var btns = root.querySelectorAll('[data-like]');
     Array.prototype.forEach.call(btns, function (btn) {
@@ -283,14 +272,10 @@
       btn.setAttribute('data-like-done', '1');
       var kind = btn.getAttribute('data-like-kind') || 'moment';
       var id = btn.getAttribute('data-like-id') || '';
-      var base = Number(btn.getAttribute('data-like-base') || 0);
-      var span = btn.querySelector('span');
-      var fallback = base + (liked(kind, id) ? 1 : 0);
       getCount(kind, id).then(function (n) {
-        var real = n > 0 ? n : fallback;
-        if (span) span.textContent = String(real);
-        setStat(kind, id, real);
-      }).catch(function () { /* 保留回落值 */ });
+        if (typeof n !== 'number') return;
+        setCount(btn, n); setStat(kind, id, n);
+      }).catch(function () { /* 保留所有设备共用的静态基准 */ });
     });
   }
   /* 首页卡片与文章页署名行上的只读点赞数 */
@@ -300,7 +285,7 @@
       if (v.length < 2) return;
       var kind = v[0], id = v.slice(1).join(':');
       getCount(kind, id).then(function (n) {
-        if (typeof n === 'number') el.textContent = String(n > 0 ? n : (liked(kind, id) ? 1 : 0));
+        if (typeof n === 'number') el.textContent = String(n);
       }).catch(function () { /* 保留占位 0 */ });
     });
   }
@@ -322,7 +307,7 @@
       Promise.resolve(p).then(function (n) {
         if (typeof n !== 'number') return;
         slots[s].forEach(function (el) { el.textContent = String(n); });
-      }).catch(function () { /* 保留占位 0 */ });
+      }).catch(function () { /* 保留占位 0，所有设备一致 */ });
     });
     /* 首页底部：整站首页的匿名浏览数，与文章同样每会话只 +1 */
     var homeSlots = root.querySelectorAll('[data-view-home]');
@@ -332,7 +317,7 @@
       Promise.resolve(hp).then(function (n) {
         if (typeof n !== 'number') return;
         Array.prototype.forEach.call(homeSlots, function (el) { el.textContent = String(n); });
-      }).catch(function () { /* 保留占位 0 */ });
+      }).catch(function () { /* 保留占位 0，所有设备一致 */ });
     }
   }
   function mount() {

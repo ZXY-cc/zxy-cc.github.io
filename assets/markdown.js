@@ -1089,7 +1089,33 @@
      它决定整块缩进与嵌套层级）、连续空行、正文里多余的连续半角空格。
      $$ 公式块整段原样保留，反引号行内代码与公式内部的空格不动；
      公式与相邻文字之间的空格按紧凑 / 舒展两种模式整理。
-     围栏代码块默认逐字保留，传 indent 时按层统一成设置的缩进长度。 */
+     围栏代码块整段保护：围栏行与块内行都不做正文清洗，
+     传 indent 时按层统一成设置的缩进长度。 */
+  /* 格式优化专用的围栏识别：允许围栏行本身带缩进（整体粘贴代码时很常见），
+     比渲染用的 fenceInfo 宽松。渲染仍按 Markdown 规则只认 0~3 空格前缀，
+     所以格式优化顺手把围栏行顶格化，整理后预览依然是代码块。 */
+  function tidyFence(line) {
+    var m = line.match(/^([ \t\u3000]*)(`{3,}|~{3,})[ \t]*([^\n]*)$/);
+    if (!m) return null;
+    return { lead: m[1], ch: m[2][0], n: m[2].length };
+  }
+  function leadWidth(s) {
+    var w = 0;
+    for (var i = 0; i < s.length; i++) w += s[i] === '\t' ? 4 : 1;
+    return w;
+  }
+  /* 去掉代码块每行开头的「公共基准缩进」——也就是围栏行带着的那一段。
+     只剥到基准宽度为止，更深的层级留给 normalizeIndent 归一，不会丢缩进。 */
+  function stripBaseIndent(lines, base) {
+    if (!base) return lines;
+    return lines.map(function (ln) {
+      var k = 0, w = 0;
+      while (k < ln.length && w < base && (ln[k] === ' ' || ln[k] === '\t')) {
+        w += ln[k] === '\t' ? 4 : 1; k++;
+      }
+      return w ? ln.slice(k) : ln;
+    });
+  }
   /* 缩进归一：把一段代码按「层」重排成设置的长度。
      「一层」的推断优先 4 空格（主流 IDE 默认）：所有缩进都是 4 的倍数按 4；
      否则都是 2 的倍数按 2；再退化取最小值。Tab 缩进按「个」计层、
@@ -1112,9 +1138,13 @@
     var unit = 0, sps = [];
     leads.forEach(function (o) { if (o.sp > o.tabs * 4) sps.push(o.sp - o.tabs * 4); });
     if (sps.length) {
-      if (sps.every(function (s) { return s % 4 === 0; })) unit = 4;
-      else if (sps.every(function (s) { return s % 2 === 0; })) unit = 2;
-      else unit = Math.min.apply(null, sps);
+      /* 一层的宽度取所有实际缩进的最大公约数：8 空格一层就是 8，
+         不会再被「都是 4 的倍数」误判成两层而保留 8 空格；
+         公约数为 1（2 与 3 混写之类）才退回最小非零缩进。 */
+      function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+      var g = 0;
+      sps.forEach(function (s) { g = gcd(g, s); });
+      unit = g >= 2 ? g : Math.min.apply(null, sps);
     }
     if (!unit && !leads.some(function (o) { return o.tabs > 0; })) return text;
     return lines.map(function (ln, i) {
@@ -1216,7 +1246,7 @@
     if (!(indentN === 2 || indentN === 4 || indentN === 8)) indentN = 0;
     var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
     var lines = text.split('\n');
-    var out = [], fence = null, fenceBuf = [], math = false, blank = 0;
+    var out = [], fence = null, fenceBuf = [], fenceBase = 0, math = false, blank = 0;
     function collapse(s) {
       /* 双美元行内公式也要整段保护：表格行里的 $$O(n^2)$$ 不会被压掉空格 */
       return s.replace(/(`[^`\n]*`|\$\$[^$\n]+\$\$|\$[^$\n]+\$)|( {2,})/g, function (m, keep) {
@@ -1224,22 +1254,28 @@
       });
     }
     function clean(s) { return mathSpacing(collapse(s), loose); }
-    /* 围栏内的行先缓冲，闭合时整段按层统一缩进；不传 indent 时逐字原样保留 */
+    /* 围栏内的行先缓冲，闭合时剥掉公共基准缩进、再按层统一成设置的缩进长度；
+       不传 indent 时逐字保留剩余缩进，绝不把代码前的缩进当多余空格删掉。 */
     function flushFence() {
-      if (!fenceBuf.length) return;
-      var buf = indentN ? normalizeIndent(fenceBuf.join('\n'), indentN).split('\n') : fenceBuf;
+      if (!fenceBuf.length) { fenceBuf = []; return; }
+      var buf = stripBaseIndent(fenceBuf, fenceBase);
+      if (indentN) buf = normalizeIndent(buf.join('\n'), indentN).split('\n');
       for (var j = 0; j < buf.length; j++) out.push(buf[j]);
       fenceBuf = [];
     }
     for (var i = 0; i < lines.length; i++) {
-      var ln = lines[i], f = fenceInfo(ln);
+      var ln = lines[i], f = tidyFence(ln);
       if (fence) {
         if (fenceClose(ln, fence.ch, fence.n)) {
-          flushFence(); out.push(ln); fence = null;
+          flushFence(); out.push(ln.replace(/^[ \t\u3000]+/, '')); fence = null;
         } else fenceBuf.push(ln);
         blank = 0; continue;
       }
-      if (f) { fence = f; out.push(ln); fenceBuf = []; blank = 0; continue; }
+      if (f) {
+        fence = f; fenceBase = leadWidth(f.lead);
+        out.push(ln.replace(/^[ \t\u3000]+/, ''));
+        fenceBuf = []; blank = 0; continue;
+      }
       if (math) {
         out.push(ln);
         if (ln.indexOf('$$') >= 0) math = false;

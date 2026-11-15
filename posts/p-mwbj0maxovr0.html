@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-11">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.57.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.58.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -87,6 +87,48 @@ nav.toc[hidden]{display:none}
 .back{margin:24px 0 0;font-size:14px}
 .mirror-badge{margin:26px 0 0;padding-top:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:12.5px;letter-spacing:.4px;text-align:center}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+
+/* 字体设置：设置页写入 data-font-en / data-font-cn / data-font-code / data-font-tex。
+   随站点自带 SIL OFL 的等宽字形（许可见 assets/fonts/JetBrainsMono-OFL.txt）：
+   手机、平板与没装本机字体的设备加载同一份 woff2，不再整页回落到默认字体；
+   拉丁字形由随站字体提供，中文回落到系统中文栈。 */
+@font-face {
+  font-family: "ZB Mono";
+  src: url("/assets/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "ZB Mono";
+  src: url("/assets/fonts/jetbrains-mono-latin-700-normal.woff2") format("woff2");
+  font-style: normal; font-weight: 700; font-display: swap;
+}
+:root {
+  --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-code: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
+}
+:root[data-font-code="default"] {
+  --font-code: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", var(--font-cn), monospace;
+}
+:root[data-font-code="consolas"] {
+  --font-code: "ZB Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", var(--font-cn), monospace;
+}
+:root[data-font-code="maple"] {
+  --font-code: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
+}
+/* 英文字体：选了具体字体则放到栈最前（拉丁字形生效；自带中文的字体也会覆盖页面中文） */
+:root[data-font-en="consolas"] body {
+  font-family: "ZB Mono", Consolas, -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+}
+:root[data-font-en="maple"] body {
+  font-family: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+}
+/* JetBrains Mono 只有英文字形：拉丁字形生效，中文自然回落到 var(--font-cn) */
+:root[data-font-en="jbmono"] body {
+  font-family: "ZB Mono", "JetBrains Mono", -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cn);
+}
+/* 静态阅读版没有主样式表，这里补一条通用代码字体，让镜像页取到同一套变量 */
+code, pre, pre code { font-family: var(--font-code, "ZB Mono", monospace); }
+
 
 /* 公式排版：站点文章、工坊预览、无 JS 静态镜像共用这一段，
    build.mjs 会原样抽进 posts/*.html 的内联样式。 */
@@ -251,6 +293,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 }
 
 </style>
+<script>try{var r=document.documentElement,fe=localStorage.getItem('zb-font-en'),fc=localStorage.getItem('zb-font-code'),fn=localStorage.getItem('zb-font-cn'),ft=localStorage.getItem('zb-font-tex');if(!/^(default|consolas|maple|jbmono)$/.test(fe||''))fe='jbmono';if(!/^(default|consolas|maple)$/.test(fc||''))fc='maple';if(fn!=='default')fn='default';if(!/^(default|cm|katex)$/.test(ft||''))ft='cm';r.setAttribute('data-font-en',fe);r.setAttribute('data-font-code',fc);r.setAttribute('data-font-cn',fn);r.setAttribute('data-font-tex',ft);}catch(e){}</script>
 </head>
 <body>
 <div class="wrap">
@@ -402,12 +445,12 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <p class="back"><a href="/#/post/p-mwbj0maxovr0">在站点中打开 →</a></p>
 <footer class="mirror-badge">静态页面 · 无追踪 · 轻量交互 · 有星光、有梦想</footer>
 </div>
-<script src="../assets/comments-data.js?v=v3.57.0"></script>
-<script src="../assets/comment-archive.js?v=v3.57.0"></script>
-<script src="../assets/interactions-config.js?v=v3.57.0"></script>
-<script src="../assets/interactions.js?v=v3.57.0"></script>
-<script src="../assets/issues-live.js?v=v3.57.0"></script>
-<script src="../assets/likes.js?v=v3.57.0"></script>
+<script src="../assets/comments-data.js?v=v3.58.0"></script>
+<script src="../assets/comment-archive.js?v=v3.58.0"></script>
+<script src="../assets/interactions-config.js?v=v3.58.0"></script>
+<script src="../assets/interactions.js?v=v3.58.0"></script>
+<script src="../assets/issues-live.js?v=v3.58.0"></script>
+<script src="../assets/likes.js?v=v3.58.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("p-mwbj0maxovr0");
 window.ZBLive && window.ZBLive.mount("p-mwbj0maxovr0");
 window.ZBLikes && window.ZBLikes.mount();</script>

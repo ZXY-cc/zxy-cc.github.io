@@ -33,6 +33,20 @@ const ZBMD = require(path.join(ROOT, 'assets/markdown.js'));
 /* 归档渲染器与前端共用同一份实现，静态镜像与 SPA 永不版式分叉 */
 const ZBArchive = require(path.join(ROOT, 'assets/comment-archive.js'));
 
+/* 公式与字体样式在 style.css 的 ZB-MATH / ZB-FONT 段里各只维护一份，
+   主站、静态阅读版、路由镜像与版本日志镜像都从这里复用，避免版式分叉。 */
+const styleCss = fs.readFileSync(path.join(ROOT, 'assets/style.css'), 'utf8');
+function cssSection(a, b) {
+  const i = styleCss.indexOf(a), j = styleCss.indexOf(b);
+  return i >= 0 && j > i ? styleCss.slice(i + a.length, j) : '';
+}
+const ZB_MATH_CSS = cssSection('/* ZB-MATH:START */', '/* ZB-MATH:END */');
+const ZB_FONT_CSS = cssSection('/* ZB-FONT:START */', '/* ZB-FONT:END */');
+/* 字体偏好在首屏落到根节点：静态页没有 SPA 脚本，也要和主站显示同一套字体。
+   这段与 index.html 首屏脚本的字体部分逐字一致，check.mjs 会比对。 */
+const FONT_BOOT = "var r=document.documentElement,fe=localStorage.getItem('zb-font-en'),fc=localStorage.getItem('zb-font-code'),fn=localStorage.getItem('zb-font-cn'),ft=localStorage.getItem('zb-font-tex');if(!/^(default|consolas|maple|jbmono)$/.test(fe||''))fe='jbmono';if(!/^(default|consolas|maple)$/.test(fc||''))fc='maple';if(fn!=='default')fn='default';if(!/^(default|cm|katex)$/.test(ft||''))ft='cm';r.setAttribute('data-font-en',fe);r.setAttribute('data-font-code',fc);r.setAttribute('data-font-cn',fn);r.setAttribute('data-font-tex',ft);";
+const MIRROR_FONT_JS = '<script>try{' + FONT_BOOT + '}catch(e){}</script>';
+
 /* 互动区配置由 assets/interactions-config.js 单独维护：仓库标识、留言入口与分页条数。
    构建把仓库归档烘焙进静态阅读版（无 JS 也能读），浏览器再按需读取公开 Issues
    把留言直接显示进评论区；GitHub Actions 负责把 Issues 留言写回 data/comments.json。 */
@@ -433,7 +447,9 @@ function standaloneHtml() {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(docTitle)}</title>
 <meta name="description" content="星梦Staream 博客的版本记录镜像，与站点文章、关于页预览保持同步。">
-<style>${STANDALONE_CSS}</style>
+<style>${STANDALONE_CSS}
+${ZB_FONT_CSS}</style>
+${MIRROR_FONT_JS}
 </head>
 <body>
 <div class="wrap">
@@ -532,13 +548,7 @@ if (DEAD_POSTS.length) {
 }
 
 /* ---------- 静态文章镜像：无 JS 可读、爬虫可索引 ----------
-   公式与代码块样式在 style.css 的 ZB-MATH 段里只维护一份，这里直接复用。 */
-const styleCss = read('assets/style.css');
-const MATH_A = '/* ZB-MATH:START */', MATH_B = '/* ZB-MATH:END */';
-const ZB_MATH_CSS = (() => {
-  const a = styleCss.indexOf(MATH_A), b = styleCss.indexOf(MATH_B);
-  return a >= 0 && b > a ? styleCss.slice(a + MATH_A.length, b) : '';
-})();
+   ZB-MATH / ZB-FONT 段在文件开头统一抽取，这里直接复用。 */
 const MIRROR_CSS = `
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -611,6 +621,7 @@ nav.toc[hidden]{display:none}
 .back{margin:24px 0 0;font-size:14px}
 .mirror-badge{margin:26px 0 0;padding-top:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:12.5px;letter-spacing:.4px;text-align:center}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
+${ZB_FONT_CSS}
 ${ZB_MATH_CSS}
 `;
 /* 静态阅读版 / 路由镜像：Markdown 内链接以 / 开头，点击时把链接文本接在当前站点网址后面 */
@@ -638,6 +649,7 @@ function mirrorHtml(p) {
 <meta property="article:published_time" content="${esc(p.date || '')}">
 <link rel="stylesheet" href="../assets/interactions.css">
 <style>${MIRROR_CSS}</style>
+${MIRROR_FONT_JS}
 </head>
 <body>
 <div class="wrap">
@@ -839,6 +851,7 @@ function routeMirrorHtml(name, label, sub, data) {
 <link rel="stylesheet" href="assets/style.css">
 <style>${MIRROR_FIX_CSS}</style>
 ${ZB_MATH_CSS ? '<style>' + ZB_MATH_CSS + '</style>' : ''}
+${MIRROR_FONT_JS}
 </head>
 <body>
 <header class="mirror-head">
@@ -873,6 +886,7 @@ write('404.html', `<!DOCTYPE html>
 <title>页面不存在 · ${esc(SITE_TITLE)}</title>
 <meta name="robots" content="noindex">
 <style>${MIRROR_CSS}</style>
+${MIRROR_FONT_JS}
 </head>
 <body>
 <div class="wrap">
