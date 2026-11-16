@@ -943,6 +943,22 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: opacity .35s ease, transform .35s ease, box-shadow .35s ease;
 }
 .to-top .puffy-mark { width: 30px; height: 30px; }
+/* 回顶流星的光迹：细长蜜金线，头端（top 端）接星星最亮，尾端化进背景 */
+.to-top-trail {
+  position: fixed; z-index: 29; width: 2px; height: var(--tt, 150px);
+  border-radius: 999px; pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255, 246, 214, .9) 0%, rgba(255, 230, 170, .55) 30%,
+    rgba(255, 214, 150, .22) 66%, transparent 100%);
+  filter: blur(1.6px);
+  will-change: transform, opacity;
+}
+.to-top-trail::after {
+  content: ''; position: absolute; left: -5px; top: -6px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle, #fff6dc 0%, rgba(255, 214, 150, .9) 46%, transparent 74%);
+  box-shadow: 0 0 14px 5px rgba(255, 226, 170, .55), 0 0 34px 13px rgba(255, 214, 150, .22);
+}
 .to-top .puffy-mark svg { width: 23px; height: 23px; }
 .to-top.show { opacity: 1; transform: none; pointer-events: auto; }
 .to-top:hover { box-shadow: 0 0 24px rgba(171, 139, 212, .32), var(--glass-inner); transform: translateY(-3px); }
@@ -987,20 +1003,29 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* 分段胶囊：设置页里「一行多点」的交互组（画质三档 / 通用与动画卡的选项组）
    仿导航栏切换——选中重点随一枚胶囊滑到新选项上，选项自身不再描边发光 */
 .quality-group, .opt-group { position: relative; }
+.quality-item, .opt-item { position: relative; z-index: 3; }
+/* 分段胶囊：淡玻璃底衬 + ::before 渐变描边环（mask 挖空中段，只留 1px 圈），
+   渐变色与页面背景同款蓝→粉；滑移由 JS 弹簧驱动（与导航胶囊同一套物理） */
 .seg-pill {
   position: absolute; left: 0; top: 0; width: 0; height: 0;
   border-radius: 14px; pointer-events: none; z-index: 2;
-  background: rgba(171, 139, 212, .07);
-  border: 1px solid rgba(171, 139, 212, .62);
-  box-shadow: 0 0 0 1px rgba(171, 139, 212, .26), 0 8px 22px rgba(171, 139, 212, .18);
+  background: var(--glass-sheen), var(--glass-strong);
+  box-shadow: 0 0 0 1px rgba(85, 121, 196, .18), 0 8px 22px rgba(171, 139, 212, .14);
   opacity: 0; will-change: transform, width, height;
-  transition: transform .42s cubic-bezier(.3,1.18,.42,1), width .42s cubic-bezier(.3,1.18,.42,1), height .42s cubic-bezier(.3,1.18,.42,1);
 }
-.seg-pill.no-anim { transition: none; }
+.seg-pill::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  padding: 1.4px; pointer-events: none;
+  background: linear-gradient(135deg, #5579c4 0%, #8262bd 54%, #bb6ba1 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
 :root[data-theme="night"] .seg-pill {
-  background: rgba(126, 162, 226, .10);
-  border-color: rgba(226, 205, 251, .55);
-  box-shadow: 0 0 0 1px rgba(226, 205, 251, .24), 0 8px 22px rgba(6, 14, 44, .45);
+  background: linear-gradient(160deg, rgba(40, 66, 128, .9), rgba(30, 44, 96, .9));
+  box-shadow: 0 8px 22px rgba(6, 14, 44, .45);
+}
+:root[data-theme="night"] .seg-pill::before {
+  background: linear-gradient(135deg, #7fa8dd 0%, #a68ecf 54%, #d396bb 100%);
 }
 /* 选中项自身不再描边发光，重点交给滑过来的胶囊（只保留文字加重的层次） */
 .opt-item:has(input:checked) { border-color: transparent; box-shadow: none; color: var(--ink-strong); }
@@ -1050,6 +1075,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* ---------- 首页名片：仿参考站结构，配色沿用本站晴蓝樱粉 ---------- */
 .profile-card {
+  --stat-1: var(--accent-text); --stat-2: var(--accent-2-text); --stat-3: var(--accent-3-text);
   position: relative; overflow: hidden;
   margin: 12px 0 2px; padding: 22px 28px 20px;
   border-radius: var(--radius-lg);
@@ -1089,10 +1115,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   min-width: 74px; padding: 0 12px; text-align: center; color: inherit; }
 .p-stat + .p-stat { border-left: 1px solid var(--line); }
 .p-stat b { font-size: 25px; font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums;
-  /* 数字用与站名「星梦Staream」同款的蓝→紫→粉渐变（v3.61 回归原版样式） */
-  background: linear-gradient(100deg, #3f5c9c 0%, #6b4a9f 52%, #934268 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent; }
+  /* 恢复原版逐项配色：文章蓝、杂谈紫、照片粉——整体由蓝到粉 */
+  color: var(--stat-1); }
+.p-stat:nth-of-type(2) b { color: var(--stat-2); }
+.p-stat:nth-of-type(3) b { color: var(--stat-3); }
 .p-stat span { font-size: 11.5px; letter-spacing: .8px; color: var(--muted); margin-top: 3px; }
 .p-stat:hover b { filter: brightness(1.06); }
 .p-links { display: flex; gap: 9px; margin-left: auto; flex-wrap: wrap; }
@@ -1108,10 +1134,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: 0 8px 22px rgba(171,139,212,.38), var(--glass-inner); }
 .p-link.is-accent:hover { color: #fff; }
 :root[data-theme="night"] .profile-name { background-image: linear-gradient(100deg, #b6d0ff 0%, #ddbdfa 52%, #f9bddb 100%); }
-:root[data-theme="night"] .p-stat b,
-:root[data-theme="night"] .stat-cell b {
-  background-image: linear-gradient(100deg, #b6d0ff 0%, #ddbdfa 52%, #f9bddb 100%);
-  text-shadow: none; }
+:root[data-theme="night"] .profile-card { --stat-1: #b6d0ff; --stat-2: #ddbdfa; --stat-3: #f9bddb; }
+:root[data-theme="night"] .p-stat b { text-shadow: 0 2px 10px rgba(8,16,44,.48); }
+:root[data-theme="night"] .stat-cell b { color: var(--ink-strong); text-shadow: 0 2px 10px rgba(8,16,44,.48); }
 :root[data-theme="night"] .profile-avatar-wrap {
   box-shadow: 0 0 0 1px rgba(208,226,255,.40), 0 10px 30px rgba(8,16,44,.32); }
 :root[data-theme="night"] .p-link { color: var(--accent-text); }
@@ -1147,9 +1172,13 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: var(--glass-shadow), var(--glass-inner); }
 .stat-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .stat-cell b { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums;
-  background: linear-gradient(100deg, #3f5c9c 0%, #6b4a9f 52%, #934268 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent; }
+  color: var(--ink-strong); }
+/* 归档五格数字整体由蓝到粉，与名片同族配色 */
+.stat-cell:nth-child(1) b { color: var(--accent-text); }
+.stat-cell:nth-child(2) b { color: #4f55a5; }
+.stat-cell:nth-child(3) b { color: var(--accent-2-text); }
+.stat-cell:nth-child(4) b { color: #87457f; }
+.stat-cell:nth-child(5) b { color: var(--accent-3-text); }
 .stat-cell span { font-size: 11.5px; color: var(--muted); letter-spacing: .4px; }
 
 /* ---------- 滚动渐显（只走 opacity / transform） ---------- */
@@ -1330,7 +1359,18 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
    日→月：光瓣收拢、月牙咬合，结尾微微回摆表现惯性；
    月→日：月牙退开露出全圆、光瓣弹出，结尾一小瞬膨胀再回弹。 */
 .theme-morph .moon-cut { transform: translate(26px, 26px); transition: transform .52s cubic-bezier(.55, 1.5, .4, 1); }
-.theme-morph.is-night .moon-cut { transform: translate(4.2px, -4.2px); }
+.theme-morph.is-night .moon-cut { transform: translate(3.6px, -3.6px); }
+/* 月→日 / 日→月的形状转换：挖月牙的圆整体滑出 / 滑回，配合整体膨胀或回摆 */
+.theme-morph.to-day .moon-cut { animation: moon-cut-out .56s cubic-bezier(.4, 1.35, .45, 1) .18s both; }
+.theme-morph.to-night .moon-cut { animation: moon-cut-in .6s cubic-bezier(.4, .9, .35, 1) .2s both; }
+@keyframes moon-cut-out {
+  0% { transform: translate(3.6px, -3.6px); }
+  100% { transform: translate(26px, 26px); }
+}
+@keyframes moon-cut-in {
+  0% { transform: translate(26px, 26px); }
+  100% { transform: translate(3.6px, -3.6px); }
+}
 .theme-morph .tm-rays {
   transform-origin: 12px 12px; opacity: 1;
   transition: opacity .3s ease, transform .48s cubic-bezier(.34, 1.5, .5, 1);
@@ -1808,13 +1848,24 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .quality-item:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(112, 138, 190, .18), var(--glass-inner); }
 .quality-item b { font-size: 21px; font-weight: 650; color: var(--ink-strong); line-height: 1.3; }
 .quality-item small { font-size: 11.5px; line-height: 1.7; color: var(--muted); }
-.quality-item.on { border-color: rgba(171, 139, 212, .72);
-  box-shadow: 0 0 0 1px rgba(171, 139, 212, .34), 0 12px 30px rgba(171, 139, 212, .18), var(--glass-inner); }
+.quality-item.on { border-color: transparent;
+  box-shadow: var(--glass-inner); }
 .q-mark { position: absolute; right: 14px; top: 14px; width: 18px; height: 18px;
   opacity: .28; transition: opacity .3s ease, transform .3s ease; }
 .q-mark svg { display: block; width: 100%; height: 100%; fill: var(--star-soft);
   filter: drop-shadow(0 0 5px var(--star-glow)); }
 .quality-item.on .q-mark { opacity: .95; transform: rotate(-12deg) scale(1.08); }
+/* 设置卡片里的选项组：整行整行排列（与画质三档同款的行卡布局）；
+   单选圆点不显示——选中重点交给滑过来的渐变胶囊，避免再出现深色圆圈 */
+.settings-card .opt-group { flex-direction: column; flex-wrap: nowrap; gap: 10px; }
+.settings-card .opt-item { width: 100%; box-sizing: border-box; padding: 13px 18px;
+  border-radius: 14px; display: flex; align-items: center; gap: 12px; }
+.settings-card .opt-item input { position: absolute; opacity: 0; pointer-events: none; }
+.settings-card .opt-item:has(input:checked) { border-color: transparent;
+  box-shadow: none; color: var(--ink-strong); }
+.settings-card .opt-item:hover { border-color: var(--glass-line); }
+.settings-card .opt-item b { font-size: 14px; }
+.settings-card .opt-item i { font-size: 11.5px; }
 .settings-foot { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--glass-line);
   font-size: 12px; line-height: 1.9; color: var(--muted); }
 .settings-foot b { color: var(--accent-text); font-weight: 650; }

@@ -114,11 +114,15 @@
     }, ROLL_MS + 150);
   }
   function rollText(el, target, live) {
+    /* live = 浏览量 / 点赞量计数器。三档语义：
+       all  = 全部数字滚动；
+       part = 默认，除计数器以外的数字（名片统计、归档统计等）滚动；
+       off  = 全部直接落文本。 */
     if (!el) return;
     target = Math.max(0, Math.round(Number(target) || 0));
     var mode = rollMode();
     var st = el.__zbRoll;
-    if (mode === 'off' || (mode === 'part' && !live) || !rollCan()) {
+    if (mode === 'off' || (mode === 'part' && live) || !rollCan()) {
       if (st) { if (st.wrap.parentNode) st.wrap.parentNode.removeChild(st.wrap); el.__zbRoll = null; }
       el.textContent = String(target);
       return;

@@ -22,8 +22,8 @@
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <link rel="icon" type="image/png" sizes="64x64" href="assets/avatar-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/avatar-180.png">
-<link rel="stylesheet" href="assets/style.css?v=v3.61.0">
-<link rel="stylesheet" href="assets/interactions.css?v=v3.61.0">
+<link rel="stylesheet" href="assets/style.css?v=v3.62.0">
+<link rel="stylesheet" href="assets/interactions.css?v=v3.62.0">
 <!-- 画质偏好在首屏渲染前落到根节点，避免中/低画质闪一下完整特效 -->
 <script>try{var q=localStorage.getItem('zb-quality');if(q!=='ultra'&&q!=='high'&&q!=='mid'){var m=navigator.deviceMemory||8,c=navigator.hardwareConcurrency||8;q=(m<=2||c<=2)?'mid':(m<=4||c<=4)?'high':'ultra';}if(q==='mid'||q==='ultra')document.documentElement.setAttribute('data-quality',q);var r=document.documentElement,fe=localStorage.getItem('zb-font-en'),fc=localStorage.getItem('zb-font-code'),fn=localStorage.getItem('zb-font-cn'),ft=localStorage.getItem('zb-font-tex');if(!/^(default|consolas|maple|jbmono)$/.test(fe||''))fe='jbmono';if(!/^(default|consolas|maple)$/.test(fc||''))fc='maple';if(fn!=='default')fn='default';if(!/^(default|cm|katex)$/.test(ft||''))ft='cm';r.setAttribute('data-font-en',fe);r.setAttribute('data-font-code',fc);r.setAttribute('data-font-cn',fn);r.setAttribute('data-font-tex',ft);}catch(e){}</script>
 <!-- JSONLD:START -->
@@ -195,7 +195,7 @@
   <div class="splash-inner">
     <svg class="splash-star" viewBox="0 0 100 100"><use href="#puffy-star"/></svg>
     <span class="splash-name">星 梦 Staream</span>
-    <span class="splash-note">把想法写下来，才算真的想过</span>
+    <span class="splash-note">仰望星空，脚踏实地</span>
   </div>
 </div>
 
@@ -211,187 +211,16 @@
 </script>
 <script src="assets/changelog.js"></script>
 <!-- Markdown + LaTeX 渲染：工坊预览、前台文章与杂谈共用 -->
-<script src="assets/markdown.js?v=v3.61.0"></script>
-<script src="assets/studio.js?v=v3.61.0"></script>
+<script src="assets/markdown.js?v=v3.62.0"></script>
+<script src="assets/studio.js?v=v3.62.0"></script>
 <!-- 留言归档：仓库内纯文本快照，页面唯一数据源，不依赖任何服务 -->
-<script src="assets/comments-data.js?v=v3.61.0"></script>
-<script src="assets/comment-archive.js?v=v3.61.0"></script>
+<script src="assets/comments-data.js?v=v3.62.0"></script>
+<script src="assets/comment-archive.js?v=v3.62.0"></script>
 <!-- 互动区：配置独立于主程序；归档装载零请求，实时层按需读取公开 Issues -->
-<script src="assets/interactions-config.js?v=v3.61.0"></script>
-<script src="assets/interactions.js?v=v3.61.0"></script>
-<script src="assets/issues-live.js?v=v3.61.0"></script>
-<script src="assets/likes.js?v=v3.61.0"></script>
-<script src="assets/app.js?v=v3.61.0"></script>
-<script>
-document.documentElement.setAttribute('data-probe-start', '1');
-window.__OUT = [];
-window.addEventListener('error', function (e) {
-  window.__OUT.push({ winErr: String(e.message || e), src: String((e.filename || '') + ':' + (e.lineno || '')) });
-});
-(function () {
-  var out = window.__OUT;
-  var finished = false;
-  function done() {
-    if (finished) return;
-    finished = true;
-    var pre = document.createElement('pre');
-    pre.id = 'probe-out';
-  var A = 'PROBE' + String.fromCharCode(62, 62);
-  var B = String.fromCharCode(60, 60) + 'PROBE';
-  pre.textContent = A + JSON.stringify(out) + B;
-    document.body.appendChild(pre);
-  }
-  setTimeout(done, 9000);
-  setTimeout(function () {
-    try {
-      var stuck = [];
-      document.querySelectorAll('.zb-roll').forEach(function (w, wi) {
-        w.querySelectorAll('.zb-col').forEach(function (c, ci) {
-          var t = getComputedStyle(c).transform;
-          var m = t === 'none' ? [1,0,0,1,0,0] : t.match(/matrix.*\((.+?)\)/)[1].split(',').map(Number);
-          var row = -m[5] / parseFloat(getComputedStyle(c).fontSize);
-          var frac = Math.abs(row - Math.round(row));
-          if (frac > 0.02) stuck.push({ w: wi, c: ci, row: +row.toFixed(3) });
-        });
-      });
-      out.push({ scan: { total: document.querySelectorAll('.zb-roll').length, stuck: stuck } });
-      /* 连续调用复现：9 -> 12 -> 10，最终应为两位数、十位行=1 个位行=0 */
-      var el = document.createElement('b');
-      el.style.fontSize = '25px';
-      el.style.position = 'fixed';
-      document.body.appendChild(el);
-      var Z = window.ZBLikes;
-      Z.rollText(el, 9, true);
-      setTimeout(function () { Z.rollText(el, 12, true); }, 150);
-      setTimeout(function () { Z.rollText(el, 10, true); }, 320);
-      setTimeout(function () {
-        var rows = [];
-        el.querySelectorAll('.zb-col').forEach(function (c) {
-          var t = getComputedStyle(c).transform;
-          var m = t === 'none' ? [1,0,0,1,0,0] : t.match(/matrix.*\((.+?)\)/)[1].split(',').map(Number);
-          rows.push(+(-m[5] / parseFloat(getComputedStyle(c).fontSize)).toFixed(3));
-        });
-        var anims = 0;
-        el.querySelectorAll('.zb-col').forEach(function (c) { anims += c.getAnimations ? c.getAnimations().length : 0; });
-        out.push({ rapid: { text: el.textContent, rows: rows, liveAnims: anims } });
-        done();
-      }, 1800);
-    } catch (e) { out.push({ err: String(e) }); done(); }
-  }, 3000);
-})();
-</script><script>
-document.documentElement.setAttribute('data-probe-start', '1');
-window.__OUT = [];
-window.addEventListener('error', function (e) {
-  window.__OUT.push({ winErr: String(e.message || e), src: String((e.filename || '') + ':' + (e.lineno || '')) });
-});
-(function () {
-  var out = window.__OUT;
-  var finished = false;
-  function done() {
-    if (finished) return;
-    finished = true;
-    var pre = document.createElement('pre');
-    pre.id = 'probe-out';
-  var A = 'PROBE' + String.fromCharCode(62, 62);
-  var B = String.fromCharCode(60, 60) + 'PROBE';
-  pre.textContent = A + JSON.stringify(out) + B;
-    document.body.appendChild(pre);
-  }
-  setTimeout(done, 9000);
-  setTimeout(function () {
-    try {
-      var stuck = [];
-      document.querySelectorAll('.zb-roll').forEach(function (w, wi) {
-        w.querySelectorAll('.zb-col').forEach(function (c, ci) {
-          var t = getComputedStyle(c).transform;
-          var m = t === 'none' ? [1,0,0,1,0,0] : t.match(/matrix.*\((.+?)\)/)[1].split(',').map(Number);
-          var row = -m[5] / parseFloat(getComputedStyle(c).fontSize);
-          var frac = Math.abs(row - Math.round(row));
-          if (frac > 0.02) stuck.push({ w: wi, c: ci, row: +row.toFixed(3) });
-        });
-      });
-      out.push({ scan: { total: document.querySelectorAll('.zb-roll').length, stuck: stuck } });
-      /* 连续调用复现：9 -> 12 -> 10，最终应为两位数、十位行=1 个位行=0 */
-      var el = document.createElement('b');
-      el.style.fontSize = '25px';
-      el.style.position = 'fixed';
-      document.body.appendChild(el);
-      var Z = window.ZBLikes;
-      Z.rollText(el, 9, true);
-      setTimeout(function () { Z.rollText(el, 12, true); }, 150);
-      setTimeout(function () { Z.rollText(el, 10, true); }, 320);
-      setTimeout(function () {
-        var rows = [];
-        el.querySelectorAll('.zb-col').forEach(function (c) {
-          var t = getComputedStyle(c).transform;
-          var m = t === 'none' ? [1,0,0,1,0,0] : t.match(/matrix.*\((.+?)\)/)[1].split(',').map(Number);
-          rows.push(+(-m[5] / parseFloat(getComputedStyle(c).fontSize)).toFixed(3));
-        });
-        var anims = 0;
-        el.querySelectorAll('.zb-col').forEach(function (c) { anims += c.getAnimations ? c.getAnimations().length : 0; });
-        out.push({ rapid: { text: el.textContent, rows: rows, liveAnims: anims } });
-        done();
-      }, 1800);
-    } catch (e) { out.push({ err: String(e) }); done(); }
-  }, 3000);
-})();
-</script><script>
-document.documentElement.setAttribute('data-probe-start', '1');
-window.__OUT = [];
-window.addEventListener('error', function (e) {
-  window.__OUT.push({ winErr: String(e.message || e), src: String((e.filename || '') + ':' + (e.lineno || '')) });
-});
-(function () {
-  var out = window.__OUT;
-  var finished = false;
-  function done() {
-    if (finished) return;
-    finished = true;
-    var pre = document.createElement('pre');
-    pre.id = 'probe-out';
-  var A = 'PROBE' + String.fromCharCode(62, 62);
-  var B = String.fromCharCode(60, 60) + 'PROBE';
-  pre.textContent = A + JSON.stringify(out) + B;
-    document.body.appendChild(pre);
-  }
-  setTimeout(done, 9000);
-  setTimeout(function () {
-    try {
-      var stuck = [];
-      document.querySelectorAll('.zb-roll').forEach(function (w, wi) {
-        w.querySelectorAll('.zb-col').forEach(function (c, ci) {
-          var t = getComputedStyle(c).transform;
-          var m = t === 'none' ? [1,0,0,1,0,0] : t.match(/matrix.*\((.+?)\)/)[1].split(',').map(Number);
-          var row = -m[5] / parseFloat(getComputedStyle(c).fontSize);
-          var frac = Math.abs(row - Math.round(row));
-          if (frac > 0.02) stuck.push({ w: wi, c: ci, row: +row.toFixed(3) });
-        });
-      });
-      out.push({ scan: { total: document.querySelectorAll('.zb-roll').length, stuck: stuck } });
-      /* 连续调用复现：9 -> 12 -> 10，最终应为两位数、十位行=1 个位行=0 */
-      var el = document.createElement('b');
-      el.style.fontSize = '25px';
-      el.style.position = 'fixed';
-      document.body.appendChild(el);
-      var Z = window.ZBLikes;
-      Z.rollText(el, 9, true);
-      setTimeout(function () { Z.rollText(el, 12, true); }, 150);
-      setTimeout(function () { Z.rollText(el, 10, true); }, 320);
-      setTimeout(function () {
-        var rows = [];
-        el.querySelectorAll('.zb-col').forEach(function (c) {
-          var t = getComputedStyle(c).transform;
-          var m = t === 'none' ? [1,0,0,1,0,0] : t.match(/matrix.*\((.+?)\)/)[1].split(',').map(Number);
-          rows.push(+(-m[5] / parseFloat(getComputedStyle(c).fontSize)).toFixed(3));
-        });
-        var anims = 0;
-        el.querySelectorAll('.zb-col').forEach(function (c) { anims += c.getAnimations ? c.getAnimations().length : 0; });
-        out.push({ rapid: { text: el.textContent, rows: rows, liveAnims: anims } });
-        done();
-      }, 1800);
-    } catch (e) { out.push({ err: String(e) }); done(); }
-  }, 3000);
-})();
-</script></body>
+<script src="assets/interactions-config.js?v=v3.62.0"></script>
+<script src="assets/interactions.js?v=v3.62.0"></script>
+<script src="assets/issues-live.js?v=v3.62.0"></script>
+<script src="assets/likes.js?v=v3.62.0"></script>
+<script src="assets/app.js?v=v3.62.0"></script>
+</body>
 </html>

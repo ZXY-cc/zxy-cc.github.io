@@ -193,7 +193,7 @@
       [runningDays(), '天在线']
     ];
     return '<div class="stat-bar glass reveal">' + items.map(function (it) {
-      return '<div class="stat-cell"><b>' + it[0] + '</b><span>' + it[1] + '</span></div>';
+      return '<div class="stat-cell"><b data-roll="' + it[0] + '">' + it[0] + '</b><span>' + it[1] + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -354,8 +354,8 @@
     return pageHead('归档', '总计 ' + all.length + ' 篇文章，按时间排好', 'ARCHIVE') +
       statHtml() + filters +
       '<div class="timeline">' + order.map(function (k) {
-        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span><i>' +
-          groups[k].length + '</i> 篇</span></div><div class="tl-items">' +
+        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span><i data-roll="' +
+          groups[k].length + '">' + groups[k].length + '</i> 篇</span></div><div class="tl-items">' +
           groups[k].map(function (p) {
             return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
               '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
@@ -683,9 +683,9 @@
     return 'part';
   }
   function rollModeNote(m) {
-    if (m === 'all') return '已选择「所有」：全部数字（含文章页计数等静态位）都带逐位滚动动画。';
+    if (m === 'all') return '已选择「所有」：全部数字（含浏览量与点赞量）都带逐位滚动动画。';
     if (m === 'off') return '已选择「关闭」：所有数字直接显示，不带滚动动画。';
-    return '已选择「部分」：浏览量与点赞数带逐位滚动动画，其余数字直接显示。';
+    return '已选择「部分」：除浏览量与点赞量以外的数字都带逐位滚动动画。';
   }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
@@ -747,8 +747,8 @@
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
     var rollOpts = [
-      ['all', '所有', '全部数字滚动'],
-      ['part', '部分', '仅浏览量与点赞数滚动'],
+      ['all', '所有', '全部数字滚动（含浏览量与点赞量）'],
+      ['part', '部分', '除浏览量与点赞量以外的数字滚动'],
       ['off', '关闭', '所有数字直接显示']
     ].map(function (o) {
       var on = o[0] === rmode;
@@ -800,7 +800,7 @@
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>动画</h2><p>控制页面里数字的逐位滚动动画。切换后立即生效，偏好只保存在本机。</p></div>' +
       '<div class="settings-sub"><h3>数字滚动动画</h3>' +
-      '<p>数字变化时每一位独立滚动（0~9 循环），不再整段滑动。</p>' +
+      '<p>数字变化时每一位独立滚动（0~9 循环），不再整段滑动；浏览量与点赞量只在「所有」档滚动。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
       '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
@@ -898,7 +898,7 @@
       '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
       '<div class="profile-foot"><div class="profile-stats">' +
       stats.map(function (s) {
-        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b data-roll="' + s[0] + '">' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
   /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
@@ -1517,8 +1517,8 @@
   /* 主题图标：日月同体 SVG。切换时月牙/光瓣平滑过渡，
      日→月结尾微微回摆（惯性），月→日结尾小膨胀再回弹（style.css 定义动画） */
   var ICON_THEME = '<svg class="theme-morph" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
-    '<mask id="zb-moon-cut"><rect x="-6" y="-6" width="36" height="36" fill="#fff"/><circle class="moon-cut" cx="12" cy="12" r="7.6" fill="#000"/></mask>' +
-    '<circle class="tm-core" cx="12" cy="12" r="9" mask="url(#zb-moon-cut)" fill="currentColor"></circle>' +
+    '<mask id="zb-moon-cut"><rect x="-6" y="-6" width="36" height="36" fill="#fff"/><circle class="moon-cut" cx="12" cy="12" r="6.1" fill="#000"/></mask>' +
+    '<circle class="tm-core" cx="12" cy="12" r="7.2" mask="url(#zb-moon-cut)" fill="currentColor"></circle>' +
     '<g class="tm-rays" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
   function themeIconSet(btn, night, anim) {
     if (!btn) return;
@@ -1650,19 +1650,61 @@
     if (!on) return null;
     return on.closest ? on.closest('.quality-item, .opt-item') : on;
   }
+  /* 分段胶囊弹簧：与导航胶囊同一套物理（刚度 200 / 阻尼 24），
+     移动中沿运动方向拉伸变细、垂直方向压扁——导航栏同款粘滞水滴感 */
+  var segGroups = [];
   function segPillMove(group, item, instant) {
     var pill = group.__segPill;
     if (!pill) return;
     if (!item) { pill.style.opacity = '0'; return; }
     pill.style.opacity = '1';
-    if (instant) pill.classList.add('no-anim');
-    pill.style.width = item.offsetWidth + 'px';
-    pill.style.height = item.offsetHeight + 'px';
-    pill.style.transform = 'translate3d(' + item.offsetLeft + 'px,' + item.offsetTop + 'px,0)';
-    if (instant) {
-      void pill.offsetWidth; /* 先无过渡就位，再恢复过渡 */
-      pill.classList.remove('no-anim');
+    var st = group.__segSpring;
+    if (!st) {
+      st = group.__segSpring = { x: 0, y: 0, w: 0, h: 0, vx: 0, vy: 0, tx: 0, ty: 0, tw: 0, th: 0, running: false, last: 0 };
     }
+    st.tx = item.offsetLeft; st.ty = item.offsetTop;
+    st.tw = item.offsetWidth; st.th = item.offsetHeight;
+    if (instant || st.w === 0) { /* 首次 / 指定瞬时：直接就位 */
+      st.x = st.tx; st.y = st.ty; st.w = st.tw; st.h = st.th;
+      st.vx = 0; st.vy = 0;
+      segPaint(group);
+      st.running = false;
+      return;
+    }
+    if (!st.running) { st.running = true; st.last = 0; window.requestAnimationFrame(function (t) { segStep(group, t); }); }
+  }
+  function segPaint(group) {
+    var pill = group.__segPill, st = group.__segSpring;
+    var sx = 1 + Math.min(.30, (Math.abs(st.vx) + Math.abs(st.vy)) * 0.0012);
+    var sy = 1 / Math.max(1, sx);
+    pill.style.width = st.w + 'px';
+    pill.style.height = st.h + 'px';
+    pill.style.transform = 'translate3d(' + st.x.toFixed(2) + 'px,' + st.y.toFixed(2) + 'px,0)' +
+      ' scale(' + sx.toFixed(4) + ',' + sy.toFixed(4) + ')';
+  }
+  function segStep(group, t) {
+    var st = group.__segSpring;
+    if (!st || !st.running) return;
+    var dt = st.last ? Math.min(0.05, (t - st.last) / 1000) : 0.016;
+    st.last = t;
+    var ax = (st.tx - st.x) * 200 - st.vx * 24;
+    var ay = (st.ty - st.y) * 200 - st.vy * 24;
+    var aw = (st.tw - st.w) * 200 - (st.tw - st.w) * 26;
+    var ah = (st.th - st.h) * 200 - (st.th - st.h) * 26;
+    st.vx += ax * dt; st.vy += ay * dt;
+    st.x += st.vx * dt; st.y += st.vy * dt;
+    st.w += aw * dt; st.h += ah * dt;
+    segPaint(group);
+    if (Math.abs(st.tx - st.x) < .5 && Math.abs(st.ty - st.y) < .5 &&
+        Math.abs(st.tw - st.w) < .5 && Math.abs(st.th - st.h) < .5 &&
+        Math.abs(st.vx) < 8 && Math.abs(st.vy) < 8) {
+      st.x = st.tx; st.y = st.ty; st.w = st.tw; st.h = st.th;
+      st.vx = 0; st.vy = 0;
+      segPaint(group);
+      st.running = false;
+      return;
+    }
+    window.requestAnimationFrame(function (t2) { segStep(group, t2); });
   }
   function initSegPills(root) {
     if (!root || !root.querySelectorAll) return;
@@ -1672,6 +1714,7 @@
       pill.className = 'seg-pill';
       group.insertBefore(pill, group.firstChild);
       group.__segPill = pill;
+      if (segGroups.indexOf(group) < 0) segGroups.push(group);
       segPillMove(group, segPillItem(group), true);
     });
   }
@@ -1682,6 +1725,11 @@
     if (!group || (!group.classList.contains('quality-group') && !group.classList.contains('opt-group'))) return;
     /* 单选点下就滑过去；等 input/checked 或 .on 类由各自 handler 更新后再对位 */
     window.setTimeout(function () { segPillMove(group, segPillItem(group), false); }, 0);
+  });
+  window.addEventListener('resize', function () {
+    Array.prototype.forEach.call(segGroups, function (group) {
+      if (group.__segPill) segPillMove(group, segPillItem(group), true);
+    });
   });
 
   /* ---------- 照片堆叠：滚轮 / 滑动换层 ----------
@@ -1803,6 +1851,83 @@
       else top.classList.remove('show');
     }
   }
+  /* 回到顶部：星星化作流星带你穿梭上去。
+     点击后：星星本体沿「右上→左下」流星的镜像轨迹（左上方向）加速飞出，
+     身后拖一条蜜金光迹；玻璃圆钮像被流星冲破的泡泡，以粘滞水感放大消散；
+     同时页面用同一段缓动滚回顶端，人眼跟着流星「到站」。 */
+  function flyTop(top) {
+    var reducedNow = reduced();
+    if (reducedNow || typeof top.animate !== 'function') { window.scrollTo(0, 0); return; }
+    var r = top.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var mark = top.querySelector('.puffy-mark');
+    var DUR = 720;
+    /* 流星轨迹：几乎垂直向上、带一点向左的倾角（背景流星从右上掠向左下，
+       回程就是它的镜像——从右下掠向左上） */
+    var dx = -Math.min(110, window.innerHeight * 0.14);
+    var dy = -(cy + window.innerHeight + 120);
+    var len = Math.sqrt(dx * dx + dy * dy);
+    var deg = Math.atan2(dx, -dy) * 180 / Math.PI; /* 竖直光迹转到轨迹方向所需的角 */
+    /* 星星本体：流星头 */
+    if (mark) {
+      try {
+        mark.style.pointerEvents = 'none';
+        var head = mark.animate([
+          { transform: 'translate(0,0) scale(1)', opacity: 1 },
+          { transform: 'translate(' + dx * 0.5 + 'px,' + dy * 0.42 + 'px) scale(1.15)', opacity: 1, offset: 0.42 },
+          { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.28)', opacity: 0 }
+        ], { duration: DUR, easing: 'cubic-bezier(.45,.05,.65,.6)', fill: 'forwards' });
+        head.addEventListener('finish', function () {
+          if (head.fill !== 'auto') { try { head.cancel(); } catch (e) { /* 忽略 */ } }
+          mark.style.pointerEvents = '';
+        });
+      } catch (e) { /* 忽略 */ }
+    }
+    /* 光迹：细长蜜金渐变线，头端接星星、尾端拖在来路，随流星一起飞 */
+    var trail = document.createElement('span');
+    trail.className = 'to-top-trail';
+    trail.setAttribute('aria-hidden', 'true');
+    var tlen = Math.min(190, Math.max(120, len * 0.22));
+    /* transform-origin 设在头部端点：光迹头始终钉在按钮中心，尾端只向来路收 */
+    trail.style.cssText = 'left:' + cx + 'px;top:' + cy + 'px;--tt:' + tlen.toFixed(0) + 'px;' +
+      'transform-origin:50% 0;transform:rotate(' + deg.toFixed(2) + 'deg);';
+    document.body.appendChild(trail);
+    try {
+      var ta = trail.animate([
+        { transform: 'rotate(' + deg.toFixed(2) + 'deg) scaleY(1)', opacity: .92 },
+        { transform: 'rotate(' + deg.toFixed(2) + 'deg) scaleY(.06)', opacity: 0 }
+      ], { duration: DUR + 120, easing: 'cubic-bezier(.4,.1,.7,.5)', fill: 'forwards' });
+      ta.addEventListener('finish', function () { if (trail.parentNode) trail.parentNode.removeChild(trail); });
+    } catch (e) { if (trail.parentNode) trail.parentNode.removeChild(trail); }
+    /* 玻璃圆钮：泡泡被冲破，先鼓起再以水感模糊缓缓消散 */
+    try {
+      var bub = top.animate([
+        { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
+        { transform: 'scale(1.18)', opacity: .75, filter: 'blur(1px)', offset: .3 },
+        { transform: 'scale(1.5)', opacity: 0, filter: 'blur(9px)' }
+      ], { duration: 560, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
+      bub.addEventListener('finish', function () {
+        window.setTimeout(function () {
+          try { bub.cancel(); } catch (e) { /* 忽略 */ }
+          updateScroll();
+        }, 240);
+      });
+    } catch (e) { /* 忽略 */ }
+    /* 页面滚动：与流星同一段缓动滚回顶端，700ms 左右的穿梭感 */
+    var y0 = window.scrollY || 0;
+    if (y0 > 0) {
+      var t0 = 0;
+      function step(t) {
+        if (!t0) t0 = t;
+        var k = Math.min(1, (t - t0) / DUR);
+        var e2 = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        window.scrollTo(0, y0 * (1 - e2));
+        if (k < 1) window.requestAnimationFrame(step);
+      }
+      window.requestAnimationFrame(step);
+    }
+  }
+
   function fallbackCopy(text, done) {
     try {
       var ta = document.createElement('textarea');
@@ -1972,7 +2097,7 @@
     }
     var top = document.getElementById('to-top');
     if (top && top.addEventListener) {
-      top.addEventListener('click', function () { window.scrollTo(0, 0); });
+      top.addEventListener('click', function () { flyTop(top); });
     }
     var ticking = false;
     function raf(fn) {
