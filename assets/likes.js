@@ -50,12 +50,11 @@
   }
   /* ---------- 数字逐位滚动（odometer）----------
      每个数位独立一列 0~9（末尾多放一个 0 供 9→0 折返），只滚动发生
-     变化的位，不再把整个数字从旧值滑到新值——位数增减时按右对齐补列
-     （新列从 0 滚到位）或删列，不会出现整段数字重叠的残影。
-     总时长全站统一 ROLL_MS，缓动 easeInOutCubic（慢→快→慢）。
+     变化的位。总时长全站统一 ROLL_MS，缓动 easeInOutCubic（慢→快→慢）。
      设置页「数字滚动动画」三档（localStorage zb-roll-mode）：
-       all  = 大数字与小数字全部滚动；
-       part = 默认，只有彩色大数字（data-roll）滚动，浏览/点赞小数字直接落文本；
+       all  = 全部数字（含文章页计数等静态位）都滚动；
+       part = 默认，只有浏览量 / 点赞数这类实时计数器滚动，
+              名片统计、归档统计等静态数字直接显示；
        off  = 全部直接落文本。
      无 WAAPI / 减少动态偏好 / 沙箱环境直接落文本，不影响功能。 */
   var ROLL_MS = 1000;
@@ -73,29 +72,53 @@
     } catch (e) { /* 判不了就按默认档 */ }
     return 'part';
   }
-  /* 单列滚动：from/to 是数位栈里的行号（0~9，10 = 折返的 0） */
+  /* 单列滚动：to 是数位栈里的行号（0~9，10 = 折返的 0）。
+     自愈关键：动画启动的同时就把内联 transform 写成目标行——动画播放期间
+     由 WAAPI 关键帧覆盖显示；无论动画正常结束、被下一次滚动取消还是意外
+     丢失，元素回落到的内联值永远是最新的目标行，绝不会卡在半行。
+     起点取当前视觉位置（可能是上一次滚动被打断的半行处），接续平滑不跳变。 */
   function rollCol(c, to, snap) {
     var col = c.col;
+    var fs = parseFloat(getComputedStyle(col).fontSize) || 16;
     var from = c.cur;
     if (col.getAnimations) {
       var runs = col.getAnimations();
-      for (var i = 0; i < runs.length; i++) { try { runs[i].cancel(); } catch (e) { /* 忽略 */ } }
+      for (var i = 0; i < runs.length; i++) {
+        try {
+          var t = getComputedStyle(col).transform;
+          if (t && t !== 'none') {
+            var m = t.match(/matrix.*\((.+?)\)/);
+            if (m) { var ty = Number(m[1].split(',')[5]); from = -ty / fs; }
+          }
+        } catch (e) { /* 取不到就按逻辑行起步 */ }
+        try { runs[i].cancel(); } catch (e) { /* 忽略 */ }
+      }
     }
+    if (!(from > -0.01)) from = 0; /* 防御：非法值回 0 */
     c.cur = snap ? 0 : to;
-    var a = col.animate([
+    col.style.transform = 'translateY(' + (-c.cur) + 'em)';
+    col.animate([
       { transform: 'translateY(' + (-from) + 'em)' },
-      { transform: 'translateY(' + (-to) + 'em)' }
+      { transform: 'translateY(' + (-c.cur) + 'em)' }
     ], { duration: ROLL_MS, easing: 'cubic-bezier(.45,.05,.2,1)' });
-    if (a) a.onfinish = function () {
+    /* 看门狗：滚动结束后强制取消残存动画并落回内联目标行——即使动画被
+       浏览器意外冻结/丢失，这一列也必定显示逻辑目标行，绝不卡在半行。 */
+    if (c.wd) window.clearTimeout(c.wd);
+    c.wd = window.setTimeout(function () {
+      c.wd = 0;
+      if (col.getAnimations) {
+        var runs = col.getAnimations();
+        for (var k = 0; k < runs.length; k++) { try { runs[k].cancel(); } catch (e) { /* 忽略 */ } }
+      }
       col.style.transform = 'translateY(' + (-c.cur) + 'em)';
-    };
+    }, ROLL_MS + 150);
   }
-  function rollText(el, target, big) {
+  function rollText(el, target, live) {
     if (!el) return;
     target = Math.max(0, Math.round(Number(target) || 0));
     var mode = rollMode();
     var st = el.__zbRoll;
-    if (mode === 'off' || (mode === 'part' && !big) || !rollCan()) {
+    if (mode === 'off' || (mode === 'part' && !live) || !rollCan()) {
       if (st) { if (st.wrap.parentNode) st.wrap.parentNode.removeChild(st.wrap); el.__zbRoll = null; }
       el.textContent = String(target);
       return;
@@ -310,7 +333,7 @@
     function paint(el, v) {
       if (el.getAttribute('data-live')) return;
       var target = el.tagName === 'BUTTON' ? el.querySelector('span') : el;
-      if (target) rollText(target, v, false);
+      if (target) rollText(target, v, true);
     }
     Array.prototype.forEach.call(root.querySelectorAll('[data-like]'), function (btn) {
       var kind = btn.getAttribute('data-like-kind') || 'moment';
@@ -441,7 +464,7 @@
   function setCount(btn, n) {
     var span = btn.querySelector('span');
     if (span && typeof n === 'number') {
-      rollText(span, n, false);
+      rollText(span, n, true);
       btn.setAttribute('data-live', '1');
     }
   }
@@ -455,7 +478,7 @@
   function setStat(kind, id, n) {
     if (typeof n !== 'number') return;
     statSlots(kind, id).forEach(function (el) {
-      rollText(el, n, false);
+      rollText(el, n, true);
       el.setAttribute('data-live', '1');
     });
   }
@@ -509,7 +532,7 @@
       if (v.length < 2) return;
       var kind = v[0], id = v.slice(1).join(':');
       getCount(kind, id).then(function (n) {
-        if (typeof n === 'number') { rollText(el, n, false); el.setAttribute('data-live', '1'); }
+        if (typeof n === 'number') { rollText(el, n, true); el.setAttribute('data-live', '1'); }
       }).catch(function () { /* 基线补画兜底 */ });
     });
   }
@@ -532,7 +555,7 @@
       Promise.resolve(p).then(function (n) {
         if (typeof n !== 'number') return;
         slots[s].forEach(function (el) {
-          rollText(el, n, false);
+          rollText(el, n, true);
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });
@@ -545,7 +568,7 @@
       Promise.resolve(hp).then(function (n) {
         if (typeof n !== 'number') return;
         Array.prototype.forEach.call(homeSlots, function (el) {
-          rollText(el, n, false);
+          rollText(el, n, true);
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });

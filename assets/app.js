@@ -193,7 +193,7 @@
       [runningDays(), '天在线']
     ];
     return '<div class="stat-bar glass reveal">' + items.map(function (it) {
-      return '<div class="stat-cell"><b data-roll="' + it[0] + '">' + it[0] + '</b><span>' + it[1] + '</span></div>';
+      return '<div class="stat-cell"><b>' + it[0] + '</b><span>' + it[1] + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -354,8 +354,8 @@
     return pageHead('归档', '总计 ' + all.length + ' 篇文章，按时间排好', 'ARCHIVE') +
       statHtml() + filters +
       '<div class="timeline">' + order.map(function (k) {
-        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span><i data-roll="' +
-          groups[k].length + '">' + groups[k].length + '</i> 篇</span></div><div class="tl-items">' +
+        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span><i>' +
+          groups[k].length + '</i> 篇</span></div><div class="tl-items">' +
           groups[k].map(function (p) {
             return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
               '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
@@ -670,8 +670,9 @@
       (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
   }
   /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
-     大数字 = 首页名片彩色统计、归档统计栏、归档月份计数等 data-roll 位；
-     小数字 = 点赞数与浏览量（爱心按钮、名片右上角、文章署名行）。
+     计数器 = 浏览量与点赞数（爱心按钮、名片右上角、文章署名行），实时变化；
+     静态位 = 文章页「共 N 篇文章」这类 data-roll 位，仅「所有」档才滚动。
+     名片彩色统计与归档统计已回归原版纯文本样式（v3.61）。
      likes.js 的 rollText 每次执行都读同一个键（zb-roll-mode），切换立即生效。 */
   var ROLL_MODES = ['all', 'part', 'off'];
   function readRollMode() {
@@ -682,9 +683,9 @@
     return 'part';
   }
   function rollModeNote(m) {
-    if (m === 'all') return '已选择「所有」：彩色大数字与点赞、浏览小数字都带逐位滚动动画。';
+    if (m === 'all') return '已选择「所有」：全部数字（含文章页计数等静态位）都带逐位滚动动画。';
     if (m === 'off') return '已选择「关闭」：所有数字直接显示，不带滚动动画。';
-    return '已选择「部分」：只有彩色大数字带逐位滚动动画，点赞、浏览小数字直接显示。';
+    return '已选择「部分」：浏览量与点赞数带逐位滚动动画，其余数字直接显示。';
   }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
@@ -746,8 +747,8 @@
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
     var rollOpts = [
-      ['all', '所有', '大数字与小数字全部滚动'],
-      ['part', '部分', '只有彩色大数字滚动'],
+      ['all', '所有', '全部数字滚动'],
+      ['part', '部分', '仅浏览量与点赞数滚动'],
       ['off', '关闭', '所有数字直接显示']
     ].map(function (o) {
       var on = o[0] === rmode;
@@ -897,7 +898,7 @@
       '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
       '<div class="profile-foot"><div class="profile-stats">' +
       stats.map(function (s) {
-        return '<a class="p-stat" href="' + esc(s[2]) + '"><b data-roll="' + s[0] + '">' + s[0] + '</b><span>' + s[1] + '</span></a>';
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
   /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
@@ -1760,14 +1761,14 @@
     }
   }
 
-  /* 数字滚动：静态数字（名片彩色统计 / 归档统计栏 / 归档月份计数 / 文章页计数）
-     是「大数字」，交给 ZBLikes.rollText 的逐位 odometer（big=true）——
-     是否真的滚动由设置页「数字滚动动画」三档决定（默认部分：只有大数字滚）。 */
+  /* 数字滚动：静态位（文章页「共 N 篇文章」）是 data-roll 标记位，
+     仅「所有」档才滚动（live=false）；浏览/点赞等实时计数器由 likes.js
+     内部以 live=true 调用，「部分」档（默认）也滚动。 */
   function rollMount(root) {
     if (!root || !root.querySelectorAll) return;
     if (!window.ZBLikes || typeof window.ZBLikes.rollText !== 'function') return;
     Array.prototype.forEach.call(root.querySelectorAll('[data-roll]'), function (el) {
-      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0, true);
+      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0, false);
     });
   }
 
