@@ -549,16 +549,29 @@ a:hover { color: var(--accent-3-text); text-decoration: none; }
 .icon-btn:hover { transform: rotate(-18deg) scale(1.08); color: var(--accent-3-text); box-shadow: 0 0 18px rgba(171, 139, 212, .28), var(--glass-inner); }
 .icon-btn svg { display: block; width: 18px; height: 18px; }
 
-.nav { display: flex; gap: 2px; font-size: 13px; margin-left: auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
-.nav a { color: var(--muted); padding: 6px 9px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+.nav { display: flex; gap: 2px; font-size: 13px; margin-left: auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; position: relative; }
+/* 导航水滴胶囊：选中态的底衬独立成一层，切换时丝滑滑到新项背后，
+   移动中带挤压拉伸与尾随水滴的张力粘连（JS 弹簧驱动 .nav-pill） */
+.nav-pill {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  border-radius: 999px; pointer-events: none; z-index: 0;
+  background: var(--glass-sheen), var(--glass-strong);
+  border: 1px solid var(--glass-line);
+  box-shadow: 0 5px 16px rgba(110, 136, 188, .12), var(--glass-inner);
+  opacity: 0; will-change: transform, width;
+}
+.nav-drop {
+  position: absolute; top: 50%; left: 0;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-line);
+  transform: translate(-50%, -50%);
+  will-change: transform, width, height;
+}
+.nav a { color: var(--muted); padding: 6px 9px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; position: relative; z-index: 1; }
 .nav a:hover { color: var(--ink-strong); background: rgba(255, 255, 255, .26); }
 .nav a.active {
-  position: relative; z-index: 0;
   color: var(--ink-strong); font-weight: 600;
-  background: var(--glass-sheen), var(--glass-strong);
-  border-color: var(--glass-line);
-
-  box-shadow: 0 5px 16px rgba(110, 136, 188, .12), var(--glass-inner);
 }
 .nav a.active::after {
   /* 选中态的星标：衬在文字正后方，不再占位在文字旁 */
@@ -973,6 +986,12 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .nav a:hover { color: #ffffff; background: rgba(18, 30, 74, .32); }
 :root[data-theme="night"] .nav a.active { color: #ffffff; }
 :root[data-theme="night"] .nav a.active::after { opacity: .5; }
+:root[data-theme="night"] .nav-pill {
+  background: linear-gradient(160deg, rgba(40, 66, 128, .85), rgba(30, 44, 96, .85));
+  border-color: rgba(90, 120, 200, .45);
+  box-shadow: 0 5px 16px rgba(6, 14, 44, .5);
+}
+:root[data-theme="night"] .nav-drop { background: rgba(30, 44, 96, .9); border-color: rgba(90, 120, 200, .45); }
 
 /* 点击星爆：一圈小星星从点击处向四周溅射后快速消散（仅高画质开启）；
    星星与天空的胖星同款：蜜金填充，发光贴合星星轮廓（不做圆形光幕，避免多星叠加成实心圆饼） */
@@ -1289,6 +1308,58 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .post-x-card .x-foot .x-link { margin-top: 0; }
 .post-x-card .x-foot .post-stats { margin: 0; }
 
+/* 主题切换图标：日月同体，切换时形状平滑过渡。
+   日→月：光瓣收拢、月牙咬合，结尾微微回摆表现惯性；
+   月→日：月牙退开露出全圆、光瓣弹出，结尾一小瞬膨胀再回弹。 */
+.theme-morph .moon-cut { transform: translate(26px, 26px); transition: transform .52s cubic-bezier(.55, 1.5, .4, 1); }
+.theme-morph.is-night .moon-cut { transform: translate(4.2px, -4.2px); }
+.theme-morph .tm-rays {
+  transform-origin: 12px 12px; opacity: 1;
+  transition: opacity .3s ease, transform .48s cubic-bezier(.34, 1.5, .5, 1);
+}
+.theme-morph.is-night .tm-rays { opacity: 0; transform: scale(.32); }
+.theme-morph.to-day { animation: theme-inflate .48s cubic-bezier(.34, 1.3, .4, 1) .3s both; }
+.theme-morph.to-night { animation: theme-swing .62s cubic-bezier(.3, .8, .3, 1) .3s both; }
+@keyframes theme-inflate {
+  0% { transform: scale(1); }
+  55% { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+@keyframes theme-swing {
+  0% { transform: rotate(0deg); }
+  42% { transform: rotate(-16deg); }
+  74% { transform: rotate(9deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* 点赞蓄势膨胀：未赞 → 已赞瞬间，灰心先压缩蓄势，再突然膨胀变粉、弹回原尺寸，
+   外圈同步炸开一圈涟漪 */
+.like { position: relative; }
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  26% { transform: scale(.72); }
+  56% { transform: scale(1.55); }
+  74% { transform: scale(.9); }
+  100% { transform: scale(1); }
+}
+@keyframes like-ring {
+  0% { transform: scale(.55); opacity: .75; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.like.like-pop { animation: like-pop .6s cubic-bezier(.32, .72, .3, 1); z-index: 2; }
+.like.like-pop svg { transition: fill .16s ease, stroke .16s ease; }
+.like.like-pop::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 16px; height: 16px; margin: -8px 0 0 -8px;
+  border-radius: 50%; border: 2px solid var(--accent-3, #e891ad);
+  animation: like-ring .55s ease-out .1s both; pointer-events: none;
+}
+
+/* 数字滚动容器：旧数字上滑淡出、新数字下方滑入淡入（likes.js 驱动） */
+.zb-roll { display: inline-flex; position: relative; overflow: hidden; vertical-align: bottom; }
+.zb-roll .zb-val { display: inline-block; will-change: transform, opacity; }
+.zb-roll .zb-out { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
 /* ---------- 相册 / 相册 ---------- */
 /* 两栏相册（Kirameku 式），窄屏回落单栏 */
 /* 相册：三列瀑布流（CSS columns），一行放 3 个照片集，卡片区域整体收窄；
@@ -1321,6 +1392,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 .album-stack .stack-mid::after  { opacity: .30; }
 .album-stack .stack-back::after { opacity: .48; }
+/* 换层时白色景深跟随淡入淡出，层次明度差平滑过渡 */
+.album-stack .stack-mid::after,
+.album-stack .stack-back::after { transition: opacity .45s ease; }
 .album-stack:hover .stack-back,
 .album-card:hover .stack-back,
 .q-photo:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }

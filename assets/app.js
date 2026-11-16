@@ -193,7 +193,7 @@
       [runningDays(), '天在线']
     ];
     return '<div class="stat-bar glass reveal">' + items.map(function (it) {
-      return '<div class="stat-cell"><b>' + it[0] + '</b><span>' + it[1] + '</span></div>';
+      return '<div class="stat-cell"><b data-roll="' + it[0] + '">' + it[0] + '</b><span>' + it[1] + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -354,8 +354,8 @@
     return pageHead('归档', '总计 ' + all.length + ' 篇文章，按时间排好', 'ARCHIVE') +
       statHtml() + filters +
       '<div class="timeline">' + order.map(function (k) {
-        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span>' +
-          groups[k].length + ' 篇</span></div><div class="tl-items">' +
+        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span><i data-roll="' +
+          groups[k].length + '">' + groups[k].length + '</i> 篇</span></div><div class="tl-items">' +
           groups[k].map(function (p) {
             return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
               '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
@@ -1172,7 +1172,7 @@
   /* ---------- 文章页：全部文章卡片化（复用项目页 x-card 布局） ---------- */
   function renderPostsPage() {
     return pageHead('文章', '写过的所有记录，都在这里', 'POSTS') +
-      '<p class="page-note">共 ' + POSTS.length + ' 篇文章</p>' +
+      '<p class="page-note">共 <span data-roll="' + POSTS.length + '">' + POSTS.length + '</span> 篇文章</p>' +
       '<div class="card-grid">' + pinnedFirst(POSTS).map(function (p) {
         return '<article class="x-card glass sheen reveal post-x-card">' +
           '<div class="x-card-top"><span class="x-badge">' +
@@ -1253,6 +1253,8 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     applyNavNames();
+    navPillTarget();
+    rollMount(app);
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
@@ -1501,8 +1503,28 @@
     try { if (window.localStorage) window.localStorage.setItem('zb-theme', t); }
     catch (e) { /* file:// 下可能不可用，忽略 */ }
   }
-  var ICON_MOON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z" fill="currentColor"/></svg>';
-  var ICON_SUN = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
+  /* 主题图标：日月同体 SVG。切换时月牙/光瓣平滑过渡，
+     日→月结尾微微回摆（惯性），月→日结尾小膨胀再回弹（style.css 定义动画） */
+  var ICON_THEME = '<svg class="theme-morph" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+    '<mask id="zb-moon-cut"><rect x="-6" y="-6" width="36" height="36" fill="#fff"/><circle class="moon-cut" cx="12" cy="12" r="7.6" fill="#000"/></mask>' +
+    '<circle class="tm-core" cx="12" cy="12" r="9" mask="url(#zb-moon-cut)" fill="currentColor"></circle>' +
+    '<g class="tm-rays" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
+  function themeIconSet(btn, night, anim) {
+    if (!btn) return;
+    var svg = btn.querySelector('svg.theme-morph');
+    if (!svg) {
+      btn.innerHTML = ICON_THEME;
+      svg = btn.querySelector('svg.theme-morph');
+    }
+    if (!svg) return;
+    svg.classList.toggle('is-night', !!night);
+    svg.classList.remove('to-day', 'to-night');
+    if (anim) {
+      try { void svg.getBoundingClientRect(); } catch (e) { /* 忽略 */ }
+      svg.classList.add(anim);
+      window.setTimeout(function () { svg.classList.remove(anim); }, 1000);
+    }
+  }
   function applyTheme(t) {
     var root = document.documentElement;
     if (root && root.dataset) {
@@ -1510,12 +1532,11 @@
       else delete root.dataset.theme;
     }
     if (window.ZBInteractions && window.ZBInteractions.syncTheme) window.ZBInteractions.syncTheme();
+    themeIconSet(document.getElementById('theme-toggle'), t === 'night', false);
     var btn = document.getElementById('theme-toggle');
     if (btn) {
-      var night = t === 'night';
-      btn.innerHTML = night ? ICON_SUN : ICON_MOON;
-      btn.setAttribute('aria-label', night ? '切换为晴空模式' : '切换为星夜模式');
-      btn.setAttribute('title', night ? '切换为晴空模式' : '切换为星夜模式');
+      btn.setAttribute('aria-label', t === 'night' ? '切换为晴空模式' : '切换为星夜模式');
+      btn.setAttribute('title', t === 'night' ? '切换为晴空模式' : '切换为星夜模式');
     }
     try { document.dispatchEvent(new CustomEvent('zb:theme', { detail: t })); } catch (e) {}
   }
@@ -1524,12 +1545,196 @@
     var btn = document.getElementById('theme-toggle');
     if (btn && btn.addEventListener) {
       btn.addEventListener('click', function () {
-        var next = document.documentElement && document.documentElement.dataset &&
-          document.documentElement.dataset.theme === 'night' ? '' : 'night';
+        var night = document.documentElement && document.documentElement.dataset &&
+          document.documentElement.dataset.theme === 'night';
+        var next = night ? '' : 'night';
         saveTheme(next);
         applyTheme(next);
+        /* 只在点击这一次播放形变收尾动画（惯性回摆 / 小膨胀） */
+        themeIconSet(btn, next === 'night', next === 'night' ? 'to-night' : 'to-day');
       });
     }
+  }
+
+  /* ---------- 导航水滴胶囊（Huawei 式切换） ----------
+     选中底衬独立成一层 .nav-pill，切换时用弹簧丝滑滑到新项背后：
+     移动快时胶囊沿运动方向拉伸变细（水滴张力），尾随一滴 .nav-drop
+     以更低的刚度滞后跟随，粘在胶囊尾缘被「拽」过去，松手时回弹收拢。
+     相邻两项切换时滞后液滴与主胶囊重叠最多，粘连感最明显。 */
+  var pillBox = null;
+  function initNavPill() {
+    var nav = document.querySelector('.nav');
+    if (!nav || nav.__zbPill || !window.requestAnimationFrame) return;
+    var pill = document.createElement('span');
+    pill.className = 'nav-pill';
+    var drop = document.createElement('span');
+    drop.className = 'nav-drop';
+    pill.appendChild(drop);
+    nav.appendChild(pill);
+    pillBox = nav.__zbPill = {
+      nav: nav, pill: pill, drop: drop,
+      x: null, w: 0, y: 0, h: 0, vx: 0, vw: 0,
+      dx: null, dvx: 0,           /* 尾随液滴：更低刚度、更阻 → 滞后粘连 */
+      tx: 0, tw: 0, ty: 0, th: 0, running: false, last: 0
+    };
+    navPillTarget();
+    window.addEventListener('resize', navPillTarget);
+    document.addEventListener('zb-nav-sync', navPillTarget);
+    window.addEventListener('load', function () { setTimeout(navPillTarget, 120); });
+  }
+  function navPillTarget() {
+    if (!pillBox) return;
+    var a = pillBox.nav.querySelector('a.active');
+    if (!a) { pillBox.pill.style.opacity = '0'; pillBox.x = null; return; }
+    pillBox.pill.style.opacity = '1';
+    pillBox.tx = a.offsetLeft;
+    pillBox.ty = a.offsetTop;
+    pillBox.tw = a.offsetWidth;
+    pillBox.th = a.offsetHeight;
+    if (pillBox.x == null) { /* 首次直接就位，不做动画 */
+      pillBox.x = pillBox.tx; pillBox.w = pillBox.tw;
+      pillBox.y = pillBox.ty; pillBox.h = pillBox.th;
+      pillBox.dx = null;
+      pillPaint(pillBox, 0);
+      return;
+    }
+    pillStart();
+  }
+  function pillStart() {
+    if (!pillBox || pillBox.running) return;
+    pillBox.running = true;
+    pillBox.last = 0;
+    window.requestAnimationFrame(pillStep);
+  }
+  function pillPaint(pb, dt) {
+    var sx = 1 + Math.min(.42, Math.abs(pb.vx) * 0.0016);
+    var sy = 1 / Math.max(1, sx);
+    pb.pill.style.width = pb.w + 'px';
+    pb.pill.style.height = pb.h + 'px';
+    pb.pill.style.transform = 'translate3d(' + pb.x + 'px,' + pb.y + 'px,0) scale(' + sx.toFixed(4) + ',' + sy.toFixed(4) + ')';
+    /* 液滴：粘在运动反方向的尾缘，滞后越多越被拉长成泪滴 */
+    var trailing = pb.x + (pb.vx >= 0 ? pb.w : 0);
+    var gap = trailing - (pb.dx == null ? trailing : pb.dx);
+    var size = Math.max(5, Math.min(15, 14 - Math.abs(gap) * 0.10));
+    pb.drop.style.left = (pb.dx == null ? trailing : pb.dx) + 'px';
+    pb.drop.style.width = size + 'px';
+    pb.drop.style.height = size + 'px';
+    pb.drop.style.opacity = (pb.dx == null || Math.abs(gap) < 2) ? '0' : '1';
+  }
+  function pillStep(t) {
+    var pb = pillBox;
+    if (!pb || !pb.running) return;
+    var dt = pb.last ? Math.min(0.05, (t - pb.last) / 1000) : 0.016;
+    pb.last = t;
+    /* 主胶囊弹簧 */
+    var ax = (pb.tx - pb.x) * 200 - pb.vx * 24;
+    var aw = (pb.tw - pb.w) * 200 - pb.vw * 24;
+    pb.vx += ax * dt; pb.vw += aw * dt;
+    pb.x += pb.vx * dt; pb.w += pb.vw * dt;
+    /* 尾随液滴弹簧（刚度低 → 滞后 → 粘连感） */
+    var trail = pb.x + (pb.vx >= 0 ? pb.w : 0);
+    if (pb.dx == null) pb.dx = trail;
+    var adx = (trail - pb.dx) * 120 - pb.dvx * 18;
+    pb.dvx += adx * dt;
+    pb.dx += pb.dvx * dt;
+    pb.y = pb.ty; pb.h = pb.th;
+    pillPaint(pb, dt);
+    if (Math.abs(pb.tx - pb.x) < .4 && Math.abs(pb.tw - pb.w) < .4 &&
+        Math.abs(pb.vx) < 8 && Math.abs(pb.vw) < 8) {
+      pb.x = pb.tx; pb.w = pb.tw; pb.vx = 0; pb.vw = 0;
+      pb.dx = null; pb.dvx = 0;
+      pillPaint(pb, dt);
+      pb.running = false;
+      return;
+    }
+    window.requestAnimationFrame(pillStep);
+  }
+
+  /* ---------- 照片堆叠：滚轮 / 滑动换层 ----------
+     桌面端：鼠标在照片集上滚轮向下 → 最上层照片丝滑滑落到最底层，
+     下一层浮现到顶层；滚轮向上 → 最底层升到最上层。
+     手机端：在照片集上右滑 = 滚轮向下，左滑 = 滚轮向上。
+     层次明度差不变：顶层原样、下层偏白、下下层更偏白（CSS 白膜跟随淡入淡出）。 */
+  function initStackWheel() {
+    if (document.__zbStack || !document.addEventListener) return;
+    document.__zbStack = true;
+    var touch = null;
+    document.addEventListener('wheel', function (e) {
+      var st = e.target && e.target.closest ? e.target.closest('.album-stack') : null;
+      if (!st || st.__busy) return;
+      e.preventDefault();
+      st.__acc = (st.__acc || 0) + e.deltaY;
+      if (Math.abs(st.__acc) < 55) return;
+      var dir = st.__acc > 0 ? 1 : -1;
+      st.__acc = 0;
+      rotateStack(st, dir);
+    }, { passive: false });
+    document.addEventListener('touchstart', function (e) {
+      var st = e.target && e.target.closest ? e.target.closest('.album-stack') : null;
+      if (!st || !e.touches.length) return;
+      touch = { st: st, x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+    }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (!touch) return;
+      var tx = touch; touch = null;
+      if (!e.changedTouches.length) return;
+      var dx = e.changedTouches[0].clientX - tx.x;
+      var dy = e.changedTouches[0].clientY - tx.y;
+      if (tx.st.__busy || Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+      /* 右滑 = 滚轮向下（顶 → 底），左滑 = 滚轮向上（底 → 顶） */
+      rotateStack(tx.st, dx > 0 ? 1 : -1);
+    }, { passive: true });
+  }
+  function rotateStack(st, dir) {
+    var top = st.querySelector('.stack-top');
+    var mid = st.querySelector('.stack-mid');
+    var back = st.querySelector('.stack-back');
+    if (!top || !mid || !back || st.__busy) return;
+    st.__busy = true;
+    window.setTimeout(function () { st.__busy = false; }, 500);
+    if (dir > 0) {
+      /* 顶层拿起 → 滑落到最底层；换层类交给 CSS 过渡接力 */
+      var a = null;
+      if (top.animate) {
+        a = top.animate([
+          { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 0 },
+          { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', offset: 0.42 },
+          { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 1 }
+        ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
+      }
+      window.setTimeout(function () {
+        top.className = 'stack-back';
+        mid.className = 'stack-top';
+        back.className = 'stack-mid';
+        if (a) a.cancel();
+      }, 200);
+    } else {
+      /* 最底层拿起 → 升到最顶层 */
+      var b = null;
+      if (back.animate) {
+        b = back.animate([
+          { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 0 },
+          { transform: 'rotate(3deg) translateY(-30px) scale(1.08)', offset: 0.45 },
+          { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 1 }
+        ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
+      }
+      window.setTimeout(function () {
+        back.className = 'stack-top';
+        top.className = 'stack-mid';
+        mid.className = 'stack-back';
+        if (b) b.cancel();
+      }, 200);
+    }
+  }
+
+  /* 数字滚动：静态数字（统计栏 / 归档月份计数 / 文章页计数）交给 ZBLikes.rollText
+     统一处理——从 0 滚到目标值、全站同一时长、缓动慢→快→慢、逐位上滑淡出下滑入。 */
+  function rollMount(root) {
+    if (!root || !root.querySelectorAll) return;
+    if (!window.ZBLikes || typeof window.ZBLikes.rollText !== 'function') return;
+    Array.prototype.forEach.call(root.querySelectorAll('[data-roll]'), function (el) {
+      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0);
+    });
   }
 
   /* ---------- 搜索 ---------- */
@@ -1974,5 +2179,7 @@
   initSearch();
   initInteractions();
   initChangelogSync();
+  initNavPill();
+  initStackWheel();
   route();
 })();

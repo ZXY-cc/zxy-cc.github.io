@@ -48,6 +48,73 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
+  /* ---------- 数字滚动（全站统一时长，慢→快→慢） ----------
+     从 0（或旧值）滚到目标值，总时长固定 ROLL_MS，缓动 easeInOutCubic；
+     每次整数变化：旧数字上滑淡出，新数字从下方滑入淡入。
+     无 WAAPI / 减少动态偏好 / 沙箱环境直接落文本，不影响功能。 */
+  var ROLL_MS = 1300, ROLL_SLIDE = 190, ROLL_RE = 620;
+  function rollEase(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function rollCan() {
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    } catch (e) { /* 判不了就按支持处理 */ }
+    return typeof window.requestAnimationFrame === 'function' &&
+      typeof window.Element === 'function' && Element.prototype.animate;
+  }
+  function rollSlide(st, v) {
+    var prev = st.shown;
+    st.shown = v;
+    var val = st.val;
+    var old = document.createElement('span');
+    old.className = 'zb-val zb-out';
+    old.textContent = String(prev);
+    st.el.appendChild(old);
+    val.textContent = String(v);
+    var top = String(Math.round(st.h || 100)) + '%';
+    if (old.animate) {
+      old.animate([
+        { transform: 'translateY(0)', opacity: 1 },
+        { transform: 'translateY(-108%)', opacity: 0 }
+      ], { duration: ROLL_SLIDE, easing: 'cubic-bezier(.4,0,.6,1)' }).onfinish = function () {
+        if (old.parentNode) old.parentNode.removeChild(old);
+      };
+      val.animate([
+        { transform: 'translateY(108%)', opacity: 0 },
+        { transform: 'translateY(0)', opacity: 1 }
+      ], { duration: ROLL_SLIDE, easing: 'cubic-bezier(.2,.7,.3,1)' });
+    }
+  }
+  function rollTick(st, t) {
+    var k = Math.min(1, (t - st.t0) / st.dur);
+    var v = Math.round(st.from + (st.target - st.from) * rollEase(k));
+    if (v !== st.shown) rollSlide(st, v);
+    if (k < 1) st.raf = window.requestAnimationFrame(function (t2) { rollTick(st, t2); });
+    else { st.playing = false; st.raf = 0; }
+  }
+  function rollText(el, target) {
+    if (!el) return;
+    target = Math.max(0, Math.round(Number(target) || 0));
+    if (!rollCan()) { el.textContent = String(target); return; }
+    var st = el.__zbRoll;
+    if (!st) {
+      el.classList.add('zb-roll');
+      var val = document.createElement('span');
+      val.className = 'zb-val';
+      val.textContent = '0';
+      el.textContent = '';
+      el.appendChild(val);
+      st = { el: el, val: val, shown: 0, target: target, t0: 0, from: 0, dur: ROLL_MS, playing: false, raf: 0, h: 108 };
+      el.__zbRoll = st;
+      if (target === 0) return;
+    } else {
+      if (st.target === target && st.playing) return;
+      st.target = target;
+      if (st.playing) return; /* 滚动途中来的新真值：滚完这轮再处理 */
+      st.from = st.shown; st.dur = ROLL_RE;
+    }
+    st.playing = true;
+    st.raf = window.requestAnimationFrame(function (t) { st.t0 = t; rollTick(st, t); });
+  }
   /* Abacus key 只允许 [A-Za-z0-9_-.]：连字符分隔（kind 前缀 + 条目 id） */
   function counterKey(kind, id) {
     var raw = String(kind) + '-' + String(id);
@@ -218,7 +285,7 @@
     function paint(el, v) {
       if (el.getAttribute('data-live')) return;
       var target = el.tagName === 'BUTTON' ? el.querySelector('span') : el;
-      if (target) target.textContent = String(v);
+      if (target) rollText(target, v);
     }
     Array.prototype.forEach.call(root.querySelectorAll('[data-like]'), function (btn) {
       var kind = btn.getAttribute('data-like-kind') || 'moment';
@@ -349,7 +416,7 @@
   function setCount(btn, n) {
     var span = btn.querySelector('span');
     if (span && typeof n === 'number') {
-      span.textContent = String(n);
+      rollText(span, n);
       btn.setAttribute('data-live', '1');
     }
   }
@@ -363,7 +430,7 @@
   function setStat(kind, id, n) {
     if (typeof n !== 'number') return;
     statSlots(kind, id).forEach(function (el) {
-      el.textContent = String(n);
+      rollText(el, n);
       el.setAttribute('data-live', '1');
     });
   }
@@ -374,6 +441,12 @@
     var id = btn.getAttribute('data-like-id') || '';
     if (!id || liked(kind, id)) return;
     markLiked(kind, id);
+    /* 蓄势膨胀：先压缩蓄力，再突然膨胀变粉、弹回原尺寸，外圈炸开涟漪。
+       能走到这里必然是「本机从未赞过 → 点赞」，动画只在这一刻播一次。 */
+    btn.classList.remove('like-pop');
+    try { void btn.offsetWidth; } catch (e) { /* 忽略 */ }
+    btn.classList.add('like-pop');
+    window.setTimeout(function () { btn.classList.remove('like-pop'); }, 720);
     btn.classList.add('on');
     btn.setAttribute('aria-pressed', 'true');
     btn.setAttribute('title', '已点赞，谢谢你喜欢');
@@ -434,7 +507,7 @@
       Promise.resolve(p).then(function (n) {
         if (typeof n !== 'number') return;
         slots[s].forEach(function (el) {
-          el.textContent = String(n);
+          rollText(el, n);
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });
@@ -447,7 +520,7 @@
       Promise.resolve(hp).then(function (n) {
         if (typeof n !== 'number') return;
         Array.prototype.forEach.call(homeSlots, function (el) {
-          el.textContent = String(n);
+          rollText(el, n);
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });
@@ -467,6 +540,7 @@
     liked: liked, getCount: getCount, hitCount: hitCount,
     getViews: getViews, countView: countView,
     getHomeViews: getHomeViews, countHomeView: countHomeView,
+    rollText: rollText,
     ownerDevice: ownerDevice, NO_COUNT_KEY: NO_COUNT_KEY
   };
 })();
