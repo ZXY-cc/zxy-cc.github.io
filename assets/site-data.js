@@ -218,13 +218,12 @@ window.STUDIO_DATA = {
     {
       "slug": "free-blog",
       "title": "（测试）零成本搭一个自己的博客",
-      "date": "2026-11-07",
+      "date": "2026-11-16",
       "tags": [
-        "建站",
         "笔记",
-        "A"
+        "A",
+        "站点"
       ],
-      "category": "随笔",
       "cover": "",
       "summary": "域名、证书、托管这三件事各管什么，以及一条最省事的上线路径。",
       "markdown": "想拥有一个自己的博客，其实只需要解决三个问题：别人怎么找到你、内容放在哪、以及浏览器地址栏里那把小锁。这三件事分别对应域名、托管和证书，彼此独立，可以分开选。\n\n## 三条信息，三层链路\n\n环节可选服务要做的事免费域名dpdns.org申请一个 you.dpdns.org解析与证书Cloudflare / 平台自带加解析记录，勾强制 HTTPS网站托管GitHub Pages / Cloudflare Pages上传静态文件dpdns.org 来自 DigitalPlat FreeDomain，是一个免费二级域名服务。注册后你会拿到形如 you.dpdns.org 的地址，并且拥有完整的 DNS 控制权，可以自己添加 A、CNAME、TXT 记录，也可以把 NS 委派给 Cloudflare。每个账号的免费名额有限，长期闲置或违规会被回收，所以它适合练手和个人站点，不适合承载重要业务。\n\n一个常见误解：以为要单独去申请一张免费证书。其实不用。GitHub Pages 通过 Let's Encrypt 自动签发，Cloudflare Pages 用 Universal SSL，两者都会自动续期，你要做的只是把 DNS 指对，然后勾选强制 HTTPS。\n\n## 最省事的一条路径\n\n- 在 DigitalPlat 控制台注册域名，委派模式选「DigitalPlat DNS」（默认且标了推荐），解析记录就在这个面板里加，先不必迁到 Cloudflare。\n- 把博客文件推到 GitHub 仓库，在 Settings → Pages 里选择从 main 分支根目录部署。此时已经能用 username.github.io 访问了。\n- 回到域名控制台添加解析记录。注意 you.dpdns.org 是这个区域的根，标准 DNS 不允许在根上放 CNAME：\n方案 A：不带 www，给根域加 4 条 A 记录\nA  you.dpdns.org  185.199.108.153\nA  you.dpdns.org  185.199.109.153\nA  you.dpdns.org  185.199.110.153\nA  you.dpdns.org  185.199.111.153\n\n方案 B：用 www，只加一条 CNAME\nCNAME  www.you.dpdns.org  username.github.io然后在仓库的 Pages 设置里填入对应的域名并保存。DNS 生效后勾选 Enforce HTTPS，证书最多需要一天左右签发完成，之后就是一条带小锁的正式地址。\n\n## 如果用 Cloudflare Pages\n\n子域名不必把 NS 迁到 Cloudflare，直接在 Pages 项目的 Custom domains 里发起添加，再去域名控制台按提示补一条 CNAME 指向 xxx.pages.dev 即可。注意顺序不能反：只在 DNS 里手写 CNAME、而不在 Pages 后台登记域名，会得到 522 错误。CF Pages 只提供 CNAME 目标，所以走 www.you.dpdns.org 这类子域最省事；只有绑裸域（apex）才必须把 NS 托管到 Cloudflare。\n\n## 几个值得记住的坑\n\n- 根域不能放 CNAME。想直接用 you.dpdns.org 就得用 A 记录，CNAME 只能给 www 这类子域用。\n- 委派模式选「外部名称服务器」时，得先在外部 DNS 建好区域、拿到 NS 主机名再提交注册；而 dpdns.org 是子域，Cloudflare 免费版只接受可注册根域作为区域，容易卡在这一步。\n- 把 GitHub Pages 套在 Cloudflare 代理后面时，DNS 记录先设为「仅 DNS」（灰云），否则 Let's Encrypt 的验证容易失败；证书签发后再考虑开代理。\n- 免费域名随时可能调整政策，重要内容要留有迁移方案：DNS 记录导出一份，随时能换到付费域名。\n- 静态博客不需要构建工具。三个文件加一份文章数据，就能直接拖进托管平台。\n写到这里，这个站本身也是这么搭起来的。剩下的问题只有一个：下一篇写什么。",
