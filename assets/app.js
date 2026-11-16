@@ -193,7 +193,7 @@
       [runningDays(), '天在线']
     ];
     return '<div class="stat-bar glass reveal">' + items.map(function (it) {
-      return '<div class="stat-cell"><b data-roll="' + it[0] + '">' + it[0] + '</b><span>' + it[1] + '</span></div>';
+      return '<div class="stat-cell"><b>' + it[0] + '</b><span>' + it[1] + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -354,8 +354,8 @@
     return pageHead('归档', '总计 ' + all.length + ' 篇文章，按时间排好', 'ARCHIVE') +
       statHtml() + filters +
       '<div class="timeline">' + order.map(function (k) {
-        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span><i data-roll="' +
-          groups[k].length + '">' + groups[k].length + '</i> 篇</span></div><div class="tl-items">' +
+        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span>' +
+          groups[k].length + ' 篇</span></div><div class="tl-items">' +
           groups[k].map(function (p) {
             return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
               '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
@@ -670,10 +670,10 @@
       (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
   }
   /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
-     计数器 = 浏览量与点赞数（爱心按钮、名片右上角、文章署名行），实时变化；
-     静态位 = 文章页「共 N 篇文章」这类 data-roll 位，仅「所有」档才滚动。
-     名片彩色统计与归档统计已回归原版纯文本样式（v3.61）。
-     likes.js 的 rollText 每次执行都读同一个键（zb-roll-mode），切换立即生效。 */
+     滚动对象 = 实时计数器（浏览量与点赞量：爱心按钮、名片右上角、文章署名行）。
+     「所有」= 两类计数器都滚；「部分」= 仅点赞量滚，浏览量直接显示；
+     「关闭」= 全部直接显示。likes.js 的 rollText 每次执行都读同一个键
+     （zb-roll-mode），切换立即生效。 */
   var ROLL_MODES = ['all', 'part', 'off'];
   function readRollMode() {
     try {
@@ -683,9 +683,9 @@
     return 'part';
   }
   function rollModeNote(m) {
-    if (m === 'all') return '已选择「所有」：全部数字（含浏览量与点赞量）都带逐位滚动动画。';
+    if (m === 'all') return '已选择「所有」：浏览量与点赞量都带逐位滚动动画。';
     if (m === 'off') return '已选择「关闭」：所有数字直接显示，不带滚动动画。';
-    return '已选择「部分」：除浏览量与点赞量以外的数字都带逐位滚动动画。';
+    return '已选择「部分」：仅点赞量带逐位滚动动画，浏览量直接显示。';
   }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
@@ -747,8 +747,8 @@
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
     var rollOpts = [
-      ['all', '所有', '全部数字滚动（含浏览量与点赞量）'],
-      ['part', '部分', '除浏览量与点赞量以外的数字滚动'],
+      ['all', '所有', '浏览量与点赞量都滚动'],
+      ['part', '部分', '仅点赞量滚动'],
       ['off', '关闭', '所有数字直接显示']
     ].map(function (o) {
       var on = o[0] === rmode;
@@ -800,7 +800,7 @@
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>动画</h2><p>控制页面里数字的逐位滚动动画。切换后立即生效，偏好只保存在本机。</p></div>' +
       '<div class="settings-sub"><h3>数字滚动动画</h3>' +
-      '<p>数字变化时每一位独立滚动（0~9 循环），不再整段滑动；浏览量与点赞量只在「所有」档滚动。</p>' +
+      '<p>数字变化时每一位独立滚动（0~9 循环）；控制浏览量与点赞量计数器的滚动动画。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
       '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
@@ -898,7 +898,7 @@
       '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
       '<div class="profile-foot"><div class="profile-stats">' +
       stats.map(function (s) {
-        return '<a class="p-stat" href="' + esc(s[2]) + '"><b data-roll="' + s[0] + '">' + s[0] + '</b><span>' + s[1] + '</span></a>';
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
   /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
@@ -1183,7 +1183,7 @@
   /* ---------- 文章页：全部文章卡片化（复用项目页 x-card 布局） ---------- */
   function renderPostsPage() {
     return pageHead('文章', '写过的所有记录，都在这里', 'POSTS') +
-      '<p class="page-note">共 <span data-roll="' + POSTS.length + '">' + POSTS.length + '</span> 篇文章</p>' +
+      '<p class="page-note">共 ' + POSTS.length + ' 篇文章</p>' +
       '<div class="card-grid">' + pinnedFirst(POSTS).map(function (p) {
         return '<article class="x-card glass sheen reveal post-x-card">' +
           '<div class="x-card-top"><span class="x-badge">' +
@@ -1264,8 +1264,6 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     navPillTarget();
-    rollMount(app);
-    initSegPills(app);
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
@@ -1514,28 +1512,8 @@
     try { if (window.localStorage) window.localStorage.setItem('zb-theme', t); }
     catch (e) { /* file:// 下可能不可用，忽略 */ }
   }
-  /* 主题图标：日月同体 SVG。切换时月牙/光瓣平滑过渡，
-     日→月结尾微微回摆（惯性），月→日结尾小膨胀再回弹（style.css 定义动画） */
-  var ICON_THEME = '<svg class="theme-morph" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
-    '<mask id="zb-moon-cut"><rect x="-6" y="-6" width="36" height="36" fill="#fff"/><circle class="moon-cut" cx="12" cy="12" r="6.1" fill="#000"/></mask>' +
-    '<circle class="tm-core" cx="12" cy="12" r="7.2" mask="url(#zb-moon-cut)" fill="currentColor"></circle>' +
-    '<g class="tm-rays" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
-  function themeIconSet(btn, night, anim) {
-    if (!btn) return;
-    var svg = btn.querySelector('svg.theme-morph');
-    if (!svg) {
-      btn.innerHTML = ICON_THEME;
-      svg = btn.querySelector('svg.theme-morph');
-    }
-    if (!svg) return;
-    svg.classList.toggle('is-night', !!night);
-    svg.classList.remove('to-day', 'to-night');
-    if (anim) {
-      try { void svg.getBoundingClientRect(); } catch (e) { /* 忽略 */ }
-      svg.classList.add(anim);
-      window.setTimeout(function () { svg.classList.remove(anim); }, 1000);
-    }
-  }
+  var ICON_MOON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z" fill="currentColor"/></svg>';
+  var ICON_SUN = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
   function applyTheme(t) {
     var root = document.documentElement;
     if (root && root.dataset) {
@@ -1543,11 +1521,12 @@
       else delete root.dataset.theme;
     }
     if (window.ZBInteractions && window.ZBInteractions.syncTheme) window.ZBInteractions.syncTheme();
-    themeIconSet(document.getElementById('theme-toggle'), t === 'night', false);
     var btn = document.getElementById('theme-toggle');
     if (btn) {
-      btn.setAttribute('aria-label', t === 'night' ? '切换为晴空模式' : '切换为星夜模式');
-      btn.setAttribute('title', t === 'night' ? '切换为晴空模式' : '切换为星夜模式');
+      var night = t === 'night';
+      btn.innerHTML = night ? ICON_SUN : ICON_MOON;
+      btn.setAttribute('aria-label', night ? '切换为晴空模式' : '切换为星夜模式');
+      btn.setAttribute('title', night ? '切换为晴空模式' : '切换为星夜模式');
     }
     try { document.dispatchEvent(new CustomEvent('zb:theme', { detail: t })); } catch (e) {}
   }
@@ -1556,13 +1535,10 @@
     var btn = document.getElementById('theme-toggle');
     if (btn && btn.addEventListener) {
       btn.addEventListener('click', function () {
-        var night = document.documentElement && document.documentElement.dataset &&
-          document.documentElement.dataset.theme === 'night';
-        var next = night ? '' : 'night';
+        var next = document.documentElement && document.documentElement.dataset &&
+          document.documentElement.dataset.theme === 'night' ? '' : 'night';
         saveTheme(next);
         applyTheme(next);
-        /* 只在点击这一次播放形变收尾动画（惯性回摆 / 小膨胀） */
-        themeIconSet(btn, next === 'night', next === 'night' ? 'to-night' : 'to-day');
       });
     }
   }
@@ -1640,98 +1616,6 @@
     }
     window.requestAnimationFrame(pillStep);
   }
-
-  /* ---------- 分段胶囊（设置页「一行多点」交互组） ----------
-     画质三档 / 通用与动画卡里的选项组等一行多项的点击交互，仿导航栏切换：
-     一枚 .seg-pill 随选中项滑过去（CSS 过渡带轻微回弹），落定后提供选中重点。
-     选项自身不再描边发光，只保留文字加重的层次（样式见 style.css）。 */
-  function segPillItem(group) {
-    var on = group.querySelector('.quality-item.on, .opt-item input:checked');
-    if (!on) return null;
-    return on.closest ? on.closest('.quality-item, .opt-item') : on;
-  }
-  /* 分段胶囊弹簧：与导航胶囊同一套物理（刚度 200 / 阻尼 24），
-     移动中沿运动方向拉伸变细、垂直方向压扁——导航栏同款粘滞水滴感 */
-  var segGroups = [];
-  function segPillMove(group, item, instant) {
-    var pill = group.__segPill;
-    if (!pill) return;
-    if (!item) { pill.style.opacity = '0'; return; }
-    pill.style.opacity = '1';
-    var st = group.__segSpring;
-    if (!st) {
-      st = group.__segSpring = { x: 0, y: 0, w: 0, h: 0, vx: 0, vy: 0, tx: 0, ty: 0, tw: 0, th: 0, running: false, last: 0 };
-    }
-    st.tx = item.offsetLeft; st.ty = item.offsetTop;
-    st.tw = item.offsetWidth; st.th = item.offsetHeight;
-    if (instant || st.w === 0) { /* 首次 / 指定瞬时：直接就位 */
-      st.x = st.tx; st.y = st.ty; st.w = st.tw; st.h = st.th;
-      st.vx = 0; st.vy = 0;
-      segPaint(group);
-      st.running = false;
-      return;
-    }
-    if (!st.running) { st.running = true; st.last = 0; window.requestAnimationFrame(function (t) { segStep(group, t); }); }
-  }
-  function segPaint(group) {
-    var pill = group.__segPill, st = group.__segSpring;
-    var sx = 1 + Math.min(.30, (Math.abs(st.vx) + Math.abs(st.vy)) * 0.0012);
-    var sy = 1 / Math.max(1, sx);
-    pill.style.width = st.w + 'px';
-    pill.style.height = st.h + 'px';
-    pill.style.transform = 'translate3d(' + st.x.toFixed(2) + 'px,' + st.y.toFixed(2) + 'px,0)' +
-      ' scale(' + sx.toFixed(4) + ',' + sy.toFixed(4) + ')';
-  }
-  function segStep(group, t) {
-    var st = group.__segSpring;
-    if (!st || !st.running) return;
-    var dt = st.last ? Math.min(0.05, (t - st.last) / 1000) : 0.016;
-    st.last = t;
-    var ax = (st.tx - st.x) * 200 - st.vx * 24;
-    var ay = (st.ty - st.y) * 200 - st.vy * 24;
-    var aw = (st.tw - st.w) * 200 - (st.tw - st.w) * 26;
-    var ah = (st.th - st.h) * 200 - (st.th - st.h) * 26;
-    st.vx += ax * dt; st.vy += ay * dt;
-    st.x += st.vx * dt; st.y += st.vy * dt;
-    st.w += aw * dt; st.h += ah * dt;
-    segPaint(group);
-    if (Math.abs(st.tx - st.x) < .5 && Math.abs(st.ty - st.y) < .5 &&
-        Math.abs(st.tw - st.w) < .5 && Math.abs(st.th - st.h) < .5 &&
-        Math.abs(st.vx) < 8 && Math.abs(st.vy) < 8) {
-      st.x = st.tx; st.y = st.ty; st.w = st.tw; st.h = st.th;
-      st.vx = 0; st.vy = 0;
-      segPaint(group);
-      st.running = false;
-      return;
-    }
-    window.requestAnimationFrame(function (t2) { segStep(group, t2); });
-  }
-  function initSegPills(root) {
-    if (!root || !root.querySelectorAll) return;
-    Array.prototype.forEach.call(root.querySelectorAll('.quality-group, .opt-group'), function (group) {
-      if (group.__segPill) { segPillMove(group, segPillItem(group), true); return; }
-      var pill = document.createElement('span');
-      pill.className = 'seg-pill';
-      group.insertBefore(pill, group.firstChild);
-      group.__segPill = pill;
-      if (segGroups.indexOf(group) < 0) segGroups.push(group);
-      segPillMove(group, segPillItem(group), true);
-    });
-  }
-  document.addEventListener('click', function (e) {
-    var item = e.target && e.target.closest ? e.target.closest('.quality-item, .opt-item') : null;
-    if (!item) return;
-    var group = item.parentElement;
-    if (!group || (!group.classList.contains('quality-group') && !group.classList.contains('opt-group'))) return;
-    /* 单选点下就滑过去；等 input/checked 或 .on 类由各自 handler 更新后再对位 */
-    window.setTimeout(function () { segPillMove(group, segPillItem(group), false); }, 0);
-  });
-  window.addEventListener('resize', function () {
-    Array.prototype.forEach.call(segGroups, function (group) {
-      if (group.__segPill) segPillMove(group, segPillItem(group), true);
-    });
-  });
-
   /* ---------- 照片堆叠：滚轮 / 滑动换层 ----------
      桌面端：鼠标在照片集上滚轮向下 → 最上层照片丝滑滑落到最底层，
      下一层浮现到顶层；滚轮向上 → 最底层升到最上层。
@@ -1807,17 +1691,6 @@
         if (b) b.cancel();
       }, 200);
     }
-  }
-
-  /* 数字滚动：静态位（文章页「共 N 篇文章」）是 data-roll 标记位，
-     仅「所有」档才滚动（live=false）；浏览/点赞等实时计数器由 likes.js
-     内部以 live=true 调用，「部分」档（默认）也滚动。 */
-  function rollMount(root) {
-    if (!root || !root.querySelectorAll) return;
-    if (!window.ZBLikes || typeof window.ZBLikes.rollText !== 'function') return;
-    Array.prototype.forEach.call(root.querySelectorAll('[data-roll]'), function (el) {
-      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0, false);
-    });
   }
 
   /* ---------- 搜索 ---------- */

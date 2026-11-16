@@ -707,12 +707,7 @@ nav.toc[hidden]{display:none}
 .back{margin:24px 0 0;font-size:14px}
 .mirror-badge{margin:26px 0 0;padding-top:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:12.5px;letter-spacing:.4px;text-align:center}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
-/* 点赞蓄势膨胀 + 数字滚动容器（likes.js 同款） */
-.like{position:relative}
-@keyframes like-pop{0%{transform:scale(1)}26%{transform:scale(.72)}56%{transform:scale(1.55)}74%{transform:scale(.9)}100%{transform:scale(1)}}
-@keyframes like-ring{0%{transform:scale(.55);opacity:.75}100%{transform:scale(2.2);opacity:0}}
-.like.like-pop{animation:like-pop .6s cubic-bezier(.32,.72,.3,1);z-index:2}
-.like.like-pop::after{content:'';position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid #e891ad;animation:like-ring .55s ease-out .1s both;pointer-events:none}
+/* 数字逐位滚动容器（likes.js 同款：浏览量 / 点赞量计数器用） */
 .zb-roll{display:inline-flex;overflow:hidden;height:1em;line-height:1;vertical-align:baseline}
 .zb-dig{display:block;flex:none}
 .zb-col{display:block;will-change:transform}

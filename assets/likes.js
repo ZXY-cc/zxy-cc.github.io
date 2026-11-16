@@ -52,9 +52,8 @@
      每个数位独立一列 0~9（末尾多放一个 0 供 9→0 折返），只滚动发生
      变化的位。总时长全站统一 ROLL_MS，缓动 easeInOutCubic（慢→快→慢）。
      设置页「数字滚动动画」三档（localStorage zb-roll-mode）：
-       all  = 全部数字（含文章页计数等静态位）都滚动；
-       part = 默认，只有浏览量 / 点赞数这类实时计数器滚动，
-              名片统计、归档统计等静态数字直接显示；
+       all  = 浏览量与点赞量都滚动；
+       part = 默认，仅点赞量滚动，浏览量直接显示；
        off  = 全部直接落文本。
      无 WAAPI / 减少动态偏好 / 沙箱环境直接落文本，不影响功能。 */
   var ROLL_MS = 1000;
@@ -114,15 +113,15 @@
     }, ROLL_MS + 150);
   }
   function rollText(el, target, live) {
-    /* live = 浏览量 / 点赞量计数器。三档语义：
-       all  = 全部数字滚动；
-       part = 默认，除计数器以外的数字（名片统计、归档统计等）滚动；
+    /* live = 计数器标记：'like'（点赞数）/'view'（浏览量）。三档语义：
+       all  = 浏览量与点赞量都滚动；
+       part = 默认，仅点赞量滚动（浏览量直接显示）；
        off  = 全部直接落文本。 */
     if (!el) return;
     target = Math.max(0, Math.round(Number(target) || 0));
     var mode = rollMode();
     var st = el.__zbRoll;
-    if (mode === 'off' || (mode === 'part' && live) || !rollCan()) {
+    if (mode === 'off' || !live || (mode === 'part' && live !== 'like') || !rollCan()) {
       if (st) { if (st.wrap.parentNode) st.wrap.parentNode.removeChild(st.wrap); el.__zbRoll = null; }
       el.textContent = String(target);
       return;
@@ -468,7 +467,7 @@
   function setCount(btn, n) {
     var span = btn.querySelector('span');
     if (span && typeof n === 'number') {
-      rollText(span, n, true);
+      rollText(span, n, 'like');
       btn.setAttribute('data-live', '1');
     }
   }
@@ -482,7 +481,7 @@
   function setStat(kind, id, n) {
     if (typeof n !== 'number') return;
     statSlots(kind, id).forEach(function (el) {
-      rollText(el, n, true);
+      rollText(el, n, 'like');
       el.setAttribute('data-live', '1');
     });
   }
@@ -493,12 +492,6 @@
     var id = btn.getAttribute('data-like-id') || '';
     if (!id || liked(kind, id)) return;
     markLiked(kind, id);
-    /* 蓄势膨胀：先压缩蓄力，再突然膨胀变粉、弹回原尺寸，外圈炸开涟漪。
-       能走到这里必然是「本机从未赞过 → 点赞」，动画只在这一刻播一次。 */
-    btn.classList.remove('like-pop');
-    try { void btn.offsetWidth; } catch (e) { /* 忽略 */ }
-    btn.classList.add('like-pop');
-    window.setTimeout(function () { btn.classList.remove('like-pop'); }, 720);
     btn.classList.add('on');
     btn.setAttribute('aria-pressed', 'true');
     btn.setAttribute('title', '已点赞，谢谢你喜欢');
@@ -536,7 +529,7 @@
       if (v.length < 2) return;
       var kind = v[0], id = v.slice(1).join(':');
       getCount(kind, id).then(function (n) {
-        if (typeof n === 'number') { rollText(el, n, true); el.setAttribute('data-live', '1'); }
+        if (typeof n === 'number') { rollText(el, n, 'like'); el.setAttribute('data-live', '1'); }
       }).catch(function () { /* 基线补画兜底 */ });
     });
   }
@@ -559,7 +552,7 @@
       Promise.resolve(p).then(function (n) {
         if (typeof n !== 'number') return;
         slots[s].forEach(function (el) {
-          rollText(el, n, true);
+          rollText(el, n, 'view');
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });
@@ -572,7 +565,7 @@
       Promise.resolve(hp).then(function (n) {
         if (typeof n !== 'number') return;
         Array.prototype.forEach.call(homeSlots, function (el) {
-          rollText(el, n, true);
+          rollText(el, n, 'view');
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });

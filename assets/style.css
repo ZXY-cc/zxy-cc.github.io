@@ -1002,34 +1002,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* 分段胶囊：设置页里「一行多点」的交互组（画质三档 / 通用与动画卡的选项组）
    仿导航栏切换——选中重点随一枚胶囊滑到新选项上，选项自身不再描边发光 */
-.quality-group, .opt-group { position: relative; }
-.quality-item, .opt-item { position: relative; z-index: 3; }
-/* 分段胶囊：淡玻璃底衬 + ::before 渐变描边环（mask 挖空中段，只留 1px 圈），
-   渐变色与页面背景同款蓝→粉；滑移由 JS 弹簧驱动（与导航胶囊同一套物理） */
-.seg-pill {
-  position: absolute; left: 0; top: 0; width: 0; height: 0;
-  border-radius: 14px; pointer-events: none; z-index: 2;
-  background: var(--glass-sheen), var(--glass-strong);
-  box-shadow: 0 0 0 1px rgba(85, 121, 196, .18), 0 8px 22px rgba(171, 139, 212, .14);
-  opacity: 0; will-change: transform, width, height;
-}
-.seg-pill::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
-  padding: 1.4px; pointer-events: none;
-  background: linear-gradient(135deg, #5579c4 0%, #8262bd 54%, #bb6ba1 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-}
-:root[data-theme="night"] .seg-pill {
-  background: linear-gradient(160deg, rgba(40, 66, 128, .9), rgba(30, 44, 96, .9));
-  box-shadow: 0 8px 22px rgba(6, 14, 44, .45);
-}
-:root[data-theme="night"] .seg-pill::before {
-  background: linear-gradient(135deg, #7fa8dd 0%, #a68ecf 54%, #d396bb 100%);
-}
-/* 选中项自身不再描边发光，重点交给滑过来的胶囊（只保留文字加重的层次） */
-.opt-item:has(input:checked) { border-color: transparent; box-shadow: none; color: var(--ink-strong); }
-.quality-item.on { border-color: transparent; box-shadow: var(--glass-inner); }
 
 /* 点击星爆：一圈小星星从点击处向四周溅射后快速消散（仅高画质开启）；
    星星与天空的胖星同款：蜜金填充，发光贴合星星轮廓（不做圆形光幕，避免多星叠加成实心圆饼） */
@@ -1115,10 +1087,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   min-width: 74px; padding: 0 12px; text-align: center; color: inherit; }
 .p-stat + .p-stat { border-left: 1px solid var(--line); }
 .p-stat b { font-size: 25px; font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums;
-  /* 恢复原版逐项配色：文章蓝、杂谈紫、照片粉——整体由蓝到粉 */
   color: var(--stat-1); }
-.p-stat:nth-of-type(2) b { color: var(--stat-2); }
-.p-stat:nth-of-type(3) b { color: var(--stat-3); }
+.p-stat:nth-child(2) b { color: var(--stat-2); }
+.p-stat:nth-child(3) b { color: var(--stat-3); }
 .p-stat span { font-size: 11.5px; letter-spacing: .8px; color: var(--muted); margin-top: 3px; }
 .p-stat:hover b { filter: brightness(1.06); }
 .p-links { display: flex; gap: 9px; margin-left: auto; flex-wrap: wrap; }
@@ -1136,7 +1107,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .profile-name { background-image: linear-gradient(100deg, #b6d0ff 0%, #ddbdfa 52%, #f9bddb 100%); }
 :root[data-theme="night"] .profile-card { --stat-1: #b6d0ff; --stat-2: #ddbdfa; --stat-3: #f9bddb; }
 :root[data-theme="night"] .p-stat b { text-shadow: 0 2px 10px rgba(8,16,44,.48); }
-:root[data-theme="night"] .stat-cell b { color: var(--ink-strong); text-shadow: 0 2px 10px rgba(8,16,44,.48); }
 :root[data-theme="night"] .profile-avatar-wrap {
   box-shadow: 0 0 0 1px rgba(208,226,255,.40), 0 10px 30px rgba(8,16,44,.32); }
 :root[data-theme="night"] .p-link { color: var(--accent-text); }
@@ -1171,14 +1141,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   border-radius: var(--radius); padding: 16px 10px; margin: 30px 0 8px; border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); }
 .stat-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-cell b { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums;
-  color: var(--ink-strong); }
-/* 归档五格数字整体由蓝到粉，与名片同族配色 */
-.stat-cell:nth-child(1) b { color: var(--accent-text); }
-.stat-cell:nth-child(2) b { color: #4f55a5; }
-.stat-cell:nth-child(3) b { color: var(--accent-2-text); }
-.stat-cell:nth-child(4) b { color: #87457f; }
-.stat-cell:nth-child(5) b { color: var(--accent-3-text); }
+.stat-cell b { font-size: 21px; font-weight: 650; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
 .stat-cell span { font-size: 11.5px; color: var(--muted); letter-spacing: .4px; }
 
 /* ---------- 滚动渐显（只走 opacity / transform） ---------- */
@@ -1354,64 +1317,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   gap: 10px; margin-top: auto; padding-top: 6px; }
 .post-x-card .x-foot .x-link { margin-top: 0; }
 .post-x-card .x-foot .post-stats { margin: 0; }
-
-/* 主题切换图标：日月同体，切换时形状平滑过渡。
-   日→月：光瓣收拢、月牙咬合，结尾微微回摆表现惯性；
-   月→日：月牙退开露出全圆、光瓣弹出，结尾一小瞬膨胀再回弹。 */
-.theme-morph .moon-cut { transform: translate(26px, 26px); transition: transform .52s cubic-bezier(.55, 1.5, .4, 1); }
-.theme-morph.is-night .moon-cut { transform: translate(3.6px, -3.6px); }
-/* 月→日 / 日→月的形状转换：挖月牙的圆整体滑出 / 滑回，配合整体膨胀或回摆 */
-.theme-morph.to-day .moon-cut { animation: moon-cut-out .56s cubic-bezier(.4, 1.35, .45, 1) .18s both; }
-.theme-morph.to-night .moon-cut { animation: moon-cut-in .6s cubic-bezier(.4, .9, .35, 1) .2s both; }
-@keyframes moon-cut-out {
-  0% { transform: translate(3.6px, -3.6px); }
-  100% { transform: translate(26px, 26px); }
-}
-@keyframes moon-cut-in {
-  0% { transform: translate(26px, 26px); }
-  100% { transform: translate(3.6px, -3.6px); }
-}
-.theme-morph .tm-rays {
-  transform-origin: 12px 12px; opacity: 1;
-  transition: opacity .3s ease, transform .48s cubic-bezier(.34, 1.5, .5, 1);
-}
-.theme-morph.is-night .tm-rays { opacity: 0; transform: scale(.32); }
-.theme-morph.to-day { animation: theme-inflate .48s cubic-bezier(.34, 1.3, .4, 1) .3s both; }
-.theme-morph.to-night { animation: theme-swing .62s cubic-bezier(.3, .8, .3, 1) .3s both; }
-@keyframes theme-inflate {
-  0% { transform: scale(1); }
-  55% { transform: scale(1.28); }
-  100% { transform: scale(1); }
-}
-@keyframes theme-swing {
-  0% { transform: rotate(0deg); }
-  42% { transform: rotate(-16deg); }
-  74% { transform: rotate(9deg); }
-  100% { transform: rotate(0deg); }
-}
-
-/* 点赞蓄势膨胀：未赞 → 已赞瞬间，灰心先压缩蓄势，再突然膨胀变粉、弹回原尺寸，
-   外圈同步炸开一圈涟漪 */
-.like { position: relative; }
-@keyframes like-pop {
-  0% { transform: scale(1); }
-  26% { transform: scale(.72); }
-  56% { transform: scale(1.55); }
-  74% { transform: scale(.9); }
-  100% { transform: scale(1); }
-}
-@keyframes like-ring {
-  0% { transform: scale(.55); opacity: .75; }
-  100% { transform: scale(2.2); opacity: 0; }
-}
-.like.like-pop { animation: like-pop .6s cubic-bezier(.32, .72, .3, 1); z-index: 2; }
-.like.like-pop svg { transition: fill .16s ease, stroke .16s ease; }
-.like.like-pop::after {
-  content: ''; position: absolute; left: 50%; top: 50%;
-  width: 16px; height: 16px; margin: -8px 0 0 -8px;
-  border-radius: 50%; border: 2px solid var(--accent-3, #e891ad);
-  animation: like-ring .55s ease-out .1s both; pointer-events: none;
-}
 
 /* 数字滚动容器：旧数字上滑淡出、新数字下方滑入淡入（likes.js 驱动） */
 /* 数字逐位滚动（odometer）：滚动结构包在元素内部一层，元素自身排版不变。
@@ -1848,28 +1753,24 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .quality-item:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(112, 138, 190, .18), var(--glass-inner); }
 .quality-item b { font-size: 21px; font-weight: 650; color: var(--ink-strong); line-height: 1.3; }
 .quality-item small { font-size: 11.5px; line-height: 1.7; color: var(--muted); }
-.quality-item.on { border-color: transparent;
-  box-shadow: var(--glass-inner); }
+.quality-item.on { border-color: rgba(171, 139, 212, .72);
+  box-shadow: 0 0 0 1px rgba(171, 139, 212, .34), 0 12px 30px rgba(171, 139, 212, .18), var(--glass-inner); }
 .q-mark { position: absolute; right: 14px; top: 14px; width: 18px; height: 18px;
   opacity: .28; transition: opacity .3s ease, transform .3s ease; }
 .q-mark svg { display: block; width: 100%; height: 100%; fill: var(--star-soft);
   filter: drop-shadow(0 0 5px var(--star-glow)); }
 .quality-item.on .q-mark { opacity: .95; transform: rotate(-12deg) scale(1.08); }
-/* 设置卡片里的选项组：整行整行排列（与画质三档同款的行卡布局）；
-   单选圆点不显示——选中重点交给滑过来的渐变胶囊，避免再出现深色圆圈 */
+/* 设置卡片里的选项组：整行整行排列（与画质三档同款的行卡布局） */
 .settings-card .opt-group { flex-direction: column; flex-wrap: nowrap; gap: 10px; }
 .settings-card .opt-item { width: 100%; box-sizing: border-box; padding: 13px 18px;
   border-radius: 14px; display: flex; align-items: center; gap: 12px; }
-.settings-card .opt-item input { position: absolute; opacity: 0; pointer-events: none; }
-.settings-card .opt-item:has(input:checked) { border-color: transparent;
-  box-shadow: none; color: var(--ink-strong); }
 .settings-card .opt-item:hover { border-color: var(--glass-line); }
 .settings-card .opt-item b { font-size: 14px; }
 .settings-card .opt-item i { font-size: 11.5px; }
 .settings-foot { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--glass-line);
   font-size: 12px; line-height: 1.9; color: var(--muted); }
 .settings-foot b { color: var(--accent-text); font-weight: 650; }
-:root[data-theme="night"] .quality-item.on { border-color: transparent; }
+:root[data-theme="night"] .quality-item.on { border-color: rgba(226, 205, 251, .66); }
 :root[data-theme="night"] .settings-info p,
 :root[data-theme="night"] .quality-item small,
 :root[data-theme="night"] .settings-foot,

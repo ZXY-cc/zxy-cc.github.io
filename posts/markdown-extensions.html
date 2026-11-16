@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-13">
-<link rel="stylesheet" href="../assets/interactions.css?v=v3.62.0">
+<link rel="stylesheet" href="../assets/interactions.css?v=v3.63.0">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -87,12 +87,7 @@ nav.toc[hidden]{display:none}
 .back{margin:24px 0 0;font-size:14px}
 .mirror-badge{margin:26px 0 0;padding-top:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:12.5px;letter-spacing:.4px;text-align:center}
 @media (max-width:640px){.wrap{padding:20px 12px 48px}article{padding:22px 18px}h1{font-size:23px}}
-/* 点赞蓄势膨胀 + 数字滚动容器（likes.js 同款） */
-.like{position:relative}
-@keyframes like-pop{0%{transform:scale(1)}26%{transform:scale(.72)}56%{transform:scale(1.55)}74%{transform:scale(.9)}100%{transform:scale(1)}}
-@keyframes like-ring{0%{transform:scale(.55);opacity:.75}100%{transform:scale(2.2);opacity:0}}
-.like.like-pop{animation:like-pop .6s cubic-bezier(.32,.72,.3,1);z-index:2}
-.like.like-pop::after{content:'';position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid #e891ad;animation:like-ring .55s ease-out .1s both;pointer-events:none}
+/* 数字逐位滚动容器（likes.js 同款：浏览量 / 点赞量计数器用） */
 .zb-roll{display:inline-flex;overflow:hidden;height:1em;line-height:1;vertical-align:baseline}
 .zb-dig{display:block;flex:none}
 .zb-col{display:block;will-change:transform}
@@ -529,12 +524,12 @@ import java.<span class="tk-pr">util</span>.<span class="tk-pr">Scanner</span>;
 <p class="back"><a href="/#/post/markdown-extensions">在站点中打开 →</a></p>
 <footer class="mirror-badge">静态页面 · 无追踪 · 轻量交互 · 有星光、有梦想</footer>
 </div>
-<script src="../assets/comments-data.js?v=v3.62.0"></script>
-<script src="../assets/comment-archive.js?v=v3.62.0"></script>
-<script src="../assets/interactions-config.js?v=v3.62.0"></script>
-<script src="../assets/interactions.js?v=v3.62.0"></script>
-<script src="../assets/issues-live.js?v=v3.62.0"></script>
-<script src="../assets/likes.js?v=v3.62.0"></script>
+<script src="../assets/comments-data.js?v=v3.63.0"></script>
+<script src="../assets/comment-archive.js?v=v3.63.0"></script>
+<script src="../assets/interactions-config.js?v=v3.63.0"></script>
+<script src="../assets/interactions.js?v=v3.63.0"></script>
+<script src="../assets/issues-live.js?v=v3.63.0"></script>
+<script src="../assets/likes.js?v=v3.63.0"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("markdown-extensions");
 window.ZBLive && window.ZBLive.mount("markdown-extensions");
 window.ZBLikes && window.ZBLikes.mount();</script>
