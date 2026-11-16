@@ -669,46 +669,41 @@
     return '当前：每张卡片轮流展示 ' + n + ' 条内容。' +
       (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
   }
+  /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
+     大数字 = 首页名片彩色统计、归档统计栏、归档月份计数等 data-roll 位；
+     小数字 = 点赞数与浏览量（爱心按钮、名片右上角、文章署名行）。
+     likes.js 的 rollText 每次执行都读同一个键（zb-roll-mode），切换立即生效。 */
+  var ROLL_MODES = ['all', 'part', 'off'];
+  function readRollMode() {
+    try {
+      var m = window.localStorage ? window.localStorage.getItem('zb-roll-mode') : null;
+      if (ROLL_MODES.indexOf(m) >= 0) return m;
+    } catch (e) { /* 忽略 */ }
+    return 'part';
+  }
+  function rollModeNote(m) {
+    if (m === 'all') return '已选择「所有」：彩色大数字与点赞、浏览小数字都带逐位滚动动画。';
+    if (m === 'off') return '已选择「关闭」：所有数字直接显示，不带滚动动画。';
+    return '已选择「部分」：只有彩色大数字带逐位滚动动画，点赞、浏览小数字直接显示。';
+  }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
     try { return window.localStorage && window.localStorage.getItem('zb-no-count') === '1'; }
     catch (e) { return false; }
   }
-  /* 「名称意境」开关：开启后导航栏换成意境名；默认关，只保存在本机。
-     工坊入口由 studio.js 动态生成：站长是「墨坊」，游客体验入口是「墨坊 · 冥会」。 */
-  var NAV_POETRY = {
-    home: '星梦', posts: '拾文', timeline: '流年', projects: '造物',
-    photowall: '拾光', moments: '碎语', chatter: '漫谈', friends: '宇友',
-    about: '心源', settings: '道法', studio: '墨坊', 'studio-exp': '墨坊 · 冥会'
-  };
-  var NAV_PLAIN = {
-    home: '首页', posts: '文章', timeline: '归档', projects: '项目',
-    photowall: '相册', moments: '说说', chatter: '杂谈', friends: '友链',
-    about: '关于', settings: '设置', studio: '工坊', 'studio-exp': '工坊 · 体验'
-  };
-  function poetryOn() {
-    try { return window.localStorage && window.localStorage.getItem('zb-nav-poetry') === '1'; }
-    catch (e) { return false; }
-  }
-  function applyNavNames() {
-    var names = poetryOn() ? NAV_POETRY : NAV_PLAIN;
-    Array.prototype.forEach.call(document.querySelectorAll('.nav a[data-nav]'), function (a) {
-      var n = names[a.getAttribute('data-nav')];
-      if (n && a.textContent !== n) a.textContent = n;
-    });
-  }
-  document.addEventListener('zb-nav-sync', applyNavNames);
+  /* 导航意境名功能已按需求移除：导航栏恒用默认名称。
+     工坊入口由 studio.js 动态生成：站长是「工坊」，游客体验入口是「工坊 · 体验」。 */
   document.addEventListener('change', function (e) {
     var t = e.target;
     var k = t && t.getAttribute ? t.getAttribute('data-font-sel') : null;
     if (k) { saveFont(k, t.value); applyFonts(); return; }
-    if (t && t.getAttribute && t.getAttribute('data-nav-poetry') !== null) {
-      try { window.localStorage.setItem('zb-nav-poetry', t.checked ? '1' : '0'); } catch (err) {}
-      applyNavNames();
-      var note = document.getElementById('nav-poetry-state');
-      if (note) note.textContent = t.checked ?
-        '已开启：导航栏换成了意境名，再点一次可换回原名。' :
-        '已关闭：导航栏显示默认名称。';
+    if (t && t.getAttribute && t.getAttribute('data-roll-mode') !== null) {
+      var rm = t.value;
+      if (rm === 'all' || rm === 'part' || rm === 'off') {
+        try { window.localStorage.setItem('zb-roll-mode', rm); } catch (err) { /* 忽略 */ }
+        var rnote = document.getElementById('roll-mode-state');
+        if (rnote) rnote.textContent = rollModeNote(rm);
+      }
       return;
     }
     if (t && t.getAttribute && t.getAttribute('data-quick-count') !== null) {
@@ -742,13 +737,23 @@
       head + body + '</table></div></div></div>';
   }
   function renderSettings() {
-    var cur = readQuality(), quick = readQuickCount();
+    var cur = readQuality(), quick = readQuickCount(), rmode = readRollMode();
     var opts = QUALITY_OPTS.map(function (o) {
       var on = o.id === cur;
       return '<button class="quality-item' + (on ? ' on' : '') + '" type="button" role="radio"' +
         ' aria-checked="' + (on ? 'true' : 'false') + '" data-quality="' + o.id + '">' +
         '<span class="q-mark" aria-hidden="true"><svg viewBox="0 0 100 100"><use href="#puffy-star"/></svg></span>' +
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
+    }).join('');
+    var rollOpts = [
+      ['all', '所有', '大数字与小数字全部滚动'],
+      ['part', '部分', '只有彩色大数字滚动'],
+      ['off', '关闭', '所有数字直接显示']
+    ].map(function (o) {
+      var on = o[0] === rmode;
+      return '<label class="opt-item"><input type="radio" name="zb-roll-mode" value="' + o[0] +
+        '" data-roll-mode' + (on ? ' checked' : '') + '><span><b>' + o[1] + '</b>' +
+        (o[0] === 'part' ? '<i>默认</i>' : '') + '<i>' + o[2] + '</i></span></label>';
     }).join('');
     var fontNote = '代码字体选 JetBrains Maple Mono 时，代码里的中文也用它' +
       '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。' +
@@ -776,25 +781,27 @@
       '<label class="font-item">LaTeX 字体' + fontSelect('tex', FONT_TEX_OPTS, readFont('tex')) + '</label>' +
       '</div>' +
       '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>' +
-      '<section class="settings-card glass reveal" aria-label="首页卡片轮流数">' +
+      /* 「通用」卡片：日常会用到的偏好归在一起 */
+      '<section class="settings-card glass reveal" aria-label="通用设置">' +
       '<div class="settings-block"><div class="settings-info">' +
-      '<h2>首页卡片轮流数</h2><p>设置首页每张卡片轮流展示几条内容，切换后立即生效；偏好只保存在本机。</p></div>' +
+      '<h2>通用</h2><p>日常偏好集中在这张卡片里，切换后立即生效；偏好只保存在本机。</p></div>' +
+      '<div class="settings-sub"><h3>首页卡片轮流数</h3>' +
+      '<p>设置首页每张卡片轮流展示几条内容。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="首页卡片轮流数">' +
       QUICK_OPTS.map(function (n) {
         return '<label class="opt-item"><input type="radio" name="zb-quick-count" value="' + n +
           '" data-quick-count' + (quick === n ? ' checked' : '') +
           '><span><b>' + n + ' 条</b>' + (n === 3 ? '<i>默认</i>' : '') + '</span></label>';
-      }).join('') + '</div></div>' +
-      '<p class="settings-foot" id="quick-count-state">' + esc(quickCountNote(quick)) + '</p></section>' +
-      '<section class="settings-card glass reveal" aria-label="名称意境">' +
+      }).join('') + '</div>' +
+      '<p class="settings-foot" id="quick-count-state">' + esc(quickCountNote(quick)) + '</p></div></div></section>' +
+      /* 「动画」卡片：数字滚动动画三档 */
+      '<section class="settings-card glass reveal" aria-label="动画设置">' +
       '<div class="settings-block"><div class="settings-info">' +
-      '<h2>名称意境</h2><p>开启后导航栏会换成一组意境名：星梦、拾文、流年、造物、拾光、碎语、漫谈、宇友、心源、道法、墨坊。偏好只保存在本机。</p></div>' +
-      '<label class="no-count-item"><input type="checkbox" data-nav-poetry' +
-      (poetryOn() ? ' checked' : '') + '><span>启用意境名</span></label></div>' +
-      '<p class="settings-foot" id="nav-poetry-state">' +
-      esc(poetryOn() ? '已开启：导航栏换成了意境名，再点一次可换回原名。' :
-        '已关闭：导航栏显示默认名称。') +
-      '</p></section>' +
+      '<h2>动画</h2><p>控制页面里数字的逐位滚动动画。切换后立即生效，偏好只保存在本机。</p></div>' +
+      '<div class="settings-sub"><h3>数字滚动动画</h3>' +
+      '<p>数字变化时每一位独立滚动（0~9 循环），不再整段滑动。</p>' +
+      '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
+      '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
       (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner() ?
       '<section class="settings-card glass reveal" aria-label="浏览统计">' +
@@ -890,7 +897,7 @@
       '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
       '<div class="profile-foot"><div class="profile-stats">' +
       stats.map(function (s) {
-        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b data-roll="' + s[0] + '">' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
   /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
@@ -970,11 +977,14 @@
   }
   /* 三张按日期倒序的照片：最新一张在最上层，底层往上错位露角（CSS 端再做景深模糊：
      顶层清晰、第二层略糊、第三层更糊）。照片 contain 等比完整显示，无相框，
-     横版与竖版都不裁切、不变形，也不会因 height:auto 撑出卡片。 */
+     横版与竖版都不裁切、不变形，也不会因 height:auto 撑出卡片。
+     换层交互要求三层恒在场：相册照片不足三张（或没有照片）时循环补齐，
+     否则滚轮 / 滑动命中了堆叠层也翻不动照片（v3.59 实测踩坑）。 */
   function stackCovers(photos, alt) {
     var list = recentByDate(photos, 3);
     if (!list.length) list = [{ src: avatarSrc() }];
     var layers = list.slice().reverse();
+    while (layers.length < 3) layers.unshift(layers[layers.length - 1]);
     return layers.map(function (p, i) {
       var cls = i === layers.length - 1 ? 'stack-top' :
         (i === layers.length - 2 ? 'stack-mid' : 'stack-back');
@@ -1252,9 +1262,9 @@
     Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
-    applyNavNames();
     navPillTarget();
     rollMount(app);
+    initSegPills(app);
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
@@ -1556,25 +1566,21 @@
     }
   }
 
-  /* ---------- 导航水滴胶囊（Huawei 式切换） ----------
+  /* ---------- 导航胶囊（Huawei 式切换） ----------
      选中底衬独立成一层 .nav-pill，切换时用弹簧丝滑滑到新项背后：
-     移动快时胶囊沿运动方向拉伸变细（水滴张力），尾随一滴 .nav-drop
-     以更低的刚度滞后跟随，粘在胶囊尾缘被「拽」过去，松手时回弹收拢。
-     相邻两项切换时滞后液滴与主胶囊重叠最多，粘连感最明显。 */
+     移动快时胶囊沿运动方向拉伸变细（水滴张力）。
+     （旧版胶囊后面还跟着一滴 .nav-drop 尾随液滴，实际观感是导航栏
+     最右侧常驻一颗小圆气泡——按需求删除，只保留主胶囊。） */
   var pillBox = null;
   function initNavPill() {
     var nav = document.querySelector('.nav');
     if (!nav || nav.__zbPill || !window.requestAnimationFrame) return;
     var pill = document.createElement('span');
     pill.className = 'nav-pill';
-    var drop = document.createElement('span');
-    drop.className = 'nav-drop';
-    pill.appendChild(drop);
     nav.appendChild(pill);
     pillBox = nav.__zbPill = {
-      nav: nav, pill: pill, drop: drop,
+      nav: nav, pill: pill,
       x: null, w: 0, y: 0, h: 0, vx: 0, vw: 0,
-      dx: null, dvx: 0,           /* 尾随液滴：更低刚度、更阻 → 滞后粘连 */
       tx: 0, tw: 0, ty: 0, th: 0, running: false, last: 0
     };
     navPillTarget();
@@ -1594,8 +1600,7 @@
     if (pillBox.x == null) { /* 首次直接就位，不做动画 */
       pillBox.x = pillBox.tx; pillBox.w = pillBox.tw;
       pillBox.y = pillBox.ty; pillBox.h = pillBox.th;
-      pillBox.dx = null;
-      pillPaint(pillBox, 0);
+      pillPaint(pillBox);
       return;
     }
     pillStart();
@@ -1606,20 +1611,12 @@
     pillBox.last = 0;
     window.requestAnimationFrame(pillStep);
   }
-  function pillPaint(pb, dt) {
+  function pillPaint(pb) {
     var sx = 1 + Math.min(.42, Math.abs(pb.vx) * 0.0016);
     var sy = 1 / Math.max(1, sx);
     pb.pill.style.width = pb.w + 'px';
     pb.pill.style.height = pb.h + 'px';
     pb.pill.style.transform = 'translate3d(' + pb.x + 'px,' + pb.y + 'px,0) scale(' + sx.toFixed(4) + ',' + sy.toFixed(4) + ')';
-    /* 液滴：粘在运动反方向的尾缘，滞后越多越被拉长成泪滴 */
-    var trailing = pb.x + (pb.vx >= 0 ? pb.w : 0);
-    var gap = trailing - (pb.dx == null ? trailing : pb.dx);
-    var size = Math.max(5, Math.min(15, 14 - Math.abs(gap) * 0.10));
-    pb.drop.style.left = (pb.dx == null ? trailing : pb.dx) + 'px';
-    pb.drop.style.width = size + 'px';
-    pb.drop.style.height = size + 'px';
-    pb.drop.style.opacity = (pb.dx == null || Math.abs(gap) < 2) ? '0' : '1';
   }
   function pillStep(t) {
     var pb = pillBox;
@@ -1631,24 +1628,60 @@
     var aw = (pb.tw - pb.w) * 200 - pb.vw * 24;
     pb.vx += ax * dt; pb.vw += aw * dt;
     pb.x += pb.vx * dt; pb.w += pb.vw * dt;
-    /* 尾随液滴弹簧（刚度低 → 滞后 → 粘连感） */
-    var trail = pb.x + (pb.vx >= 0 ? pb.w : 0);
-    if (pb.dx == null) pb.dx = trail;
-    var adx = (trail - pb.dx) * 120 - pb.dvx * 18;
-    pb.dvx += adx * dt;
-    pb.dx += pb.dvx * dt;
     pb.y = pb.ty; pb.h = pb.th;
-    pillPaint(pb, dt);
+    pillPaint(pb);
     if (Math.abs(pb.tx - pb.x) < .4 && Math.abs(pb.tw - pb.w) < .4 &&
         Math.abs(pb.vx) < 8 && Math.abs(pb.vw) < 8) {
       pb.x = pb.tx; pb.w = pb.tw; pb.vx = 0; pb.vw = 0;
-      pb.dx = null; pb.dvx = 0;
-      pillPaint(pb, dt);
+      pillPaint(pb);
       pb.running = false;
       return;
     }
     window.requestAnimationFrame(pillStep);
   }
+
+  /* ---------- 分段胶囊（设置页「一行多点」交互组） ----------
+     画质三档 / 通用与动画卡里的选项组等一行多项的点击交互，仿导航栏切换：
+     一枚 .seg-pill 随选中项滑过去（CSS 过渡带轻微回弹），落定后提供选中重点。
+     选项自身不再描边发光，只保留文字加重的层次（样式见 style.css）。 */
+  function segPillItem(group) {
+    var on = group.querySelector('.quality-item.on, .opt-item input:checked');
+    if (!on) return null;
+    return on.closest ? on.closest('.quality-item, .opt-item') : on;
+  }
+  function segPillMove(group, item, instant) {
+    var pill = group.__segPill;
+    if (!pill) return;
+    if (!item) { pill.style.opacity = '0'; return; }
+    pill.style.opacity = '1';
+    if (instant) pill.classList.add('no-anim');
+    pill.style.width = item.offsetWidth + 'px';
+    pill.style.height = item.offsetHeight + 'px';
+    pill.style.transform = 'translate3d(' + item.offsetLeft + 'px,' + item.offsetTop + 'px,0)';
+    if (instant) {
+      void pill.offsetWidth; /* 先无过渡就位，再恢复过渡 */
+      pill.classList.remove('no-anim');
+    }
+  }
+  function initSegPills(root) {
+    if (!root || !root.querySelectorAll) return;
+    Array.prototype.forEach.call(root.querySelectorAll('.quality-group, .opt-group'), function (group) {
+      if (group.__segPill) { segPillMove(group, segPillItem(group), true); return; }
+      var pill = document.createElement('span');
+      pill.className = 'seg-pill';
+      group.insertBefore(pill, group.firstChild);
+      group.__segPill = pill;
+      segPillMove(group, segPillItem(group), true);
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var item = e.target && e.target.closest ? e.target.closest('.quality-item, .opt-item') : null;
+    if (!item) return;
+    var group = item.parentElement;
+    if (!group || (!group.classList.contains('quality-group') && !group.classList.contains('opt-group'))) return;
+    /* 单选点下就滑过去；等 input/checked 或 .on 类由各自 handler 更新后再对位 */
+    window.setTimeout(function () { segPillMove(group, segPillItem(group), false); }, 0);
+  });
 
   /* ---------- 照片堆叠：滚轮 / 滑动换层 ----------
      桌面端：鼠标在照片集上滚轮向下 → 最上层照片丝滑滑落到最底层，
@@ -1727,13 +1760,14 @@
     }
   }
 
-  /* 数字滚动：静态数字（统计栏 / 归档月份计数 / 文章页计数）交给 ZBLikes.rollText
-     统一处理——从 0 滚到目标值、全站同一时长、缓动慢→快→慢、逐位上滑淡出下滑入。 */
+  /* 数字滚动：静态数字（名片彩色统计 / 归档统计栏 / 归档月份计数 / 文章页计数）
+     是「大数字」，交给 ZBLikes.rollText 的逐位 odometer（big=true）——
+     是否真的滚动由设置页「数字滚动动画」三档决定（默认部分：只有大数字滚）。 */
   function rollMount(root) {
     if (!root || !root.querySelectorAll) return;
     if (!window.ZBLikes || typeof window.ZBLikes.rollText !== 'function') return;
     Array.prototype.forEach.call(root.querySelectorAll('[data-roll]'), function (el) {
-      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0);
+      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0, true);
     });
   }
 

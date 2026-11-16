@@ -550,8 +550,8 @@ a:hover { color: var(--accent-3-text); text-decoration: none; }
 .icon-btn svg { display: block; width: 18px; height: 18px; }
 
 .nav { display: flex; gap: 2px; font-size: 13px; margin-left: auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; position: relative; }
-/* 导航水滴胶囊：选中态的底衬独立成一层，切换时丝滑滑到新项背后，
-   移动中带挤压拉伸与尾随水滴的张力粘连（JS 弹簧驱动 .nav-pill） */
+/* 导航胶囊：选中态的底衬独立成一层，切换时用弹簧丝滑滑到新项背后，
+   移动快时沿运动方向拉伸变细（水滴张力），JS 弹簧驱动 .nav-pill */
 .nav-pill {
   position: absolute; left: 0; top: 0; width: 0; height: 0;
   border-radius: 999px; pointer-events: none; z-index: 0;
@@ -559,14 +559,6 @@ a:hover { color: var(--accent-3-text); text-decoration: none; }
   border: 1px solid var(--glass-line);
   box-shadow: 0 5px 16px rgba(110, 136, 188, .12), var(--glass-inner);
   opacity: 0; will-change: transform, width;
-}
-.nav-drop {
-  position: absolute; top: 50%; left: 0;
-  width: 14px; height: 14px; border-radius: 50%;
-  background: var(--glass-strong);
-  border: 1px solid var(--glass-line);
-  transform: translate(-50%, -50%);
-  will-change: transform, width, height;
 }
 .nav a { color: var(--muted); padding: 6px 9px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; position: relative; z-index: 1; }
 .nav a:hover { color: var(--ink-strong); background: rgba(255, 255, 255, .26); }
@@ -991,7 +983,28 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   border-color: rgba(90, 120, 200, .45);
   box-shadow: 0 5px 16px rgba(6, 14, 44, .5);
 }
-:root[data-theme="night"] .nav-drop { background: rgba(30, 44, 96, .9); border-color: rgba(90, 120, 200, .45); }
+
+/* 分段胶囊：设置页里「一行多点」的交互组（画质三档 / 通用与动画卡的选项组）
+   仿导航栏切换——选中重点随一枚胶囊滑到新选项上，选项自身不再描边发光 */
+.quality-group, .opt-group { position: relative; }
+.seg-pill {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  border-radius: 14px; pointer-events: none; z-index: 2;
+  background: rgba(171, 139, 212, .07);
+  border: 1px solid rgba(171, 139, 212, .62);
+  box-shadow: 0 0 0 1px rgba(171, 139, 212, .26), 0 8px 22px rgba(171, 139, 212, .18);
+  opacity: 0; will-change: transform, width, height;
+  transition: transform .42s cubic-bezier(.3,1.18,.42,1), width .42s cubic-bezier(.3,1.18,.42,1), height .42s cubic-bezier(.3,1.18,.42,1);
+}
+.seg-pill.no-anim { transition: none; }
+:root[data-theme="night"] .seg-pill {
+  background: rgba(126, 162, 226, .10);
+  border-color: rgba(226, 205, 251, .55);
+  box-shadow: 0 0 0 1px rgba(226, 205, 251, .24), 0 8px 22px rgba(6, 14, 44, .45);
+}
+/* 选中项自身不再描边发光，重点交给滑过来的胶囊（只保留文字加重的层次） */
+.opt-item:has(input:checked) { border-color: transparent; box-shadow: none; color: var(--ink-strong); }
+.quality-item.on { border-color: transparent; box-shadow: var(--glass-inner); }
 
 /* 点击星爆：一圈小星星从点击处向四周溅射后快速消散（仅高画质开启）；
    星星与天空的胖星同款：蜜金填充，发光贴合星星轮廓（不做圆形光幕，避免多星叠加成实心圆饼） */
@@ -1356,9 +1369,12 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 
 /* 数字滚动容器：旧数字上滑淡出、新数字下方滑入淡入（likes.js 驱动） */
-.zb-roll { display: inline-flex; position: relative; overflow: hidden; vertical-align: bottom; }
-.zb-roll .zb-val { display: inline-block; will-change: transform, opacity; }
-.zb-roll .zb-out { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+/* 数字逐位滚动（odometer）：滚动结构包在元素内部一层，元素自身排版不变。
+   每个数字位一列 0~9（末尾多一个折返 0），列高 1em、行高 1，与普通文本基线对齐。 */
+.zb-roll { display: inline-flex; overflow: hidden; height: 1em; line-height: 1; vertical-align: baseline; }
+.zb-dig { display: block; flex: none; }
+.zb-col { display: block; will-change: transform; }
+.zb-col span { display: block; height: 1em; }
 
 /* ---------- 相册 / 相册 ---------- */
 /* 两栏相册（Kirameku 式），窄屏回落单栏 */
@@ -1769,6 +1785,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   background: linear-gradient(180deg, var(--accent), var(--accent-3));
 }
 .settings-info p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--muted); }
+/* 通用 / 动画卡片里的子项：小标题 + 说明 + 选项组（复用 opt-group 胶囊） */
+.settings-sub { flex: 1 1 320px; min-width: 0; }
+.settings-sub h3 { margin: 0 0 4px; font-size: 14.5px; font-weight: 650; color: var(--ink-strong); }
+.settings-sub > p { margin: 0; font-size: 12.5px; line-height: 1.9; color: var(--muted); }
+.settings-sub .settings-foot { margin-top: 10px; padding-top: 10px; }
 .quality-group { flex: 2 1 420px; display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .quality-item {
@@ -1792,7 +1813,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .settings-foot { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--glass-line);
   font-size: 12px; line-height: 1.9; color: var(--muted); }
 .settings-foot b { color: var(--accent-text); font-weight: 650; }
-:root[data-theme="night"] .quality-item.on { border-color: rgba(226, 205, 251, .66); }
+:root[data-theme="night"] .quality-item.on { border-color: transparent; }
 :root[data-theme="night"] .settings-info p,
 :root[data-theme="night"] .quality-item small,
 :root[data-theme="night"] .settings-foot,

@@ -48,12 +48,17 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
-  /* ---------- 数字滚动（全站统一时长，慢→快→慢） ----------
-     从 0（或旧值）滚到目标值，总时长固定 ROLL_MS，缓动 easeInOutCubic；
-     每次整数变化：旧数字上滑淡出，新数字从下方滑入淡入。
+  /* ---------- 数字逐位滚动（odometer）----------
+     每个数位独立一列 0~9（末尾多放一个 0 供 9→0 折返），只滚动发生
+     变化的位，不再把整个数字从旧值滑到新值——位数增减时按右对齐补列
+     （新列从 0 滚到位）或删列，不会出现整段数字重叠的残影。
+     总时长全站统一 ROLL_MS，缓动 easeInOutCubic（慢→快→慢）。
+     设置页「数字滚动动画」三档（localStorage zb-roll-mode）：
+       all  = 大数字与小数字全部滚动；
+       part = 默认，只有彩色大数字（data-roll）滚动，浏览/点赞小数字直接落文本；
+       off  = 全部直接落文本。
      无 WAAPI / 减少动态偏好 / 沙箱环境直接落文本，不影响功能。 */
-  var ROLL_MS = 1300, ROLL_SLIDE = 190, ROLL_RE = 620;
-  function rollEase(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  var ROLL_MS = 1000;
   function rollCan() {
     try {
       if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
@@ -61,59 +66,79 @@
     return typeof window.requestAnimationFrame === 'function' &&
       typeof window.Element === 'function' && Element.prototype.animate;
   }
-  function rollSlide(st, v) {
-    var prev = st.shown;
-    st.shown = v;
-    var val = st.val;
-    var old = document.createElement('span');
-    old.className = 'zb-val zb-out';
-    old.textContent = String(prev);
-    st.el.appendChild(old);
-    val.textContent = String(v);
-    var top = String(Math.round(st.h || 100)) + '%';
-    if (old.animate) {
-      old.animate([
-        { transform: 'translateY(0)', opacity: 1 },
-        { transform: 'translateY(-108%)', opacity: 0 }
-      ], { duration: ROLL_SLIDE, easing: 'cubic-bezier(.4,0,.6,1)' }).onfinish = function () {
-        if (old.parentNode) old.parentNode.removeChild(old);
-      };
-      val.animate([
-        { transform: 'translateY(108%)', opacity: 0 },
-        { transform: 'translateY(0)', opacity: 1 }
-      ], { duration: ROLL_SLIDE, easing: 'cubic-bezier(.2,.7,.3,1)' });
+  function rollMode() {
+    try {
+      var m = window.localStorage && window.localStorage.getItem('zb-roll-mode');
+      if (m === 'all' || m === 'part' || m === 'off') return m;
+    } catch (e) { /* 判不了就按默认档 */ }
+    return 'part';
+  }
+  /* 单列滚动：from/to 是数位栈里的行号（0~9，10 = 折返的 0） */
+  function rollCol(c, to, snap) {
+    var col = c.col;
+    var from = c.cur;
+    if (col.getAnimations) {
+      var runs = col.getAnimations();
+      for (var i = 0; i < runs.length; i++) { try { runs[i].cancel(); } catch (e) { /* 忽略 */ } }
     }
+    c.cur = snap ? 0 : to;
+    var a = col.animate([
+      { transform: 'translateY(' + (-from) + 'em)' },
+      { transform: 'translateY(' + (-to) + 'em)' }
+    ], { duration: ROLL_MS, easing: 'cubic-bezier(.45,.05,.2,1)' });
+    if (a) a.onfinish = function () {
+      col.style.transform = 'translateY(' + (-c.cur) + 'em)';
+    };
   }
-  function rollTick(st, t) {
-    var k = Math.min(1, (t - st.t0) / st.dur);
-    var v = Math.round(st.from + (st.target - st.from) * rollEase(k));
-    if (v !== st.shown) rollSlide(st, v);
-    if (k < 1) st.raf = window.requestAnimationFrame(function (t2) { rollTick(st, t2); });
-    else { st.playing = false; st.raf = 0; }
-  }
-  function rollText(el, target) {
+  function rollText(el, target, big) {
     if (!el) return;
     target = Math.max(0, Math.round(Number(target) || 0));
-    if (!rollCan()) { el.textContent = String(target); return; }
+    var mode = rollMode();
     var st = el.__zbRoll;
-    if (!st) {
-      el.classList.add('zb-roll');
-      var val = document.createElement('span');
-      val.className = 'zb-val';
-      val.textContent = '0';
-      el.textContent = '';
-      el.appendChild(val);
-      st = { el: el, val: val, shown: 0, target: target, t0: 0, from: 0, dur: ROLL_MS, playing: false, raf: 0, h: 108 };
-      el.__zbRoll = st;
-      if (target === 0) return;
-    } else {
-      if (st.target === target && st.playing) return;
-      st.target = target;
-      if (st.playing) return; /* 滚动途中来的新真值：滚完这轮再处理 */
-      st.from = st.shown; st.dur = ROLL_RE;
+    if (mode === 'off' || (mode === 'part' && !big) || !rollCan()) {
+      if (st) { if (st.wrap.parentNode) st.wrap.parentNode.removeChild(st.wrap); el.__zbRoll = null; }
+      el.textContent = String(target);
+      return;
     }
-    st.playing = true;
-    st.raf = window.requestAnimationFrame(function (t) { st.t0 = t; rollTick(st, t); });
+    if (!st) {
+      var wrap = document.createElement('span');
+      wrap.className = 'zb-roll';
+      el.textContent = '';
+      el.appendChild(wrap);
+      st = el.__zbRoll = { el: el, wrap: wrap, cols: [], shown: null };
+    }
+    var ts = String(target);
+    /* 位数增减：新列插在最前（数字向左生长），删列也从最前删 */
+    while (st.cols.length < ts.length) {
+      var dig = document.createElement('span');
+      dig.className = 'zb-dig';
+      var col = document.createElement('span');
+      col.className = 'zb-col';
+      col.style.transform = 'translateY(0em)';
+      for (var d = 0; d <= 10; d++) {
+        var cell = document.createElement('span');
+        cell.textContent = String(d % 10);
+        col.appendChild(cell);
+      }
+      dig.appendChild(col);
+      st.wrap.insertBefore(dig, st.wrap.firstChild);
+      st.cols.unshift({ col: col, cur: 0 });
+    }
+    while (st.cols.length > ts.length) {
+      var gone = st.cols.shift();
+      var digEl = gone.col && gone.col.parentNode;
+      if (digEl && digEl.parentNode) digEl.parentNode.removeChild(digEl);
+    }
+    var first = st.shown == null; /* 首次挂载：每一位都从 0 滚到目标 */
+    for (var i = 0; i < st.cols.length; i++) {
+      var td = Number(ts.charAt(i));
+      var c = st.cols[i];
+      if (first || c.cur !== td) {
+        if (c.cur === 9 && td === 0) rollCol(c, 10, true);          /* 9→0 走折返位 */
+        else rollCol(c, td, false);
+      }
+    }
+    st.shown = target;
   }
   /* Abacus key 只允许 [A-Za-z0-9_-.]：连字符分隔（kind 前缀 + 条目 id） */
   function counterKey(kind, id) {
@@ -285,7 +310,7 @@
     function paint(el, v) {
       if (el.getAttribute('data-live')) return;
       var target = el.tagName === 'BUTTON' ? el.querySelector('span') : el;
-      if (target) rollText(target, v);
+      if (target) rollText(target, v, false);
     }
     Array.prototype.forEach.call(root.querySelectorAll('[data-like]'), function (btn) {
       var kind = btn.getAttribute('data-like-kind') || 'moment';
@@ -416,7 +441,7 @@
   function setCount(btn, n) {
     var span = btn.querySelector('span');
     if (span && typeof n === 'number') {
-      rollText(span, n);
+      rollText(span, n, false);
       btn.setAttribute('data-live', '1');
     }
   }
@@ -430,7 +455,7 @@
   function setStat(kind, id, n) {
     if (typeof n !== 'number') return;
     statSlots(kind, id).forEach(function (el) {
-      rollText(el, n);
+      rollText(el, n, false);
       el.setAttribute('data-live', '1');
     });
   }
@@ -484,7 +509,7 @@
       if (v.length < 2) return;
       var kind = v[0], id = v.slice(1).join(':');
       getCount(kind, id).then(function (n) {
-        if (typeof n === 'number') { el.textContent = String(n); el.setAttribute('data-live', '1'); }
+        if (typeof n === 'number') { rollText(el, n, false); el.setAttribute('data-live', '1'); }
       }).catch(function () { /* 基线补画兜底 */ });
     });
   }
@@ -507,7 +532,7 @@
       Promise.resolve(p).then(function (n) {
         if (typeof n !== 'number') return;
         slots[s].forEach(function (el) {
-          rollText(el, n);
+          rollText(el, n, false);
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });
@@ -520,7 +545,7 @@
       Promise.resolve(hp).then(function (n) {
         if (typeof n !== 'number') return;
         Array.prototype.forEach.call(homeSlots, function (el) {
-          rollText(el, n);
+          rollText(el, n, false);
           el.setAttribute('data-live', '1');
         });
       }).catch(function () { /* 基线补画兜底 */ });
@@ -540,7 +565,7 @@
     liked: liked, getCount: getCount, hitCount: hitCount,
     getViews: getViews, countView: countView,
     getHomeViews: getHomeViews, countHomeView: countHomeView,
-    rollText: rollText,
+    rollText: rollText, rollMode: rollMode,
     ownerDevice: ownerDevice, NO_COUNT_KEY: NO_COUNT_KEY
   };
 })();
