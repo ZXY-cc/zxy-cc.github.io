@@ -1107,11 +1107,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 :root[data-theme="night"] .profile-name { background-image: linear-gradient(100deg, #b6d0ff 0%, #ddbdfa 52%, #f9bddb 100%); }
 :root[data-theme="night"] .profile-card { --stat-1: #b6d0ff; --stat-2: #ddbdfa; --stat-3: #f9bddb; }
 :root[data-theme="night"] .p-stat b { text-shadow: 0 2px 10px rgba(8,16,44,.48); }
-:root[data-theme="night"] .stat-cell:nth-child(1) b { color: #b6d0ff; }
-:root[data-theme="night"] .stat-cell:nth-child(2) b { color: #c4bcfb; }
-:root[data-theme="night"] .stat-cell:nth-child(3) b { color: #ddbdfa; }
-:root[data-theme="night"] .stat-cell:nth-child(4) b { color: #eab4dd; }
-:root[data-theme="night"] .stat-cell:nth-child(5) b { color: #f9bddb; }
 :root[data-theme="night"] .stat-cell b { text-shadow: 0 2px 10px rgba(8,16,44,.48); }
 :root[data-theme="night"] .profile-avatar-wrap {
   box-shadow: 0 0 0 1px rgba(208,226,255,.40), 0 10px 30px rgba(8,16,44,.32); }
@@ -1149,12 +1144,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .stat-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .stat-cell b { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums;
   color: var(--ink-strong); }
-/* 归档五格彩色大数字：与名片统计同族，最左端蓝、最右端粉、中间自然过渡 */
-.stat-cell:nth-child(1) b { color: var(--accent-text); }
-.stat-cell:nth-child(2) b { color: #54529d; }
-.stat-cell:nth-child(3) b { color: var(--accent-2-text); }
-.stat-cell:nth-child(4) b { color: #7f4684; }
-.stat-cell:nth-child(5) b { color: var(--accent-3-text); }
 .stat-cell span { font-size: 11.5px; color: var(--muted); letter-spacing: .4px; }
 
 /* ---------- 滚动渐显（只走 opacity / transform） ---------- */
@@ -1359,7 +1348,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .nav a.star-pop::after { animation: nav-star-pop .55s cubic-bezier(.34, 1.45, .45, 1) both; }
 @keyframes nav-star-pop {
   0% { transform: translate(-50%, -50%) scale(.16); opacity: 0; }
-  45% { transform: translate(-50%, -50%) scale(1.7); opacity: .62; }
+  45% { transform: translate(-50%, -50%) scale(1.26); opacity: .5; }
   100% { transform: translate(-50%, -50%) scale(1); opacity: .35; }
 }
 
@@ -1817,6 +1806,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .settings-info p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--muted); }
 /* 通用 / 动画卡片里的子项：小标题 + 说明 + 选项组（复用 opt-group 胶囊） */
 .settings-sub { flex: 1 1 320px; min-width: 0; }
+/* 通用 / 动画卡：标题描述在上、选项组在其下方（整卡单列），不再是左右两栏 */
+.settings-block.stack { flex-direction: column; gap: 14px; }
+.settings-block.stack .settings-sub { flex: none; width: 100%; }
 .settings-sub h3 { margin: 0 0 4px; font-size: 14.5px; font-weight: 650; color: var(--ink-strong); }
 .settings-sub > p { margin: 0; font-size: 12.5px; line-height: 1.9; color: var(--muted); }
 .settings-sub .settings-foot { margin-top: 10px; padding-top: 10px; }

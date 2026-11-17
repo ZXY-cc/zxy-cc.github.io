@@ -193,7 +193,7 @@
       [runningDays(), '天在线']
     ];
     return '<div class="stat-bar glass reveal">' + items.map(function (it) {
-      return '<div class="stat-cell"><b data-roll="' + it[0] + '">' + it[0] + '</b><span>' + it[1] + '</span></div>';
+      return '<div class="stat-cell"><b>' + it[0] + '</b><span>' + it[1] + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -345,23 +345,41 @@
     var shown = timelineTag ? all.filter(function (p) {
       return (p.tags || []).indexOf(timelineTag) >= 0;
     }) : all;
+    return pageHead('归档', '总计 ' + all.length + ' 篇文章，按时间排好', 'ARCHIVE') +
+      statHtml() + filters + timelineBody(all, shown);
+  }
+  /* 归档时间轴列表：整页渲染与标签局部刷新共用 */
+  function timelineBody(all, shown) {
     var groups = {}, order = [];
     shown.forEach(function (p) {
       var k = String(p.date || '').slice(0, 7) || '未标日期';
       if (!groups[k]) { groups[k] = []; order.push(k); }
       groups[k].push(p);
     });
-    return pageHead('归档', '总计 ' + all.length + ' 篇文章，按时间排好', 'ARCHIVE') +
-      statHtml() + filters +
-      '<div class="timeline">' + order.map(function (k) {
-        return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span>' +
-          groups[k].length + ' 篇</span></div><div class="tl-items">' +
-          groups[k].map(function (p) {
-            return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
-              '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
-              '<span>' + orderedTags(p.tags || []).map(function (t) { return '#' + esc(t); }).join(' ') + '</span></a>';
-          }).join('') + '</div></section>';
-      }).join('') + '</div>';
+    return '<div class="timeline">' + order.map(function (k) {
+      return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span>' +
+        groups[k].length + ' 篇</span></div><div class="tl-items">' +
+        groups[k].map(function (p) {
+          return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
+            '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
+            '<span>' + orderedTags(p.tags || []).map(function (t) { return '#' + esc(t); }).join(' ') + '</span></a>';
+        }).join('') + '</div></section>';
+    }).join('') + '</div>';
+  }
+  /* 归档标签切换：只更新标签选中态与下方筛选结果，不整页重绘（页面不闪、不回顶） */
+  function retintTimeline() {
+    var row = app.querySelector('.filter-row');
+    var tl = app.querySelector('.timeline');
+    if (!row || !tl || !row.querySelector('[data-tfilter]')) { repaint(renderTimeline); return; }
+    Array.prototype.forEach.call(row.querySelectorAll('[data-tfilter]'), function (b) {
+      b.classList.toggle('on', b.getAttribute('data-tfilter') === timelineTag);
+    });
+    var all = POSTS.slice();
+    var shown = timelineTag ? all.filter(function (p) {
+      return (p.tags || []).indexOf(timelineTag) >= 0;
+    }) : all;
+    tl.outerHTML = timelineBody(all, shown);
+    observeReveal();
   }
 
   /* ---------- 相册 ---------- */
@@ -670,10 +688,10 @@
       (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
   }
   /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
-     「部分」= 只让首页名片与归档的彩色大数字（data-roll 位，live='stat'）滚动，
-     浏览量与点赞量等实时计数器直接显示；
-     「所有」= 全部数字都滚；「关闭」= 全部直接显示。
-     likes.js 的 rollText 每次执行都读同一个键（zb-roll-mode），切换立即生效。 */
+     滚动对象 = 实时计数器（浏览量与点赞量：爱心按钮、名片右上角、文章署名行）。
+     「所有」= 两类计数器都滚；「部分」= 仅点赞量滚，浏览量直接显示；
+     「关闭」= 全部直接显示。likes.js 的 rollText 每次执行都读同一个键
+     （zb-roll-mode），切换立即生效。 */
   var ROLL_MODES = ['all', 'part', 'off'];
   function readRollMode() {
     try {
@@ -683,9 +701,9 @@
     return 'part';
   }
   function rollModeNote(m) {
-    if (m === 'all') return '已选择「所有」：全部数字（含浏览量与点赞量）都带逐位滚动动画。';
+    if (m === 'all') return '已选择「所有」：浏览量与点赞量都带逐位滚动动画。';
     if (m === 'off') return '已选择「关闭」：所有数字直接显示，不带滚动动画。';
-    return '已选择「部分」：名片与归档的彩色大数字带逐位滚动动画，浏览量与点赞量直接显示。';
+    return '已选择「部分」：仅点赞量带逐位滚动动画，浏览量直接显示。';
   }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
@@ -747,8 +765,8 @@
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
     var rollOpts = [
-      ['all', '所有', '全部数字滚动（含浏览量与点赞量）'],
-      ['part', '部分', '仅彩色大数字滚动（名片与归档）'],
+      ['all', '所有', '浏览量与点赞量都滚动'],
+      ['part', '部分', '仅点赞量滚动'],
       ['off', '关闭', '所有数字直接显示']
     ].map(function (o) {
       var on = o[0] === rmode;
@@ -784,7 +802,7 @@
       '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>' +
       /* 「通用」卡片：日常会用到的偏好归在一起 */
       '<section class="settings-card glass reveal" aria-label="通用设置">' +
-      '<div class="settings-block"><div class="settings-info">' +
+      '<div class="settings-block stack"><div class="settings-info">' +
       '<h2>通用</h2><p>日常偏好集中在这张卡片里，切换后立即生效；偏好只保存在本机。</p></div>' +
       '<div class="settings-sub"><h3>首页卡片轮流数</h3>' +
       '<p>设置首页每张卡片轮流展示几条内容。</p>' +
@@ -797,10 +815,10 @@
       '<p class="settings-foot" id="quick-count-state">' + esc(quickCountNote(quick)) + '</p></div></div></section>' +
       /* 「动画」卡片：数字滚动动画三档 */
       '<section class="settings-card glass reveal" aria-label="动画设置">' +
-      '<div class="settings-block"><div class="settings-info">' +
+      '<div class="settings-block stack"><div class="settings-info">' +
       '<h2>动画</h2><p>控制页面里数字的逐位滚动动画。切换后立即生效，偏好只保存在本机。</p></div>' +
       '<div class="settings-sub"><h3>数字滚动动画</h3>' +
-      '<p>数字变化时每一位独立滚动（0~9 循环）；「部分」只让名片与归档的彩色大数字滚动。</p>' +
+      '<p>数字变化时每一位独立滚动（0~9 循环）；控制浏览量与点赞量计数器的滚动动画。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
       '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
@@ -898,7 +916,7 @@
       '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
       '<div class="profile-foot"><div class="profile-stats">' +
       stats.map(function (s) {
-        return '<a class="p-stat" href="' + esc(s[2]) + '"><b data-roll="' + s[0] + '">' + s[0] + '</b><span>' + s[1] + '</span></a>';
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
   /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
@@ -1264,7 +1282,6 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     navPillTarget();
-    rollMount(app);
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
@@ -1874,17 +1891,6 @@
     }
   }
 
-  /* 数字滚动：首页名片与归档的彩色大数字是 data-roll 标记位（live='stat'），
-     「部分」档（默认）与「所有」档都滚动；浏览量与点赞量等实时计数器由
-     likes.js 内部以 live='like'/'view' 调用，「部分」档直接显示。 */
-  function rollMount(root) {
-    if (!root || !root.querySelectorAll) return;
-    if (!window.ZBLikes || typeof window.ZBLikes.rollText !== 'function') return;
-    Array.prototype.forEach.call(root.querySelectorAll('[data-roll]'), function (el) {
-      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0, 'stat');
-    });
-  }
-
   function fallbackCopy(text, done) {
     try {
       var ta = document.createElement('textarea');
@@ -2033,7 +2039,7 @@
           var cf = node.closest('[data-cfilter]');
           if (cf) { chatterTag = cf.getAttribute('data-cfilter'); repaint(renderChatter); return; }
           var tf = node.closest('[data-tfilter]');
-          if (tf) { timelineTag = tf.getAttribute('data-tfilter'); repaint(renderTimeline); return; }
+          if (tf) { timelineTag = tf.getAttribute('data-tfilter'); retintTimeline(); return; }
           var share = node.closest('[data-share]');
           if (share) {
             var url = location.origin + location.pathname + share.getAttribute('data-share');
