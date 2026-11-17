@@ -193,7 +193,7 @@
       [runningDays(), '天在线']
     ];
     return '<div class="stat-bar glass reveal">' + items.map(function (it) {
-      return '<div class="stat-cell"><b>' + it[0] + '</b><span>' + it[1] + '</span></div>';
+      return '<div class="stat-cell"><b data-roll="' + it[0] + '">' + it[0] + '</b><span>' + it[1] + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -670,10 +670,10 @@
       (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
   }
   /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
-     滚动对象 = 实时计数器（浏览量与点赞量：爱心按钮、名片右上角、文章署名行）。
-     「所有」= 两类计数器都滚；「部分」= 仅点赞量滚，浏览量直接显示；
-     「关闭」= 全部直接显示。likes.js 的 rollText 每次执行都读同一个键
-     （zb-roll-mode），切换立即生效。 */
+     「部分」= 只让首页名片与归档的彩色大数字（data-roll 位，live='stat'）滚动，
+     浏览量与点赞量等实时计数器直接显示；
+     「所有」= 全部数字都滚；「关闭」= 全部直接显示。
+     likes.js 的 rollText 每次执行都读同一个键（zb-roll-mode），切换立即生效。 */
   var ROLL_MODES = ['all', 'part', 'off'];
   function readRollMode() {
     try {
@@ -683,9 +683,9 @@
     return 'part';
   }
   function rollModeNote(m) {
-    if (m === 'all') return '已选择「所有」：浏览量与点赞量都带逐位滚动动画。';
+    if (m === 'all') return '已选择「所有」：全部数字（含浏览量与点赞量）都带逐位滚动动画。';
     if (m === 'off') return '已选择「关闭」：所有数字直接显示，不带滚动动画。';
-    return '已选择「部分」：仅点赞量带逐位滚动动画，浏览量直接显示。';
+    return '已选择「部分」：名片与归档的彩色大数字带逐位滚动动画，浏览量与点赞量直接显示。';
   }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
@@ -747,8 +747,8 @@
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
     var rollOpts = [
-      ['all', '所有', '浏览量与点赞量都滚动'],
-      ['part', '部分', '仅点赞量滚动'],
+      ['all', '所有', '全部数字滚动（含浏览量与点赞量）'],
+      ['part', '部分', '仅彩色大数字滚动（名片与归档）'],
       ['off', '关闭', '所有数字直接显示']
     ].map(function (o) {
       var on = o[0] === rmode;
@@ -800,7 +800,7 @@
       '<div class="settings-block"><div class="settings-info">' +
       '<h2>动画</h2><p>控制页面里数字的逐位滚动动画。切换后立即生效，偏好只保存在本机。</p></div>' +
       '<div class="settings-sub"><h3>数字滚动动画</h3>' +
-      '<p>数字变化时每一位独立滚动（0~9 循环）；控制浏览量与点赞量计数器的滚动动画。</p>' +
+      '<p>数字变化时每一位独立滚动（0~9 循环）；「部分」只让名片与归档的彩色大数字滚动。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
       '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
@@ -898,7 +898,7 @@
       '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
       '<div class="profile-foot"><div class="profile-stats">' +
       stats.map(function (s) {
-        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b data-roll="' + s[0] + '">' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
   /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
@@ -984,8 +984,8 @@
   function stackCovers(photos, alt) {
     var list = recentByDate(photos, 3);
     if (!list.length) list = [{ src: avatarSrc() }];
+    /* 有几张放几层：不足三张不再补空白照片（一张无换层、两张两片互换） */
     var layers = list.slice().reverse();
-    while (layers.length < 3) layers.unshift(layers[layers.length - 1]);
     return layers.map(function (p, i) {
       var cls = i === layers.length - 1 ? 'stack-top' :
         (i === layers.length - 2 ? 'stack-mid' : 'stack-back');
@@ -1264,6 +1264,7 @@
       a.classList.toggle('active', a.getAttribute('data-nav') === active);
     });
     navPillTarget();
+    rollMount(app);
     if (window.ZBLikes && window.ZBLikes.mount) window.ZBLikes.mount();
     if (window.ZBInteractions && window.ZBInteractions.mount) window.ZBInteractions.mount();
     if (window.ZBLive && window.ZBLive.mount) window.ZBLive.mount();
@@ -1512,8 +1513,28 @@
     try { if (window.localStorage) window.localStorage.setItem('zb-theme', t); }
     catch (e) { /* file:// 下可能不可用，忽略 */ }
   }
-  var ICON_MOON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z" fill="currentColor"/></svg>';
-  var ICON_SUN = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
+  /* 主题图标：日月同体 SVG。切换时月牙/光瓣平滑过渡，
+     日→月结尾微微回摆（惯性），月→日结尾小膨胀再回弹（style.css 定义动画） */
+  var ICON_THEME = '<svg class="theme-morph" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+    '<mask id="zb-moon-cut"><rect x="-6" y="-6" width="36" height="36" fill="#fff"/><circle class="moon-cut" cx="12" cy="12" r="6.1" fill="#000"/></mask>' +
+    '<circle class="tm-core" cx="12" cy="12" r="7.2" mask="url(#zb-moon-cut)" fill="currentColor"></circle>' +
+    '<g class="tm-rays" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M12 1.8v2.2M12 20v2.2M1.8 12H4M20 12h2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M19.2 4.8l-1.6 1.6M6.4 17.6l-1.6 1.6"/></g></svg>';
+  function themeIconSet(btn, night, anim) {
+    if (!btn) return;
+    var svg = btn.querySelector('svg.theme-morph');
+    if (!svg) {
+      btn.innerHTML = ICON_THEME;
+      svg = btn.querySelector('svg.theme-morph');
+    }
+    if (!svg) return;
+    svg.classList.toggle('is-night', !!night);
+    svg.classList.remove('to-day', 'to-night');
+    if (anim) {
+      try { void svg.getBoundingClientRect(); } catch (e) { /* 忽略 */ }
+      svg.classList.add(anim);
+      window.setTimeout(function () { svg.classList.remove(anim); }, 1000);
+    }
+  }
   function applyTheme(t) {
     var root = document.documentElement;
     if (root && root.dataset) {
@@ -1521,12 +1542,11 @@
       else delete root.dataset.theme;
     }
     if (window.ZBInteractions && window.ZBInteractions.syncTheme) window.ZBInteractions.syncTheme();
+    themeIconSet(document.getElementById('theme-toggle'), t === 'night', false);
     var btn = document.getElementById('theme-toggle');
     if (btn) {
-      var night = t === 'night';
-      btn.innerHTML = night ? ICON_SUN : ICON_MOON;
-      btn.setAttribute('aria-label', night ? '切换为晴空模式' : '切换为星夜模式');
-      btn.setAttribute('title', night ? '切换为晴空模式' : '切换为星夜模式');
+      btn.setAttribute('aria-label', t === 'night' ? '切换为晴空模式' : '切换为星夜模式');
+      btn.setAttribute('title', t === 'night' ? '切换为晴空模式' : '切换为星夜模式');
     }
     try { document.dispatchEvent(new CustomEvent('zb:theme', { detail: t })); } catch (e) {}
   }
@@ -1535,10 +1555,13 @@
     var btn = document.getElementById('theme-toggle');
     if (btn && btn.addEventListener) {
       btn.addEventListener('click', function () {
-        var next = document.documentElement && document.documentElement.dataset &&
-          document.documentElement.dataset.theme === 'night' ? '' : 'night';
+        var night = document.documentElement && document.documentElement.dataset &&
+          document.documentElement.dataset.theme === 'night';
+        var next = night ? '' : 'night';
         saveTheme(next);
         applyTheme(next);
+        /* 只在点击这一次播放形变收尾动画（惯性回摆 / 小膨胀） */
+        themeIconSet(btn, next === 'night', next === 'night' ? 'to-night' : 'to-day');
       });
     }
   }
@@ -1616,6 +1639,16 @@
     }
     window.requestAnimationFrame(pillStep);
   }
+  /* 导航星标反馈：点击切换后，新选中项文字背后的星星蓄势突然膨胀、再弹回
+     原大小（keyframes 见 style.css 的 nav-star-pop） */
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('.nav a[data-nav]') : null;
+    if (!a) return;
+    a.classList.remove('star-pop');
+    try { void a.offsetWidth; } catch (err) { /* 忽略 */ }
+    a.classList.add('star-pop');
+    window.setTimeout(function () { a.classList.remove('star-pop'); }, 620);
+  });
   /* ---------- 照片堆叠：滚轮 / 滑动换层 ----------
      桌面端：鼠标在照片集上滚轮向下 → 最上层照片丝滑滑落到最底层，
      下一层浮现到顶层；滚轮向上 → 最底层升到最上层。
@@ -1628,6 +1661,8 @@
     document.addEventListener('wheel', function (e) {
       var st = e.target && e.target.closest ? e.target.closest('.album-stack') : null;
       if (!st || st.__busy) return;
+      /* 只有一张照片时没有可换的层：不拦滚轮，页面照常滚动 */
+      if (!st.querySelector('.stack-mid')) return;
       e.preventDefault();
       st.__acc = (st.__acc || 0) + e.deltaY;
       if (Math.abs(st.__acc) < 55) return;
@@ -1655,40 +1690,75 @@
     var top = st.querySelector('.stack-top');
     var mid = st.querySelector('.stack-mid');
     var back = st.querySelector('.stack-back');
-    if (!top || !mid || !back || st.__busy) return;
+    if (!top || !mid || st.__busy) return; /* 只有一张时没有 mid，滚轮 / 滑动无换层动画 */
     st.__busy = true;
     window.setTimeout(function () { st.__busy = false; }, 500);
+    if (back) {
+      if (dir > 0) {
+        /* 三张：顶层拿起 → 滑落到最底层；换层类交给 CSS 过渡接力 */
+        var a = null;
+        if (top.animate) {
+          a = top.animate([
+            { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 0 },
+            { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', offset: 0.42 },
+            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 1 }
+          ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
+        }
+        window.setTimeout(function () {
+          top.className = 'stack-back';
+          mid.className = 'stack-top';
+          back.className = 'stack-mid';
+          if (a) a.cancel();
+        }, 200);
+      } else {
+        /* 三张：最底层拿起 → 升到最顶层 */
+        var b = null;
+        if (back.animate) {
+          b = back.animate([
+            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 0 },
+            { transform: 'rotate(3deg) translateY(-30px) scale(1.08)', offset: 0.45 },
+            { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 1 }
+          ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
+        }
+        window.setTimeout(function () {
+          back.className = 'stack-top';
+          top.className = 'stack-mid';
+          mid.className = 'stack-back';
+          if (b) b.cancel();
+        }, 200);
+      }
+      return;
+    }
+    /* 两张：只有顶与第二层，两片照片之间来回互换 */
     if (dir > 0) {
-      /* 顶层拿起 → 滑落到最底层；换层类交给 CSS 过渡接力 */
-      var a = null;
+      /* 顶层拿起 → 落到第二层位置 */
+      var c = null;
       if (top.animate) {
-        a = top.animate([
+        c = top.animate([
           { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 0 },
           { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', offset: 0.42 },
-          { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 1 }
+          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', offset: 1 }
         ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
       }
       window.setTimeout(function () {
-        top.className = 'stack-back';
+        top.className = 'stack-mid';
         mid.className = 'stack-top';
-        back.className = 'stack-mid';
-        if (a) a.cancel();
+        if (c) c.cancel();
       }, 200);
     } else {
-      /* 最底层拿起 → 升到最顶层 */
-      var b = null;
-      if (back.animate) {
-        b = back.animate([
-          { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 0 },
-          { transform: 'rotate(3deg) translateY(-30px) scale(1.08)', offset: 0.45 },
+      /* 第二层拿起 → 升回顶层 */
+      var d = null;
+      if (mid.animate) {
+        d = mid.animate([
+          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', offset: 0 },
+          { transform: 'rotate(3deg) translateY(-26px) scale(1.07)', offset: 0.45 },
           { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 1 }
         ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
       }
       window.setTimeout(function () {
-        back.className = 'stack-top';
+        mid.className = 'stack-top';
         top.className = 'stack-mid';
-        mid.className = 'stack-back';
-        if (b) b.cancel();
+        if (d) d.cancel();
       }, 200);
     }
   }
@@ -1724,81 +1794,95 @@
       else top.classList.remove('show');
     }
   }
-  /* 回到顶部：星星化作流星带你穿梭上去。
-     点击后：星星本体沿「右上→左下」流星的镜像轨迹（左上方向）加速飞出，
-     身后拖一条蜜金光迹；玻璃圆钮像被流星冲破的泡泡，以粘滞水感放大消散；
-     同时页面用同一段缓动滚回顶端，人眼跟着流星「到站」。 */
+  /* 回到顶部：点击瞬间页面立刻开始回顶；同一刻星星压缩蓄势后化作流星
+     竖直向上冲刺（身后拖蜜金光迹），玻璃圆钮像水滴一样先被压扁、再在星星
+     冲破的一瞬扩散开来，模糊溶解进背景里。 */
   function flyTop(top) {
     var reducedNow = reduced();
     if (reducedNow || typeof top.animate !== 'function') { window.scrollTo(0, 0); return; }
     var r = top.getBoundingClientRect();
     var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     var mark = top.querySelector('.puffy-mark');
-    var DUR = 720;
-    /* 流星轨迹：几乎垂直向上、带一点向左的倾角（背景流星从右上掠向左下，
-       回程就是它的镜像——从右下掠向左上） */
-    var dx = -Math.min(110, window.innerHeight * 0.14);
+    var CHARGE = 130;   /* 蓄势时长 */
+    var DUR = 650;      /* 冲刺 / 回顶总时长 */
+    /* 流星轨迹：竖直向上，冲出屏幕顶 */
     var dy = -(cy + window.innerHeight + 120);
-    var len = Math.sqrt(dx * dx + dy * dy);
-    var deg = Math.atan2(dx, -dy) * 180 / Math.PI; /* 竖直光迹转到轨迹方向所需的角 */
-    /* 星星本体：流星头 */
+    /* 星星本体：先压缩蓄势，冲破瞬间猛地窜出（分两段播） */
     if (mark) {
       try {
         mark.style.pointerEvents = 'none';
-        var head = mark.animate([
-          { transform: 'translate(0,0) scale(1)', opacity: 1 },
-          { transform: 'translate(' + dx * 0.5 + 'px,' + dy * 0.42 + 'px) scale(1.15)', opacity: 1, offset: 0.42 },
-          { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.28)', opacity: 0 }
-        ], { duration: DUR, easing: 'cubic-bezier(.45,.05,.65,.6)', fill: 'forwards' });
-        head.addEventListener('finish', function () {
-          if (head.fill !== 'auto') { try { head.cancel(); } catch (e) { /* 忽略 */ } }
-          mark.style.pointerEvents = '';
+        var charge = mark.animate([
+          { transform: 'scale(1)' },
+          { transform: 'scale(.78)' }
+        ], { duration: CHARGE, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
+        charge.addEventListener('finish', function () {
+          var head = mark.animate([
+            { transform: 'scale(.78)', opacity: 1 },
+            { transform: 'scale(1.28)', opacity: 1, offset: 0.25 },
+            { transform: 'translateY(' + dy + 'px) scale(.26)', opacity: 0 }
+          ], { duration: DUR - CHARGE, easing: 'cubic-bezier(.5,.02,.7,.5)', fill: 'forwards' });
+          head.addEventListener('finish', function () {
+            if (head.fill !== 'auto') { try { head.cancel(); } catch (e) { /* 忽略 */ } }
+            mark.style.pointerEvents = '';
+          });
+          /* 光迹：竖直蜜金线，头端钉在按钮中心，随流星冲刺展开再收尾 */
+          var trail = document.createElement('span');
+          trail.className = 'to-top-trail';
+          trail.setAttribute('aria-hidden', 'true');
+          var tlen = Math.min(200, Math.max(130, window.innerHeight * 0.22));
+          trail.style.cssText = 'left:' + cx + 'px;top:' + cy + 'px;--tt:' + tlen.toFixed(0) + 'px;' +
+            'transform-origin:50% 0;transform:rotate(0deg);';
+          document.body.appendChild(trail);
+          try {
+            var ta = trail.animate([
+              { transform: 'rotate(0deg) scaleY(.12)', opacity: 0 },
+              { transform: 'rotate(0deg) scaleY(1)', opacity: .92, offset: 0.3 },
+              { transform: 'rotate(0deg) scaleY(.06)', opacity: 0 }
+            ], { duration: DUR - CHARGE + 80, easing: 'cubic-bezier(.4,.1,.7,.5)', fill: 'forwards' });
+            ta.addEventListener('finish', function () { if (trail.parentNode) trail.parentNode.removeChild(trail); });
+          } catch (e) { if (trail.parentNode) trail.parentNode.removeChild(trail); }
         });
       } catch (e) { /* 忽略 */ }
     }
-    /* 光迹：细长蜜金渐变线，头端接星星、尾端拖在来路，随流星一起飞 */
-    var trail = document.createElement('span');
-    trail.className = 'to-top-trail';
-    trail.setAttribute('aria-hidden', 'true');
-    var tlen = Math.min(190, Math.max(120, len * 0.22));
-    /* transform-origin 设在头部端点：光迹头始终钉在按钮中心，尾端只向来路收 */
-    trail.style.cssText = 'left:' + cx + 'px;top:' + cy + 'px;--tt:' + tlen.toFixed(0) + 'px;' +
-      'transform-origin:50% 0;transform:rotate(' + deg.toFixed(2) + 'deg);';
-    document.body.appendChild(trail);
-    try {
-      var ta = trail.animate([
-        { transform: 'rotate(' + deg.toFixed(2) + 'deg) scaleY(1)', opacity: .92 },
-        { transform: 'rotate(' + deg.toFixed(2) + 'deg) scaleY(.06)', opacity: 0 }
-      ], { duration: DUR + 120, easing: 'cubic-bezier(.4,.1,.7,.5)', fill: 'forwards' });
-      ta.addEventListener('finish', function () { if (trail.parentNode) trail.parentNode.removeChild(trail); });
-    } catch (e) { if (trail.parentNode) trail.parentNode.removeChild(trail); }
-    /* 玻璃圆钮：泡泡被冲破，先鼓起再以水感模糊缓缓消散 */
+    /* 玻璃圆钮：水滴被流星冲破——先被压扁蓄力，冲破一瞬扩散开来、模糊溶解进背景 */
     try {
       var bub = top.animate([
         { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
-        { transform: 'scale(1.18)', opacity: .75, filter: 'blur(1px)', offset: .3 },
-        { transform: 'scale(1.5)', opacity: 0, filter: 'blur(9px)' }
-      ], { duration: 560, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
+        { transform: 'scale(.9)', opacity: 1, filter: 'blur(0px)', offset: CHARGE / 1000 * 0.8 },
+        { transform: 'scale(1.12)', opacity: .82, filter: 'blur(2px)', offset: 0.34 },
+        { transform: 'scale(1.62)', opacity: 0, filter: 'blur(11px)' }
+      ], { duration: CHARGE + DUR - 60, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
       bub.addEventListener('finish', function () {
         window.setTimeout(function () {
           try { bub.cancel(); } catch (e) { /* 忽略 */ }
           updateScroll();
-        }, 240);
+        }, 200);
       });
     } catch (e) { /* 忽略 */ }
-    /* 页面滚动：与流星同一段缓动滚回顶端，700ms 左右的穿梭感 */
+    /* 页面滚动：点击瞬间立刻开始，快速滚回顶端（easeOut 起步即快） */
     var y0 = window.scrollY || 0;
     if (y0 > 0) {
       var t0 = 0;
       function step(t) {
         if (!t0) t0 = t;
         var k = Math.min(1, (t - t0) / DUR);
-        var e2 = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        var e2 = 1 - Math.pow(1 - k, 3);
         window.scrollTo(0, y0 * (1 - e2));
         if (k < 1) window.requestAnimationFrame(step);
       }
       window.requestAnimationFrame(step);
     }
+  }
+
+  /* 数字滚动：首页名片与归档的彩色大数字是 data-roll 标记位（live='stat'），
+     「部分」档（默认）与「所有」档都滚动；浏览量与点赞量等实时计数器由
+     likes.js 内部以 live='like'/'view' 调用，「部分」档直接显示。 */
+  function rollMount(root) {
+    if (!root || !root.querySelectorAll) return;
+    if (!window.ZBLikes || typeof window.ZBLikes.rollText !== 'function') return;
+    Array.prototype.forEach.call(root.querySelectorAll('[data-roll]'), function (el) {
+      window.ZBLikes.rollText(el, Number(el.getAttribute('data-roll')) || 0, 'stat');
+    });
   }
 
   function fallbackCopy(text, done) {
@@ -1927,12 +2011,15 @@
             }
             return;
           }
-          var quality = node.closest('[data-quality]');
+          /* 只认设置卡里的画质按钮：html 根节点也带 data-quality（CSS 档位驱动），
+             旧的裸属性 closest 会命中根节点，把归档标签、杂谈筛选等
+             排在其后的分支全部拦截（归档标签只能停在「全部」的 BUG 根因） */
+          var quality = node.closest('.quality-item[data-quality]');
           if (quality) {
             var qv = quality.getAttribute('data-quality');
             saveQuality(qv);
             applyQuality(qv);
-            Array.prototype.forEach.call(app.querySelectorAll('[data-quality]'), function (btn) {
+            Array.prototype.forEach.call(app.querySelectorAll('.quality-item[data-quality]'), function (btn) {
               var on = btn.getAttribute('data-quality') === qv;
               btn.classList.toggle('on', on);
               btn.setAttribute('aria-checked', on ? 'true' : 'false');

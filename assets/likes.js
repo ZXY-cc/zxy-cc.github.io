@@ -52,8 +52,9 @@
      每个数位独立一列 0~9（末尾多放一个 0 供 9→0 折返），只滚动发生
      变化的位。总时长全站统一 ROLL_MS，缓动 easeInOutCubic（慢→快→慢）。
      设置页「数字滚动动画」三档（localStorage zb-roll-mode）：
-       all  = 浏览量与点赞量都滚动；
-       part = 默认，仅点赞量滚动，浏览量直接显示；
+       all  = 全部数字（彩色大数字 + 浏览量 + 点赞量）都滚动；
+       part = 默认，仅首页名片与归档的彩色大数字滚动，
+              浏览量 / 点赞量这类实时计数器直接显示；
        off  = 全部直接落文本。
      无 WAAPI / 减少动态偏好 / 沙箱环境直接落文本，不影响功能。 */
   var ROLL_MS = 1000;
@@ -113,15 +114,16 @@
     }, ROLL_MS + 150);
   }
   function rollText(el, target, live) {
-    /* live = 计数器标记：'like'（点赞数）/'view'（浏览量）。三档语义：
-       all  = 浏览量与点赞量都滚动；
-       part = 默认，仅点赞量滚动（浏览量直接显示）；
+    /* live = 计数器标记：'stat'（名片 / 归档彩色大数字）、'like'（点赞数）、
+       'view'（浏览量）。三档语义：
+       all  = 全部数字滚动；
+       part = 默认，仅彩色大数字（'stat' 位）滚动，浏览量 / 点赞量直接显示；
        off  = 全部直接落文本。 */
     if (!el) return;
     target = Math.max(0, Math.round(Number(target) || 0));
     var mode = rollMode();
     var st = el.__zbRoll;
-    if (mode === 'off' || !live || (mode === 'part' && live !== 'like') || !rollCan()) {
+    if (mode === 'off' || !live || (mode === 'part' && live !== 'stat') || !rollCan()) {
       if (st) { if (st.wrap.parentNode) st.wrap.parentNode.removeChild(st.wrap); el.__zbRoll = null; }
       el.textContent = String(target);
       return;
@@ -336,7 +338,7 @@
     function paint(el, v) {
       if (el.getAttribute('data-live')) return;
       var target = el.tagName === 'BUTTON' ? el.querySelector('span') : el;
-      if (target) rollText(target, v, true);
+      if (target) rollText(target, v, 'like');
     }
     Array.prototype.forEach.call(root.querySelectorAll('[data-like]'), function (btn) {
       var kind = btn.getAttribute('data-like-kind') || 'moment';
@@ -492,6 +494,12 @@
     var id = btn.getAttribute('data-like-id') || '';
     if (!id || liked(kind, id)) return;
     markLiked(kind, id);
+    /* 蓄势膨胀：先压缩蓄力，再突然膨胀变粉、弹回原尺寸，外圈炸开涟漪。
+       能走到这里必然是「本机从未赞过 → 点赞」，动画只在这一刻播一次。 */
+    btn.classList.remove('like-pop');
+    try { void btn.offsetWidth; } catch (e) { /* 忽略 */ }
+    btn.classList.add('like-pop');
+    window.setTimeout(function () { btn.classList.remove('like-pop'); }, 720);
     btn.classList.add('on');
     btn.setAttribute('aria-pressed', 'true');
     btn.setAttribute('title', '已点赞，谢谢你喜欢');
