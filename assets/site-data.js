@@ -150,6 +150,63 @@ window.STUDIO_DATA = {
           "h": 1200
         }
       ]
+    },
+    {
+      "id": "a-mwm0yntjxdbi",
+      "title": "成都-蓉城 · LIVE🌸",
+      "date": "2026-08-14",
+      "desc": "暑假旅游",
+      "cover": "/assets/photos/p-eb40ef4f4f16.jpg",
+      "photos": [
+        {
+          "src": "/assets/photos/p-eb40ef4f4f16.jpg",
+          "title": "成都-蓉城 · LIVE🌸 · 1",
+          "note": "杜甫草堂",
+          "date": "2026-08-14",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-06e6efd1a817.jpg",
+          "title": "成都-蓉城 · LIVE🌸 · 2",
+          "note": "锦里 武侯祠",
+          "date": "2026-08-14",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-c9714cc6d5c3.jpg",
+          "title": "成都-蓉城 · LIVE🌸 · 3",
+          "note": "都江堰",
+          "date": "2026-08-14",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-554ba07456e0.jpg",
+          "title": "成都-蓉城 · LIVE🌸 · 4",
+          "note": "青城山",
+          "date": "2026-08-14",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-4ff2070e83d5.jpg",
+          "title": "成都-蓉城 · LIVE🌸 · 5",
+          "note": "美食&街景",
+          "date": "2026-08-14",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-f3a665b83ac4.jpg",
+          "title": "成都-蓉城 · LIVE🌸 · 6",
+          "note": "小酒馆 宽窄巷子",
+          "date": "2026-08-14",
+          "w": 900,
+          "h": 1200
+        }
+      ]
     }
   ],
   "moments": [
