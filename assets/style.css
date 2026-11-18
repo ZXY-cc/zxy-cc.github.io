@@ -1144,6 +1144,16 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .stat-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .stat-cell b { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums;
   color: var(--ink-strong); }
+/* 归档五格彩色大数字：与首页名片同族配色，最左蓝、最右粉、中间自然过渡 */
+.stat-bar { --stat-1: var(--accent-text); --stat-2: var(--accent-2-text); --stat-3: var(--accent-3-text); }
+.stat-cell:nth-child(1) b { color: var(--stat-1); }
+.stat-cell:nth-child(2) b { color: #54529d; }
+.stat-cell:nth-child(3) b { color: var(--stat-2); }
+.stat-cell:nth-child(4) b { color: #7f4684; }
+.stat-cell:nth-child(5) b { color: var(--stat-3); }
+:root[data-theme="night"] .stat-bar { --stat-1: #b6d0ff; --stat-2: #ddbdfa; --stat-3: #f9bddb; }
+:root[data-theme="night"] .stat-cell:nth-child(2) b { color: #c4bcfb; }
+:root[data-theme="night"] .stat-cell:nth-child(4) b { color: #eab4dd; }
 .stat-cell span { font-size: 11.5px; color: var(--muted); letter-spacing: .4px; }
 
 /* ---------- 滚动渐显（只走 opacity / transform） ---------- */
@@ -1804,10 +1814,13 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   background: linear-gradient(180deg, var(--accent), var(--accent-3));
 }
 .settings-info p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--muted); }
-/* 通用 / 动画卡片里的子项：小标题 + 说明 + 选项组（复用 opt-group 胶囊） */
+/* 通用 / 动画卡片里的子项：小标题 + 说明 + 选项组（复用 opt-group 胶囊）。
+   上下排列时 info 不能保留横向布局的 flex-basis（column 下会变成最小高度，
+   把选项组顶出大片留空），必须放开让内容决定高度 */
 .settings-sub { flex: 1 1 320px; min-width: 0; }
 /* 通用 / 动画卡：标题描述在上、选项组在其下方（整卡单列），不再是左右两栏 */
 .settings-block.stack { flex-direction: column; gap: 14px; }
+.settings-block.stack .settings-info,
 .settings-block.stack .settings-sub { flex: none; width: 100%; }
 .settings-sub h3 { margin: 0 0 4px; font-size: 14.5px; font-weight: 650; color: var(--ink-strong); }
 .settings-sub > p { margin: 0; font-size: 12.5px; line-height: 1.9; color: var(--muted); }
@@ -1832,11 +1845,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-mark svg { display: block; width: 100%; height: 100%; fill: var(--star-soft);
   filter: drop-shadow(0 0 5px var(--star-glow)); }
 .quality-item.on .q-mark { opacity: .95; transform: rotate(-12deg) scale(1.08); }
-/* 设置卡片里的选项组：整行整行排列（与画质三档同款的行卡布局） */
-.settings-card .opt-group { flex-direction: column; flex-wrap: nowrap; gap: 10px; }
-.settings-card .opt-item { width: 100%; box-sizing: border-box; padding: 13px 18px;
-  border-radius: 14px; display: flex; align-items: center; gap: 12px; }
-.settings-card .opt-item:hover { border-color: var(--glass-line); }
+/* 设置卡片里的选项组：多个选项横向排成一行（与其他筛选胶囊一致的密度） */
 .settings-card .opt-item b { font-size: 14px; }
 .settings-card .opt-item i { font-size: 11.5px; }
 .settings-foot { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--glass-line);

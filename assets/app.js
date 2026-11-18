@@ -420,12 +420,16 @@
   function renderMoments() {
     var list = arr('moments');
     if (momentOrder === 'old') list.reverse();
-    var L = window.ZBLikes;
     return pageHead('说说', '在正文之外，捕捉一些瞬间的温度', 'MOMENTS') +
       '<div class="sort-row reveal"><span>' + list.length + ' 条动态</span>' +
       '<button class="filter' + (momentOrder === 'new' ? ' on' : '') + '" type="button" data-morder="new">最新</button>' +
       '<button class="filter' + (momentOrder === 'old' ? ' on' : '') + '" type="button" data-morder="old">最早</button></div>' +
-      '<div class="moment-list">' + list.map(function (m) {
+      momentsBody(list);
+  }
+  /* 说说列表：整页渲染与排序局部刷新共用 */
+  function momentsBody(list) {
+    var L = window.ZBLikes;
+    return '<div class="moment-list">' + list.map(function (m) {
         var imgs = (m.images || []).length ? '<div class="moment-imgs">' + m.images.map(function (src) {
           return '<img src="' + esc(src) + '" alt="说说的配图" loading="lazy" decoding="async">';
         }).join('') + '</div>' : '';
@@ -441,6 +445,19 @@
           '</article>';
       }).join('') + '</div>';
   }
+  /* 说说排序切换：只更新排序按钮选中态与下方动态列表，不整页重绘 */
+  function retintMoments() {
+    var row = app.querySelector('.sort-row');
+    var ml = app.querySelector('.moment-list');
+    if (!row || !ml || !row.querySelector('[data-morder]')) { repaint(renderMoments); return; }
+    Array.prototype.forEach.call(row.querySelectorAll('[data-morder]'), function (b) {
+      b.classList.toggle('on', b.getAttribute('data-morder') === momentOrder);
+    });
+    var list = arr('moments');
+    if (momentOrder === 'old') list.reverse();
+    ml.outerHTML = momentsBody(list);
+    observeReveal();
+  }
 
   /* ---------- 杂谈 ---------- */
   function renderChatter() {
@@ -454,10 +471,14 @@
         return '<button class="filter' + (chatterTag === t ? ' on' : '') +
           '" type="button" data-cfilter="' + esc(t) + '">' + esc(t) + '</button>';
       }).join('') + '</div>';
+    return pageHead('杂谈', '比文章短一点，比说说长一点', 'CHATTER') + filters +
+      chatterList(list);
+  }
+  /* 杂谈列表：整页渲染与标签局部刷新共用 */
+  function chatterList(list) {
     var shown = chatterTag ? list.filter(function (c) { return (c.tags || []).indexOf(chatterTag) >= 0; }) : list;
     var L = window.ZBLikes;
-    return pageHead('杂谈', '比文章短一点，比说说长一点', 'CHATTER') + filters +
-      '<div class="chatter-list">' + shown.map(function (c) {
+    return '<div class="chatter-list">' + shown.map(function (c) {
         return '<article class="chatter-card glass reveal">' +
           '<div class="chatter-meta"><span class="x-badge">' + esc(c.mood || '碎片') + '</span>' +
           '<time>' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
@@ -468,6 +489,17 @@
           (L ? L.html('chatter', c.id, c.likes) : '<span></span>') + '</div>' +
           '</article>';
       }).join('') + '</div>';
+  }
+  /* 杂谈标签切换：只更新标签选中态与下方列表，不整页重绘 */
+  function retintChatter() {
+    var row = app.querySelector('.filter-row');
+    var cl = app.querySelector('.chatter-list');
+    if (!row || !cl || !row.querySelector('[data-cfilter]')) { repaint(renderChatter); return; }
+    Array.prototype.forEach.call(row.querySelectorAll('[data-cfilter]'), function (b) {
+      b.classList.toggle('on', b.getAttribute('data-cfilter') === chatterTag);
+    });
+    cl.outerHTML = chatterList(pinnedFirst(arr('chatter')));
+    observeReveal();
   }
   function renderChatterDetail(c) {
     return '<a class="back-link reveal" href="#/chatter">← 返回杂谈</a>' +
@@ -1703,6 +1735,26 @@
       rotateStack(tx.st, dx > 0 ? 1 : -1);
     }, { passive: true });
   }
+  /* 换层交叉淡化：新顶层渐渐出现、被切走的照片渐渐隐去再在新层位浮现，
+     让 className 轮换的瞬间不生硬 */
+  function stackFade(el, from, ms) {
+    if (!el || typeof el.animate !== 'function') return;
+    try {
+      var a = el.animate([{ opacity: from }, { opacity: 1 }],
+        { duration: ms, easing: 'ease-out' });
+      a.addEventListener('finish', function () { try { a.cancel(); } catch (e) { /* 忽略 */ } });
+    } catch (e) { /* 忽略 */ }
+  }
+  /* 被动降位的照片（没有飞行动画）：先隐后现，像被新主角盖住又透出来 */
+  function stackSink(el, ms) {
+    if (!el || typeof el.animate !== 'function') return;
+    try {
+      var a = el.animate([
+        { opacity: 1 }, { opacity: .22, offset: .45 }, { opacity: 1 }
+      ], { duration: ms || 380, easing: 'ease-in-out' });
+      a.addEventListener('finish', function () { try { a.cancel(); } catch (e) { /* 忽略 */ } });
+    } catch (e) { /* 忽略 */ }
+  }
   function rotateStack(st, dir) {
     var top = st.querySelector('.stack-top');
     var mid = st.querySelector('.stack-mid');
@@ -1716,9 +1768,9 @@
         var a = null;
         if (top.animate) {
           a = top.animate([
-            { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 0 },
-            { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', offset: 0.42 },
-            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 1 }
+            { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 0 },
+            { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', opacity: .8, offset: 0.42 },
+            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', opacity: .22, offset: 1 }
           ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
         }
         window.setTimeout(function () {
@@ -1726,15 +1778,17 @@
           mid.className = 'stack-top';
           back.className = 'stack-mid';
           if (a) a.cancel();
+          stackFade(top, .22, 240);  /* 被切走的照片在新层位渐渐浮现 */
+          stackFade(mid, .25, 260);  /* 新顶层渐渐出现 */
         }, 200);
       } else {
         /* 三张：最底层拿起 → 升到最顶层 */
         var b = null;
         if (back.animate) {
           b = back.animate([
-            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', offset: 0 },
-            { transform: 'rotate(3deg) translateY(-30px) scale(1.08)', offset: 0.45 },
-            { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 1 }
+            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', opacity: .55, offset: 0 },
+            { transform: 'rotate(3deg) translateY(-30px) scale(1.08)', opacity: .92, offset: 0.45 },
+            { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 1 }
           ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
         }
         window.setTimeout(function () {
@@ -1742,6 +1796,8 @@
           top.className = 'stack-mid';
           mid.className = 'stack-back';
           if (b) b.cancel();
+          stackFade(back, .3, 240);  /* 升到顶层渐渐出现 */
+          stackSink(top, 380);       /* 被切走的顶层先隐后现 */
         }, 200);
       }
       return;
@@ -1752,30 +1808,34 @@
       var c = null;
       if (top.animate) {
         c = top.animate([
-          { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 0 },
-          { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', offset: 0.42 },
-          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', offset: 1 }
+          { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 0 },
+          { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', opacity: .8, offset: 0.42 },
+          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', opacity: .22, offset: 1 }
         ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
       }
       window.setTimeout(function () {
         top.className = 'stack-mid';
         mid.className = 'stack-top';
         if (c) c.cancel();
+        stackFade(top, .22, 240);  /* 被切走的照片在新层位渐渐浮现 */
+        stackFade(mid, .25, 260);  /* 新顶层渐渐出现 */
       }, 200);
     } else {
       /* 第二层拿起 → 升回顶层 */
       var d = null;
       if (mid.animate) {
         d = mid.animate([
-          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', offset: 0 },
-          { transform: 'rotate(3deg) translateY(-26px) scale(1.07)', offset: 0.45 },
-          { transform: 'rotate(0deg) translateY(0) scale(1)', offset: 1 }
+          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', opacity: .55, offset: 0 },
+          { transform: 'rotate(3deg) translateY(-26px) scale(1.07)', opacity: .92, offset: 0.45 },
+          { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 1 }
         ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
       }
       window.setTimeout(function () {
         mid.className = 'stack-top';
         top.className = 'stack-mid';
         if (d) d.cancel();
+        stackFade(mid, .3, 240);   /* 升到顶层渐渐出现 */
+        stackSink(top, 380);       /* 被切走的顶层先隐后现 */
       }, 200);
     }
   }
@@ -2035,9 +2095,9 @@
             return;
           }
           var order = node.closest('[data-morder]');
-          if (order) { momentOrder = order.getAttribute('data-morder'); repaint(renderMoments); return; }
+          if (order) { momentOrder = order.getAttribute('data-morder'); retintMoments(); return; }
           var cf = node.closest('[data-cfilter]');
-          if (cf) { chatterTag = cf.getAttribute('data-cfilter'); repaint(renderChatter); return; }
+          if (cf) { chatterTag = cf.getAttribute('data-cfilter'); retintChatter(); return; }
           var tf = node.closest('[data-tfilter]');
           if (tf) { timelineTag = tf.getAttribute('data-tfilter'); retintTimeline(); return; }
           var share = node.closest('[data-share]');
