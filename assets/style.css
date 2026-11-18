@@ -1249,8 +1249,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo-h { aspect-ratio: 4 / 3; align-self: start; }
 /* 竖版卡拉长到 3:4 原比例：竖版照片完整利用卡片空间；文章卡跨两行自动等长 */
 .q-photo-v { aspect-ratio: 3 / 4; align-self: start; }
-/* 首页竖版相册封面 cover 铺满：照片占满整个卡片，左右两侧不留空 */
-.q-photo-v .album-stack > [data-stack-layer] { background-size: cover; }
+/* 首页竖版相册封面 cover 铺满：照片占满整个卡片（v3.67 起全部堆叠层统一 cover） */
 /* 堆叠层可以越出卡片边界：悬停时底层旋转出来的整个角不再被圆角边框裁掉 */
 .q-post h2 { margin: 4px 0 0; font-size: 21px; font-weight: 680; line-height: 1.45; color: var(--ink-strong); }
 /* 双半区里标题比整卡小一号，摘要每半最多 3 行 */
@@ -1266,9 +1265,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo .q-slide { padding: 0; justify-content: flex-end; overflow: visible; }
 .q-photo .q-badge { position: absolute; top: 26px; left: 24px; z-index: 6; }
 .q-photo .album-count { top: 26px; right: 18px; bottom: auto; z-index: 6; }
-.q-photo-cap { position: absolute; left: 17px; right: 17px; bottom: 17px; z-index: 6;
-  padding: 34px 18px 15px; border-radius: 0 0 13px 13px;
-  background: linear-gradient(180deg, transparent, rgba(20, 30, 64, .62)); color: #fff; }
+/* 首页照片卡文字遮幕：通铺到卡片底边与两角，完全盖住照片下部不露边；
+   文字位置与旧版一致（左 35px / 底 32px 由内边距给出） */
+.q-photo-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+  padding: 42px 35px 32px; border-radius: 0 0 18px 18px;
+  background: linear-gradient(180deg, transparent, rgba(20, 30, 64, .68)); color: #fff; }
 .q-photo-cap b { display: block; font-size: 16px; font-weight: 650; }
 .q-photo-cap i { font-style: normal; font-size: 12px; opacity: .85; }
 .q-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -1383,6 +1384,23 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: opacity .3s ease, transform .48s cubic-bezier(.34, 1.5, .5, 1);
 }
 .theme-morph.is-night .tm-rays { opacity: 0; transform: scale(.32); }
+/* 太阳中心圆静置缩小（面积与月牙 UI 基本一致）：
+   日→夜先迅速膨胀到原尺寸再开始形变，夜→日形变结束后再缩回静置大小 */
+.theme-morph .tm-core {
+  transform-box: fill-box; transform-origin: center;
+  transform: scale(.86); transition: transform .3s ease;
+}
+.theme-morph.is-night .tm-core { transform: scale(1); }
+.theme-morph.to-night .tm-core { animation: tm-core-grow .24s cubic-bezier(.34, 1.3, .4, 1) both; }
+.theme-morph.to-day .tm-core { animation: tm-core-shrink .3s cubic-bezier(.4, .9, .35, 1) .8s both; }
+@keyframes tm-core-grow {
+  0% { transform: scale(.86); }
+  100% { transform: scale(1); }
+}
+@keyframes tm-core-shrink {
+  0% { transform: scale(1); }
+  100% { transform: scale(.86); }
+}
 .theme-morph.to-day { animation: theme-inflate .48s cubic-bezier(.34, 1.3, .4, 1) .3s both; }
 .theme-morph.to-night { animation: theme-swing .62s cubic-bezier(.3, .8, .3, 1) .3s both; }
 @keyframes theme-inflate {
@@ -1416,19 +1434,24 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: transform .4s cubic-bezier(.22,.68,.28,1), box-shadow .4s ease; }
 .album-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(112,138,190,.22); }
 /* 三张封面的旋转堆叠（仿星灰家）：全站取消相框——无边框、无卡纸内衬、无雾晕与环境光，
-   照片直接 contain 等比完整显示；横版相册 4:3、竖版相册 3:4 原比例竖版显示。
+   照片 cover 铺满层块，圆角由层块统一裁切（contain 会露出照片直边瑕疵线）；
+   横版相册 4:3、竖版相册 3:4 原比例竖版显示。
    三层同尺寸同向小角度堆叠，底层往上错位，悬停弹性展开。 */
 .album-stack { position: relative; aspect-ratio: 4 / 3; margin: 16px 16px 0; }
 /* 竖版照片集按原比例竖版显示（相册页按相册横竖多数加 is-v） */
 .album-card.is-v .album-stack { aspect-ratio: 3 / 4; }
 .album-stack > [data-stack-layer] { position: absolute; inset: 12px;
   border-radius: 14px; overflow: hidden;
-  background: var(--shot) center / contain no-repeat;
+  background: var(--shot) center / cover no-repeat;
   box-shadow: 0 10px 26px rgba(96,118,168,.16);
-  transition: transform .55s cubic-bezier(.34,1.45,.5,1); will-change: transform; }
+  transition: transform .55s cubic-bezier(.34,1.45,.5,1), opacity .3s ease; will-change: transform; }
 .album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
 .album-stack .stack-mid  { transform: rotate(-1.3deg) translateY(-6px) scale(.978); z-index: 2; }
 .album-stack .stack-top  { transform: rotate(0deg) translateY(0) scale(1); z-index: 3; }
+/* 第四张起的待命层：与最底层同位、透明隐藏，换层时随时补位（全队列轮换不裁内容） */
+.album-stack .stack-deep { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 0; }
+.album-stack .stack-deep::after { content: ''; position: absolute; inset: 0; z-index: 1;
+  background: #fff; opacity: 0; pointer-events: none; }
 /* 旋转堆叠的景深：不再模糊，下层照片盖一层半透明白，越深越白，层次靠明度差表达 */
 .album-stack .stack-mid::after,
 .album-stack .stack-back::after {
@@ -1437,9 +1460,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 .album-stack .stack-mid::after  { opacity: .30; }
 .album-stack .stack-back::after { opacity: .48; }
-/* 换层时白色景深跟随淡入淡出，层次明度差平滑过渡 */
+/* 换层时白色景深跟随淡入淡出，层次明度差平滑过渡（含待命层补位时无白膜） */
 .album-stack .stack-mid::after,
-.album-stack .stack-back::after { transition: opacity .45s ease; }
+.album-stack .stack-back::after,
+.album-stack .stack-deep::after { transition: opacity .45s ease; }
 .album-stack:hover .stack-back,
 .album-card:hover .stack-back,
 .q-photo:hover .stack-back { transform: rotate(-6.5deg) translateY(-22px) scale(.97); }
@@ -1455,7 +1479,11 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .album-info h2 { margin: 0 0 4px; font-size: 15px; font-weight: 650; color: var(--ink-strong); }
 .album-info p { margin: 0 0 7px; font-size: 12px; color: var(--muted); }
 .album-info time { font-size: 11px; color: var(--faint); }
-.photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; margin: 24px 0 40px; }
+/* 相册详情固定列网格：桌面 4 列（与多张照片时的常规布局一致），
+   照片少时每张占 1/4 行、不占整行、比例正常；窄屏逐级回落 3 列 / 2 列 */
+.photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0 40px; }
+@media (max-width: 1100px) { .photo-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .photo-grid { grid-template-columns: repeat(2, 1fr); } }
 .photo-tile { display: block; padding: 0; overflow: hidden; cursor: zoom-in; text-align: left; font: inherit;
   border-radius: var(--radius); border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner);

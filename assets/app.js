@@ -409,7 +409,7 @@
         var cap = p.note || '记录这一刻';
         return '<button class="photo-tile glass sheen reveal" type="button" data-photo="' + i + '" style="animation-delay:' + (i % 12) * 45 + 'ms">' +
           '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy" decoding="async">' +
-          '<span class="photo-cap"><b>' + esc(p.title || '这一刻') + '</b><i>' +
+          '<span class="photo-cap"><i>' +
           esc(cap) + (p.date ? ' <em>· ' + esc(String(p.date).slice(0, 10)) + '</em>' : '') +
           '</i></span>' +
           '</button>';
@@ -1026,20 +1026,17 @@
       return { '"': '%22', "'": '%27', '\\': '%5C', '\r': '', '\n': '' }[c];
     });
   }
-  /* 三张按日期倒序的照片：最新一张在最上层，底层往上错位露角（CSS 端再做景深模糊：
-     顶层清晰、第二层略糊、第三层更糊）。照片 contain 等比完整显示，无相框，
-     横版与竖版都不裁切、不变形，也不会因 height:auto 撑出卡片。
-     换层交互要求三层恒在场：相册照片不足三张（或没有照片）时循环补齐，
-     否则滚轮 / 滑动命中了堆叠层也翻不动照片（v3.59 实测踩坑）。 */
+  /* 按日期倒序的照片全部入队：最新一张在最顶层，底层往上错位露角（CSS 端再做景深：
+     顶层清晰、第二层略浅、第三层更浅）。照片 cover 铺满层块，圆角由层块统一裁切，
+     不再有 contain 露白边的瑕疵线条。换层按队列旋转：只显示最上层前三张，
+     第四张起 .stack-deep 隐藏待命，滚轮 / 滑动时随时补位上来（超过三张不再只是三张循环）。 */
   function stackCovers(photos, alt) {
-    var list = recentByDate(photos, 3);
+    var list = recentByDate(photos, photos ? photos.length : 0);
     if (!list.length) list = [{ src: avatarSrc() }];
-    /* 有几张放几层：不足三张不再补空白照片（一张无换层、两张两片互换） */
-    var layers = list.slice().reverse();
-    return layers.map(function (p, i) {
-      var cls = i === layers.length - 1 ? 'stack-top' :
-        (i === layers.length - 2 ? 'stack-mid' : 'stack-back');
-      return '<div class="' + cls + '" data-stack-layer aria-hidden="true" ' +
+    return list.map(function (p, i) {
+      var cls = i === 0 ? 'stack-top' :
+        (i === 1 ? 'stack-mid' : (i === 2 ? 'stack-back' : 'stack-deep'));
+      return '<div class="' + cls + '" data-stack-layer data-idx="' + i + '" aria-hidden="true" ' +
         'title="' + esc(alt) + '" style="--shot:url(&quot;' + esc(shotUrl(p.src)) + '&quot;)"></div>';
     }).join('');
   }
@@ -1581,7 +1578,7 @@
     if (anim) {
       try { void svg.getBoundingClientRect(); } catch (e) { /* 忽略 */ }
       svg.classList.add(anim);
-      window.setTimeout(function () { svg.classList.remove(anim); }, 1000);
+      window.setTimeout(function () { svg.classList.remove(anim); }, 1200);
     }
   }
   function applyTheme(t) {
@@ -1698,9 +1695,11 @@
     a.classList.add('star-pop');
     window.setTimeout(function () { a.classList.remove('star-pop'); }, 620);
   });
-  /* ---------- 照片堆叠：滚轮 / 滑动换层 ----------
-     桌面端：鼠标在照片集上滚轮向下 → 最上层照片丝滑滑落到最底层，
-     下一层浮现到顶层；滚轮向上 → 最底层升到最上层。
+  /* ---------- 照片堆叠：滚轮 / 滑动换层（全队列旋转） ----------
+     桌面端：鼠标在照片集上滚轮向下 → 最上层照片丝滑滑落到最底层（队尾），
+     下一层浮现到顶层；滚轮向上 → 队尾照片丝滑升到最上层。
+     照片超过三张时全员入队、只显示前三层，不再只是三张循环。
+     鼠标在照片集上滚动时一律拦截页面滚动：只切照片，不让网页跟着滚。
      手机端：在照片集上右滑 = 滚轮向下，左滑 = 滚轮向上。
      层次明度差不变：顶层原样、下层偏白、下下层更偏白（CSS 白膜跟随淡入淡出）。 */
   function initStackWheel() {
@@ -1709,10 +1708,10 @@
     var touch = null;
     document.addEventListener('wheel', function (e) {
       var st = e.target && e.target.closest ? e.target.closest('.album-stack') : null;
-      if (!st || st.__busy) return;
-      /* 只有一张照片时没有可换的层：不拦滚轮，页面照常滚动 */
-      if (!st.querySelector('.stack-mid')) return;
+      if (!st) return;
+      /* 只要在照片集上滚动就拦下页面滚动：照片不足两张时切不动，页面也不许滚 */
       e.preventDefault();
+      if (st.__busy) return;
       st.__acc = (st.__acc || 0) + e.deltaY;
       if (Math.abs(st.__acc) < 55) return;
       var dir = st.__acc > 0 ? 1 : -1;
@@ -1755,89 +1754,66 @@
       a.addEventListener('finish', function () { try { a.cancel(); } catch (e) { /* 忽略 */ } });
     } catch (e) { /* 忽略 */ }
   }
+  /* 队列式换层：全部照片按 data-idx 入队（0 = 最上层），滚轮向下整队前移一位
+     （顶层落到队尾、1→0），向上整队后移一位（队尾升顶、0→1）。
+     只显示前三层：0 顶 / 1 中 / 2 背，其余 .stack-deep 隐藏待命；
+     升顶的照片从隐藏层浮出，落进隐藏层的照片边下滑边淡出（CSS 过渡接力）。 */
   function rotateStack(st, dir) {
-    var top = st.querySelector('.stack-top');
-    var mid = st.querySelector('.stack-mid');
-    var back = st.querySelector('.stack-back');
-    if (!top || !mid || st.__busy) return; /* 只有一张时没有 mid，滚轮 / 滑动无换层动画 */
+    var layers = [];
+    Array.prototype.forEach.call(st.querySelectorAll('[data-stack-layer]'), function (el) {
+      layers.push(el);
+    });
+    var n = layers.length;
+    if (n < 2 || st.__busy) return; /* 单张没有可换的层 */
     st.__busy = true;
     window.setTimeout(function () { st.__busy = false; }, 500);
-    if (back) {
+    var byP = {};
+    layers.forEach(function (el) {
+      var p = parseInt(el.getAttribute('data-idx') || '0', 10) || 0;
+      byP[p] = el;
+      el.__p = p;
+      el.__np = (p - dir + n) % n;
+    });
+    /* 飞行动画只给跨越顶层边界的照片：向下 = 旧顶滑落，向上 = 旧队尾升起 */
+    var mover = dir > 0 ? byP[0] : byP[n - 1];
+    var a = null;
+    if (mover && mover.animate) {
       if (dir > 0) {
-        /* 三张：顶层拿起 → 滑落到最底层；换层类交给 CSS 过渡接力 */
-        var a = null;
-        if (top.animate) {
-          a = top.animate([
-            { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 0 },
-            { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', opacity: .8, offset: 0.42 },
-            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', opacity: .22, offset: 1 }
-          ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
-        }
-        window.setTimeout(function () {
-          top.className = 'stack-back';
-          mid.className = 'stack-top';
-          back.className = 'stack-mid';
-          if (a) a.cancel();
-          stackFade(top, .22, 240);  /* 被切走的照片在新层位渐渐浮现 */
-          stackFade(mid, .25, 260);  /* 新顶层渐渐出现 */
-        }, 200);
-      } else {
-        /* 三张：最底层拿起 → 升到最顶层 */
-        var b = null;
-        if (back.animate) {
-          b = back.animate([
-            { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', opacity: .55, offset: 0 },
-            { transform: 'rotate(3deg) translateY(-30px) scale(1.08)', opacity: .92, offset: 0.45 },
-            { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 1 }
-          ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
-        }
-        window.setTimeout(function () {
-          back.className = 'stack-top';
-          top.className = 'stack-mid';
-          mid.className = 'stack-back';
-          if (b) b.cancel();
-          stackFade(back, .3, 240);  /* 升到顶层渐渐出现 */
-          stackSink(top, 380);       /* 被切走的顶层先隐后现 */
-        }, 200);
-      }
-      return;
-    }
-    /* 两张：只有顶与第二层，两片照片之间来回互换 */
-    if (dir > 0) {
-      /* 顶层拿起 → 落到第二层位置 */
-      var c = null;
-      if (top.animate) {
-        c = top.animate([
+        a = mover.animate([
           { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 0 },
           { transform: 'rotate(2deg) translateY(-18px) scale(1.07)', opacity: .8, offset: 0.42 },
-          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', opacity: .22, offset: 1 }
+          { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', opacity: .22, offset: 1 }
         ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
-      }
-      window.setTimeout(function () {
-        top.className = 'stack-mid';
-        mid.className = 'stack-top';
-        if (c) c.cancel();
-        stackFade(top, .22, 240);  /* 被切走的照片在新层位渐渐浮现 */
-        stackFade(mid, .25, 260);  /* 新顶层渐渐出现 */
-      }, 200);
-    } else {
-      /* 第二层拿起 → 升回顶层 */
-      var d = null;
-      if (mid.animate) {
-        d = mid.animate([
-          { transform: 'rotate(-1.3deg) translateY(-6px) scale(.978)', opacity: .55, offset: 0 },
-          { transform: 'rotate(3deg) translateY(-26px) scale(1.07)', opacity: .92, offset: 0.45 },
+      } else {
+        var fromDeep = n > 3;
+        if (fromDeep) mover.style.zIndex = 9; /* 升顶途中浮到最前 */
+        a = mover.animate([
+          { transform: 'rotate(-2.6deg) translateY(-13px) scale(.955)', opacity: fromDeep ? 0 : .55, offset: 0 },
+          { transform: 'rotate(3deg) translateY(-30px) scale(1.08)', opacity: .92, offset: 0.45 },
           { transform: 'rotate(0deg) translateY(0) scale(1)', opacity: 1, offset: 1 }
         ], { duration: 470, easing: 'cubic-bezier(.4,.1,.3,1)' });
       }
-      window.setTimeout(function () {
-        mid.className = 'stack-top';
-        top.className = 'stack-mid';
-        if (d) d.cancel();
-        stackFade(mid, .3, 240);   /* 升到顶层渐渐出现 */
-        stackSink(top, 380);       /* 被切走的顶层先隐后现 */
-      }, 200);
     }
+    window.setTimeout(function () {
+      layers.forEach(function (el) {
+        var np = el.__np;
+        el.setAttribute('data-idx', String(np));
+        el.className = np === 0 ? 'stack-top' : np === 1 ? 'stack-mid' : np === 2 ? 'stack-back' : 'stack-deep';
+        el.style.zIndex = '';
+      });
+      if (a) a.cancel();
+      if (dir > 0) {
+        var newTop = byP[1];                  /* 旧中层升为新顶层 */
+        if (newTop) stackFade(newTop, .25, 260);
+        var lander = n > 3 ? byP[3] : byP[0]; /* 落到最底可见层的照片渐渐浮现 */
+        if (lander) stackFade(lander, n > 3 ? 0 : .22, 240);
+      } else {
+        var riser = byP[n - 1];               /* 升到顶层渐渐出现 */
+        if (riser) stackFade(riser, .3, 240);
+        var sinker = byP[0];                  /* 被切走的顶层先隐后现 */
+        if (sinker) stackSink(sinker, 380);
+      }
+    }, 200);
   }
 
   /* ---------- 搜索 ---------- */
@@ -1871,64 +1847,56 @@
       else top.classList.remove('show');
     }
   }
-  /* 回到顶部：点击瞬间页面立刻开始回顶；同一刻星星压缩蓄势后化作流星
-     竖直向上冲刺（身后拖蜜金光迹），玻璃圆钮像水滴一样先被压扁、再在星星
-     冲破的一瞬扩散开来，模糊溶解进背景里。 */
+  /* 回到顶部：点击瞬间页面立刻开始回顶，与流星动画同一帧开始、互不等待。
+     星星在同一刻直接化作流星（不再蓄势），从右下角按钮中心竖直向上飞，
+     一直飞出屏幕上边界；身后拖蜜金光迹，玻璃圆钮被冲破后扩散溶解进背景。 */
   function flyTop(top) {
     var reducedNow = reduced();
     if (reducedNow || typeof top.animate !== 'function') { window.scrollTo(0, 0); return; }
     var r = top.getBoundingClientRect();
     var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     var mark = top.querySelector('.puffy-mark');
-    var CHARGE = 130;   /* 蓄势时长 */
     var DUR = 650;      /* 冲刺 / 回顶总时长 */
-    /* 流星轨迹：竖直向上，冲出屏幕顶 */
-    var dy = -(cy + window.innerHeight + 120);
-    /* 星星本体：先压缩蓄势，冲破瞬间猛地窜出（分两段播） */
+    /* 流星轨迹：竖直向上，飞出屏幕上边界再多冲一段余量 */
+    var dy = -(cy + 140);
+    /* 星星本体：同一帧直接起跑，猛地窜出竖直向上 */
     if (mark) {
       try {
         mark.style.pointerEvents = 'none';
-        var charge = mark.animate([
-          { transform: 'scale(1)' },
-          { transform: 'scale(.78)' }
-        ], { duration: CHARGE, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
-        charge.addEventListener('finish', function () {
-          var head = mark.animate([
-            { transform: 'scale(.78)', opacity: 1 },
-            { transform: 'scale(1.28)', opacity: 1, offset: 0.25 },
-            { transform: 'translateY(' + dy + 'px) scale(.26)', opacity: 0 }
-          ], { duration: DUR - CHARGE, easing: 'cubic-bezier(.5,.02,.7,.5)', fill: 'forwards' });
-          head.addEventListener('finish', function () {
-            if (head.fill !== 'auto') { try { head.cancel(); } catch (e) { /* 忽略 */ } }
-            mark.style.pointerEvents = '';
-          });
-          /* 光迹：竖直蜜金线，头端钉在按钮中心，随流星冲刺展开再收尾 */
-          var trail = document.createElement('span');
-          trail.className = 'to-top-trail';
-          trail.setAttribute('aria-hidden', 'true');
-          var tlen = Math.min(200, Math.max(130, window.innerHeight * 0.22));
-          trail.style.cssText = 'left:' + cx + 'px;top:' + cy + 'px;--tt:' + tlen.toFixed(0) + 'px;' +
-            'transform-origin:50% 0;transform:rotate(0deg);';
-          document.body.appendChild(trail);
-          try {
-            var ta = trail.animate([
-              { transform: 'rotate(0deg) scaleY(.12)', opacity: 0 },
-              { transform: 'rotate(0deg) scaleY(1)', opacity: .92, offset: 0.3 },
-              { transform: 'rotate(0deg) scaleY(.06)', opacity: 0 }
-            ], { duration: DUR - CHARGE + 80, easing: 'cubic-bezier(.4,.1,.7,.5)', fill: 'forwards' });
-            ta.addEventListener('finish', function () { if (trail.parentNode) trail.parentNode.removeChild(trail); });
-          } catch (e) { if (trail.parentNode) trail.parentNode.removeChild(trail); }
+        var head = mark.animate([
+          { transform: 'scale(1)', opacity: 1 },
+          { transform: 'scale(1.28)', opacity: 1, offset: 0.25 },
+          { transform: 'translateY(' + dy + 'px) scale(.26)', opacity: 0 }
+        ], { duration: DUR, easing: 'cubic-bezier(.5,.02,.7,.5)', fill: 'forwards' });
+        head.addEventListener('finish', function () {
+          if (head.fill !== 'auto') { try { head.cancel(); } catch (e) { /* 忽略 */ } }
+          mark.style.pointerEvents = '';
         });
+        /* 光迹：竖直蜜金线，头端钉在按钮中心，随流星冲刺展开再收尾 */
+        var trail = document.createElement('span');
+        trail.className = 'to-top-trail';
+        trail.setAttribute('aria-hidden', 'true');
+        var tlen = Math.min(200, Math.max(130, window.innerHeight * 0.22));
+        trail.style.cssText = 'left:' + cx + 'px;top:' + cy + 'px;--tt:' + tlen.toFixed(0) + 'px;' +
+          'transform-origin:50% 0;transform:rotate(0deg);';
+        document.body.appendChild(trail);
+        try {
+          var ta = trail.animate([
+            { transform: 'rotate(0deg) scaleY(.12)', opacity: 0 },
+            { transform: 'rotate(0deg) scaleY(1)', opacity: .92, offset: 0.3 },
+            { transform: 'rotate(0deg) scaleY(.06)', opacity: 0 }
+          ], { duration: DUR + 80, easing: 'cubic-bezier(.4,.1,.7,.5)', fill: 'forwards' });
+          ta.addEventListener('finish', function () { if (trail.parentNode) trail.parentNode.removeChild(trail); });
+        } catch (e) { if (trail.parentNode) trail.parentNode.removeChild(trail); }
       } catch (e) { /* 忽略 */ }
     }
-    /* 玻璃圆钮：水滴被流星冲破——先被压扁蓄力，冲破一瞬扩散开来、模糊溶解进背景 */
+    /* 玻璃圆钮：水滴被流星冲破——冲破一瞬扩散开来、模糊溶解进背景 */
     try {
       var bub = top.animate([
         { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
-        { transform: 'scale(.9)', opacity: 1, filter: 'blur(0px)', offset: CHARGE / 1000 * 0.8 },
         { transform: 'scale(1.12)', opacity: .82, filter: 'blur(2px)', offset: 0.34 },
         { transform: 'scale(1.62)', opacity: 0, filter: 'blur(11px)' }
-      ], { duration: CHARGE + DUR - 60, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
+      ], { duration: DUR - 60, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
       bub.addEventListener('finish', function () {
         window.setTimeout(function () {
           try { bub.cancel(); } catch (e) { /* 忽略 */ }
@@ -1936,7 +1904,7 @@
         }, 200);
       });
     } catch (e) { /* 忽略 */ }
-    /* 页面滚动：点击瞬间立刻开始，快速滚回顶端（easeOut 起步即快） */
+    /* 页面滚动：同一帧立刻开始，快速滚回顶端（easeOut 起步即快），与流星互不等待 */
     var y0 = window.scrollY || 0;
     if (y0 > 0) {
       var t0 = 0;

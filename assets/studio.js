@@ -1570,11 +1570,11 @@
     }
     var fi = 0;
     state.files.forEach(function (src) {
-      var cap = state.fileNotes[fi] || note || (album.title + ' · ' + (album.photos.length + 1));
+      /* 新照片不再自动生成「相册名 · 序号」标题：标题留空，展示层只显示文字批注 */
+      var cap = state.fileNotes[fi] || note || '';
       fi++;
       album.photos.push({
-        src: src, title: note || (album.title + ' · ' + (album.photos.length + 1)),
-        note: cap, date: pdate
+        src: src, title: note || '', note: cap, date: pdate
       });
     });
     album.cover = album.photos.length ? album.photos[0].src : '';
