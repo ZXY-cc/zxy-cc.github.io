@@ -691,29 +691,46 @@
   }
 
   /* ---------------- 洛谷扩展：容器指令（折叠框 / 对齐 / 引言 / 渐变竖线） ----------------
-     语法 :::名字[标题]{open}，闭合行是同等数量的冒号；嵌套时外层多用冒号。 */
+     语法 :::名字[标题]{open}，闭合行是同等数量的冒号；嵌套时外层多用一个冒号。
+     :::|epig[署名] 是引言与署名的新写法（旧 :::epig[署名] 保持兼容）。 */
   function directiveInfo(line) {
-    var m = line.match(/^ {0,3}(:{3,})([a-z][a-z-]*|\|)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?[ \t]*$/);
-    return m ? { colons: m[1].length, name: m[2], arg: m[3] || '', opt: m[4] || '' } : null;
+    var m = line.match(/^ {0,3}(:{3,})(\|epig|\||[a-z][a-z-]*)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?[ \t]*$/);
+    return m ? { colons: m[1].length, name: m[2], arg: m[3] || '', hasArg: m[3] !== undefined,
+      opt: m[4] || '' } : null;
   }
   /* 四色折叠框：succ / warn / err 是洛谷短名，success / warning / error 为兼容旧文保留 */
   var FOLD_TITLES = { info: '信息', success: '成功', succ: '成功',
                       warning: '注意', warn: '注意', error: '错误', err: '错误' };
   var FOLD_CLASS = { succ: 'success', warn: 'warning', err: 'error' };
   function containerHtml(dir, inner) {
-    if (dir.name === 'vl' || dir.name === '|') return '<div class="zb-vl">' + inner + '</div>';
+    if (dir.name === 'vl' || dir.name === '|') {
+      /* :::| 渐变竖线区块：大括号写 1 时，文字段带一层与竖线同族的浅色底
+         （视觉与 :::epig 引言块的底色一致）；写 0 或省略大括号 = 现状无背景 */
+      var vbg = /^\s*1\s*$/.test(dir.opt) ? ' zb-vl-bg' : '';
+      return '<div class="zb-vl' + vbg + '">' + inner + '</div>';
+    }
+    if (dir.name === '|epig') {
+      /* :::|epig[署名]：引言与署名的新写法。省略大括号或写 0 = 去掉底色
+         （视觉与 :::| 渐变竖线一致）；写 1 = 保留原版引言底色 */
+      return '<blockquote class="zb-epigraph' +
+        (/^\s*1\s*$/.test(dir.opt) ? '' : ' no-bg') + '">' + inner +
+        (dir.arg ? '<footer class="zb-epigraph-sign">' + inline(dir.arg) + '</footer>' : '') +
+        '</blockquote>';
+    }
     if (dir.name === 'align') {
       var how = (dir.opt === 'r' || /right/i.test(dir.opt)) ? 'right' : 'center';
       return '<div class="zb-align zb-align-' + how + '">' + inner + '</div>';
     }
     if (dir.name === 'epigraph' || dir.name === 'epig') {
+      /* 旧写法 :::epig[署名]：保持原版视觉（带底色） */
       return '<blockquote class="zb-epigraph">' + inner +
         (dir.arg ? '<footer class="zb-epigraph-sign">' + inline(dir.arg) + '</footer>' : '') +
         '</blockquote>';
     }
     if (FOLD_TITLES[dir.name]) {
       var fname = FOLD_CLASS[dir.name] || dir.name;
-      var open = /open/i.test(dir.opt) ? ' open' : '';
+      /* 大括号写 1 与写 open 等效（默认展开）；写 0 与不写等效（默认收起） */
+      var open = (/^\s*1\s*$/.test(dir.opt) || /open/i.test(dir.opt)) ? ' open' : '';
       return '<details class="zb-fold zb-fold-' + fname + '"' + open +
         '><summary class="zb-fold-head">' +
         (dir.arg ? inline(dir.arg) : FOLD_TITLES[dir.name]) +
@@ -724,8 +741,10 @@
 
   /* :::cont::: 目录：按整篇文章的标题（含 :::| / ##| 渐变竖线标题）生成带链接的目录。
      扫描时跳过围栏代码块；slug 生成规则与标题渲染完全一致，锚点一一对应。
-     lvls 为允许的标题层级（数字 x 直接对应 x 个 # 的标题级，1~6）：null 表示全部（h1~h6）；
-     :::cont{2}::: 只收二级（##），:::cont{2,4}::: 只收二、四级，可填任意多个 1~6 的数字。 */
+     层级筛选写在中括号（:::cont[2,3]::: 只收二、四级，可填任意多个 1~6 的数字，
+     [] 空 = 全部层级）；大括号写排布模式：{0} / 省略 = 流式一行排布，
+     {1} = 每个标题独占一行。旧写法 :::cont{2,3}:::（大括号里是层级）保持兼容，
+     要全层级 + 独占一行时写 :::cont[]{1}:::。 */
   function contLevels(opt) {
     if (!opt) return null;
     var lv = [];
@@ -734,6 +753,14 @@
       if (n >= 1 && n <= 6 && lv.indexOf(n) < 0) lv.push(n);
     });
     return lv.length ? lv : null;
+  }
+  /* :::cont 参数解析：中括号筛层级（新写法）、大括号筛层级（旧写法兼容），
+     中括号在场时大括号改为排布模式（{1} = 每个标题独占一行）。
+     attr 存进 data-toc-levels，refreshToc 按同一规则重新解析。 */
+  function contSpec(hasArg, arg, opt) {
+    var lvls = contLevels(hasArg ? arg : opt);
+    return { lvls: lvls, lines: hasArg && String(opt).trim() === '1',
+      attr: String((hasArg ? arg : opt) || '') };
   }
   function scanToc(lines, lvls) {
     var items = [], fence = null;
@@ -765,11 +792,14 @@
      也能直接跳转，SPA 里由点击委托拦截成平滑滚动，避免改动 hash 路由。
      data-toc-levels 记下层级条件；没有符合的标题时也留一张隐藏的空卡片，
      渲染后 refreshToc 会按真实 DOM 标题实时重建并决定显隐。 */
-  function tocHtml(items, opt) {
+  function tocHtml(items, spec) {
+    spec = spec || {};
     var html = items.length ? items.map(function (it) {
       return '<a class="toc-item" href="#' + esc(it.slug) + '">' + esc(it.text) + '</a>';
     }).join('') : tocEmptyHtml();
-    return '<nav class="toc" data-toc-levels="' + esc(opt || '') + '"' +
+    return '<nav class="toc' + (spec.lines ? ' toc-lines' : '') +
+      '" data-toc-levels="' + esc(spec.attr || '') + '"' +
+      (spec.lines ? ' data-toc-lines="1"' : '') +
       (items.length ? '' : ' hidden') + ' aria-label="本页目录">' +
       '<div class="toc-title">本 页 目 录</div>' +
       '<div class="toc-list">' + html + '</div></nav>';
@@ -802,6 +832,8 @@
       /* 只重建 :::cont::: 生成的锚点目录（含空卡片），跳过自动目录的按钮条目 */
       if (html.indexOf('href="#h-') < 0 && html.indexOf('toc-empty') < 0) continue;
       var lvls = contLevels(nav.getAttribute ? nav.getAttribute('data-toc-levels') : null);
+      var lines = nav.getAttribute && nav.getAttribute('data-toc-lines') === '1';
+      if (nav.classList) nav.classList.toggle('toc-lines', lines);
       var picked = heads.filter(function (it) { return !lvls || lvls.indexOf(it.lev) >= 0; });
       list.innerHTML = picked.length ? picked.map(tocItemHtml).join('') : tocEmptyHtml();
       if (picked.length) { if (nav.removeAttribute) nav.removeAttribute('hidden'); }
@@ -842,11 +874,14 @@
         continue;
       }
 
-      /* :::cont::: / :::cont{1}::: 单行目录标记：按整篇文章标题生成目录 */
-      var contOne = ln.match(/^ {0,3}:::cont(?:\{([^}]*)\})?:::[ \t]*$/);
+      /* :::cont::: 单行目录标记：按整篇文章标题生成目录。
+         层级筛选写中括号 :::cont[2,3]:::（旧写法 :::cont{2,3}::: 兼容）；
+         新写法大括号 {1} = 每个标题独占一行，{0} / 省略 = 流式一行排布 */
+      var contOne = ln.match(/^ {0,3}:::cont(?:\[([^\]]*)\])?(?:\{([^}]*)\})?:::[ \t]*$/);
       if (contOne) {
         flush();
-        out.push(tocHtml(scanToc(lines, contLevels(contOne[1])), contOne[1]));
+        var cOne = contSpec(contOne[1] !== undefined, contOne[1], contOne[2] || '');
+        out.push(tocHtml(scanToc(lines, cOne.lvls), cOne));
         i++;
         continue;
       }
@@ -873,10 +908,12 @@
          洛谷嵌套规则：最深一层三个冒号，每往外一层多一个；闭合用同等数量的冒号。 */
       var dir = directiveInfo(ln);
       if (dir && dir.name === 'cont') {
-        /* 目录容器：不包裹内容，直接按全文标题生成目录（也可写成单行 :::cont:::），
-           {1} / {2,3} 可只收指定层级的标题 */
+        /* 目录容器：不包裹内容，直接按全文标题生成目录（也可写成单行 :::cont:::）。
+           层级筛选：中括号 [2,3]（新写法）或大括号 {2,3}（旧写法兼容）；
+           新写法大括号 {1} = 每个标题独占一行，{0} / 省略 = 流式一行排布 */
         flush();
-        out.push(tocHtml(scanToc(lines, contLevels(dir.opt)), dir.opt));
+        var cSpec = contSpec(dir.hasArg, dir.arg, dir.opt);
+        out.push(tocHtml(scanToc(lines, cSpec.lvls), cSpec));
         if (dir.colons >= 3) {
           var closeCont = new RegExp('^ {0,3}\\:{' + dir.colons + '}[ \\t]*$');
           i++;
@@ -1324,5 +1361,5 @@
   return { render: render, inline: inline, tex: texToHtml, plain: plain,
            tidy: tidy, normalizeIndent: normalizeIndent, linkInfo: linkInfo,
            refreshToc: refreshToc,
-           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.5' };
+           highlight: highlightCode, highlightMulti: highlightMulti, langLabel: langLabel, version: '1.8.6' };
 });

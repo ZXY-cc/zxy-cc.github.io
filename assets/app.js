@@ -1847,76 +1847,14 @@
       else top.classList.remove('show');
     }
   }
-  /* 回到顶部：点击瞬间页面立刻开始回顶，与流星动画同一帧开始、互不等待。
-     星星在同一刻直接化作流星（不再蓄势），从右下角按钮中心竖直向上飞，
-     一直飞出屏幕上边界；身后拖蜜金光迹，玻璃圆钮被冲破后扩散溶解进背景。 */
+  /* 回到顶部：点击按钮直接回到顶端，没有任何多余动画——
+     星星、圆钮、滚动过渡一律不要（临时关掉 CSS 平滑滚动硬跳，跳完还原）。 */
   function flyTop(top) {
-    var reducedNow = reduced();
-    if (reducedNow || typeof top.animate !== 'function') { window.scrollTo(0, 0); return; }
-    var r = top.getBoundingClientRect();
-    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    var mark = top.querySelector('.puffy-mark');
-    var DUR = 650;      /* 冲刺 / 回顶总时长 */
-    /* 流星轨迹：竖直向上，飞出屏幕上边界再多冲一段余量 */
-    var dy = -(cy + 140);
-    /* 星星本体：同一帧直接起跑，猛地窜出竖直向上 */
-    if (mark) {
-      try {
-        mark.style.pointerEvents = 'none';
-        var head = mark.animate([
-          { transform: 'scale(1)', opacity: 1 },
-          { transform: 'scale(1.28)', opacity: 1, offset: 0.25 },
-          { transform: 'translateY(' + dy + 'px) scale(.26)', opacity: 0 }
-        ], { duration: DUR, easing: 'cubic-bezier(.5,.02,.7,.5)', fill: 'forwards' });
-        head.addEventListener('finish', function () {
-          if (head.fill !== 'auto') { try { head.cancel(); } catch (e) { /* 忽略 */ } }
-          mark.style.pointerEvents = '';
-        });
-        /* 光迹：竖直蜜金线，头端钉在按钮中心，随流星冲刺展开再收尾 */
-        var trail = document.createElement('span');
-        trail.className = 'to-top-trail';
-        trail.setAttribute('aria-hidden', 'true');
-        var tlen = Math.min(200, Math.max(130, window.innerHeight * 0.22));
-        trail.style.cssText = 'left:' + cx + 'px;top:' + cy + 'px;--tt:' + tlen.toFixed(0) + 'px;' +
-          'transform-origin:50% 0;transform:rotate(0deg);';
-        document.body.appendChild(trail);
-        try {
-          var ta = trail.animate([
-            { transform: 'rotate(0deg) scaleY(.12)', opacity: 0 },
-            { transform: 'rotate(0deg) scaleY(1)', opacity: .92, offset: 0.3 },
-            { transform: 'rotate(0deg) scaleY(.06)', opacity: 0 }
-          ], { duration: DUR + 80, easing: 'cubic-bezier(.4,.1,.7,.5)', fill: 'forwards' });
-          ta.addEventListener('finish', function () { if (trail.parentNode) trail.parentNode.removeChild(trail); });
-        } catch (e) { if (trail.parentNode) trail.parentNode.removeChild(trail); }
-      } catch (e) { /* 忽略 */ }
-    }
-    /* 玻璃圆钮：水滴被流星冲破——冲破一瞬扩散开来、模糊溶解进背景 */
-    try {
-      var bub = top.animate([
-        { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
-        { transform: 'scale(1.12)', opacity: .82, filter: 'blur(2px)', offset: 0.34 },
-        { transform: 'scale(1.62)', opacity: 0, filter: 'blur(11px)' }
-      ], { duration: DUR - 60, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
-      bub.addEventListener('finish', function () {
-        window.setTimeout(function () {
-          try { bub.cancel(); } catch (e) { /* 忽略 */ }
-          updateScroll();
-        }, 200);
-      });
-    } catch (e) { /* 忽略 */ }
-    /* 页面滚动：同一帧立刻开始，快速滚回顶端（easeOut 起步即快），与流星互不等待 */
-    var y0 = window.scrollY || 0;
-    if (y0 > 0) {
-      var t0 = 0;
-      function step(t) {
-        if (!t0) t0 = t;
-        var k = Math.min(1, (t - t0) / DUR);
-        var e2 = 1 - Math.pow(1 - k, 3);
-        window.scrollTo(0, y0 * (1 - e2));
-        if (k < 1) window.requestAnimationFrame(step);
-      }
-      window.requestAnimationFrame(step);
-    }
+    var de = document.documentElement;
+    var prev = de.style.scrollBehavior;
+    de.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    de.style.scrollBehavior = prev;
   }
 
   function fallbackCopy(text, done) {

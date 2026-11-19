@@ -5,7 +5,7 @@
   <id>https://zxy-blog.top/</id>
   <link rel="self" href="https://zxy-blog.top/feed.xml"/>
   <link href="https://zxy-blog.top/"/>
-  <updated>2026-11-18T00:00:00Z</updated>
+  <updated>2026-11-19T00:00:00Z</updated>
   <author><name>星梦Staream</name></author>
   <entry>
     <title>本站支持的 Markdown 拓展语法</title>
@@ -20,8 +20,16 @@
     <id>https://zxy-blog.top/posts/blog-changelog.html</id>
     <link rel="alternate" href="https://zxy-blog.top/posts/blog-changelog.html"/>
     <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/blog-changelog"/>
-    <updated>2026-11-18T00:00:00Z</updated>
+    <updated>2026-11-19T00:00:00Z</updated>
     <summary>每次更新都记在这里：改了什么、什么时候改的。</summary>
+  </entry>
+  <entry>
+    <title>本站支持的 Markdown 拓展语法</title>
+    <id>https://zxy-blog.top/posts/markdown-extensions.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/markdown-extensions.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/markdown-extensions"/>
+    <updated>2026-11-19T00:00:00Z</updated>
+    <summary>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法，写法与洛谷 Markdown 手册保持一致。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。 :::cont{2}::: 一、目录 在文章任意位置写一行 :::cont::: ，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的……</summary>
   </entry>
   <entry>
     <title>（测试）零成本搭一个自己的博客</title>

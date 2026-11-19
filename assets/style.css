@@ -699,6 +699,21 @@ main { min-height: 320px; }
 .article-body > .zb-vl, .desk-preview > .zb-vl { margin: 22px 0; }
 .article-body > .zb-vl > :first-child, .desk-preview > .zb-vl > :first-child { margin-top: 0; }
 .article-body > .zb-vl > :last-child, .desk-preview > .zb-vl > :last-child { margin-bottom: 0; }
+/* :::|{1}：竖线区块带一层与竖线同族的浅色底（视觉对齐 :::epig 引言块的底色）；
+   :::|{0} / 省略 = 现状无背景 */
+.article-body .zb-vl.zb-vl-bg, .desk-preview .zb-vl.zb-vl-bg {
+  background: var(--accent-soft);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 18px 12px 14px;
+}
+/* :::|epig[署名]{}（{0} / 省略大括号）：引言去掉底色，视觉与 :::| 渐变竖线一致；
+   {1} = 保留原版引言底色；旧写法 :::epig[署名] 永远带底色 */
+.article-body .zb-epigraph.no-bg, .desk-preview .zb-epigraph.no-bg {
+  background: transparent; color: inherit; border-radius: 0;
+  border-left: 3px solid transparent;
+  border-image: linear-gradient(180deg, var(--accent), var(--accent-2), var(--accent-3)) 1;
+  padding-left: 14px;
+}
 /* 文章页：整篇收进一个统一栏，栏宽用 rem 固定，不随各块自身字号变化；
    标题、署名、标签、目录、正文共享同一左右边界，观感匀称。 */
 .article-inner { width: 100%; max-width: 46rem; margin: 0 auto; }
@@ -794,6 +809,8 @@ main { min-height: 320px; }
 nav.toc[hidden] { display: none; }
 .toc-title { font-size: 12.5px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
 .toc-list { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+/* :::cont[]{1}::: 独占一行排布：每个标题一行（默认流式一行排布不变） */
+.toc-lines .toc-list { flex-direction: column; gap: 6px 0; }
 .toc-empty { font-size: 12.5px; color: var(--muted); }
 .toc-item { border: 0; background: none; padding: 2px 0; cursor: pointer; color: var(--accent-text); font: inherit; font-size: 13px; text-align: left; text-decoration: none; }
 .toc-item::before {
@@ -943,22 +960,6 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   transition: opacity .35s ease, transform .35s ease, box-shadow .35s ease;
 }
 .to-top .puffy-mark { width: 30px; height: 30px; }
-/* 回顶流星的光迹：细长蜜金线，头端（top 端）接星星最亮，尾端化进背景 */
-.to-top-trail {
-  position: fixed; z-index: 29; width: 2px; height: var(--tt, 150px);
-  border-radius: 999px; pointer-events: none;
-  background: linear-gradient(180deg,
-    rgba(255, 246, 214, .9) 0%, rgba(255, 230, 170, .55) 30%,
-    rgba(255, 214, 150, .22) 66%, transparent 100%);
-  filter: blur(1.6px);
-  will-change: transform, opacity;
-}
-.to-top-trail::after {
-  content: ''; position: absolute; left: -5px; top: -6px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: radial-gradient(circle, #fff6dc 0%, rgba(255, 214, 150, .9) 46%, transparent 74%);
-  box-shadow: 0 0 14px 5px rgba(255, 226, 170, .55), 0 0 34px 13px rgba(255, 214, 150, .22);
-}
 .to-top .puffy-mark svg { width: 23px; height: 23px; }
 .to-top.show { opacity: 1; transform: none; pointer-events: auto; }
 .to-top:hover { box-shadow: 0 0 24px rgba(171, 139, 212, .32), var(--glass-inner); transform: translateY(-3px); }
@@ -1265,10 +1266,10 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .q-photo .q-slide { padding: 0; justify-content: flex-end; overflow: visible; }
 .q-photo .q-badge { position: absolute; top: 26px; left: 24px; z-index: 6; }
 .q-photo .album-count { top: 26px; right: 18px; bottom: auto; z-index: 6; }
-/* 首页照片卡文字遮幕：通铺到卡片底边与两角，完全盖住照片下部不露边；
-   文字位置与旧版一致（左 35px / 底 32px 由内边距给出） */
-.q-photo-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
-  padding: 42px 35px 32px; border-radius: 0 0 18px 18px;
+/* 首页照片卡文字遮幕：只盖最上层照片（层块 inset 12px、圆角 14px）的下半部，
+   左右与底边对齐照片边缘；文字位置与旧版一致（左 35px / 底 32px 由内边距给出） */
+.q-photo-cap { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 6;
+  padding: 42px 23px 20px; border-radius: 0 0 14px 14px;
   background: linear-gradient(180deg, transparent, rgba(20, 30, 64, .68)); color: #fff; }
 .q-photo-cap b { display: block; font-size: 16px; font-weight: 650; }
 .q-photo-cap i { font-style: normal; font-size: 12px; opacity: .85; }
