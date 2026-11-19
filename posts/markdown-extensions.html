@@ -314,10 +314,10 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <div class="body"><p>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法，写法与洛谷 Markdown 手册保持一致。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。</p>
 <nav class="toc" data-toc-levels="2" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h-一-目录">一、目录</a><a class="toc-item" href="#h-二-渐变竖线标题">二、渐变竖线标题</a><a class="toc-item" href="#h-三-渐变竖线区块">三、渐变竖线区块</a><a class="toc-item" href="#h-四-四色折叠框">四、四色折叠框</a><a class="toc-item" href="#h-五-对齐容器">五、对齐容器</a><a class="toc-item" href="#h-六-引言与署名">六、引言与署名</a><a class="toc-item" href="#h-七-代码块-语言标签-行号与行高亮">七、代码块：语言标签、行号与行高亮</a><a class="toc-item" href="#h-八-多语言代码标签组">八、多语言代码标签组</a><a class="toc-item" href="#h-九-表格合并单元格">九、表格合并单元格</a><a class="toc-item" href="#h-十-truck-表格">十、Truck 表格</a><a class="toc-item" href="#h-十一-图片显式尺寸">十一、图片显式尺寸</a><a class="toc-item" href="#h-十二-任务列表与缩进嵌套">十二、任务列表与缩进嵌套</a></div></nav>
 <h2 id="h-一-目录">一、目录</h2>
-<p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的）。花括号里写层级号可以只收部分标题：<code>:::cont{1}:::</code> 只收一级标题，<code>:::cont{2,3}:::</code> 只收二、三级标题；不写花括号就是全部标题（一级、二级、三级都收）。</p>
+<p>在文章任意位置写一行 <code>:::cont:::</code>，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的）。中括号里写层级号可以只收部分标题：<code>:::cont[1]:::</code> 只收一级标题，<code>:::cont[2,3]:::</code> 只收二、三级标题；不写花括号就是全部标题（一级、二级、三级都收）。大括号里填写是否换行的布尔值：<code>:::cont{0}:::</code>则密集排列标题，<code>:::cont{1}</code>则每一行只有一个标题。</p>
 <pre class="zb-code"><code>:::cont:::
-:::cont{<span class="tk-nu">1</span>}:::
-:::cont{<span class="tk-nu">2</span>,<span class="tk-nu">3</span>}:::</code><button class="copy-btn" type="button">复制</button></pre>
+:::cont[<span class="tk-nu">1</span>]::
+:::cont[<span class="tk-nu">2</span>,<span class="tk-nu">3</span>]{<span class="tk-nu">1</span>}:::</code><button class="copy-btn" type="button">复制</button></pre>
 <p>（占据篇幅，此处省略）</p>
 <h2 id="h-二-渐变竖线标题">二、渐变竖线标题</h2>
 <p>井号后紧跟一个竖线，只给这一个标题加蓝→粉渐变竖线；普通 <code>## 标题</code> 保持干净。</p>
@@ -326,14 +326,19 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <h3 class="zb-vl" id="h-带渐变竖线的小标题">带渐变竖线的小标题</h3>
 <h3 id="h-普通小标题">普通小标题</h3>
 <h2 id="h-三-渐变竖线区块">三、渐变竖线区块</h2>
-<p>用 <code>:::| … :::</code> 包住整段内容，区块左侧是一整条渐变竖线；外层多写一个冒号就能嵌套。</p>
+<p>用 <code>:::| … :::</code> 包住整段内容，区块左侧是一整条渐变竖线；外层多写一个冒号就能嵌套。若为<code>:::|{1} … :::</code>则引入的内容后面会有背景颜色。</p>
 <pre class="zb-code"><code>:::|
-这里是一整段被引用的内容，
+这里是一整段被引用的内容，没有背景色。
 可以写**加粗**、列表和公式。
 :::</code><button class="copy-btn" type="button">复制</button></pre>
-<div class="zb-vl"><p>这里是一整段被引用的内容，<br>可以写<strong>加粗</strong>、列表和公式。</p></div>
+<div class="zb-vl"><p>这里是一整段被引用的内容，没有背景色。<br>可以写<strong>加粗</strong>、列表和公式。</p></div>
+<pre class="zb-code"><code>:::|{<span class="tk-nu">1</span>}
+这里是一整段被引用的内容，有背景色。
+可以写**加粗**、列表和公式。
+:::</code><button class="copy-btn" type="button">复制</button></pre>
+<div class="zb-vl zb-vl-bg"><p>这里是一整段被引用的内容，有背景色。<br>可以写<strong>加粗</strong>、列表和公式。</p></div>
 <h2 id="h-四-四色折叠框">四、四色折叠框</h2>
-<p><code>info / succ / warn / err</code> 四种颜色（成功、注意、错误用洛谷短名），方括号写标题，花括号写 <code>open</code> 则默认展开；冒号数量配对即可嵌套。</p>
+<p><code>info / succ / warn / err</code> 四种颜色（成功、注意、错误用洛谷短名），方括号写标题，花括号写 <code>open</code> 或者<code>1</code>则默认展开；冒号数量配对即可嵌套。</p>
 <pre class="zb-code"><code>:::info[信息框]
 这是信息框，默认折叠。
 :::
@@ -343,13 +348,13 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 :::warn[注意框]
 这是注意框。
 :::
-:::err[错误框]
-这是错误框。
+:::err[错误框]{<span class="tk-nu">1</span>}
+这是默认展开的错误框。
 :::</code><button class="copy-btn" type="button">复制</button></pre>
 <details class="zb-fold zb-fold-info"><summary class="zb-fold-head">信息框</summary><div class="zb-fold-body"><p>这是信息框，默认折叠。</p></div></details>
 <details class="zb-fold zb-fold-success" open><summary class="zb-fold-head">成功框</summary><div class="zb-fold-body"><p>这是默认展开的成功框。</p></div></details>
 <details class="zb-fold zb-fold-warning"><summary class="zb-fold-head">注意框</summary><div class="zb-fold-body"><p>这是注意框。</p></div></details>
-<details class="zb-fold zb-fold-error"><summary class="zb-fold-head">错误框</summary><div class="zb-fold-body"><p>这是错误框。</p></div></details>
+<details class="zb-fold zb-fold-error" open><summary class="zb-fold-head">错误框</summary><div class="zb-fold-body"><p>这是默认展开的错误框。</p></div></details>
 <h2 id="h-五-对齐容器">五、对齐容器</h2>
 <p><code>:::align{c}</code> 整段居中，<code>:::align{r}</code> 整段靠右。</p>
 <pre class="zb-code"><code>:::align{c}
@@ -361,8 +366,12 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <div class="zb-align zb-align-center"><p>这一段整体居中。</p></div>
 <div class="zb-align zb-align-right"><p>这一段整体靠右。</p></div>
 <h2 id="h-六-引言与署名">六、引言与署名</h2>
-<p><code>:::epig[署名]</code> 渲染成带右对齐署名的引言块。</p>
+<p><code>:::epig[署名]</code> 渲染成带右对齐署名的引言块。若为<code>:::epig[署名]{1}</code>则引入的内容后面会有背景颜色。</p>
 <pre class="zb-code"><code>:::epig[——星梦<span class="tk-cls">Staream</span>]
+樱花草会铺满路，春风正温柔相迎。
+:::</code><button class="copy-btn" type="button">复制</button></pre>
+<blockquote class="zb-epigraph"><p>樱花草会铺满路，春风正温柔相迎。</p><footer class="zb-epigraph-sign">——星梦Staream</footer></blockquote>
+<pre class="zb-code"><code>:::epig[——星梦<span class="tk-cls">Staream</span>]{<span class="tk-nu">1</span>}
 在阳光盛放的花田里，做一缕飘忽的梦；在星光低垂的旷野上，做一尾不倦的鱼。
 :::</code><button class="copy-btn" type="button">复制</button></pre>
 <blockquote class="zb-epigraph"><p>在阳光盛放的花田里，做一缕飘忽的梦；在星光低垂的旷野上，做一尾不倦的鱼。</p><footer class="zb-epigraph-sign">——星梦Staream</footer></blockquote>
