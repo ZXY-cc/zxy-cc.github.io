@@ -345,7 +345,7 @@ function drawEye(side, kind, open){
   const e = EYE[side];
   const gx = clamp(P.ParamEyeBallX / 100, -1, 1);
   const gy = clamp(P.ParamEyeBallY / 100, -1, 1);
-  const k = kind === 'iris' ? 1 : (kind === 'highlight' ? 0.62 : 0.06);
+  const k = kind === 'iris' ? 1 : (kind === 'highlight' ? 1 : 0.06);
   const m = Math.max(Math.abs(gx), Math.abs(gy));
 
   ctx.save();
@@ -363,8 +363,7 @@ function drawEye(side, kind, open){
   if (k > 0.05){
     // 最大位移留足外圈余量：位移上限 < 眼白半径 - 虹膜半径
     const sx = e.shiftX * k, sy = e.shiftY * k;
-    /* 虹膜的 x 方向与 ParamAngleX 相反，取负号，保证头往右转眼也往右看 */
-    ctx.translate(-gx * sx, gy * sy);
+    ctx.translate(gx * sx, gy * sy);
     // 球面感：偏向极限时虹膜轻微收小，避免贴边被裁
     const sc = 1 - 0.075 * m * k;
     ctx.scale(sc, sc);

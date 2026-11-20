@@ -2473,8 +2473,8 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
    ============================================================ */
 .neko-pet {
   position: fixed; z-index: 28;   /* 压在回顶按钮(30)下面 */
-  right: 22px; bottom: 92px;
-  width: 300px; height: 340px;
+  right: 12px; bottom: 10px;
+  width: 190px; height: 216px;
   /* 尺寸靠 JS 写 --neko-w / --neko-h，缩放时只改这两个变量 */
   pointer-events: none;
   touch-action: none;

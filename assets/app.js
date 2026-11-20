@@ -2415,7 +2415,9 @@
 
     /* ---- 恢复上次的位置与大小 ---- */
     var saved = nekoLoad();
-    nekoApplySize(saved && saved.w ? saved.w : (window.innerWidth < 760 ? 200 : 280));
+    var vw = window.innerWidth || 1440;
+    var auto = Math.round(Math.min(260, Math.max(150, vw * 0.13)));
+    nekoApplySize(saved && saved.w ? saved.w : auto);
     if (saved && typeof saved.x === 'number') nekoPlace(saved.x, saved.y);
 
     /* ---- 延迟挂载：等页面空闲再拉 4.6MB 的部件 ---- */
@@ -2563,9 +2565,10 @@
       var base = api.base;
       if (base) {
         /* 尾巴：慢扫 + 一点不规则；抬起角度也跟着轻轻起伏 */
-        base.ts = 0.42 * Math.sin(t * 0.62) + 0.16 * Math.sin(t * 1.47 + 1.1);
-        base.tl = 0.05 + 0.03 * Math.sin(t * 0.44 + 0.6);
-        base.tc = 0.16 + 0.025 * Math.sin(t * 0.31);
+        /* 尾巴：主摆 0.26 + 副波 0.10（不同周期），抬起/弯曲各用更慢的周期，相位错开 */
+        base.ts = 0.26 * Math.sin(t * 0.55) + 0.10 * Math.sin(t * 1.31 + 2.1);
+        base.tl = 0.045 + 0.018 * Math.sin(t * 0.33 + 0.4);
+        base.tc = 0.15 + 0.022 * Math.sin(t * 0.27);
         /* 身体：极轻的重心左右转移，和尾巴反相，看起来才像"活着" */
         base.bx = 0.018 * Math.sin(t * 0.37 + 2.0);
       }
