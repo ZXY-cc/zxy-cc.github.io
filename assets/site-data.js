@@ -320,6 +320,63 @@ window.STUDIO_DATA = {
           "h": 1200
         }
       ]
+    },
+    {
+      "id": "a-mwoz9e1p75na",
+      "title": "厦门-鹭岛 · LIVE🕊",
+      "date": "2026-08-21",
+      "desc": "厦门-鹭岛 · LIVE🕊",
+      "cover": "/assets/photos/p-7b6ae43b7bc1.jpg",
+      "photos": [
+        {
+          "src": "/assets/photos/p-7b6ae43b7bc1.jpg",
+          "title": "",
+          "note": "福建土楼",
+          "date": "2026-08-21",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-1fae818e7e35.jpg",
+          "title": "",
+          "note": "云水谣",
+          "date": "2026-08-21",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-8c8375af3e90.jpg",
+          "title": "",
+          "note": "鼓浪屿·江街景",
+          "date": "2026-08-21",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-e68a9fd486fa.jpg",
+          "title": "",
+          "note": "鼓浪屿·蜡像馆",
+          "date": "2026-08-21",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-cb9154fca023.jpg",
+          "title": "",
+          "note": "美食",
+          "date": "2026-08-21",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-f787f9203c31.jpg",
+          "title": "",
+          "note": "中山路街景",
+          "date": "2026-08-21",
+          "w": 900,
+          "h": 1200
+        }
+      ]
     }
   ],
   "moments": [
