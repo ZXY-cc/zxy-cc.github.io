@@ -199,6 +199,16 @@
   </div>
 </div>
 
+<!-- 右下角站宠「雪团」：51 部件 Canvas2D 运行时，隔离在 iframe 里；
+     拖动 / 滚轮缩放 / 视线跟随都由 app.js 的 initNekoPet() 驱动。 -->
+<div id="neko-pet" class="neko-pet" aria-hidden="true">
+  <div class="neko-stage">
+    <iframe id="neko-frame" title="站宠 雪团" tabindex="-1" scrolling="no"></iframe>
+  </div>
+  <div class="neko-grab" id="neko-grab" title="按住拖动 · 拖动时滚轮缩放"></div>
+</div>
+<noscript><style>#neko-pet{display:none!important}</style></noscript>
+
 <script src="assets/posts.js"></script>
 <!-- 站点数据：地址每 10 秒轮换，任何访客都绕开 CDN 旧缓存；站长发布后另用会话内唯一版本号立即读新文件 -->
 <script>

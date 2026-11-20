@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>白猫桌宠 · 全身关节 v3</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+  body{display:flex;background:radial-gradient(120% 100% at 50% 0%,#fdf8fb 0%,#f8eff5 36%,#ece6f3 70%,#e2e7f1 100%)}
+  #stage{position:relative;flex:1;min-width:0}
+  #stage canvas{display:block;width:100%;height:100%;cursor:crosshair}
+  #hint{position:absolute;left:50%;top:18px;transform:translateX(-50%);color:#8d7f98;font-size:12.5px;letter-spacing:.05em;
+        background:rgba(255,255,255,.62);backdrop-filter:blur(8px);padding:7px 15px;border-radius:999px;white-space:nowrap;
+        border:1px solid rgba(255,255,255,.9)}
+  #panel{width:308px;flex:0 0 308px;height:100%;overflow-y:auto;padding:18px 16px 34px;
+         background:rgba(255,255,255,.66);backdrop-filter:blur(20px);border-left:1px solid rgba(255,255,255,.95);
+         box-shadow:-16px 0 42px rgba(120,100,140,.10)}
+  #panel::-webkit-scrollbar{width:5px}
+  #panel::-webkit-scrollbar-thumb{background:rgba(190,160,200,.35);border-radius:3px}
+  #panel h1{font-size:14.5px;color:#4b4159;letter-spacing:.03em;margin-bottom:3px}
+  #panel .sub{font-size:10.5px;color:#9b90a6;line-height:1.75;margin-bottom:15px}
+  .grp{margin-bottom:13px;padding-bottom:11px;border-bottom:1px dashed rgba(190,170,200,.28)}
+  .grp:last-child{border:none}
+  .tt{font-size:10px;color:#9a8ea5;letter-spacing:.14em;margin-bottom:8px}
+  .row{margin-bottom:7px}
+  .lab{display:flex;justify-content:space-between;font-size:11px;color:#6b6079;margin-bottom:3px}
+  .lab b{font-weight:600;color:#c4678f;font-variant-numeric:tabular-nums;font-size:10.5px}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:4px;
+      background:linear-gradient(90deg,#f5c6da,#cfc5ea);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+      background:#fff;border:1.5px solid #c974a0;box-shadow:0 2px 6px rgba(180,110,150,.32);cursor:pointer}
+  .btns{display:flex;flex-wrap:wrap;gap:7px}
+  .btn{flex:1 1 45%;padding:7px 0;border-radius:9px;border:1px solid rgba(190,150,190,.45);background:rgba(255,255,255,.85);
+       color:#7a6a86;font-size:11px;cursor:pointer;transition:.16s}
+  .btn.on{background:#f4cfe2;border-color:#d995b8;color:#7c3f60}
+  .btn:active{transform:scale(.97)}
+  #fps{position:absolute;right:14px;bottom:10px;font-size:10px;color:#b0a7bb;letter-spacing:.04em}
+  #tip{position:absolute;left:18px;bottom:12px;font-size:10px;color:#b0a7bb}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cat"></canvas>
+  <div id="hint">鼠标移动 → 瞳孔与头部跟随　·　右侧每个关节都能单独控制</div>
+  <div id="fps"></div>
+  <div id="tip">51 件图层 · 前肢 3 段 · 后肢 2 段 · 尾巴 16 段</div>
+</div>
+<aside id="panel">
+  <h1>白猫 · 全身关节 v3</h1>
+  <div class="sub">按标注图重抠：前肢 3 段 / 后肢 2 段 / 尾巴 16 段<br>参数命名与 Live2D Cubism 一致</div>
+
+  <div class="grp">
+    <div class="tt">头部 HEAD</div>
+    <div class="row"><div class="lab"><span>ParamAngleX 左右</span><b id="v_ax">0</b></div><input id="ax" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamAngleY 上下</span><b id="v_ay">0</b></div><input id="ay" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamAngleZ 歪头</span><b id="v_az">0</b></div><input id="az" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamBodyAngleX 身体</span><b id="v_bx">0</b></div><input id="bx" type="range" min="-100" max="100" value="0"></div>
+  </div>
+
+  <div class="grp">
+    <div class="tt">眼睛 EYES</div>
+    <div class="row"><div class="lab"><span>ParamEyeLOpen 左眼</span><b id="v_el">1.00</b></div><input id="el" type="range" min="0" max="100" value="100"></div>
+    <div class="row"><div class="lab"><span>ParamEyeROpen 右眼</span><b id="v_er">1.00</b></div><input id="er" type="range" min="0" max="100" value="100"></div>
+    <div class="row"><div class="lab"><span>ParamEyeBallX 瞳孔横</span><b id="v_gx">0</b></div><input id="gx" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamEyeBallY 瞳孔纵</span><b id="v_gy">0</b></div><input id="gy" type="range" min="-100" max="100" value="0"></div>
+  </div>
+
+  <div class="grp">
+    <div class="tt">前肢 FORELIMB</div>
+    <div class="row"><div class="lab"><span>ParamArmL 左肩抬起</span><b id="v_al">0</b></div><input id="al" type="range" min="0" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamArmL2 左肘</span><b id="v_al2">0</b></div><input id="al2" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamArmL3 左腕</span><b id="v_al3">0</b></div><input id="al3" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamArmR 右肩抬起</span><b id="v_ar">0</b></div><input id="ar" type="range" min="0" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamArmR2 右肘</span><b id="v_ar2">0</b></div><input id="ar2" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamArmR3 右腕</span><b id="v_ar3">0</b></div><input id="ar3" type="range" min="-100" max="100" value="0"></div>
+  </div>
+
+  <div class="grp">
+    <div class="tt">后肢 HINDLIMB</div>
+    <div class="row"><div class="lab"><span>ParamLegL 左髋</span><b id="v_gl">0</b></div><input id="gl" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamLegL2 左踝</span><b id="v_gl2">0</b></div><input id="gl2" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamLegR 右髋</span><b id="v_gr">0</b></div><input id="gr" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamLegR2 右踝</span><b id="v_gr2">0</b></div><input id="gr2" type="range" min="-100" max="100" value="0"></div>
+  </div>
+
+  <div class="grp">
+    <div class="tt">嘴 MOUTH</div>
+    <div class="row"><div class="lab"><span>ParamMouthOpenY 张合</span><b id="v_mo">0.00</b></div><input id="mo" type="range" min="0" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamMouthForm 口型</span><b id="v_mf">0</b></div><input id="mf" type="range" min="-100" max="100" value="0"></div>
+  </div>
+
+  <div class="grp">
+    <div class="tt">耳朵 / 尾巴 TAIL</div>
+    <div class="row"><div class="lab"><span>ParamEarL 左耳</span><b id="v_el2">0</b></div><input id="earL" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamEarR 右耳</span><b id="v_er2">0</b></div><input id="earR" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamTailSway 摆动</span><b id="v_ts">0</b></div><input id="ts" type="range" min="-100" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamTailLift 抬起</span><b id="v_tl">0</b></div><input id="tl" type="range" min="0" max="100" value="0"></div>
+    <div class="row"><div class="lab"><span>ParamTailCurl 卷曲</span><b id="v_tc">0</b></div><input id="tc" type="range" min="-100" max="100" value="0"></div>
+  </div>
+
+  <div class="grp">
+    <div class="tt">交互 INTERACTION</div>
+    <div class="btns">
+      <button class="btn on" id="b_follow">视线跟随</button>
+      <button class="btn on" id="b_idle">呼吸 / 眨眼</button>
+      <button class="btn on" id="b_wag">尾巴自摆</button>
+      <button class="btn" id="b_wave">抬起前肢</button>
+      <button class="btn" id="b_bg">透明背景</button>
+      <button class="btn" id="b_blink">强制眨眼</button>
+      <button class="btn" id="b_reset">复位</button>
+    </div>
+  </div>
+</aside>
+
+<script>
+const PARTS = [{"n":"sil_patch","x":19,"y":27,"w":1397,"h":1584,"px":701.0,"py":773.0,"d":"assets/sil_patch.webp"},{"n":"body_lo","x":164,"y":1229,"w":1000,"h":386,"px":436.0,"py":71.0,"d":"assets/body_lo.webp"},{"n":"body_up","x":164,"y":851,"w":1000,"h":461,"px":436.0,"py":419.0,"d":"assets/body_up.webp"},{"n":"hind_thigh_L","x":173,"y":1015,"w":242,"h":525,"px":53.5,"py":90.0,"d":"assets/hind_thigh_L.webp"},{"n":"hind_foot_L","x":222,"y":1396,"w":203,"h":193,"px":84.9,"py":69.0,"d":"assets/hind_foot_L.webp"},{"n":"hind_thigh_R","x":773,"y":1011,"w":371,"h":530,"px":261.1,"py":92.0,"d":"assets/hind_thigh_R.webp"},{"n":"hind_foot_R","x":753,"y":1406,"w":227,"h":187,"px":107.7,"py":66.7,"d":"assets/hind_foot_R.webp"},{"n":"tail_01","x":1091,"y":1101,"w":149,"h":260,"px":59.0,"py":61.0,"d":"assets/tail_01.webp"},{"n":"tail_02","x":1091,"y":1182,"w":224,"h":180,"px":105.9,"py":19.0,"d":"assets/tail_02.webp"},{"n":"tail_03","x":1098,"y":1196,"w":270,"h":186,"px":142.4,"py":44.8,"d":"assets/tail_03.webp"},{"n":"tail_04","x":1098,"y":1232,"w":311,"h":167,"px":172.1,"py":59.6,"d":"assets/tail_04.webp"},{"n":"tail_05","x":1111,"y":1285,"w":307,"h":168,"px":178.1,"py":61.3,"d":"assets/tail_05.webp"},{"n":"tail_06","x":1140,"y":1354,"w":278,"h":190,"px":156.3,"py":48.7,"d":"assets/tail_06.webp"},{"n":"tail_07","x":1172,"y":1410,"w":245,"h":176,"px":116.9,"py":47.0,"d":"assets/tail_07.webp"},{"n":"tail_08","x":1129,"y":1384,"w":242,"h":213,"px":130.0,"py":118.2,"d":"assets/tail_08.webp"},{"n":"tail_09","x":1100,"y":1373,"w":183,"h":233,"px":113.6,"py":156.1,"d":"assets/tail_09.webp"},{"n":"tail_10","x":1072,"y":1373,"w":146,"h":239,"px":93.8,"py":173.8,"d":"assets/tail_10.webp"},{"n":"tail_11","x":1025,"y":1387,"w":137,"h":227,"px":92.1,"py":171.1,"d":"assets/tail_11.webp"},{"n":"tail_12","x":920,"y":1446,"w":190,"h":168,"px":149.5,"py":118.1,"d":"assets/tail_12.webp"},{"n":"tail_13","x":884,"y":1430,"w":210,"h":183,"px":139.5,"py":126.4,"d":"assets/tail_13.webp"},{"n":"tail_14","x":875,"y":1356,"w":241,"h":238,"px":121.2,"py":170.3,"d":"assets/tail_14.webp"},{"n":"tail_15","x":871,"y":1347,"w":245,"h":226,"px":103.8,"py":144.4,"d":"assets/tail_15.webp"},{"n":"tail_16","x":871,"y":1347,"w":245,"h":207,"px":82.3,"py":115.5,"d":"assets/tail_16.webp"},{"n":"front_up_L","x":285,"y":1005,"w":285,"h":416,"px":129.3,"py":85.0,"d":"assets/front_up_L.webp"},{"n":"front_lo_L","x":285,"y":1243,"w":285,"h":329,"px":154.0,"py":81.0,"d":"assets/front_lo_L.webp"},{"n":"front_paw_L","x":313,"y":1423,"w":257,"h":179,"px":159.8,"py":69.1,"d":"assets/front_paw_L.webp"},{"n":"front_up_R","x":594,"y":992,"w":294,"h":419,"px":175.1,"py":86.0,"d":"assets/front_up_R.webp"},{"n":"front_lo_R","x":593,"y":1239,"w":295,"h":343,"px":167.7,"py":73.8,"d":"assets/front_lo_R.webp"},{"n":"front_paw_R","x":593,"y":1423,"w":273,"h":179,"px":115.4,"py":73.8,"d":"assets/front_paw_R.webp"},{"n":"chest_fur","x":230,"y":837,"w":644,"h":606,"px":320.0,"py":123.0,"d":"assets/chest_fur.webp"},{"n":"head","x":62,"y":73,"w":1042,"h":882,"px":523.0,"py":827.0,"d":"assets/head.webp"},{"n":"cheek_L","x":17,"y":400,"w":348,"h":490,"px":183.0,"py":300.0,"d":"assets/cheek_L.webp"},{"n":"cheek_R","x":814,"y":402,"w":333,"h":508,"px":146.0,"py":298.0,"d":"assets/cheek_R.webp"},{"n":"fur_tuft","x":482,"y":73,"w":283,"h":112,"px":118.0,"py":67.0,"d":"assets/fur_tuft.webp"},{"n":"ear_L","x":112,"y":22,"w":297,"h":394,"px":88.0,"py":318.0,"d":"assets/ear_L.webp"},{"n":"ear_R","x":754,"y":61,"w":312,"h":357,"px":196.0,"py":284.0,"d":"assets/ear_R.webp"},{"n":"nose","x":496,"y":635,"w":185,"h":143,"px":92.0,"py":65.0,"d":"assets/nose.webp"},{"n":"mouth_closed","x":512,"y":694,"w":153,"h":114,"px":80.0,"py":76.0,"d":"assets/mouth_closed.webp"},{"n":"eye_L_sclera","x":244,"y":434,"w":273,"h":293,"px":146.5,"py":144.0,"d":"assets/eye_L_sclera.webp"},{"n":"eye_L_iris","x":286,"y":474,"w":210,"h":209,"px":104.5,"py":104.0,"d":"assets/eye_L_iris.webp"},{"n":"eye_L_highlight","x":321,"y":540,"w":141,"h":138,"px":69.5,"py":38.0,"d":"assets/eye_L_highlight.webp"},{"n":"eye_L_lash","x":239,"y":474,"w":354,"h":306,"px":151.5,"py":104.0,"d":"assets/eye_L_lash.webp"},{"n":"eye_L_lid","x":200,"y":393,"w":361,"h":375,"px":190.5,"py":185.0,"d":"assets/eye_L_lid.webp"},{"n":"eye_L_closed","x":278,"y":565,"w":224,"h":39,"px":112.5,"py":13.0,"d":"assets/eye_L_closed.webp"},{"n":"eye_R_sclera","x":670,"y":446,"w":257,"h":277,"px":117.5,"py":135.5,"d":"assets/eye_R_sclera.webp"},{"n":"eye_R_iris","x":692,"y":486,"w":192,"h":192,"px":95.5,"py":95.5,"d":"assets/eye_R_iris.webp"},{"n":"eye_R_highlight","x":691,"y":492,"w":179,"h":184,"px":96.5,"py":89.5,"d":"assets/eye_R_highlight.webp"},{"n":"eye_R_lash","x":609,"y":487,"w":315,"h":234,"px":178.5,"py":94.5,"d":"assets/eye_R_lash.webp"},{"n":"eye_R_lid","x":626,"y":405,"w":345,"h":359,"px":161.5,"py":176.5,"d":"assets/eye_R_lid.webp"},{"n":"eye_R_closed","x":675,"y":568,"w":224,"h":40,"px":112.5,"py":13.5,"d":"assets/eye_R_closed.webp"},{"n":"mouth_open","x":530,"y":750,"w":124,"h":96,"px":62.0,"py":2,"d":"assets/mouth_open.webp"}];
+const RIG = {"eyes":{"L":{"cx":380.0,"cy":580.0,"rx":126,"ry":134,"icx":390.5,"icy":578.0,"ir":97.5,"shiftX":16.5,"shiftY":26.5},"R":{"cx":798.0,"cy":584.0,"rx":118,"ry":126,"icx":787.5,"icy":581.5,"ir":89.5,"shiftX":16.5,"shiftY":26.5}},"tail":{"pts":[[1150.0,1162.0,0.0],[1196.890057735868,1201.0242733279645,0.0],[1240.3849891139826,1240.8050697304195,0.0],[1270.0641612443997,1291.570531343621,0.0],[1289.101809152759,1346.2771258667176,0.0],[1296.3423764866236,1402.7216818580778,0.0],[1288.9213169740287,1456.9912093848764,0.0],[1258.982112667116,1502.2087968075014,0.0],[1213.6051562440944,1529.1121480309423,0.0],[1165.8038247426975,1546.7834893717768,0.0],[1117.113871947977,1558.0611885371395,0.0],[1069.5153921626527,1564.1168582324658,0.0],[1023.50897963742,1556.3965584277328,0.0],[996.1970435408984,1526.330438988436,0.0],[974.8249976621232,1491.3582052644538,0.0],[953.3404093954609,1462.4744346374878,0.0],[936.8460278017221,1441.0985496995156,0.0]],"cuts":[0.0,60.6,120.3,179.0,236.8,293.5,349.1,403.5,456.6,508.2,558.2,606.4,652.6,696.2,736.7,772.8,800.0],"len":800.0,"segs":16,"overlap":30.0,"dir":"root_first"},"limbs":{"shoulderL":[414.3,1090.0],"elbowL":[439.0,1324.0],"wristL":[472.8,1492.1],"shoulderR":[769.1,1078.0],"elbowR":[760.7,1312.8],"wristR":[708.4,1496.8],"shoulderRange":0.3,"elbowRange":0.3,"wristRange":0.52},"legs":{"hipL":[226.5,1105.0],"ankleL":[306.9,1465.0],"hipR":[1034.1,1103.0],"ankleR":[860.7,1472.7],"hipRange":0.16,"ankleRange":0.12},"face":{"neck":[585,946],"waist":[600,1300],"earL":[200,340],"earR":[950,345]}};
+const W = 1441, H = 1636;
+const NECK = { x: 585, y: 946 };
+const WAIST = { x: 600, y: 1300 };
+const EYE = RIG.eyes;
+const EAR = { L: { x: 200, y: 340 }, R: { x: 950, y: 345 } };
+const LIMB = RIG.limbs, LEG = RIG.legs;
+
+const cv = document.getElementById('cat');
+const ctx = cv.getContext('2d', { alpha: true });
+const ly = {};
+PARTS.forEach(p => {
+  const im = new Image();
+  im.src = p.d;
+  ly[p.n] = Object.assign({}, p, { img: im });
+});
+
+/* ---------------- 参数 ---------------- */
+const P = {
+  ParamAngleX: 0, ParamAngleY: 0, ParamAngleZ: 0, ParamBodyAngleX: 0, ParamBreath: 0.5,
+  ParamEyeLOpen: 1, ParamEyeROpen: 1, ParamEyeBallX: 0, ParamEyeBallY: 0,
+  ParamMouthOpenY: 0, ParamMouthForm: 0,
+  ParamArmL: 0, ParamArmL2: 0, ParamArmL3: 0, ParamArmR: 0, ParamArmR2: 0, ParamArmR3: 0,
+  ParamLegL: 0, ParamLegL2: 0, ParamLegR: 0, ParamLegR2: 0,
+  ParamEarL: 0, ParamEarR: 0,
+  ParamTailSway: 0, ParamTailLift: 0, ParamTailCurl: 0, ParamMoveX: 0
+};
+const base = { ax:0, ay:0, az:0, bx:0, el:1, er:1, gx:0, gy:0, mo:0, mf:0,
+               armL:0, armL2:0, armL3:0, armR:0, armR2:0, armR3:0,
+               legL:0, legL2:0, legR:0, legR2:0,
+               earL:0, earR:0, ts:0, tl:0, tc:0, move:0 };
+window.catModel = {
+  params: P,
+  setParameterValueById(id, v){ if(id in P) P[id] = v; },
+  getParameterValueById(id){ return P[id]; },
+  addParameterValueById(id, v){ if(id in P) P[id] += v; },
+  setBase(k, v){ if(k in base) base[k] = v; },
+  blink(){ st.blinkStart = st.t; st.forceBlink = true; }
+};
+
+const st = {
+  t: 0, gx: 0, gy: 0, tx: 0, ty: 0, follow: true, idle: true, wag: true,
+  blinkStart: -9, blinkT: 2.6, forceBlink: false,
+  earL: 0, earVL: 0, earR: 0, earVR: 0, prevAX: 0,
+  tailWag: 0, wagAmt: 0, wagTarget: 1, wagTimer: 4,
+  waveOn: false, waveAmt: 0,
+  bg: true,
+  paused: false
+};
+const mouse = { x: W * 0.5, y: H * 0.42 };
+const view = { dpr: 1, w: 1, h: 1, s: 1, ox: 0, oy: 0 };
+window.st = st; window.base = base; window.view = view;
+
+function resize(){
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const box = cv.parentElement.getBoundingClientRect();
+  const w = Math.max(240, box.width), h = Math.max(240, box.height);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  view.dpr = dpr; view.w = w; view.h = h;
+  const s = Math.min(w / W, h / H) * 0.88;
+  view.s = s;
+  view.ox = (w - W * s) / 2;
+  view.oy = Math.max(0, (h - H * s) * 0.52);
+}
+
+const clamp = (v,a,b) => v < a ? a : (v > b ? b : v);
+const lerp = (a,b,t) => a + (b - a) * t;
+const rotP = (p, c, a) => {
+  const cs = Math.cos(a), sn = Math.sin(a), dx = p[0] - c[0], dy = p[1] - c[1];
+  return [c[0] + cs * dx - sn * dy, c[1] + sn * dx + cs * dy];
+};
+
+/* ---------------- 变换组 ---------------- */
+function bodyT(g){
+  const bx = P.ParamBodyAngleX / 100;
+  g.translate(600 + bx * 14, 1520);
+  g.rotate(bx * 0.035);
+  g.scale(1 - Math.abs(bx) * 0.02, 1);
+  g.translate(-600, -1520);
+}
+function bodyUpT(g){
+  bodyT(g);
+  const br = P.ParamBreath - 0.5;   // 0.5 为中性，静止时不产生形变
+  g.translate(WAIST.x, WAIST.y);
+  g.scale(1 + br * 0.012, 1 + br * 0.016);
+  g.translate(-WAIST.x, -WAIST.y);
+}
+function headT(g){
+  const ax = P.ParamAngleX / 100, ay = P.ParamAngleY / 100, az = P.ParamAngleZ / 100;
+  g.translate(NECK.x + ax * 26, NECK.y - ay * 22);
+  g.rotate(az * 0.14 + ax * 0.05);
+  g.scale(1 - Math.abs(ax) * 0.05, 1 + ay * 0.025);
+  g.translate(-NECK.x, -NECK.y);
+}
+
+/* 前肢：肩 → 肘 → 腕 三级链 */
+function frontT(g, side, level){
+  bodyT(g);
+  const sb = side === 'L' ? 1 : -1;
+  const S = LIMB['shoulder' + side], E = LIMB['elbow' + side], Wr = LIMB['wrist' + side];
+  const a0 = sb * (P['ParamArm' + side] / 100) * LIMB.shoulderRange;
+  const a1 = (P['ParamArm' + side + '2'] / 100) * LIMB.elbowRange;
+  const a2 = (P['ParamArm' + side + '3'] / 100) * LIMB.wristRange;
+  g.translate(S[0], S[1]); g.rotate(a0); g.translate(-S[0], -S[1]);
+  if (level >= 1){
+    const E1 = rotP(E, S, a0);
+    g.translate(E1[0], E1[1]); g.rotate(a1); g.translate(-E1[0], -E1[1]);
+    if (level >= 2){
+      const W1 = rotP(Wr, S, a0), W2 = rotP(W1, E1, a1);
+      g.translate(W2[0], W2[1]); g.rotate(a2); g.translate(-W2[0], -W2[1]);
+    }
+  }
+}
+
+/* 后肢：髋 → 踝 两级链 */
+function hindT(g, side, level){
+  bodyT(g);
+  const Hp = LEG['hip' + side], An = LEG['ankle' + side];
+  const a0 = (P['ParamLeg' + side] / 100) * LEG.hipRange;
+  const a1 = (P['ParamLeg' + side + '2'] / 100) * LEG.ankleRange;
+  g.translate(Hp[0], Hp[1]); g.rotate(a0); g.translate(-Hp[0], -Hp[1]);
+  if (level >= 1){
+    const A1 = rotP(An, Hp, a0);
+    g.translate(A1[0], A1[1]); g.rotate(a1); g.translate(-A1[0], -A1[1]);
+  }
+}
+
+/* ---------------- 尾巴：16 段链 ---------------- */
+const TAIL_N = RIG.tail.segs;
+const TP = RIG.tail.pts;
+const tailPiece = [];
+for (let i = 0; i < TAIL_N; i++) tailPiece.push({ A: 0, tx: 0, ty: 0 });
+
+function tailBend(i){
+  const lift = P.ParamTailLift / 100, curl = P.ParamTailCurl / 100, sway = P.ParamTailSway / 100;
+  const j = i;                           /* 0 = 尾根(tail_01), TAIL_N-1 = 尾尖 */
+  const u = j / (TAIL_N - 1);            /* 0..1 根→尖 */
+  let b = 0;
+  /* 抬起：根部承担主旋转，其余关节等量微跟，尾尖随尾巴身整体抬起，不会脱节 */
+  b += lift * (j === 0 ? 0.130 : 0.0235);
+  /* 卷曲：越靠尾尖越强，形成向内收卷 */
+  b += -curl * (0.006 + 0.048 * u * u);
+  /* 摆动 / 摇尾：沿链传播的行波，净位移小、柔软感强 */
+  b += sway * 0.016 * Math.sin(j * 0.62 - st.t * 1.9) * (0.30 + 0.70 * u);
+  b += st.tailWag * 0.024 * Math.sin(j * 0.58 - st.t * 2.3) * u;
+  return b;
+}
+
+function buildTail(){
+  /* tail_01 是尾根（贴臀），tail_16 是尾尖：从根向尖累积，
+     根部只转自己那点角度，尾尖叠加全部前序旋转，尾巴端必然跟着尾巴身走 */
+  let A = 0, tx = 0, ty = 0;
+  for (let i = 0; i < TAIL_N; i++){
+    const b = tailBend(i);
+    const p = TP[i];
+    const qx = Math.cos(A) * p[0] - Math.sin(A) * p[1] + tx;
+    const qy = Math.sin(A) * p[0] + Math.cos(A) * p[1] + ty;
+    const cs = Math.cos(b), sn = Math.sin(b);
+    const nA = A + b;
+    const ntx = qx + cs * (tx - qx) - sn * (ty - qy);
+    const nty = qy + sn * (tx - qx) + cs * (ty - qy);
+    A = nA; tx = ntx; ty = nty;
+    tailPiece[i].A = A; tailPiece[i].tx = tx; tailPiece[i].ty = ty;
+  }
+}
+
+function partRaw(p, groupFn){
+  if (!p || !p.img.complete) return;
+  ctx.save();
+  if (groupFn) groupFn(ctx);
+  ctx.drawImage(p.img, p.x, p.y, p.w, p.h);
+  ctx.restore();
+}
+
+function drawTail(){
+  ctx.save();
+  bodyT(ctx);
+  for (let i = 0; i < TAIL_N; i++){
+    const p = ly['tail_' + String(i + 1).padStart(2, '0')];
+    if (!p || !p.img.complete) continue;
+    const q = tailPiece[i];
+    ctx.save();
+    ctx.translate(q.tx, q.ty);
+    ctx.rotate(q.A);
+    ctx.drawImage(p.img, p.x, p.y, p.w, p.h);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* ---------------- 通用绘制 ---------------- */
+function part(name, groupFn, o){
+  const p = ly[name];
+  if (!p || !p.img.complete) return;
+  o = o || {};
+  ctx.save();
+  if (groupFn) groupFn(ctx);
+  ctx.translate(p.x + p.px, p.y + p.py);
+  if (o.rot) ctx.rotate(o.rot);
+  if (o.sx !== undefined || o.sy !== undefined) ctx.scale(o.sx || 1, o.sy || 1);
+  ctx.globalAlpha = (o.alpha === undefined ? 1 : o.alpha);
+  if (ctx.globalAlpha <= 0.001) { ctx.restore(); return; }
+  ctx.drawImage(p.img, -p.px, -p.py, p.w, p.h);
+  ctx.restore();
+}
+
+/* ---------------- 耳朵 ---------------- */
+function drawEar(side){
+  const p = ly['ear_' + side];
+  if (!p || !p.img.complete) return;
+  const piv = EAR[side];
+  const angle = (side === 'L' ? st.earL : st.earR) + (side === 'L' ? P.ParamEarL : P.ParamEarR) / 100 * 0.10;
+  const a = clamp(angle, -0.12, 0.12);
+  ctx.save();
+  headT(ctx);
+  ctx.translate(piv.x, piv.y);
+  ctx.rotate(a);
+  ctx.translate(-piv.x, -piv.y);
+  ctx.drawImage(p.img, p.x, p.y, p.w, p.h);
+  ctx.restore();
+}
+
+/* ---------------- 眼睛：虹膜固定裁剪 + 球面缩放，大位移不出形 ---------------- */
+function drawEye(side, kind, open){
+  const p = ly['eye_' + side + '_' + kind];
+  if (!p || !p.img.complete) return;
+  const e = EYE[side];
+  const gx = clamp(P.ParamEyeBallX / 100, -1, 1);
+  const gy = clamp(P.ParamEyeBallY / 100, -1, 1);
+  const k = kind === 'iris' ? 1 : (kind === 'highlight' ? 0.62 : 0.06);
+  const m = Math.max(Math.abs(gx), Math.abs(gy));
+
+  ctx.save();
+  headT(ctx);
+  ctx.translate(e.icx, e.icy);
+  ctx.scale(1, Math.max(0.06, open));
+
+  if (kind === 'iris' || kind === 'highlight'){
+    ctx.beginPath();
+    ctx.ellipse(0, 0, e.rx - 7, e.ry - 5, 0, 0, Math.PI * 2);
+    ctx.clip();
+  }
+
+  let alpha = 1;
+  if (k > 0.05){
+    // 最大位移留足外圈余量：位移上限 < 眼白半径 - 虹膜半径
+    const sx = e.shiftX * 0.80 * k, sy = e.shiftY * 0.80 * k;
+    ctx.translate(gx * sx, gy * sy);
+    // 球面感：偏向极限时虹膜轻微收小，避免贴边被裁
+    const sc = 1 - 0.055 * m * k;
+    ctx.scale(sc, sc);
+  }
+  if (kind !== 'lid') alpha = clamp(open * 4, 0, 1);
+  if (kind === 'lash') alpha *= clamp((open - 0.05) / 0.25, 0, 1);
+  ctx.globalAlpha = alpha;
+  if (alpha > 0.001) ctx.drawImage(p.img, p.x - e.icx, p.y - e.icy, p.w, p.h);
+  ctx.restore();
+}
+function drawLid(side, open){
+  const p = ly['eye_' + side + '_lid'];
+  if (!p || !p.img.complete) return;
+  const a = clamp((0.78 - open) / 0.22, 0, 1);
+  if (a <= 0.002) return;
+  ctx.save();
+  headT(ctx);
+  ctx.globalAlpha = a;
+  ctx.drawImage(p.img, p.x, p.y, p.w, p.h);
+  ctx.restore();
+}
+function drawClosedArc(side, open){
+  const p = ly['eye_' + side + '_closed'];
+  if (!p || !p.img.complete) return;
+  const a = clamp((0.46 - open) / 0.26, 0, 1);
+  if (a <= 0.002) return;
+  ctx.save();
+  headT(ctx);
+  ctx.globalAlpha = a;
+  ctx.drawImage(p.img, p.x, p.y, p.w, p.h);
+  ctx.restore();
+}
+
+/* ---------------- 渲染 ---------------- */
+function render(){
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const dpr = view.dpr;
+  const s = view.s * dpr;
+  const shift = (P.ParamMoveX / 100) * 40 * view.s;
+  ctx.setTransform(s, 0, 0, s, view.ox * dpr + shift * dpr, view.oy * dpr);
+
+  partRaw(ly['sil_patch'], bodyT);
+
+  part('body_lo', bodyT);
+  part('body_up', bodyUpT);
+
+  // 后肢：左髋/左踝，右髋/右踝
+  part('hind_thigh_L', g => hindT(g, 'L', 0));
+  part('hind_foot_L', g => hindT(g, 'L', 1));
+  part('hind_thigh_R', g => hindT(g, 'R', 0));
+  part('hind_foot_R', g => hindT(g, 'R', 1));
+
+  // 尾巴：画在身体与右后腿之上（猫尾巴是压在身侧/腿前的），
+  // 身体里因此保留完整毛面，尾巴摆开时露出的是连续毛发而不是尾巴剪影
+  drawTail();
+
+  // 前肢：每侧三段
+  part('front_up_L', g => frontT(g, 'L', 0));
+  part('front_lo_L', g => frontT(g, 'L', 1));
+  part('front_paw_L', g => frontT(g, 'L', 2));
+  part('front_up_R', g => frontT(g, 'R', 0));
+  part('front_lo_R', g => frontT(g, 'R', 1));
+  part('front_paw_R', g => frontT(g, 'R', 2));
+
+  part('chest_fur', bodyUpT, { sy: 1 + (P.ParamBreath - 0.5) * 0.012 });
+
+  // 前肢抬起后需要压在胸毛之上，否则会被胸毛团遮住（静止时不重绘，保证 1:1）
+  ['L', 'R'].forEach(side => {
+    const v = clamp(P['ParamArm' + side] / 100, 0, 1.6);
+    const a = clamp((v - 0.10) / 0.28, 0, 1);
+    if (a <= 0.004) return;
+    ['paw'].forEach(seg => {
+      const i = 2;
+      const nm = 'front_' + seg + '_' + side;
+      const p = ly[nm];
+      if (!p || !p.img.complete) return;
+      ctx.save();
+      frontT(ctx, side, i);
+      ctx.globalAlpha = a;
+      ctx.drawImage(p.img, p.x, p.y, p.w, p.h);
+      ctx.restore();
+    });
+  });
+
+  part('head', headT);
+  part('cheek_L', headT);
+  part('cheek_R', headT);
+  part('fur_tuft', headT, { rot: Math.sin(st.t * 1.15) * 0.018 });
+  drawEar('L');
+  drawEar('R');
+  part('nose', headT);
+
+  const mo = clamp(P.ParamMouthOpenY, 0, 1);
+  const mf = P.ParamMouthForm / 100;
+  if (mo < 0.2) part('mouth_closed', headT, { alpha: 1 - mo / 0.2 * 0.9 });
+  if (mo > 0.01){
+    const p = ly['mouth_open'];
+    ctx.save();
+    headT(ctx);
+    ctx.translate(p.x + p.px, p.y + p.py + 2);
+    ctx.scale(0.84 + 0.16 * mo + mf * 0.06, Math.max(0.05, mo * 1.12));
+    ctx.globalAlpha = clamp(mo * 3.2, 0, 1);
+    ctx.drawImage(p.img, -p.px, -p.py, p.w, p.h);
+    ctx.restore();
+  }
+
+  const openL = clamp(P.ParamEyeLOpen, 0, 1), openR = clamp(P.ParamEyeROpen, 0, 1);
+  drawLid('L', openL); drawEye('L', 'sclera', openL); drawEye('L', 'iris', openL);
+  drawEye('L', 'highlight', openL); drawEye('L', 'lash', openL); drawClosedArc('L', openL);
+  drawLid('R', openR); drawEye('R', 'sclera', openR); drawEye('R', 'iris', openR);
+  drawEye('R', 'highlight', openR); drawEye('R', 'lash', openR); drawClosedArc('R', openR);
+}
+
+function spring(cur, vel, target, k, damp, dt){
+  // 子步积分：任意大 dt 也不会发散（后台切回 / 掉帧时稳定）
+  const n = Math.max(1, Math.ceil(dt / 0.008));
+  const h = dt / n;
+  for (let i = 0; i < n; i++){
+    vel += ((target - cur) * k - vel * damp) * h;
+    cur += vel * h;
+  }
+  if (!isFinite(cur) || Math.abs(cur) > 50){ cur = target; vel = 0; }
+  return [cur, vel];
+}
+
+let last = performance.now(), fpsAcc = 0, fpsN = 0;
+function tick(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (st.paused){ requestAnimationFrame(tick); return; }
+  st.t += dt;
+  nekoTweenTick(dt);
+
+  if (st.idle){
+    st.blinkT -= dt;
+    if (st.blinkT <= 0){ st.blinkT = 2.8 + Math.random() * 4.0; st.blinkStart = st.t; }
+  }
+  const bt = st.t - st.blinkStart;
+  let blink = 1;
+  if (bt >= 0 && bt < 0.34) blink = 1 - Math.sin(bt / 0.34 * Math.PI) * 0.985;
+
+  P.ParamBreath = st.idle ? 0.5 + 0.5 * Math.sin(st.t * 0.9) : 0.5;
+
+  if (st.follow){
+    const cx = view.w * 0.5, cy = view.h * 0.5;
+    st.tx = clamp((mouse.x - cx) / (view.w * 0.42), -1, 1);
+    st.ty = clamp((mouse.y - cy) / (view.h * 0.46), -1, 1);
+  } else { st.tx = base.gx; st.ty = base.gy; }
+  const kk = 1 - Math.pow(0.0022, dt);
+  st.gx = lerp(st.gx, st.tx, kk);
+  st.gy = lerp(st.gy, st.ty, kk);
+
+  P.ParamAngleX = base.ax * 100 + st.gx * 13 + (st.idle ? Math.sin(st.t * 0.42) * 2.2 : 0);
+  P.ParamAngleY = base.ay * 100 + st.gy * 8 + (st.idle ? Math.sin(st.t * 0.58) * 1.6 : 0);
+  P.ParamAngleZ = base.az * 100 + st.gx * 3.0;
+  P.ParamEyeBallX = (st.follow ? st.gx * 62 : 0) + base.gx * 100;
+  P.ParamEyeBallY = (st.follow ? st.gy * 54 : 0) + base.gy * 100;
+  P.ParamEyeLOpen = base.el * blink;
+  P.ParamEyeROpen = base.er * blink;
+  P.ParamMouthOpenY = base.mo;
+  P.ParamMouthForm = base.mf * 100;
+  P.ParamBodyAngleX = base.bx * 100 + st.gx * 2.0;
+  P.ParamEarL = base.earL * 100;
+  P.ParamEarR = base.earR * 100;
+
+  // 抬手示意（平滑淡入的前肢预设）
+  st.waveAmt = lerp(st.waveAmt, st.waveOn ? 1 : 0, 1 - Math.pow(0.02, dt));
+  P.ParamArmL = base.armL * 100 + st.waveAmt * 52 * (1 + Math.sin(st.t * 2.4) * 0.06);
+  P.ParamArmL2 = base.armL2 * 100 - st.waveAmt * 62;
+  P.ParamArmL3 = base.armL3 * 100 - st.waveAmt * 96;
+  P.ParamArmR = base.armR * 100;
+  P.ParamArmR2 = base.armR2 * 100;
+  P.ParamArmR3 = base.armR3 * 100;
+  P.ParamLegL = base.legL * 100;
+  P.ParamLegL2 = base.legL2 * 100;
+  P.ParamLegR = base.legR * 100;
+  P.ParamLegR2 = base.legR2 * 100;
+
+  P.ParamTailSway = base.ts * 100 + st.gx * 8;
+  P.ParamTailLift = base.tl * 100;
+  P.ParamTailCurl = base.tc * 100;
+
+  if (st.wag){
+    st.wagTimer -= dt;
+    if (st.wagTimer <= 0){
+      st.wagTarget = st.wagTarget > 0.5 ? 0 : 1;
+      st.wagTimer = st.wagTarget > 0.5 ? 3.4 + Math.random() * 3.6 : 2.2 + Math.random() * 2.8;
+    }
+  } else st.wagTarget = 0;
+  st.wagAmt = lerp(st.wagAmt, st.wagTarget, 1 - Math.pow(0.05, dt));
+  st.tailWag = st.wagAmt * (1 + Math.abs(P.ParamTailSway) / 100 * 1.4);
+
+  const hv = (P.ParamAngleX - st.prevAX) / Math.max(dt, 0.001);
+  st.prevAX = P.ParamAngleX;
+  const tL = -hv * 0.006 + Math.sin(st.t * 1.7) * 0.010;
+  const tR = -hv * 0.008 + Math.sin(st.t * 1.7 + 0.8) * 0.010;
+  [st.earL, st.earVL] = spring(st.earL, st.earVL, clamp(tL, -0.10, 0.10), 120, 13, dt);
+  [st.earR, st.earVR] = spring(st.earR, st.earVR, clamp(tR, -0.10, 0.10), 120, 13, dt);
+
+  buildTail();
+  render();
+
+  fpsAcc += dt; fpsN++;
+  if (fpsAcc > 0.8){
+    document.getElementById('fps').textContent = Math.round(fpsN / fpsAcc) + ' fps · ' + PARTS.length + ' 部件';
+    fpsAcc = 0; fpsN = 0;
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------------- UI ---------------- */
+function bind(id, key, vid, fmt){
+  const el = document.getElementById(id), lab = document.getElementById(vid);
+  if (!el) return;
+  const upd = () => {
+    const v = +el.value;
+    if (lab) lab.textContent = fmt ? fmt(v) : v;
+    base[key] = fmt ? v / 100 : v;
+  };
+  el.addEventListener('input', upd);
+  upd();
+}
+const f2 = v => (v / 100).toFixed(2);
+const pct = v => v / 100;
+bind('ax','ax','v_ax',pct); bind('ay','ay','v_ay',pct); bind('az','az','v_az',pct); bind('bx','bx','v_bx',pct);
+bind('el','el','v_el',f2); bind('er','er','v_er',f2);
+bind('gx','gx','v_gx',pct); bind('gy','gy','v_gy',pct);
+bind('mo','mo','v_mo',f2); bind('mf','mf','v_mf',pct);
+bind('al','armL','v_al',pct); bind('al2','armL2','v_al2',pct); bind('al3','armL3','v_al3',pct);
+bind('ar','armR','v_ar',pct); bind('ar2','armR2','v_ar2',pct); bind('ar3','armR3','v_ar3',pct);
+bind('gl','legL','v_gl',pct); bind('gl2','legL2','v_gl2',pct);
+bind('gr','legR','v_gr',pct); bind('gr2','legR2','v_gr2',pct);
+bind('earL','earL','v_el2',pct); bind('earR','earR','v_er2',pct);
+bind('ts','ts','v_ts',pct); bind('tl','tl','v_tl',pct); bind('tc','tc','v_tc',pct);
+
+document.getElementById('b_follow').onclick = e => { st.follow = !st.follow; e.target.classList.toggle('on', st.follow); };
+document.getElementById('b_idle').onclick = e => {
+  st.idle = !st.idle; e.target.classList.toggle('on', st.idle);
+  if (!st.idle){ P.ParamEyeLOpen = base.el; P.ParamEyeROpen = base.er; P.ParamBreath = 0.5; }
+};
+document.getElementById('b_wag').onclick = e => { st.wag = !st.wag; e.target.classList.toggle('on', st.wag); };
+document.getElementById('b_wave').onclick = e => { st.waveOn = !st.waveOn; e.target.classList.toggle('on', st.waveOn); };
+document.getElementById('b_bg').onclick = e => {
+  st.bg = !st.bg;
+  document.body.style.background = st.bg
+    ? 'radial-gradient(120% 100% at 50% 0%,#fdf8fb 0%,#f8eff5 36%,#ece6f3 70%,#e2e7f1 100%)'
+    : 'repeating-conic-gradient(rgba(210,210,220,.55) 0% 25%,rgba(255,255,255,.55) 0% 50%) 0 0/24px 24px, #fff';
+  e.target.classList.toggle('on', !st.bg);
+};
+document.getElementById('b_blink').onclick = () => catModel.blink();
+document.getElementById('b_reset').onclick = () => {
+  ['ax','ay','az','bx','gx','gy','mo','mf','al','al2','al3','ar','ar2','ar3','gl','gl2','gr','gr2','earL','earR','ts','tl','tc'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    el.value = 0; el.dispatchEvent(new Event('input'));
+  });
+  ['el','er'].forEach(id => { const el = document.getElementById(id); el.value = 100; el.dispatchEvent(new Event('input')); });
+  st.waveOn = false; document.getElementById('b_wave').classList.remove('on');
+};
+
+window.addEventListener('mousemove', e => {
+  const r = cv.getBoundingClientRect();
+  mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+});
+window.addEventListener('touchmove', e => {
+  const r = cv.getBoundingClientRect(), t = e.touches[0];
+  mouse.x = t.clientX - r.left; mouse.y = t.clientY - r.top;
+}, { passive: true });
+window.addEventListener('resize', resize);
+window.addEventListener('load', resize);
+
+resize();
+requestAnimationFrame(tick);
+
+/* ==================================================================
+   对外接口（网站接入 / AI 驱动用）   window.NekoCat
+   说明：只读写 base / st / P 这三个已存在的对象，不改变渲染路径；
+        不调用本层时，表现与打包前逐像素一致。
+   ================================================================== */
+const NEKO_DEF = { ax:0, ay:0, az:0, bx:0, el:1, er:1, gx:0, gy:0, mo:0, mf:0,
+  armL:0, armL2:0, armL3:0, armR:0, armR2:0, armR3:0, legL:0, legL2:0, legR:0, legR2:0,
+  earL:0, earR:0, ts:0, tl:0, tc:0, move:0 };
+
+const nekoTw = [];
+function nekoTweenTick(dt){
+  for (let i = nekoTw.length - 1; i >= 0; i--){
+    const a = nekoTw[i]; a.t += dt;
+    const p = a.dur > 0 ? Math.min(1, a.t / a.dur) : 1;
+    const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    base[a.k] = a.from + (a.to - a.from) * e;
+    if (p >= 1) nekoTw.splice(i, 1);
+  }
+}
+function nekoSet(obj, ms){
+  const list = Object.keys(obj || {});
+  for (const k of list){
+    if (!(k in base)) continue;
+    const to = +obj[k];
+    for (let i = nekoTw.length - 1; i >= 0; i--) if (nekoTw[i].k === k) nekoTw.splice(i, 1);
+    if (!(ms > 0)){ base[k] = to; continue; }
+    nekoTw.push({ k, from: base[k], to, t: 0, dur: ms / 1000 });
+  }
+}
+const nekoClamp = (v, a, b) => (v < a ? a : (v > b ? b : v));
+
+/* ---- 表情预设：key 均为 base 的键，值域见「接入说明」 ---- */
+const NEKO_EXPR = {
+  neutral:  {},
+  happy:    { az: 0.06, ay: 0.05, el: 0.90, er: 0.90, mf: 0.55, tl: 0.45, ts: 0.10 },
+  excited:  { az: 0.10, ay: 0.08, el: 1.00, er: 1.00, mf: 0.60, mo: 0.26, tl: 0.70, ts: 0.30 },
+  curious:  { ax: -0.10, az: 0.11, ay: -0.05, mf: 0.12, earL: 0.20, earR: 0.10, tl: 0.60 },
+  listen:   { ay: 0.04, az: 0.05, el: 0.95, er: 0.95, earL: 0.28, earR: 0.28, tl: 0.35 },
+  think:    { ax: 0.09, ay: 0.08, az: -0.05, el: 0.80, er: 0.82, mf: -0.12, tl: 0.25 },
+  alert:    { ay: 0.10, el: 1.00, er: 1.00, earL: 0.35, earR: 0.35, tl: 0.80, mo: 0.10 },
+  sleepy:   { ay: -0.03, az: 0.04, el: 0.42, er: 0.42, mf: 0.05, tl: -0.15, ts: 0.05 },
+  sad:      { ay: -0.10, az: -0.04, el: 0.80, er: 0.80, mf: -0.45, earL: -0.20, earR: -0.20, tl: -0.25 },
+  shy:      { az: -0.12, ay: -0.05, el: 0.72, er: 0.78, mf: 0.25, earL: -0.10, earR: 0.12, tl: 0.20 }
+};
+
+const NEKO_EXPR_KEYS = ['ax','ay','az','bx','el','er','gx','gy','mo','mf','earL','earR','tl','tc','ts'];
+
+/* ---- 姿态预设：数值与交付前抽检过的姿态一致 ---- */
+const NEKO_POSE = {
+  rest:   {},
+  wave:   { armL: 1, armL2: -0.62, armL3: -0.96 },      /* 抬手示意，运行时自带摆动 */
+  pawL:   { armL: 1, armL2: -0.62, armL3: -0.96 },
+  pawR:   { armR: 1, armR2: -0.62, armR3: -0.96 },
+  paws:   { armL: 0.80, armL2: -0.50, armR: 0.80, armR2: -0.50 },
+  loaf:   { armL: 0.34, armL2: 0.30, armR: 0.34, armR2: 0.30, tl: -0.10 },
+  tailUp: { tl: 1 },
+  tailCurl:{ tc: 1 },
+  tailSide:{ ts: -1, tl: 0.40 },
+  stretch:{ armL: 0.90, armL2: 0.50, armR: 0.90, armR2: 0.50, tl: 0.50, el: 0.80, er: 0.80 }
+};
+
+let nekoLipRAF = null;
+function nekoStopLip(){ if (nekoLipRAF){ cancelAnimationFrame(nekoLipRAF); nekoLipRAF = null; } }
+
+const NekoCat = {
+  version: 'v3-51',
+  params: P, base, state: st, view,
+  defaults: NEKO_DEF,
+
+  /* 参数原语：与 Cubism 同名 API */
+  set(id, v){ if (id in P) P[id] = +v; },
+  get(id){ return P[id]; },
+  add(id, dv){ if (id in P) P[id] += +dv; },
+  /* 高层：读写 base（带补间）。键名 = 面板滑块名 */
+  setMany(obj, ms){ nekoSet(obj, ms || 0); },
+  reset(ms){ nekoSet(NEKO_DEF, ms || 0); if (!ms){ for (const k in base) base[k] = NEKO_DEF[k]; } },
+
+  /* 视线：follow=true 跟鼠标；false 用归一化坐标 (-1..1) 指定 */
+  follow(on){ st.follow = !!on; if (!on){ nekoSet({ gx: base.gx, gy: base.gy }, 0); } return NekoCat; },
+  gaze(nx, ny, ms){ st.follow = false; nekoSet({ gx: nekoClamp(nx, -1, 1), gy: nekoClamp(ny, -1, 1) }, ms === undefined ? 240 : ms); return NekoCat; },
+  lookAt(px, py){   /* 画布/容器内的像素坐标 */
+    const r = cv.getBoundingClientRect();
+    mouse.x = px - r.left; mouse.y = py - r.top; st.follow = true; return NekoCat;
+  },
+
+  /* 眨眼 */
+  blink(times){
+    const n = Math.max(1, times || 1);
+    catModel.blink();
+    for (let i = 1; i < n; i++) setTimeout(() => catModel.blink(), i * 420);
+    return NekoCat;
+  },
+  /* 眼睛开合 0..1（受眨眼调制） */
+  eyes(l, r){ nekoSet({ el: nekoClamp(l, 0, 1), er: nekoClamp(r === undefined ? l : r, 0, 1) }, 0); return NekoCat; },
+
+  /* 嘴：0..1，用于口型同步 */
+  mouth(v){ base.mo = nekoClamp(v, 0, 1); return NekoCat; },
+  mouthForm(v){ base.mf = nekoClamp(v, -1, 1); return NekoCat; },
+
+  /* 口型同步：传 AnalyserNode（Web Audio），从时域 RMS 推开口度 */
+  lipSync(node, opt){
+    nekoStopLip();
+    const o = Object.assign({ gain: 1.9, curve: 1.30, attack: 0.55, release: 0.20, min: 0 }, opt || {});
+    let buf = null, level = 0;
+    const step = () => {
+      try {
+        if (node && node.getByteTimeDomainData){
+          if (!buf || buf.length !== node.fftSize) buf = new Uint8Array(node.fftSize);
+          node.getByteTimeDomainData(buf);
+          let acc = 0;
+          for (let i = 0; i < buf.length; i++){ const d = (buf[i] - 128) / 128; acc += d * d; }
+          const rms = Math.sqrt(acc / buf.length);
+          const tgt = Math.min(1, Math.max(o.min, Math.pow(rms * o.gain, o.curve)));
+          level += (tgt - level) * (tgt > level ? o.attack : o.release);
+          base.mo = nekoClamp(level, 0, 1);
+        }
+      } catch (e) {}
+      nekoLipRAF = requestAnimationFrame(step);
+    };
+    step();
+    return () => { nekoStopLip(); nekoSet({ mo: 0 }, 120); };
+  },
+  stopLip(){ nekoStopLip(); nekoSet({ mo: 0 }, 120); return NekoCat; },
+
+  /* 口型同步（无音频时的假口型）：给一段时长，按音节节奏自动开合 */
+  talkFor(ms, opt){
+    nekoStopLip();
+    const o = Object.assign({ rate: 6.5, amp: 0.55 }, opt || {});
+    const t0 = performance.now();
+    const step = () => {
+      const t = (performance.now() - t0) / 1000;
+      if ((performance.now() - t0) >= ms){ base.mo = 0; nekoStopLip(); return; }
+      const env = Math.min(1, Math.min((performance.now() - t0) / 160, (ms - (performance.now() - t0)) / 220));
+      const w = 0.5 + 0.5 * Math.sin(t * o.rate * Math.PI * 2 + Math.sin(t * 3.1) * 0.9);
+      base.mo = nekoClamp(env * o.amp * (0.35 + 0.65 * Math.pow(w, 1.3)), 0, 1);
+      nekoLipRAF = requestAnimationFrame(step);
+    };
+    step();
+    return () => { nekoStopLip(); base.mo = 0; };
+  },
+
+  /* 表情 / 姿态 */
+  emotion(name, ms){
+    /* 只动「表情相关」的键（头/眼/嘴/耳/尾），不碰四肢，方便与 pose() 叠加 */
+    const t = {};
+    NEKO_EXPR_KEYS.forEach(k => { t[k] = NEKO_EXPR.neutral[k] !== undefined ? NEKO_EXPR.neutral[k] : 0; });
+    t.el = 1; t.er = 1;
+    Object.assign(t, NEKO_EXPR[name] || {});
+    nekoSet(t, ms === undefined ? 320 : ms);
+    st.wag = (name === 'happy' || name === 'excited');
+    return NekoCat;
+  },
+  pose(name, ms){
+    const p = NEKO_POSE[name];
+    if (name === 'wave'){ st.waveOn = true; return NekoCat; }
+    st.waveOn = false;
+    nekoSet(Object.assign({}, { armL: 0, armL2: 0, armL3: 0, armR: 0, armR2: 0, armR3: 0 }, p || {}), ms === undefined ? 380 : ms);
+    return NekoCat;
+  },
+  /* 尾巴三参数（-1..1 / 0..1 / -1..1） */
+  tail(o, ms){
+    const d = {}; if (!o) return NekoCat;
+    if ('lift' in o) d.tl = o.lift; if ('curl' in o) d.tc = o.curl; if ('sway' in o) d.ts = o.sway;
+    nekoSet(d, ms === undefined ? 300 : ms); return NekoCat;
+  },
+  ears(l, r){ nekoSet({ earL: nekoClamp(l, -1, 1), earR: nekoClamp(r === undefined ? l : r, -1, 1) }, 0); return NekoCat; },
+  wave(on){ st.waveOn = !!on; return NekoCat; },
+  wag(on){ st.wag = !!on; return NekoCat; },
+  breathe(on){ st.idle = !!on; return NekoCat; },
+
+  /* 被摸一下：歪头 + 耳朵抖 + 眨眼，自动回落 */
+  touch(){
+    const snap = { ax: base.ax, az: base.az, earL: base.earL, earR: base.earR, tl: base.tl, el: base.el, er: base.er };
+    const hx = (Math.random() - 0.5) * 0.5;
+    nekoSet({ ax: hx, az: 0.09, earL: 0.26, earR: 0.20, tl: Math.max(base.tl, 0.35) }, 180);
+    catModel.blink();
+    setTimeout(() => { nekoSet(snap, 700); }, 900);
+    return NekoCat;
+  },
+
+  /* 嵌入 */
+  attachTo(el){
+    if (!el) return NekoCat;
+    el.appendChild(cv);
+    const stg = document.getElementById('stage'); if (stg) stg.style.display = 'none';
+    const pn = document.getElementById('panel'); if (pn) pn.style.display = 'none';
+    resize(); return NekoCat;
+  },
+  resize(){ resize(); return NekoCat; },
+  pause(on){ st.paused = !!on; return NekoCat; },
+
+  ready: null,
+  whenReady(cb){
+    NekoCat.ready.then(r => { try { cb(r); } catch (e) { console.error(e); } });
+    return NekoCat;
+  }
+};
+
+/* 图片就绪（51 件 webp 解码完成） */
+NekoCat.ready = new Promise(resolve => {
+  const t0 = performance.now();
+  const check = () => {
+    const list = Object.keys(ly).map(k => ly[k].img);
+    if (list.every(im => im.complete && im.naturalWidth > 0)) return resolve(true);
+    if (performance.now() - t0 > 20000) return resolve(false);
+    setTimeout(check, 50);
+  };
+  check();
+});
+
+/* 点一下有反应（可在接入侧关掉：NekoCat.touchEnabled = false） */
+NekoCat.touchEnabled = true;
+cv.addEventListener('pointerdown', () => { if (NekoCat.touchEnabled) NekoCat.touch(); });
+
+window.NekoCat = NekoCat;
+
+/* ---- 嵌入模式：?embed=1 或 #embed ---- */
+const NEKO_QS = new URLSearchParams(location.search);
+const NEKO_EMBED = NEKO_QS.get('embed') === '1' || /(^|,)(embed)(,|$)/.test((location.hash || '').replace(/^#/, ''));
+if (NEKO_EMBED){
+  document.documentElement.style.background = 'transparent';
+  document.body.style.background = 'transparent';
+  document.body.style.display = 'block';
+  const hide = id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; };
+  ['panel', 'hint', 'tip', 'fps'].forEach(hide);
+  const stg = document.getElementById('stage');
+  if (stg){ stg.style.position = 'absolute'; stg.style.inset = '0'; }
+  cv.style.cursor = 'default';
+  resize();
+}
+
+</script>
+
+<style>#cat{opacity:0;transition:opacity .35s}</style>
+<script>
+NekoCat.whenReady(function(ok){ if (ok) document.getElementById('cat').style.opacity = 1; });
+</script>
+
+</body></html>

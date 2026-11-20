@@ -193,7 +193,7 @@
       [runningDays(), '天在线']
     ];
     return '<div class="stat-bar glass reveal">' + items.map(function (it) {
-      return '<div class="stat-cell"><b>' + it[0] + '</b><span>' + it[1] + '</span></div>';
+      return '<div class="stat-cell"><b data-count-to="' + it[0] + '">' + it[0] + '</b><span>' + it[1] + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -948,7 +948,7 @@
       '<p class="profile-bio">' + esc(bio) + '</p></div></div>' +
       '<div class="profile-foot"><div class="profile-stats">' +
       stats.map(function (s) {
-        return '<a class="p-stat" href="' + esc(s[2]) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></a>';
+        return '<a class="p-stat" href="' + esc(s[2]) + '"><b data-count-to="' + s[0] + '">' + s[0] + '</b><span>' + s[1] + '</span></a>';
       }).join('') + '</div><div class="p-links">' + profileLinksHtml() + '</div></div></section>';
   }
   /* 名片右上角：整站爱心点赞 + 首页匿名浏览数（站长本人不计入） */
@@ -1320,6 +1320,7 @@
        视口之外而不显示，直到用户手动滚动才出现 */
     window.scrollTo(0, 0);
     observeReveal();
+    initCountUp();
     measureScroll();
     updateScroll();
   }
@@ -1853,7 +1854,12 @@
     var de = document.documentElement;
     var prev = de.style.scrollBehavior;
     de.style.scrollBehavior = 'auto';
-    window.scrollTo(0, 0);
+    /* 只改行内样式还不够：同一次 tick 里 scrollTo 仍会用改之前算好的 scroll-behavior，
+       先强制一次样式重算；再用 behavior:'instant' 覆盖 CSS（规范里它优先于 scroll-behavior）。 */
+    try { void de.offsetHeight; } catch (e) {}
+    try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
+    catch (e) { window.scrollTo(0, 0); }
+    if (window.scrollY) window.scrollTo(0, 0);
     de.style.scrollBehavior = prev;
   }
 
@@ -2029,7 +2035,10 @@
     }
     var top = document.getElementById('to-top');
     if (top && top.addEventListener) {
-      top.addEventListener('click', function () { flyTop(top); });
+      top.addEventListener('click', function () {
+        flyTop(top);
+        launchStarMeteor(top);
+      });
     }
     var ticking = false;
     function raf(fn) {
@@ -2269,9 +2278,330 @@
   initSkyRepulsion();
   initTheme();
   initSearch();
+  /* ---------- 数字滚动 ----------
+     纯文本替换、不加任何新样式，所以字体/渐变/字号全部保持原样。
+     两种用法：
+       rollNumber(el, to)  从 0 滚到 to —— 用于「7 篇文章 / 3 张照片」这类统计
+       countTo(el, to)     从当前数字滚到 to —— 用于浏览数/点赞数这类会变的数 */
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+  function tweenNumber(el, from, to, dur) {
+    if (!el) return;
+    to = Math.max(0, Math.round(Number(to) || 0));
+    from = Math.max(0, Math.round(Number(from) || 0));
+    function finish() { el.textContent = String(to); }
+    if (from === to) { finish(); return; }
+    if (reduced() || !window.requestAnimationFrame) { finish(); return; }
+    var start = 0;
+    function step(now) {
+      if (!start) start = now;
+      var p = Math.min(1, (now - start) / (dur || 820));
+      el.textContent = String(Math.round(from + (to - from) * easeOut(p)));
+      if (p < 1) window.requestAnimationFrame(step); else finish();
+    }
+    window.requestAnimationFrame(step);
+  }
+  function rollNumber(el, to) { tweenNumber(el, 0, to, 900); }
+  function countTo(el, to) {
+    var cur = parseInt(String(el.textContent || '0').replace(/[^\d]/g, ''), 10);
+    tweenNumber(el, isNaN(cur) ? 0 : cur, to, 620);
+  }
+  var countObserver = null;
+  function initCountUp() {
+    var nodes = app.querySelectorAll ? app.querySelectorAll('[data-count-to]') : [];
+    if (!nodes.length) return;
+    if (countObserver) { try { countObserver.disconnect(); } catch (e) {} }
+    if (!window.IntersectionObserver) {
+      Array.prototype.forEach.call(nodes, function (n) { n.textContent = n.getAttribute('data-count-to'); });
+      return;
+    }
+    countObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        try { countObserver.unobserve(en.target); } catch (e) {}
+        rollNumber(en.target, Number(en.target.getAttribute('data-count-to')) || 0);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0 });
+    Array.prototype.forEach.call(nodes, function (n) { countObserver.observe(n); });
+  }
+  /* 供点赞/浏览量复用（likes.js 里读不到闭包内的函数） */
+  window.ZBCount = { countTo: countTo, roll: rollNumber };
+
+  /* 星星化作流星：直接让 .to-top 本体变成流星（而不是新建一个 0 尺寸容器）。
+     原因：0×0 的合成层会被裁掉，子元素根本画不出来；按钮本身有 48px 尺寸，
+     换皮 + 位移一定看得见。回顶是瞬时的，这一下只负责视觉收尾。 */
+  function launchStarMeteor(btn) {
+    if (!btn || reduced()) return;
+    if (btn.classList.contains('flying')) return;
+    btn.classList.add('flying');
+    var dist = (window.innerHeight || 700) + 200;
+    var done = function () {
+      try { if (anim && anim.cancel) anim.cancel(); } catch (e) {}
+      btn.classList.remove('flying');
+      updateScroll();
+    };
+    var anim = null;
+    if (btn.animate) {
+      anim = btn.animate([
+        { transform: 'translateY(0) scale(1)', opacity: 1 },
+        { transform: 'translateY(' + (-dist * 0.5).toFixed(0) + 'px) scale(.86)', opacity: 1, offset: .55 },
+        { transform: 'translateY(' + (-dist).toFixed(0) + 'px) scale(.5)', opacity: 0 }
+      ], { duration: 560, easing: 'cubic-bezier(.16,.66,.3,1)', fill: 'forwards' });
+      anim.onfinish = done;
+      window.setTimeout(done, 900);
+    } else {
+      window.setTimeout(done, 30);
+    }
+  }
+  /* ================= 右下角站宠「雪团」 =================
+     模型是 51 个部件的 Canvas2D 运行时，隔离在自己的 iframe 里（同一个源，
+     所以可以直接调 contentWindow.NekoCat）。宿主这边只做四件事：
+       ① 延迟挂载（不抢首屏）  ② 长按拖动  ③ 拖动时滚轮缩放  ④ 视线跟随全局鼠标
+     位置与大小存 localStorage，刷新后还在原地。 */
+  var NEKO_KEY = 'zb-neko:v1';
+  var neko = { box: null, frame: null, grab: null, ready: false, dragging: false, w: 300 };
+
+  function nekoSave() {
+    try {
+      if (!neko.box) return;
+      var r = neko.box.getBoundingClientRect();
+      window.localStorage.setItem(NEKO_KEY, JSON.stringify({
+        x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width)
+      }));
+    } catch (e) { /* 隐私模式忽略 */ }
+  }
+  function nekoLoad() {
+    var o = null;
+    try { o = JSON.parse(window.localStorage.getItem(NEKO_KEY) || 'null'); } catch (e) { o = null; }
+    return (o && typeof o === 'object') ? o : null;
+  }
+  function nekoClampPos(x, y, w, h) {
+    var vw = window.innerWidth || 1024, vh = window.innerHeight || 768;
+    var minVis = 72;
+    x = Math.min(Math.max(x, minVis - w), vw - minVis);
+    y = Math.min(Math.max(y, 0), vh - minVis);
+    return { x: x, y: y };
+  }
+  function nekoApplySize(w) {
+    if (!neko.box) return;
+    neko.w = Math.min(560, Math.max(180, Math.round(w)));
+    var h = Math.round(neko.w * 1.135);          /* 画布 1441×1636 */
+    neko.box.style.width = neko.w + 'px';
+    neko.box.style.height = h + 'px';
+    var api = nekoApi();
+    if (api && api.resize) { try { api.resize(); } catch (e) {} }
+  }
+  function nekoApi() {
+    try {
+      var w = neko.frame && neko.frame.contentWindow;
+      return (w && w.NekoCat) ? w.NekoCat : null;
+    } catch (e) { return null; }
+  }
+  function nekoPlace(x, y) {
+    if (!neko.box) return;
+    var r = neko.box.getBoundingClientRect();
+    var p = nekoClampPos(x, y, r.width, r.height);
+    neko.box.style.left = Math.round(p.x) + 'px';
+    neko.box.style.top = Math.round(p.y) + 'px';
+    neko.box.style.right = 'auto';
+    neko.box.style.bottom = 'auto';
+  }
+
+  function initNekoPet() {
+    var box = document.getElementById('neko-pet');
+    var frame = document.getElementById('neko-frame');
+    var grab = document.getElementById('neko-grab');
+    if (!box || !frame || !grab) return;
+    neko.box = box; neko.frame = frame; neko.grab = grab;
+
+    /* ---- 恢复上次的位置与大小 ---- */
+    var saved = nekoLoad();
+    nekoApplySize(saved && saved.w ? saved.w : (window.innerWidth < 760 ? 200 : 280));
+    if (saved && typeof saved.x === 'number') nekoPlace(saved.x, saved.y);
+
+    /* ---- 延迟挂载：等页面空闲再拉 4.6MB 的部件 ---- */
+    var mounted = false;
+    function mount() {
+      if (mounted) return;
+      mounted = true;
+      /* 省流量模式 / 2G 网络：不下载这只猫，页面其余功能不受影响 */
+      var conn = navigator.connection || navigator.mozConnection || null;
+      if (conn && (conn.saveData || /(^|-)2g$/.test(String(conn.effectiveType || '')))) {
+        box.classList.add('loaded');
+        return;
+      }
+      frame.addEventListener('load', function () {
+        var api = nekoApi();
+        if (!api) return;
+        var finish = function () {
+          neko.ready = true;
+          box.classList.add('loaded');
+          tuneNeko(api);
+        };
+        if (api.whenReady) api.whenReady(finish); else finish();
+      }, { once: true });
+      frame.src = 'assets/neko/index.html?embed=1';
+    }
+    if (reduced()) {
+      /* 减少动效：只挂一张静止的猫，不跑循环 */
+      var once = function () {
+        var api = nekoApi();
+        if (api && api.pause) api.pause(true);
+      };
+      frame.addEventListener('load', once, { once: true });
+      setTimeout(function () { frame.src = 'assets/neko/index.html?embed=1'; }, 2200);
+    } else if (window.requestIdleCallback) {
+      window.requestIdleCallback(mount, { timeout: 2600 });
+    } else {
+      window.addEventListener('load', function () { setTimeout(mount, 1200); });
+      if (document.readyState === 'complete') setTimeout(mount, 900);
+    }
+
+    /* ---- 视线跟随：全页鼠标 → 换算成 iframe 内坐标 ---- */
+    var px = 0, py = 0, hasPointer = false, gazeTick = 0;
+    window.addEventListener('pointermove', function (e) {
+      px = e.clientX; py = e.clientY; hasPointer = true;
+      if (gazeTick) return;
+      gazeTick = window.requestAnimationFrame(function () {
+        gazeTick = 0;
+        var api = nekoApi();
+        if (!api || !neko.ready || !hasPointer || neko.dragging) return;
+        var r = frame.getBoundingClientRect();
+        try { api.lookAt(px - r.left, py - r.top); } catch (e) {}
+      });
+    }, { passive: true });
+
+    /* ---- 长按拖动 / 点击摸一下 / 拖动中滚轮缩放 ---- */
+    var pressTimer = 0, downX = 0, downY = 0, offX = 0, offY = 0, wheelTimer = 0;
+
+    function beginDrag() {
+      pressTimer = 0;
+      var r = box.getBoundingClientRect();
+      neko.dragging = true;
+      offX = downX - r.left;
+      offY = downY - r.top;
+      box.classList.add('dragging');
+    }
+    function cancelPress() {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = 0; }
+    }
+    grab.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      downX = e.clientX; downY = e.clientY;
+      cancelPress();
+      pressTimer = window.setTimeout(beginDrag, 280);
+      try { grab.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    grab.addEventListener('pointermove', function (e) {
+      if (!neko.dragging) return;
+      nekoPlace(e.clientX - offX, e.clientY - offY);
+    });
+    function endPress(e) {
+      cancelPress();
+      if (neko.dragging) {
+        neko.dragging = false;
+        box.classList.remove('dragging');
+        nekoSave();
+        return;
+      }
+      /* 没拖动 = 轻点一下：摸摸头 */
+      var api = nekoApi();
+      if (api && api.touch) {
+        try { api.touch(); } catch (err) {}
+        nekoLife.guard = performance.now() + 1200;   /* 摸头的耳朵动画期间不要叠加抽动 */
+      }
+    }
+    grab.addEventListener('pointerup', endPress);
+    grab.addEventListener('pointercancel', endPress);
+
+    grab.addEventListener('wheel', function (e) {
+      if (!neko.dragging) return;                 /* 只有拖拽途中才缩放，平时不抢页面滚动 */
+      e.preventDefault();
+      var step = e.deltaY > 0 ? -0.07 : 0.07;
+      nekoApplySize(neko.w * (1 + step));
+      if (wheelTimer) clearTimeout(wheelTimer);
+      wheelTimer = window.setTimeout(nekoSave, 320);
+    }, { passive: false });
+
+    /* ---- 窗口尺寸变化：把猫拉回可视区 ---- */
+    var resizeTimer = 0;
+    window.addEventListener('resize', function () {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function () {
+        var r = box.getBoundingClientRect();
+        if (r.right > window.innerWidth || r.bottom > window.innerHeight ||
+            r.left < 0 || r.top < 0) {
+          nekoPlace(r.left, r.top);
+        }
+        var api = nekoApi();
+        if (api && api.resize) { try { api.resize(); } catch (e) {} }
+      }, 200);
+    }, { passive: true });
+
+    /* ---- 切到后台就冻结，省电 ---- */
+    document.addEventListener('visibilitychange', function () {
+      var api = nekoApi();
+      if (api && api.pause) { try { api.pause(document.hidden); } catch (e) {} }
+    });
+  }
+
+  /* 让她的默认状态像一只真的在坐着的猫：
+     模型自带呼吸与头部的慢摆，但耳朵和尾巴是静态的，所以这里补两层「生命感」：
+       · 尾巴：两个不同周期的正弦叠加，慢速左右扫（不是机械等幅摆动）
+       · 耳朵：随机间隔的轻抽动，幅度小、带回落，像被什么声音惊了一下
+     直接写 base.*（模型每帧读它），所以是零延迟、无缝的，不会和缓动队列打架。 */
+  var nekoLife = { t0: 0, raf: 0, earAt: 0, earBusy: 0, guard: 0 };
+  function nekoLifeStart() {
+    if (nekoLife.raf) return;
+    nekoLife.t0 = performance.now();
+    nekoLife.earAt = 3 + Math.random() * 4;
+    var tick = function (now) {
+      nekoLife.raf = window.requestAnimationFrame(tick);
+      var api = nekoApi();
+      if (!api || !neko.ready) return;
+      var t = (now - nekoLife.t0) / 1000;
+      var base = api.base;
+      if (base) {
+        /* 尾巴：慢扫 + 一点不规则；抬起角度也跟着轻轻起伏 */
+        base.ts = 0.15 * Math.sin(t * 0.62) + 0.06 * Math.sin(t * 1.47 + 1.1);
+        base.tl = 0.05 + 0.025 * Math.sin(t * 0.44 + 0.6);
+        base.tc = 0.16 + 0.02 * Math.sin(t * 0.31);
+        /* 身体：极轻的重心左右转移，和尾巴反相，看起来才像"活着" */
+        base.bx = 0.018 * Math.sin(t * 0.37 + 2.0);
+      }
+      /* 耳朵抽动：每 4~9 秒一次，左右随机，0.28s 回落 */
+      if (now >= nekoLife.earAt && now > nekoLife.guard && !neko.dragging) {
+        var left = Math.random() < 0.5;
+        var amp = 0.16 + Math.random() * 0.14;
+        var cur = api.base ? { l: api.base.earL || 0, r: api.base.earR || 0 } : { l: 0, r: 0 };
+        if (api.ears) {
+          api.ears(left ? cur.l + amp : cur.l, left ? cur.r : cur.r + amp);
+          window.setTimeout(function () {
+            if (api.ears) api.ears(cur.l, cur.r);
+          }, 260 + Math.random() * 120);
+        }
+        nekoLife.earAt = now + 4000 + Math.random() * 5200;
+      }
+    };
+    nekoLife.raf = window.requestAnimationFrame(tick);
+  }
+
+  /* 模型版本差异时忽略所有调节 */
+  function tuneNeko(api) {
+    try {
+      if (api.emotion) api.emotion('neutral', 0);
+      if (api.breathe) api.breathe(true);
+      if (api.wag) api.wag(false);
+      if (api.eyes) api.eyes(1, 1);
+      if (api.mouth) api.mouth(0);
+      if (api.follow) api.follow(false);
+      nekoLifeStart();
+    } catch (e) { /* 忽略 */ }
+  }
+
   initInteractions();
   initChangelogSync();
   initNavPill();
   initStackWheel();
   route();
+  initNekoPet();
 })();

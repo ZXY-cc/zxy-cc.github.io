@@ -2434,3 +2434,77 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   font-family: var(--font-code, "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace);
 }
 /* ZB-MATH:END */
+
+/* ---------- 回顶：星星本体化作流星 ----------
+   不再新建 0×0 容器（那种合成层会被裁掉），而是给 .to-top 换皮后整块上飞。 */
+.to-top.flying {
+  /* 必须关掉过渡：CSS transition 在层叠里优先于 WAAPI 动画，
+     否则 transform 被过渡钉住，按钮根本飞不起来 */
+  transition: none !important;
+  background: none; border-color: transparent; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  opacity: 1; transform: none; pointer-events: none; overflow: visible;
+}
+.to-top.flying .puffy-mark { transform: scale(1.18); }
+.to-top.flying .puffy-mark svg {
+  fill: #fff8e4;
+  filter: drop-shadow(0 0 6px rgba(255,240,190,.95)) drop-shadow(0 0 18px var(--star-mist, rgba(255,224,160,.6)));
+}
+/* 尾迹：从头（星星）向下拉出，越远越淡，和背景 .meteor 同一套配色 */
+.to-top.flying::after {
+  content: ''; position: absolute; left: 50%; top: 100%; width: 3px; height: 210px;
+  margin-left: -1.5px; border-radius: 999px;
+  background: linear-gradient(180deg,
+    rgba(255,246,214,.95) 0%, rgba(255,230,170,.62) 20%,
+    var(--star-halo, rgba(255,214,150,.45)) 60%, transparent 100%);
+  filter: blur(1.8px);
+  /* 尾迹不做独立动画：跟着按钮一起上飞、一起淡出，少一个动画少一处出错 */
+  transform-origin: 50% 0;
+  opacity: .92;
+}
+@media (prefers-reduced-motion: reduce) {
+  .to-top.flying { display: none; }
+}
+
+/* ============================================================
+   右下角站宠「雪团」—— 容器 / 拖拽把手 / 缩放
+   容器本身不接收指针事件，靠上面那层 .neko-grab 接管：
+   这样 iframe 内部的鼠标移动不会和宿主页抢事件。
+   ============================================================ */
+.neko-pet {
+  position: fixed; z-index: 38;
+  right: 22px; bottom: 92px;
+  width: 300px; height: 340px;
+  /* 尺寸靠 JS 写 --neko-w / --neko-h，缩放时只改这两个变量 */
+  pointer-events: none;
+  touch-action: none;
+  transition: filter .3s ease, opacity .45s ease;
+  opacity: 0;
+}
+.neko-pet.loaded { opacity: 1; }
+.neko-stage {
+  position: absolute; inset: 0; overflow: hidden;
+  /* 画布本体自带透明底，这里再兜一层极淡的柔光，避免白猫贴在浅色背景上发飘 */
+  filter: drop-shadow(0 14px 22px rgba(120, 108, 150, .18));
+}
+.neko-stage iframe {
+  display: block; width: 100%; height: 100%;
+  border: 0; background: transparent; pointer-events: none;
+}
+.neko-grab {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  pointer-events: auto; cursor: grab; border-radius: 18px;
+  background: transparent;
+  transition: background .25s ease;
+}
+/* 长按进入拖动：给一层很淡的描边提示"抓到了" */
+.neko-pet.dragging .neko-grab { cursor: grabbing; background: rgba(255, 255, 255, .14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55); }
+.neko-pet.dragging { filter: brightness(1.03); }
+.neko-pet.dragging .neko-stage { filter: drop-shadow(0 22px 30px rgba(120, 108, 150, .26)); }
+@media (max-width: 760px) {
+  .neko-pet { right: 8px; bottom: 74px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .neko-pet { transition: opacity .2s ease; }
+}
