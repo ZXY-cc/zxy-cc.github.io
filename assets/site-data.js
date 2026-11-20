@@ -207,6 +207,87 @@ window.STUDIO_DATA = {
           "h": 1200
         }
       ]
+    },
+    {
+      "id": "a-mwoyswte6xx9",
+      "title": "重庆-山城 · LIVE⛰️",
+      "date": "2026-08-16",
+      "desc": "重庆-山城 · LIVE⛰️",
+      "cover": "/assets/photos/p-5f4c99178069.jpg",
+      "photos": [
+        {
+          "src": "/assets/photos/p-5f4c99178069.jpg",
+          "title": "",
+          "note": "来福士广场 朝天门",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-faa3bfa60183.jpg",
+          "title": "",
+          "note": "一眼重庆·全景烤肉餐酒吧",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-e68becbaffeb.jpg",
+          "title": "",
+          "note": "长江索道 周公馆",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-3237f7c606de.jpg",
+          "title": "",
+          "note": "红岩革命纪念馆",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-b818a70be69e.jpg",
+          "title": "",
+          "note": "1st/22nd层？",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-08ccfdc1a41f.jpg",
+          "title": "",
+          "note": "洪崖洞步行街",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-365ff168b941.jpg",
+          "title": "",
+          "note": "美食 磁器口",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-b48f28eca196.jpg",
+          "title": "",
+          "note": "街景",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-917aff2f54d9.jpg",
+          "title": "",
+          "note": "李子坝 白公馆 渣滓洞",
+          "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        }
+      ]
     }
   ],
   "moments": [
