@@ -2538,6 +2538,7 @@
     }, { passive: true });
 
     /* ---- 切到后台就冻结，省电 ---- */
+    nekoWatchTheme();
     document.addEventListener('visibilitychange', function () {
       var api = nekoApi();
       if (api && api.pause) { try { api.pause(document.hidden); } catch (e) {} }
@@ -2562,9 +2563,9 @@
       var base = api.base;
       if (base) {
         /* 尾巴：慢扫 + 一点不规则；抬起角度也跟着轻轻起伏 */
-        base.ts = 0.15 * Math.sin(t * 0.62) + 0.06 * Math.sin(t * 1.47 + 1.1);
-        base.tl = 0.05 + 0.025 * Math.sin(t * 0.44 + 0.6);
-        base.tc = 0.16 + 0.02 * Math.sin(t * 0.31);
+        base.ts = 0.42 * Math.sin(t * 0.62) + 0.16 * Math.sin(t * 1.47 + 1.1);
+        base.tl = 0.05 + 0.03 * Math.sin(t * 0.44 + 0.6);
+        base.tc = 0.16 + 0.025 * Math.sin(t * 0.31);
         /* 身体：极轻的重心左右转移，和尾巴反相，看起来才像"活着" */
         base.bx = 0.018 * Math.sin(t * 0.37 + 2.0);
       }
@@ -2585,6 +2586,22 @@
     nekoLife.raf = window.requestAnimationFrame(tick);
   }
 
+  /* 环境色染色：让白猫沾上网页的环境色（白天偏暖粉、夜间偏冷紫） */
+  function nekoTint(api) {
+    if (!api || !api.tint) return;
+    var night = document.documentElement.getAttribute('data-theme') === 'night';
+    try {
+      if (night) api.tint('rgba(122,134,190,1)', 0.16);
+      else api.tint('rgba(232,208,222,1)', 0.11);
+    } catch (e) {}
+  }
+  function nekoWatchTheme() {
+    try {
+      var mo = new MutationObserver(function () { nekoTint(nekoApi()); });
+      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+    } catch (e) {}
+  }
+
   /* 模型版本差异时忽略所有调节 */
   function tuneNeko(api) {
     try {
@@ -2594,6 +2611,7 @@
       if (api.eyes) api.eyes(1, 1);
       if (api.mouth) api.mouth(0);
       if (api.follow) api.follow(false);
+      nekoTint(api);
       nekoLifeStart();
     } catch (e) { /* 忽略 */ }
   }
