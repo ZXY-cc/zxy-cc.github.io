@@ -377,6 +377,47 @@ window.STUDIO_DATA = {
           "h": 1200
         }
       ]
+    },
+    {
+      "id": "a-mwozenwr76p8",
+      "title": "天津-水上乐园&动物园",
+      "date": "2026-10-18",
+      "desc": "天津-水上乐园&动物园",
+      "cover": "/assets/photos/p-4c3c4c4d5a19.jpg",
+      "photos": [
+        {
+          "src": "/assets/photos/p-4c3c4c4d5a19.jpg",
+          "title": "",
+          "note": "",
+          "date": "2026-10-18",
+          "w": 1200,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-632e4e55c462.jpg",
+          "title": "",
+          "note": "",
+          "date": "2026-10-18",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-fab68af5824b.jpg",
+          "title": "",
+          "note": "",
+          "date": "2026-10-18",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-3814ce5b7db3.jpg",
+          "title": "",
+          "note": "",
+          "date": "2026-10-18",
+          "w": 900,
+          "h": 1200
+        }
+      ]
     }
   ],
   "moments": [
