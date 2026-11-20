@@ -127,31 +127,6 @@ window.STUDIO_DATA = {
       ]
     },
     {
-      "id": "a-mweqopzs46wx",
-      "title": "（测试竖版）",
-      "date": "2026-11-13",
-      "desc": "测试（竖版）",
-      "cover": "/assets/photos/p-1b45faf9e766.jpg",
-      "photos": [
-        {
-          "src": "/assets/photos/p-1b45faf9e766.jpg",
-          "title": "测试（竖版） · 1",
-          "note": "竖版测试照片 · 第一张，检查 3:4 原比例铺满",
-          "date": "2026-11-13",
-          "w": 900,
-          "h": 1200
-        },
-        {
-          "src": "/assets/photos/p-b51ff49eae8d.jpg",
-          "title": "测试（竖版） · 2",
-          "note": "竖版测试照片 · 第二张，检查下层照片的景深",
-          "date": "2026-11-13",
-          "w": 900,
-          "h": 1200
-        }
-      ]
-    },
-    {
       "id": "a-mwm0yntjxdbi",
       "title": "成都-蓉城 · LIVE🌸",
       "date": "2026-08-14",
@@ -284,6 +259,63 @@ window.STUDIO_DATA = {
           "title": "",
           "note": "李子坝 白公馆 渣滓洞",
           "date": "2026-08-16",
+          "w": 900,
+          "h": 1200
+        }
+      ]
+    },
+    {
+      "id": "a-mwoz4jmh5b47",
+      "title": "广州-花城 · LIVE🌸",
+      "date": "2026-08-18",
+      "desc": "广州-花城 · LIVE🌸",
+      "cover": "/assets/photos/p-c1b2f78b4c9e.jpg",
+      "photos": [
+        {
+          "src": "/assets/photos/p-c1b2f78b4c9e.jpg",
+          "title": "",
+          "note": "中山纪念馆",
+          "date": "2026-08-18",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-6fbdf6032d35.jpg",
+          "title": "",
+          "note": "广州塔 珠江夜游",
+          "date": "2026-08-18",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-c9005e3b05b6.jpg",
+          "title": "",
+          "note": "陈家祠",
+          "date": "2026-08-18",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-871573694a14.jpg",
+          "title": "",
+          "note": "永康坊 沙面",
+          "date": "2026-08-18",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-2c29c03c3760.jpg",
+          "title": "",
+          "note": "美食",
+          "date": "2026-08-18",
+          "w": 900,
+          "h": 1200
+        },
+        {
+          "src": "/assets/photos/p-0dcbba66f820.jpg",
+          "title": "",
+          "note": "街景",
+          "date": "2026-08-18",
           "w": 900,
           "h": 1200
         }
