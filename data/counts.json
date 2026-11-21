@@ -2,7 +2,7 @@
  "like:post:blog-changelog": 0,
  "view:post:blog-changelog": 9,
  "like:post:markdown-extensions": 4,
- "view:post:markdown-extensions": 38,
+ "view:post:markdown-extensions": 39,
  "like:post:free-blog": 1,
  "view:post:free-blog": 21,
  "like:post:p-mwhf1abawj06": 3,
@@ -16,5 +16,5 @@
  "like:moment:m-mwhfi1ljey7k": 0,
  "like:chatter:c-3": 0,
  "like:site:home": 6,
- "view:site:home-v2": 320
+ "view:site:home-v2": 344
 }
