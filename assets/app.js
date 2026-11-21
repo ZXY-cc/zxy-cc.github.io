@@ -2731,7 +2731,7 @@
   /* 站内预置的聊天接口（智谱 BigModel，OpenAI 兼容）：用户无痕访问也能聊。
      地址 | 密钥 | 模型；温度与最大输出随请求一起带上。
      用户可在设置里改成自己的接口，改后即覆盖这个默认值。 */
-  var NEKO_API_DEFAULT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions|4a84b8074a3e48d6be02c73ad24a4a59.0wArXpua0jGUAqyR|glm-4-flash';
+  var NEKO_API_DEFAULT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions|4a84b8074a3e48d6be02c73ad24a4a59.OwArXpuaOjGUAqyR|glm-4-flash';
   var NEKO_TEMPERATURE = 0.9;
   var NEKO_MAX_TOKENS = 4096;
   var nekoChat = { hist: [], busy: false, hideTimer: 0 };
