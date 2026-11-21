@@ -15,6 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -279,6 +280,12 @@ const verMatch = metaText.match(/（(v\d+(?:\.\d+)+)/);
 const LOG_DATE = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 10);
 const LOG_VER = verMatch ? verMatch[1] : 'v1.0.0';
 CACHE_VER = LOG_VER;
+/* 缓存键在版本号后追加脚本内容指纹：同一版本内脚本改动也能让浏览器拉到新文件，
+   避免「合并修复不升版本号 → 手机端复用旧缓存」导致修复不生效。 */
+try {
+  const appHash = crypto.createHash('sha256').update(read('assets/app.js')).digest('hex').slice(0, 8);
+  CACHE_VER += '-' + appHash;
+} catch (e) { /* 读不到脚本时退回纯版本号 */ }
 const versions = [];
 for (const b of blocks) {
   if (b.type === 'table' && tableKind(b.header) === 't-ver') {

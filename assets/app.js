@@ -2771,6 +2771,11 @@
     try { o = JSON.parse(raw || 'null'); } catch (e) { o = null; }
     /* 从未存过配置才用站内预置接口；用户主动清空（存下空 api）时尊重其选择 */
     if (!raw || !o || typeof o !== 'object') return { api: NEKO_API_DEFAULT, skill: '' };
+    /* 自愈：早期预置密钥误把大写 O 抄成数字 0，若本机曾存下这串失效 key，自动修正为当前预置值 */
+    if (typeof o.api === 'string' && o.api.indexOf('0wArXpua0jGUAqyR') >= 0) {
+      o.api = NEKO_API_DEFAULT;
+      nekoCfgSave(o);
+    }
     return o;
   }
   function nekoCfgSave(cfg) {
