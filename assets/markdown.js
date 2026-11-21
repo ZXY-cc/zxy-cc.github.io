@@ -692,7 +692,7 @@
 
   /* ---------------- 洛谷扩展：容器指令（折叠框 / 对齐 / 引言 / 渐变竖线） ----------------
      语法 :::名字[标题]{open}，闭合行是同等数量的冒号；嵌套时外层多用一个冒号。
-     :::|epig[署名] 是引言与署名的新写法（旧 :::epig[署名] 保持兼容）。 */
+     :::epig[署名] / :::|epig[署名] 是引言与署名：默认无底色，{1} 才带底色。 */
   function directiveInfo(line) {
     var m = line.match(/^ {0,3}(:{3,})(\|epig|\||[a-z][a-z-]*)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?[ \t]*$/);
     return m ? { colons: m[1].length, name: m[2], arg: m[3] || '', hasArg: m[3] !== undefined,
@@ -709,9 +709,10 @@
       var vbg = /^\s*1\s*$/.test(dir.opt) ? ' zb-vl-bg' : '';
       return '<div class="zb-vl' + vbg + '">' + inner + '</div>';
     }
-    if (dir.name === '|epig') {
-      /* :::|epig[署名]：引言与署名的新写法。省略大括号或写 0 = 去掉底色
-         （视觉与 :::| 渐变竖线一致）；写 1 = 保留原版引言底色 */
+    if (dir.name === '|epig' || dir.name === 'epigraph' || dir.name === 'epig') {
+      /* :::epig[署名] 与 :::|epig[署名] 同一套视觉：默认不带底色
+         （与 :::| 渐变竖线一致）；大括号写 {1} 才保留原版引言底色，
+         写 {0} 或省略等价 */
       return '<blockquote class="zb-epigraph' +
         (/^\s*1\s*$/.test(dir.opt) ? '' : ' no-bg') + '">' + inner +
         (dir.arg ? '<footer class="zb-epigraph-sign">' + inline(dir.arg) + '</footer>' : '') +
@@ -720,12 +721,6 @@
     if (dir.name === 'align') {
       var how = (dir.opt === 'r' || /right/i.test(dir.opt)) ? 'right' : 'center';
       return '<div class="zb-align zb-align-' + how + '">' + inner + '</div>';
-    }
-    if (dir.name === 'epigraph' || dir.name === 'epig') {
-      /* 旧写法 :::epig[署名]：保持原版视觉（带底色） */
-      return '<blockquote class="zb-epigraph">' + inner +
-        (dir.arg ? '<footer class="zb-epigraph-sign">' + inline(dir.arg) + '</footer>' : '') +
-        '</blockquote>';
     }
     if (FOLD_TITLES[dir.name]) {
       var fname = FOLD_CLASS[dir.name] || dir.name;

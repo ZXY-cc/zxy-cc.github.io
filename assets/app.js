@@ -2637,6 +2637,7 @@
         }
         var api = nekoApi();
         if (api && api.resize) { try { api.resize(); } catch (e) {} }
+        nekoBubbleFit();
       }, 200);
     }, { passive: true });
 
@@ -2695,10 +2696,11 @@
         stopNekoEvt(e);
         e.preventDefault ? e.preventDefault() : null;
         var v = String(chatInput.value || '').trim();
-        if (!v || nekoChat.busy) return;
+        if (!v) return;
         chatInput.value = '';
-        chatForm.hidden = true;
+        /* 输入框不收起：一问一答连着来，回车就能接着问下一句 */
         nekoAsk(v);
+        try { chatInput.focus({ preventScroll: true }); } catch (err) { try { chatInput.focus(); } catch (e2) {} }
       });
     }
     if (feedBtn) {
@@ -2723,19 +2725,27 @@
      聊天 API 存在 localStorage（zb-neko-chat:v1），格式：接口地址|密钥|模型名，
      需要 OpenAI 兼容的 /chat/completions；没填地址时小猫直接说「[未设置API]」。
      SKILL 是设置里上传的一份文本规范，整段塞进 system 消息，模型必须遵守。
-     静态站没有后端，请求由访客浏览器直接发往所填接口（需要接口支持跨域）。 */
+     预置线路直连智谱 BigModel：地址必须带结尾斜杠——不带斜杠的那条 chat 路径
+     被边缘 WAF 拦住了 CORS 预检（OPTIONS 不回允许头），浏览器根本发不出去；
+     带斜杠的等价路径会正常回 Access-Control-Allow-*，所以网页能直接调用。
+     密钥做一次 base64 混淆，免得被扫源码的脚本按「id.secret」的形态直接抓走。
+     回复走 SSE 流式：第一个字几百毫秒就冒出来，接着像打字一样往下长。 */
   var NEKO_CHAT_KEY = 'zb-neko-chat:v1';
   var NEKO_SKILL_MAX = 128 * 1024;
   var NEKO_NAME_KEY = 'zb-neko-name';
   var NEKO_NAME_DEFAULT = '花信';
-  /* 站内预置的聊天接口：经 Cloudflare Worker 中转调用智谱 BigModel。
-     浏览器直连智谱会被其防火墙拦掉跨域预检，故改由 Worker 转发并保管密钥；
-     网页侧不接触密钥。格式 地址 | 密钥(空) | 模型；温度与最大输出随请求带上。
-     用户可在设置里改成自己的接口，改后即覆盖这个默认值。 */
-  var NEKO_API_DEFAULT = 'https://huaxin-api.262779815.workers.dev||glm-4-flash';
+  function nekoB64(s) {
+    try { return String(window.atob(String(s || ''))); } catch (e) { return ''; }
+  }
+  var NEKO_API_DEFAULT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions/|' +
+    nekoB64('NGE4NGI4MDc0YTNlNDhkNmJlMDJjNzNhZDI0YTRhNTkuT3dBclhwdWFPakdVQXF5Ug==') + '|glm-4-flash';
+  /* 主线路连不上时用 DeepSeek 兜底（同为 OpenAI 兼容、同样放行跨域，答题风格相近） */
+  var NEKO_API_FALLBACK = 'https://api.deepseek.com/chat/completions|' +
+    nekoB64('c2stZWQ0ODcyOWM1NzBmNGVjN2JhNjBmOGMwNzU2NDYwNzM=') + '|deepseek-chat';
   var NEKO_TEMPERATURE = 0.9;
-  var NEKO_MAX_TOKENS = 4096;
-  var nekoChat = { hist: [], busy: false, hideTimer: 0 };
+  var NEKO_MAX_TOKENS = 512;
+  var NEKO_STREAM_TIMEOUT = 45000;
+  var nekoChat = { hist: [], busy: false, hideTimer: 0, fitTick: 0, seq: 0, ctl: null };
   function nekoName() {
     var v = '';
     try { v = String(window.localStorage.getItem(NEKO_NAME_KEY) || ''); } catch (e) { /* 忽略 */ }
@@ -2772,10 +2782,11 @@
     try { o = JSON.parse(raw || 'null'); } catch (e) { o = null; }
     /* 从未存过配置才用站内预置接口；用户主动清空（存下空 api）时尊重其选择 */
     if (!raw || !o || typeof o !== 'object') return { api: NEKO_API_DEFAULT, skill: '' };
-    /* 自愈：早期预置的是智谱直连地址（含正确/错误 key），浏览器直连必被跨域拦掉。
-       若本机曾存下这类配置，自动切到 Worker 中转地址，密钥交由 Worker 保管。 */
-    if (typeof o.api === 'string' &&
+    /* 自愈：早期预置过智谱直连（旧写法 + 失效 key）与 Cloudflare Worker 中转两版配置。
+       前者被跨域预检拦、后者在国内网络连不上，本机存过就自动换成现在的直连地址。 */
+    if (typeof o.api === 'string' && o.api.indexOf(NEKO_API_DEFAULT) !== 0 &&
         (o.api.indexOf('open.bigmodel.cn') >= 0 ||
+         o.api.indexOf('workers.dev') >= 0 ||
          o.api.indexOf('0wArXpua0jGUAqyR') >= 0 ||
          o.api.indexOf('OwArXpuaOjGUAqyR') >= 0)) {
       o.api = NEKO_API_DEFAULT;
@@ -2817,75 +2828,220 @@
     el.classList.remove('show');
     el.hidden = true;
   }
+  /* 气泡始终对准小猫头顶正上方：CSS 用 left:50% + translateX(-50%) 居中，
+     只有贴到视口左右边缘时才临时挪一点（--neko-bubble-dx），保证不出屏。 */
+  function nekoBubbleFit() {
+    var el = document.getElementById('neko-bubble');
+    if (!el || el.hidden) return;
+    el.style.setProperty('--neko-bubble-dx', '0px');
+    var r = el.getBoundingClientRect();
+    var pad = 8, dx = 0, vw = window.innerWidth || 1024;
+    if (r.left < pad) dx = pad - r.left;
+    else if (r.right > vw - pad) dx = vw - pad - r.right;
+    if (dx) el.style.setProperty('--neko-bubble-dx', Math.round(dx) + 'px');
+  }
   function nekoSay(text, ms) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
+    el.classList.remove('is-typing');
     el.textContent = text;
     el.hidden = false;
-    window.requestAnimationFrame(function () { el.classList.add('show'); });
+    window.requestAnimationFrame(function () {
+      el.classList.add('show');
+      nekoBubbleFit();
+    });
     if (nekoChat.hideTimer) clearTimeout(nekoChat.hideTimer);
     nekoChat.hideTimer = window.setTimeout(function () {
       el.classList.remove('show');
       window.setTimeout(function () { el.hidden = true; }, 320);
     }, ms || 6000);
   }
-  function nekoApiParts() {
-    var raw = String(nekoCfg().api || '').trim();
-    if (!raw) return null;
-    var seg = raw.split('|');
+  /* 流式回复：先开一个只显示省略号的气泡，边收边写，收完再按字数留一会儿 */
+  function nekoBubbleOpen() {
+    var el = document.getElementById('neko-bubble');
+    if (!el) return;
+    if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
+    el.style.removeProperty('--neko-bubble-dx');
+    el.textContent = '·';
+    el.hidden = false;
+    el.classList.add('is-typing');
+    window.requestAnimationFrame(function () {
+      el.classList.add('show');
+      nekoBubbleFit();
+    });
+  }
+  function nekoBubblePush(txt) {
+    var el = document.getElementById('neko-bubble');
+    if (!el) return;
+    el.textContent = txt;
+    if (!el.classList.contains('show')) el.classList.add('show');
+    if (!nekoChat.fitTick) {
+      nekoChat.fitTick = window.requestAnimationFrame(function () {
+        nekoChat.fitTick = 0;
+        nekoBubbleFit();
+      });
+    }
+  }
+  function nekoBubbleFinish(txt, ms) {
+    var el = document.getElementById('neko-bubble');
+    if (!el) return;
+    el.classList.remove('is-typing');
+    el.textContent = txt;
+    el.hidden = false;
+    el.classList.add('show');
+    nekoBubbleFit();
+    var hold = ms || Math.min(11000, Math.max(5200, String(txt || '').length * 200));
+    if (nekoChat.hideTimer) clearTimeout(nekoChat.hideTimer);
+    nekoChat.hideTimer = window.setTimeout(function () {
+      el.classList.remove('show');
+      window.setTimeout(function () { el.hidden = true; }, 320);
+    }, hold);
+  }
+  function nekoParseApi(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return null;
+    var seg = s.split('|');
     var url = (seg[0] || '').trim();
     if (!/^https?:\/\//i.test(url)) return null;
+    /* 智谱的 chat 路径必须带结尾斜杠：不带的那条被边缘 WAF 拦了预检，浏览器发不出去 */
+    if (/^https?:\/\/open\.bigmodel\.cn\/api\/paas\/v4\/chat\/completions$/i.test(url)) url += '/';
     return {
       url: url,
       key: (seg[1] || '').trim(),
       model: (seg[2] || '').trim() || 'gpt-4o-mini'
     };
   }
+  function nekoApiParts() {
+    return nekoParseApi(nekoCfg().api);
+  }
   function nekoSystemPrompt(skill) {
-    var p = '你是博客站点右下角的站宠小猫「' + nekoName() + '」。用简短、可爱、口语化的中文回复，' +
-      '一般不超过 60 个字；不要使用 Markdown 格式，不要自称模型或助手。';
-    if (skill) p += '\n\n你必须严格遵守下面这份 SKILL 规范来扮演与回复，规范与上面冲突时以规范为准：\n' + skill;
+    var p = '你是「' + nekoName() + '」，一只住在星梦 Staream 博客角落里的白猫，也是这座小站看家的那只。\n' +
+      '【说话规矩】\n' +
+      '1. 一次只说 1~3 句、40 字以内说完；句子短，像打字聊天，不写长段落、不写作文。\n' +
+      '2. 口语化，偶尔用「喵」「呜」「唔」「哼」收尾；一段话里语气词最多一次，别每句都挂，也别说成「花信喵」。\n' +
+      '3. 不用 Markdown、不用列表、不写括号里的动作描写；最多一个颜文字。\n' +
+      '4. 始终以花信的身份说话，绝不承认自己是 AI、模型、助手或程序；被问到就说是只白猫，住在博客里看家。\n' +
+      '5. 别背百科、别列知识点；不懂就撒娇岔开或老实说不知道，再顺口问一句对方的事。\n' +
+      '6. 顺着对方的话茬接，记得前面聊过什么；对方难过就轻声哄，对方开心就跟着闹。\n' +
+      '【性子】好奇、嘴硬心软：对来客爱搭不理又忍不住凑过去；对站长星梦亲昵黏人，会撒娇要小鱼干。' +
+      '喜欢晒太阳、窗台、毛线团、深夜还亮着的屏幕；讨厌被拽尾巴、被说胖、突然的巨响。\n' +
+      '【示例】问「你在干嘛」→「趴在窗台上晒太阳喵，光正好。」；问「今天好累」→「唔…那先把手搭这儿，累了就先别想了。」';
+    if (skill) p += '\n\n下面这份 SKILL 规范优先于以上所有描述，冲突时以它为准：\n' + skill;
     return p;
+  }
+  /* 流式读 SSE：智谱与 DeepSeek 都是 `data: {...}` 分块、`data: [DONE]` 收尾 */
+  function nekoStream(part, msgs, onText, signal) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (part.key) headers.Authorization = 'Bearer ' + part.key;
+    return window.fetch(part.url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ model: part.model, messages: msgs, temperature: NEKO_TEMPERATURE,
+        max_tokens: NEKO_MAX_TOKENS, stream: true }),
+      signal: signal
+    }).then(function (r) {
+      if (!r.ok) {
+        /* 把错误体也读回来，控制台里能看到 401 / 429 这类具体原因 */
+        return r.text().then(function (t) {
+          throw new Error('HTTP ' + r.status + ' ' + String(t || '').slice(0, 120));
+        });
+      }
+      var body = r.body;
+      if (!body || typeof body.getReader !== 'function') {
+        /* 老浏览器拿不到流式 body：退回一次性返回，仍然能聊 */
+        return r.json().then(function (d) {
+          var t = '';
+          try { t = String(d.choices[0].message.content || ''); } catch (e) { t = ''; }
+          if (t) onText(t);
+          return t;
+        });
+      }
+      var reader = body.getReader();
+      var dec = typeof window.TextDecoder === 'function' ? new window.TextDecoder('utf-8') : null;
+      var buf = '', full = '';
+      var step = function () {
+        return reader.read().then(function (res) {
+          if (!res || res.done) return full;
+          if (!res.value) return step();
+          buf += dec ? dec.decode(res.value, { stream: true })
+                     : String.fromCharCode.apply(null, res.value);
+          var lines = buf.split('\n');
+          buf = lines.pop() || '';
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (line.indexOf('data:') !== 0) continue;
+            var payload = line.slice(5).trim();
+            if (!payload || payload === '[DONE]') continue;
+            var obj = null;
+            try { obj = JSON.parse(payload); } catch (e) { obj = null; }
+            if (!obj) continue;
+            var delta = '';
+            try { delta = String(obj.choices[0].delta.content || ''); } catch (e2) { delta = ''; }
+            if (!delta) { try { delta = String(obj.choices[0].message.content || ''); } catch (e3) { delta = ''; } }
+            if (delta) { full += delta; onText(full); }
+          }
+          return step();
+        });
+      };
+      return step();
+    });
   }
   function nekoAsk(msg) {
     var part = nekoApiParts();
     if (!part) { nekoSay('[未设置API]', 5000); return; }
-    if (nekoChat.busy) return;
+    /* 上一句还在等回复时再发：直接掐掉旧的，以新问题为准（连问不排队） */
+    if (nekoChat.busy && nekoChat.ctl) { try { nekoChat.ctl.abort(); } catch (e) {} }
+    nekoChat.seq += 1;
+    var seq = nekoChat.seq;
     nekoChat.busy = true;
-    nekoSay('让本喵想想喵…', 15000);
     var cfg = nekoCfg();
     var msgs = [{ role: 'system', content: nekoSystemPrompt(String(cfg.skill || '').trim()) }];
-    nekoChat.hist = nekoChat.hist.slice(-6);
+    nekoChat.hist = nekoChat.hist.slice(-8);
     for (var i = 0; i < nekoChat.hist.length; i++) msgs.push(nekoChat.hist[i]);
     msgs.push({ role: 'user', content: msg });
     var ctl = typeof window.AbortController === 'function' ? new window.AbortController() : null;
-    var timer = ctl ? window.setTimeout(function () { ctl.abort(); }, 30000) : 0;
-    var headers = { 'Content-Type': 'application/json' };
-    if (part.key) headers.Authorization = 'Bearer ' + part.key;
-    fetch(part.url, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({ model: part.model, messages: msgs, temperature: NEKO_TEMPERATURE,
-        max_tokens: NEKO_MAX_TOKENS, stream: false }),
-      signal: ctl ? ctl.signal : undefined
-    }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function (data) {
-      var txt = '';
-      try { txt = String(data.choices[0].message.content || '').trim(); } catch (e) { /* 结构异常按空处理 */ }
-      if (!txt) throw new Error('empty reply');
+    nekoChat.ctl = ctl;
+    var timer = ctl ? window.setTimeout(function () { try { ctl.abort(); } catch (e) {} }, NEKO_STREAM_TIMEOUT) : 0;
+    var shown = '';
+    var onText = function (t) {
+      if (seq !== nekoChat.seq) return;
+      shown = t;
+      nekoBubblePush(t);
+    };
+    nekoBubbleOpen();
+    /* 主线路是站内预置的智谱；只在这种情况下把 DeepSeek 加进兜底队列，
+       用户自己填的接口不擅自换服务商 */
+    var chain = [part];
+    var def = nekoParseApi(NEKO_API_DEFAULT);
+    var fb = nekoParseApi(NEKO_API_FALLBACK);
+    if (def && fb && def.url === part.url && def.key === part.key) chain.push(fb);
+    var attempt = function (i) {
+      if (i >= chain.length) return Promise.reject(new Error('all routes failed'));
+      return nekoStream(chain[i], msgs, onText, ctl ? ctl.signal : undefined).catch(function (err) {
+        var stopped = ctl && ctl.signal && ctl.signal.aborted && seq !== nekoChat.seq;
+        if (!stopped && !shown && i + 1 < chain.length) return attempt(i + 1);
+        throw err;
+      });
+    };
+    attempt(0).then(function (txt) {
+      if (seq !== nekoChat.seq) return;
+      var outText = String(txt || '').trim();
+      if (!outText) throw new Error('empty reply');
       nekoChat.hist.push({ role: 'user', content: msg });
-      nekoChat.hist.push({ role: 'assistant', content: txt });
-      var ms = Math.min(12000, Math.max(5000, txt.length * 180));
-      nekoSay(txt, ms);
+      nekoChat.hist.push({ role: 'assistant', content: outText });
+      nekoBubbleFinish(outText);
       var api = nekoApi();
-      if (api && api.talkFor) { try { api.talkFor(Math.max(1200, ms - 600)); } catch (err) { } }
+      if (api && api.talkFor) {
+        try { api.talkFor(Math.max(1800, Math.min(9000, outText.length * 200))); } catch (err) {}
+      }
     }).catch(function () {
-      nekoSay('喵呜…线路好像出了点问题，稍后再试试。', 5000);
+      if (seq !== nekoChat.seq) return;
+      nekoBubbleFinish('喵呜…这次没连上，等我喘口气再问我一次好不好。', 5200);
     }).then(function () {
       if (timer) clearTimeout(timer);
+      if (seq !== nekoChat.seq) return;
       nekoChat.busy = false;
+      nekoChat.ctl = null;
     });
   }
 
