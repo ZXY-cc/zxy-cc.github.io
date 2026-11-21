@@ -1696,11 +1696,14 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   border: 1px solid var(--glass-line); }
 .adm-side-foot { padding: 12px 10px 2px; }
 .adm-side-foot .soft-btn { width: 100%; }
-/* 窄屏：侧边栏折成顶部的横向胶囊菜单，分组标签隐藏 */
+/* 窄屏：侧边栏折成顶部的横向胶囊菜单，分组标签隐藏。
+   折成纵向 flex 后必须改回 stretch：flex-start 会让 adm-main 按内容收缩宽度，
+   相册/说说/友链/内容等面板卡片就不再与工坊卡片对齐（内容宽时还会超出页边）。 */
 @media (max-width: 900px) {
-  .adm { flex-direction: column; gap: 14px; }
+  .adm { flex-direction: column; gap: 14px; align-items: stretch; }
   .adm-side { position: static; flex: none; width: 100%; flex-direction: row; flex-wrap: wrap;
     align-items: center; padding: 12px 14px; }
+  .adm-main { width: 100%; max-width: 100%; }
   .adm-brand { padding: 0 8px 0 0; }
   .adm-menu { flex: 1 1 auto; flex-direction: row; flex-wrap: wrap; gap: 4px; }
   .adm-group { display: none; }
@@ -2508,3 +2511,72 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 @media (prefers-reduced-motion: reduce) {
   .neko-pet { transition: opacity .2s ease; }
 }
+
+/* ---------- 站宠互动：左侧聊天/喂食按钮 · 头顶气泡 · 聊天输入框 ----------
+   三个部件都是 #neko-pet 的子元素，拖动小猫时整体跟随、相对位置不变。
+   容器本身 pointer-events:none，交互件各自恢复 auto。 */
+.neko-actions {
+  position: absolute; left: -52px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 10px; z-index: 3;
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s ease;
+}
+/* 猫就绪后才亮出按钮（省流量模式不下载猫，也不该有按钮） */
+.neko-pet.ready .neko-actions { opacity: 1; pointer-events: auto; }
+.neko-act {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--glass-line); background: var(--glass-sheen), var(--glass-strong);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: var(--glass-shadow); cursor: pointer; padding: 0;
+  display: grid; place-items: center; color: var(--accent-text);
+  transition: transform .18s ease, color .2s ease, box-shadow .25s ease;
+  font: inherit;
+}
+.neko-act svg { width: 19px; height: 19px; fill: currentColor; pointer-events: none; }
+.neko-act-emoji { font-size: 18px; line-height: 1; }
+.neko-act:hover { transform: scale(1.1); color: var(--accent-3-text); box-shadow: 0 6px 18px rgba(171, 139, 212, .3); }
+.neko-act:active { transform: scale(.94); }
+.neko-act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.neko-bubble {
+  position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  max-width: min(250px, 68vw); padding: 10px 14px; border-radius: 14px;
+  background: var(--glass-sheen), var(--glass-strong); border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+  color: var(--ink); font-size: 13px; line-height: 1.7; text-align: center;
+  pointer-events: none; z-index: 4; word-break: break-word;
+  opacity: 0; translate: 0 6px; transition: opacity .28s ease, translate .28s ease;
+}
+.neko-bubble.show { opacity: 1; translate: 0 0; }
+.neko-bubble::after {
+  content: ''; position: absolute; left: 50%; bottom: -6px; width: 11px; height: 11px;
+  margin-left: -6px; background: inherit; border-right: 1px solid var(--glass-line);
+  border-bottom: 1px solid var(--glass-line); transform: rotate(45deg); border-radius: 2px;
+}
+.neko-chat {
+  position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+  width: min(240px, 74vw); display: flex; align-items: center; gap: 6px;
+  padding: 7px 8px 7px 14px; border-radius: 999px;
+  background: var(--glass-sheen), var(--glass-strong); border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+  pointer-events: auto; z-index: 4;
+}
+.neko-chat[hidden] { display: none; }
+.neko-chat input {
+  flex: 1 1 auto; min-width: 0; border: none; background: transparent; outline: none;
+  font: inherit; font-size: 13px; color: var(--ink);
+}
+.neko-chat input::placeholder { color: var(--faint); }
+.neko-chat button {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3)); color: #fff;
+  display: grid; place-items: center; font-size: 13px; padding: 0;
+  transition: transform .18s ease, opacity .2s ease;
+}
+.neko-chat button:hover { transform: scale(1.08); }
+.neko-chat button:active { transform: scale(.92); }
+.neko-chat button[disabled] { opacity: .55; cursor: default; transform: none; }
+/* 拖动时隐藏气泡与输入框：拖动中大圆过滤镜会把子件一起带亮，且拖着聊天框很难看 */
+.neko-pet.dragging .neko-bubble, .neko-pet.dragging .neko-chat { opacity: 0; transition: opacity .2s ease; }
+.neko-pet.dragging .neko-actions { opacity: 1; }

@@ -720,10 +720,12 @@
       (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
   }
   /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
-     滚动对象 = 实时计数器（浏览量与点赞量：爱心按钮、名片右上角、文章署名行）。
-     「所有」= 两类计数器都滚；「部分」= 仅点赞量滚，浏览量直接显示；
-     「关闭」= 全部直接显示。likes.js 的 rollText 每次执行都读同一个键
-     （zb-roll-mode），切换立即生效。 */
+     v3.69 语义：
+       「所有」= 所有滚动数字都滚：首页卡片与归档的彩色统计大数字 + 浏览量 + 点赞量；
+       「部分」= 仅首页卡片与归档的彩色统计大数字滚动，浏览量 / 点赞量直接显示；
+       「关闭」= 全部直接显示。
+     彩色大数字走 initCountUp（data-count-to），实时计数器走 likes.js 的 rollText，
+     两边都读同一个键（zb-roll-mode），切换立即生效。 */
   var ROLL_MODES = ['all', 'part', 'off'];
   function readRollMode() {
     try {
@@ -733,9 +735,9 @@
     return 'part';
   }
   function rollModeNote(m) {
-    if (m === 'all') return '已选择「所有」：浏览量与点赞量都带逐位滚动动画。';
+    if (m === 'all') return '已选择「所有」：统计大数字与浏览量、点赞量都带滚动动画。';
     if (m === 'off') return '已选择「关闭」：所有数字直接显示，不带滚动动画。';
-    return '已选择「部分」：仅点赞量带逐位滚动动画，浏览量直接显示。';
+    return '已选择「部分」：仅首页卡片与归档的彩色大数字滚动，浏览量与点赞量直接显示。';
   }
   /* 设置页「本机不计入浏览量」：写在 localStorage，likes.js 的 ownerDevice 读取同一个键 */
   function noCountOn() {
@@ -773,6 +775,42 @@
         '已开启：这台设备浏览页面不会再增加浏览数。' :
         '已关闭：这台设备按普通访客计入浏览数。';
     }
+    if (t && t.getAttribute && t.getAttribute('data-neko-show') !== null) {
+      nekoSetVisible(t.checked);
+      var nkNote = document.getElementById('neko-show-state');
+      if (nkNote) nkNote.textContent = t.checked ?
+        '已开启：雪团常驻右下角；关闭后不会再出现，也不再下载它的资源。' :
+        '已关闭：雪团不会再出现；重新打开后会自动回来（位置和大小保持原样）。';
+      return;
+    }
+    if (t && t.getAttribute && t.getAttribute('data-neko-api') !== null) {
+      var nkCfg = nekoCfg();
+      nkCfg.api = String(t.value || '').trim();
+      nekoCfgSave(nkCfg);
+      var nkApiNote = document.getElementById('neko-api-state');
+      if (nkApiNote) nkApiNote.textContent = nekoApiStateNote(nkCfg.api);
+      return;
+    }
+    if (t && t.getAttribute && t.getAttribute('data-neko-skill') !== null) {
+      var nkFile = t.files && t.files[0];
+      if (!nkFile) return;
+      var nkSkillNote = document.getElementById('neko-skill-state');
+      if (nkFile.size > NEKO_SKILL_MAX) {
+        if (nkSkillNote) nkSkillNote.textContent = '文件太大（超过 128KB），请换一份更小的 SKILL 文件。';
+        return;
+      }
+      var rd = new FileReader();
+      rd.onload = function () {
+        var cfg2 = nekoCfg();
+        cfg2.skill = String(rd.result || '').slice(0, NEKO_SKILL_MAX);
+        nekoCfgSave(cfg2);
+        if (nkSkillNote) nkSkillNote.textContent = nekoSkillNote(cfg2.skill);
+        var clr = document.querySelector('[data-neko-skill-clear]');
+        if (clr) clr.hidden = !cfg2.skill.trim();
+      };
+      rd.readAsText(nkFile);
+      return;
+    }
   });
   function qualitySpecHtml() {
     var head = '<thead><tr><th scope="col">效果</th><th scope="col">高</th>' +
@@ -797,8 +835,8 @@
         '<b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
     }).join('');
     var rollOpts = [
-      ['all', '所有', '浏览量与点赞量都滚动'],
-      ['part', '部分', '仅点赞量滚动'],
+      ['all', '所有', '所有滚动数字都滚（统计大数字 + 浏览量 + 点赞量）'],
+      ['part', '部分', '仅首页卡片与归档的彩色大数字滚动'],
       ['off', '关闭', '所有数字直接显示']
     ].map(function (o) {
       var on = o[0] === rmode;
@@ -850,9 +888,33 @@
       '<div class="settings-block stack"><div class="settings-info">' +
       '<h2>动画</h2><p>控制页面里数字的逐位滚动动画。切换后立即生效，偏好只保存在本机。</p></div>' +
       '<div class="settings-sub"><h3>数字滚动动画</h3>' +
-      '<p>数字变化时每一位独立滚动（0~9 循环）；控制浏览量与点赞量计数器的滚动动画。</p>' +
+      '<p>数字变化时每一位独立滚动（0~9 循环）。「所有」= 统计大数字与浏览量、点赞量都滚；「部分」= 仅首页卡片与归档的彩色大数字滚动；「关闭」= 全部直接显示。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
       '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
+      /* 「小猫」卡片：右下角站宠雪团的显隐、聊天 API 与 SKILL 规范 */
+      '<section class="settings-card glass reveal" aria-label="小猫设置">' +
+      '<div class="settings-block stack"><div class="settings-info">' +
+      '<h2>小猫</h2><p>右下角的站宠雪团：显示开关、聊天用的 API 与 SKILL 规范。偏好只保存在本机，不会上传到任何地方。</p></div>' +
+      '<div class="settings-sub"><h3>显示小猫</h3>' +
+      '<label class="no-count-item"><input type="checkbox" data-neko-show' +
+      (nekoShown() ? ' checked' : '') + '><span>显示右下角的站宠雪团（可拖动、聊天、喂小鱼干）</span></label>' +
+      '<p class="settings-foot" id="neko-show-state">' +
+      esc(nekoShown() ? '已开启：雪团常驻右下角；关闭后不会再出现，也不再下载它的资源。' :
+        '已关闭：雪团不会再出现；重新打开后会自动回来（位置和大小保持原样）。') + '</p></div>' +
+      '<div class="settings-sub"><h3>聊天 API</h3>' +
+      '<p>填一个 OpenAI 兼容的 /chat/completions 接口，格式：<code>接口地址|密钥|模型名</code>（模型可省略，默认 gpt-4o-mini）。' +
+      '请求由浏览器直接发往该接口，接口需允许跨域；留空时聊天会提示 [未设置API]。</p>' +
+      '<input class="f-input" id="neko-api-input" type="text" data-neko-api' +
+      ' placeholder="https://api.example.com/v1/chat/completions|sk-xxx|gpt-4o-mini"' +
+      ' value="' + esc(String(nekoCfg().api || '')) + '" autocomplete="off" spellcheck="false">' +
+      '<p class="settings-foot" id="neko-api-state">' + esc(nekoApiStateNote(nekoCfg().api)) + '</p></div>' +
+      '<div class="settings-sub"><h3>宠物 SKILL</h3>' +
+      '<p>上传一份文本规范（.txt / .md 等，128KB 以内），雪团聊天时会严格遵守里面的设定；重新上传即覆盖。</p>' +
+      '<label class="file-zone"><input class="f-file" type="file" data-neko-skill accept=".txt,.md,.markdown,.json,text/plain,text/markdown"><span>选择 SKILL 文件上传</span></label>' +
+      '<p class="settings-foot" id="neko-skill-state">' + esc(nekoSkillNote(nekoCfg().skill)) + '</p>' +
+      '<button class="soft-btn" type="button" data-neko-skill-clear' +
+      (nekoCfg().skill ? '' : ' hidden') + '>清空 SKILL</button></div>' +
+      '</div></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
       (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner() ?
       '<section class="settings-card glass reveal" aria-label="浏览统计">' +
@@ -2006,6 +2068,17 @@
             if (qc) qc.textContent = qualityName(qv);
             return;
           }
+          /* 小猫卡：清空 SKILL 规范 */
+          var nkClr = node.closest('[data-neko-skill-clear]');
+          if (nkClr) {
+            var c2 = nekoCfg();
+            c2.skill = '';
+            nekoCfgSave(c2);
+            var sn = document.getElementById('neko-skill-state');
+            if (sn) sn.textContent = nekoSkillNote('');
+            nkClr.hidden = true;
+            return;
+          }
           var order = node.closest('[data-morder]');
           if (order) { momentOrder = order.getAttribute('data-morder'); retintMoments(); return; }
           var cf = node.closest('[data-cfilter]');
@@ -2309,6 +2382,11 @@
   function initCountUp() {
     var nodes = app.querySelectorAll ? app.querySelectorAll('[data-count-to]') : [];
     if (!nodes.length) return;
+    /* 「关闭」档：彩色大数字也直接落文本（v3.69 语义） */
+    if (readRollMode() === 'off' && window.requestAnimationFrame) {
+      Array.prototype.forEach.call(nodes, function (n) { n.textContent = n.getAttribute('data-count-to'); });
+      return;
+    }
     if (countObserver) { try { countObserver.disconnect(); } catch (e) {} }
     if (!window.IntersectionObserver) {
       Array.prototype.forEach.call(nodes, function (n) { n.textContent = n.getAttribute('data-count-to'); });
@@ -2358,7 +2436,8 @@
        ① 延迟挂载（不抢首屏）  ② 长按拖动  ③ 拖动时滚轮缩放  ④ 视线跟随全局鼠标
      位置与大小存 localStorage，刷新后还在原地。 */
   var NEKO_KEY = 'zb-neko:v1';
-  var neko = { box: null, frame: null, grab: null, ready: false, dragging: false, w: 300 };
+  var neko = { box: null, frame: null, grab: null, ready: false, dragging: false, w: 300,
+               pending: false, mount: null };
 
   function nekoSave() {
     try {
@@ -2383,7 +2462,9 @@
   }
   function nekoApplySize(w) {
     if (!neko.box) return;
-    neko.w = Math.min(560, Math.max(180, Math.round(w)));
+    /* 下限与移动端自动宽度（视口 13%，最小 150）一致：钳到 180 会让
+       手机端画布大于容器，底部（脚）被 iframe 裁掉 */
+    neko.w = Math.min(560, Math.max(150, Math.round(w)));
     var h = Math.round(neko.w * 1.135);          /* 画布 1441×1636 */
     neko.box.style.width = neko.w + 'px';
     neko.box.style.height = h + 'px';
@@ -2419,11 +2500,15 @@
     var auto = Math.round(Math.min(260, Math.max(150, vw * 0.13)));
     nekoApplySize(saved && saved.w ? saved.w : auto);
     if (saved && typeof saved.x === 'number') nekoPlace(saved.x, saved.y);
+    /* 设置里关掉了小猫：先藏起来，资源等重新打开再下载 */
+    if (!nekoShown()) box.style.display = 'none';
 
     /* ---- 延迟挂载：等页面空闲再拉 4.6MB 的部件 ---- */
     var mounted = false;
     function mount() {
       if (mounted) return;
+      /* 设置里关掉了小猫：不下载任何资源，等重新打开时再挂载 */
+      if (!nekoShown()) { neko.pending = true; return; }
       mounted = true;
       /* 省流量模式 / 2G 网络：不下载这只猫，页面其余功能不受影响 */
       var conn = navigator.connection || navigator.mozConnection || null;
@@ -2437,21 +2522,24 @@
         var finish = function () {
           neko.ready = true;
           box.classList.add('loaded');
+          box.classList.add('ready');      /* 猫就绪后才亮出左侧互动按钮 */
           tuneNeko(api);
         };
         if (api.whenReady) api.whenReady(finish); else finish();
       }, { once: true });
-      frame.src = 'assets/neko/index.html?embed=1';
+      if (reduced()) {
+        /* 减少动效：只挂一张静止的猫，不跑循环 */
+        frame.addEventListener('load', function () {
+          var api0 = nekoApi();
+          if (api0 && api0.pause) api0.pause(true);
+        }, { once: true });
+        setTimeout(function () { frame.src = 'assets/neko/index.html?embed=1'; }, 2200);
+      } else {
+        frame.src = 'assets/neko/index.html?embed=1';
+      }
     }
-    if (reduced()) {
-      /* 减少动效：只挂一张静止的猫，不跑循环 */
-      var once = function () {
-        var api = nekoApi();
-        if (api && api.pause) api.pause(true);
-      };
-      frame.addEventListener('load', once, { once: true });
-      setTimeout(function () { frame.src = 'assets/neko/index.html?embed=1'; }, 2200);
-    } else if (window.requestIdleCallback) {
+    neko.mount = mount;
+    if (window.requestIdleCallback) {
       window.requestIdleCallback(mount, { timeout: 2600 });
     } else {
       window.addEventListener('load', function () { setTimeout(mount, 1200); });
@@ -2545,6 +2633,174 @@
       var api = nekoApi();
       if (api && api.pause) { try { api.pause(document.hidden); } catch (e) {} }
     });
+
+    /* ---- 左侧互动按钮（聊天 / 喂小鱼干）与聊天输入框 ----
+       都是 #neko-pet 的子元素，拖动小猫时整体跟随、相对位置不变。
+       事件一律 stopPropagation：不能让点按钮触发页面里的其它交互。 */
+    var chatBtn = document.getElementById('neko-chat-btn');
+    var feedBtn = document.getElementById('neko-feed-btn');
+    var chatForm = document.getElementById('neko-chat');
+    var chatInput = document.getElementById('neko-chat-input');
+    var chatSend = chatForm ? chatForm.querySelector('button') : null;
+    var stopNekoEvt = function (e) {
+      if (e.stopPropagation) e.stopPropagation();
+    };
+    if (chatBtn && chatForm && chatInput) {
+      ['pointerdown', 'pointerup', 'touchstart'].forEach(function (en) {
+        chatBtn.addEventListener(en, stopNekoEvt);
+        if (feedBtn) feedBtn.addEventListener(en, stopNekoEvt);
+        chatForm.addEventListener(en, stopNekoEvt);
+      });
+      chatBtn.addEventListener('click', function (e) {
+        stopNekoEvt(e);
+        chatForm.hidden = !chatForm.hidden;
+        nekoHideBubble();
+        if (!chatForm.hidden) { try { chatInput.focus(); } catch (err) {} }
+      });
+      chatForm.addEventListener('submit', function (e) {
+        stopNekoEvt(e);
+        e.preventDefault ? e.preventDefault() : null;
+        var v = String(chatInput.value || '').trim();
+        if (!v || nekoChat.busy) return;
+        chatInput.value = '';
+        chatForm.hidden = true;
+        nekoAsk(v);
+      });
+    }
+    if (feedBtn) {
+      feedBtn.addEventListener('click', function (e) {
+        stopNekoEvt(e);
+        var lines = ['嗷呜！小鱼干最好吃了喵！', '呼噜噜…本喵勉为其难收下了。', '再来一条！再来一条喵！',
+                     '唔…今天的小鱼干有点咸喵。', '吃饱了才有力气摇尾巴喵！', '谢谢投喂，摸摸头可以，但别摸尾巴。'];
+        nekoSay(lines[Math.floor(Math.random() * lines.length)], 4200);
+        var api = nekoApi();
+        if (api && api.touch) { try { api.touch(); } catch (err) {} }
+        if (api && api.emotion) {
+          try {
+            api.emotion('happy', 300);
+            setTimeout(function () { try { api.emotion('neutral', 500); } catch (err) {} }, 2800);
+          } catch (err) {}
+        }
+      });
+    }
+  }
+
+  /* ---------- 站宠聊天 / 喂食 / 显隐 ----------
+     聊天 API 存在 localStorage（zb-neko-chat:v1），格式：接口地址|密钥|模型名，
+     需要 OpenAI 兼容的 /chat/completions；没填地址时小猫直接说「[未设置API]」。
+     SKILL 是设置里上传的一份文本规范，整段塞进 system 消息，模型必须遵守。
+     静态站没有后端，请求由访客浏览器直接发往所填接口（需要接口支持跨域）。 */
+  var NEKO_CHAT_KEY = 'zb-neko-chat:v1';
+  var NEKO_SKILL_MAX = 128 * 1024;
+  var nekoChat = { hist: [], busy: false, hideTimer: 0 };
+  function nekoCfg() {
+    var o = null;
+    try { o = JSON.parse(window.localStorage.getItem(NEKO_CHAT_KEY) || 'null'); } catch (e) { o = null; }
+    return (o && typeof o === 'object') ? o : {};
+  }
+  function nekoCfgSave(cfg) {
+    try { window.localStorage.setItem(NEKO_CHAT_KEY, JSON.stringify(cfg)); } catch (e) { /* 忽略 */ }
+  }
+  function nekoShown() {
+    try { return window.localStorage.getItem('zb-neko-show') !== '0'; }
+    catch (e) { return true; }
+  }
+  function nekoApiStateNote(api) {
+    var raw = String(api || '').trim();
+    if (!raw) return '未设置：聊天会提示 [未设置API]，其它互动不受影响。';
+    if (!/^https?:\/\//i.test(String(raw.split('|')[0] || '').trim())) {
+      return '已填写，但接口地址看起来不是 http(s) 开头，聊天会请求失败。';
+    }
+    var n = raw.split('|').length;
+    return '已设置：接口就绪' + (n >= 3 ? '（含模型名）' : n === 2 ? '（未填模型名，默认 gpt-4o-mini）' : '（未填密钥与模型名）') + '，去右下角找雪团聊天试试。';
+  }
+  function nekoSkillNote(skill) {
+    var s = String(skill || '');
+    if (!s.trim()) return '未上传：雪团按默认性格回复。';
+    return '已加载 SKILL（' + s.length + ' 字）：聊天时会严格遵守这份规范。';
+  }
+  function nekoSetVisible(on) {
+    try { window.localStorage.setItem('zb-neko-show', on ? '1' : '0'); } catch (e) { /* 忽略 */ }
+    if (!neko.box) return;
+    neko.box.style.display = on ? '' : 'none';
+    if (on && neko.pending) { neko.pending = false; if (neko.mount) neko.mount(); }
+  }
+  function nekoHideBubble() {
+    var el = document.getElementById('neko-bubble');
+    if (!el) return;
+    if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
+    el.classList.remove('show');
+    el.hidden = true;
+  }
+  function nekoSay(text, ms) {
+    var el = document.getElementById('neko-bubble');
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = false;
+    window.requestAnimationFrame(function () { el.classList.add('show'); });
+    if (nekoChat.hideTimer) clearTimeout(nekoChat.hideTimer);
+    nekoChat.hideTimer = window.setTimeout(function () {
+      el.classList.remove('show');
+      window.setTimeout(function () { el.hidden = true; }, 320);
+    }, ms || 6000);
+  }
+  function nekoApiParts() {
+    var raw = String(nekoCfg().api || '').trim();
+    if (!raw) return null;
+    var seg = raw.split('|');
+    var url = (seg[0] || '').trim();
+    if (!/^https?:\/\//i.test(url)) return null;
+    return {
+      url: url,
+      key: (seg[1] || '').trim(),
+      model: (seg[2] || '').trim() || 'gpt-4o-mini'
+    };
+  }
+  function nekoSystemPrompt(skill) {
+    var p = '你是博客站点右下角的站宠小猫「雪团」。用简短、可爱、口语化的中文回复，' +
+      '一般不超过 60 个字；不要使用 Markdown 格式，不要自称模型或助手。';
+    if (skill) p += '\n\n你必须严格遵守下面这份 SKILL 规范来扮演与回复，规范与上面冲突时以规范为准：\n' + skill;
+    return p;
+  }
+  function nekoAsk(msg) {
+    var part = nekoApiParts();
+    if (!part) { nekoSay('[未设置API]', 5000); return; }
+    if (nekoChat.busy) return;
+    nekoChat.busy = true;
+    nekoSay('让本喵想想喵…', 15000);
+    var cfg = nekoCfg();
+    var msgs = [{ role: 'system', content: nekoSystemPrompt(String(cfg.skill || '').trim()) }];
+    nekoChat.hist = nekoChat.hist.slice(-6);
+    for (var i = 0; i < nekoChat.hist.length; i++) msgs.push(nekoChat.hist[i]);
+    msgs.push({ role: 'user', content: msg });
+    var ctl = typeof window.AbortController === 'function' ? new window.AbortController() : null;
+    var timer = ctl ? window.setTimeout(function () { ctl.abort(); }, 30000) : 0;
+    var headers = { 'Content-Type': 'application/json' };
+    if (part.key) headers.Authorization = 'Bearer ' + part.key;
+    fetch(part.url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ model: part.model, messages: msgs, temperature: 0.9, stream: false }),
+      signal: ctl ? ctl.signal : undefined
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      var txt = '';
+      try { txt = String(data.choices[0].message.content || '').trim(); } catch (e) { /* 结构异常按空处理 */ }
+      if (!txt) throw new Error('empty reply');
+      nekoChat.hist.push({ role: 'user', content: msg });
+      nekoChat.hist.push({ role: 'assistant', content: txt });
+      var ms = Math.min(12000, Math.max(5000, txt.length * 180));
+      nekoSay(txt, ms);
+      var api = nekoApi();
+      if (api && api.talkFor) { try { api.talkFor(Math.max(1200, ms - 600)); } catch (err) { } }
+    }).catch(function () {
+      nekoSay('喵呜…线路好像出了点问题，稍后再试试。', 5000);
+    }).then(function () {
+      if (timer) clearTimeout(timer);
+      nekoChat.busy = false;
+    });
   }
 
   /* 让她的默认状态像一只真的在坐着的猫：
@@ -2565,9 +2821,11 @@
       var base = api.base;
       if (base) {
         /* 尾巴：慢扫 + 一点不规则；抬起角度也跟着轻轻起伏 */
-        /* 尾巴：主摆 0.26 + 副波 0.10（不同周期），抬起/弯曲各用更慢的周期，相位错开 */
-        base.ts = 0.26 * Math.sin(t * 0.55) + 0.10 * Math.sin(t * 1.31 + 2.1);
-        base.tl = 0.045 + 0.018 * Math.sin(t * 0.33 + 0.4);
+        /* 尾巴：主摆 + 副波（不同周期），抬起/弯曲各用更慢的周期，相位错开。
+           v3.69：主摆 0.26→0.44、副波 0.10→0.17，主波稍提速（0.55→0.68）——
+           待机时轻微但一眼能看出在摇；抬起 0.045→0.055、卷曲基准不变只留慢起伏 */
+        base.ts = 0.44 * Math.sin(t * 0.68) + 0.17 * Math.sin(t * 1.42 + 2.1);
+        base.tl = 0.055 + 0.020 * Math.sin(t * 0.33 + 0.4);
         base.tc = 0.15 + 0.022 * Math.sin(t * 0.27);
         /* 身体：极轻的重心左右转移，和尾巴反相，看起来才像"活着" */
         base.bx = 0.018 * Math.sin(t * 0.37 + 2.0);

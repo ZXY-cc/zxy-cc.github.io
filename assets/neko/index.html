@@ -171,7 +171,9 @@ window.st = st; window.base = base; window.view = view;
 function resize(){
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const box = cv.parentElement.getBoundingClientRect();
-  const w = Math.max(240, box.width), h = Math.max(240, box.height);
+  /* 最小尺寸只兜异常值，不能超过嵌入容器的实际大小：
+     手机端容器约 150px，之前强制 240px 会让画布溢出 iframe 被裁掉底部（脚看不见） */
+  const w = Math.max(96, box.width), h = Math.max(96, box.height);
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
   view.dpr = dpr; view.w = w; view.h = h;
