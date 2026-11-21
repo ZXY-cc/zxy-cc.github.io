@@ -6,6 +6,7 @@
  *   博客版本日志.html            同名 HTML 镜像（可直接双击打开）
  *   assets/changelog.js         前端数据：HTML 全文 + 版本日志文章 + 元信息
  *   assets/comments-data.js     留言归档快照（由 data/comments.json 生成）
+ *   assets/huaxin-skill.js      站宠花信的功能规范（由 花信-SKILL.md 原样生成）
  *   posts/<slug>.html           每篇文章的静态阅读版（含已存档留言，无 JS 可读、爬虫可索引；
  *                               归档区块带同步标记，GitHub Actions 可只替换这一段）
  *   sitemap.xml / robots.txt    站点地图
@@ -99,7 +100,7 @@ const rehlHtml = (html) =>
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 /* 互动区脚本与样式带版本参数：发布新版本后浏览器不会再复用旧缓存的
    comment-archive.js 等文件，修复「新页面 + 旧脚本」导致预览按钮丢失的问题 */
-const CACHE_FILES = ['comments-data', 'comment-archive', 'interactions-config', 'interactions',
+const CACHE_FILES = ['huaxin-skill', 'comments-data', 'comment-archive', 'interactions-config', 'interactions',
   'issues-live', 'markdown', 'studio', 'likes', 'app'];
 let CACHE_VER = '';
 const cacheBust = (s) => {
@@ -145,6 +146,15 @@ const ARCHIVE = readArchive();
 write('assets/comments-data.js',
   '/* 由 data/comments.json 生成，勿手改 */\n' +
   'window.ZB_COMMENTS = ' + JSON.stringify(ARCHIVE).replace(/</g, '\\u003c') + ';\n');
+/* 站宠花信的 SKILL 规范：正文只认 花信-SKILL.md 这一份，
+   构建时原样注入前端（window.ZB_SKILL），避免在 app.js 里维护第二份拷贝。
+   md 改了没跑构建，线上就还是旧规范，所以这里顺带把字数打进产物注释，便于核对。 */
+const SKILL_FILE = '花信-SKILL.md';
+const SKILL_MD = fs.existsSync(path.join(ROOT, SKILL_FILE)) ? read(SKILL_FILE).replace(/\r\n/g, '\n').trim() : '';
+write('assets/huaxin-skill.js',
+  '/* 由 ' + SKILL_FILE + ' 生成，勿手改（' + SKILL_MD.length + ' 字） */\n' +
+  'window.ZB_SKILL = ' + JSON.stringify({ file: SKILL_FILE, chars: SKILL_MD.length, text: SKILL_MD }) +
+  ';\n');
 const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -1086,6 +1096,7 @@ console.log('生成完成：');
 console.log('  ' + HTML_REL + '  (' + standalone.length + ' chars, ' + versions.length + ' 个版本)');
 console.log('  assets/changelog.js  (文章日期 ' + LOG_DATE + ')');
 console.log('  assets/comments-data.js  (' + Object.keys(ARCHIVE.posts).length + ' 篇文章的留言归档)');
+console.log('  assets/huaxin-skill.js  (花信 SKILL ' + SKILL_MD.length + ' 字)');
 console.log('  posts/*.html         (' + POSTS.length + ' 篇文章镜像，内嵌留言存档)');
 console.log('  ' + ROUTES.map((r) => r[0]).join('/') + '.html  (' + ROUTES.length + ' 个分页静态镜像)');
 console.log('  feed.xml / 404.html / sitemap.xml / robots.txt / index.html 兜底与结构化数据');

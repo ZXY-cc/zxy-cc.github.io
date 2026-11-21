@@ -2558,6 +2558,25 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   opacity: 0; translate: 0 6px; transition: opacity .28s ease, translate .28s ease;
 }
 .neko-bubble.show { opacity: 1; translate: 0 0; }
+/* 气泡里的结果卡片：命中文章 / 标签 / 页面各给一个按钮，点一下就带过去。
+   气泡整体是 pointer-events:none，这里单独放开，否则点不到按钮。 */
+.neko-bubble-text { display: block; }
+.neko-bubble-acts {
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  margin-top: 8px; pointer-events: auto;
+}
+.neko-bubble-acts[hidden] { display: none; }
+.neko-chip {
+  /* 气泡宽度被猫容器卡住，长标题宁可换行也别撑破居中：这里放开折行、不设省略号 */
+  max-width: 100%; padding: 5px 9px; border-radius: 11px; cursor: pointer;
+  border: 1px solid var(--glass-line); background: var(--glass-sheen), var(--glass-strong);
+  color: var(--ink); font: inherit; font-size: 12px; line-height: 1.35;
+  white-space: normal; word-break: break-word; text-align: center;
+  transition: transform .16s ease, border-color .2s ease, color .2s ease;
+}
+.neko-chip:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--accent-text); }
+.neko-chip:active { transform: scale(.96); }
+.neko-bubble.has-acts { padding: 11px 12px 10px; }
 /* 等待首字时轻轻呼吸，一眼能看出在打字 */
 .neko-bubble.is-typing { animation: neko-typing 1.1s ease-in-out infinite; }
 @keyframes neko-typing { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }

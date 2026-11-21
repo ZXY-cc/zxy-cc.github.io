@@ -2854,11 +2854,71 @@
     else if (r.right > vw - pad) dx = vw - pad - r.right;
     if (dx) el.style.setProperty('--neko-chat-dx', Math.round(dx) + 'px');
   }
+  /* 气泡分成「文字」与「结果卡片」两层：文字由流式回复反复覆写，
+     卡片单独一行、带按钮，点击就去对应的页面（气泡本身是 pointer-events:none，
+     只有卡片打开指针事件，不然整块会挡住小猫）。 */
+  function nekoBubbleParts() {
+    var el = document.getElementById('neko-bubble');
+    if (!el) return null;
+    var t = el.querySelector('.neko-bubble-text');
+    var a = el.querySelector('.neko-bubble-acts');
+    if (!t || !a) {
+      el.textContent = '';
+      t = document.createElement('span'); t.className = 'neko-bubble-text';
+      a = document.createElement('span'); a.className = 'neko-bubble-acts'; a.hidden = true;
+      el.appendChild(t); el.appendChild(a);
+    }
+    return { el: el, text: t, acts: a };
+  }
+  /* 显示层清理：气泡窄、又是纯文本，代码围栏只会露出三个反引号，去掉更干净 */
+  function nekoPretty(t) {
+    return String(t == null ? '' : t)
+      .replace(/^[ \t]*```[a-zA-Z]*[ \t]*$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\s+$/, '');
+  }
+  function nekoBubbleText(v) {
+    var q = nekoBubbleParts();
+    if (q) q.text.textContent = nekoPretty(v);
+  }
+  function nekoBubbleActsList(acts) {
+    var q = nekoBubbleParts();
+    if (!q) return;
+    while (q.acts.firstChild) q.acts.removeChild(q.acts.firstChild);
+    if (!acts || !acts.length) {
+      q.acts.hidden = true; q.el.classList.remove('has-acts');
+      return;
+    }
+    for (var i = 0; i < acts.length; i++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'neko-chip';
+      b.setAttribute('data-neko-go', acts[i].hash);
+      b.textContent = acts[i].label;
+      q.acts.appendChild(b);
+    }
+    q.acts.hidden = false;
+    q.el.classList.add('has-acts');
+    nekoBubbleFit();
+  }
+  /* 卡片点击：收起气泡，跳到对应地址（站内都是 hash 路由，不刷新页面） */
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var b = t && t.closest ? t.closest('.neko-chip') : null;
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var go = b.getAttribute('data-neko-go') || '';
+    nekoHideBubble();
+    if (!go) return;
+    if (go.charAt(0) === '#') location.hash = go; else location.href = go;
+  }, true);
+
   function nekoSay(text, ms) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
     el.classList.remove('is-typing');
-    el.textContent = text;
+    nekoBubbleText(text);
+    nekoBubbleActsList(null);
     el.hidden = false;
     window.requestAnimationFrame(function () {
       el.classList.add('show');
@@ -2876,7 +2936,8 @@
     if (!el) return;
     if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
     el.style.removeProperty('--neko-bubble-dx');
-    el.textContent = '·';
+    nekoBubbleText('·');
+    nekoBubbleActsList(null);
     el.hidden = false;
     el.classList.add('is-typing');
     window.requestAnimationFrame(function () {
@@ -2887,7 +2948,7 @@
   function nekoBubblePush(txt) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
-    el.textContent = txt;
+    nekoBubbleText(txt);
     if (!el.classList.contains('show')) el.classList.add('show');
     if (!nekoChat.fitTick) {
       nekoChat.fitTick = window.requestAnimationFrame(function () {
@@ -2900,7 +2961,7 @@
     var el = document.getElementById('neko-bubble');
     if (!el) return;
     el.classList.remove('is-typing');
-    el.textContent = txt;
+    nekoBubbleText(txt);
     el.hidden = false;
     el.classList.add('show');
     nekoBubbleFit();
@@ -2928,7 +2989,305 @@
   function nekoApiParts() {
     return nekoParseApi(nekoCfg().api);
   }
-  function nekoSystemPrompt(skill) {
+  /* ---------- 站内知识库：让花信对自己的站「知根知底」 ----------
+     不另外生成数据文件——文章集合（POSTS）与扩展数据（DATA）本来就在内存里，
+     正文直接从它们抽，所以站长发布新文章后下一次提问她读到的就是新内容，
+     不需要重跑构建、也不会出现「站上有了、她还不认识」的错位。
+     抽取只在第一次聊天时做一次并缓存；工坊改过数据就清缓存重抽。 */
+  var nekoKbCache = null;
+  var NEKO_KB_CAP = 24000;   /* 单篇最多取这么多字：够讲清语法与步骤，也不至于把内存撑大 */
+  function nekoKbDrop() { nekoKbCache = null; }
+  document.addEventListener('zb:studio-data', nekoKbDrop);
+
+  /* 正文优先取 markdown（代码示例原样保留，讲语法全靠它），只有 HTML 时才去标签 */
+  function nekoPostText(p) {
+    var raw = '';
+    if (typeof p.markdown === 'string' && p.markdown.trim()) raw = p.markdown;
+    else if (typeof p.body === 'string') raw = p.body;
+    else if (p.body && p.body.length) raw = p.body.join('\n');
+    else if (typeof p.content === 'string') raw = p.content;
+    var s = String(raw || '');
+    if (s.indexOf('\n#') < 0 && /<\/?[a-z][\s\S]*?>/i.test(s)) {
+      s = s.replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+        .replace(/<\/(p|div|li|h[1-6]|tr|pre|blockquote)>/gi, '\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+    } else {
+      /* markdown 里图片、链接的外壳去掉，留可读文字；代码块整段保留 */
+      s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+    }
+    s = s.replace(/\r\n/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    return s.length > NEKO_KB_CAP ? s.slice(0, NEKO_KB_CAP) : s;
+  }
+  function nekoKb() {
+    if (nekoKbCache) return nekoKbCache;
+    var posts = [];
+    for (var i = 0; i < POSTS.length; i++) {
+      var p = POSTS[i];
+      if (!p || !p.slug) continue;
+      var text = nekoPostText(p);
+      var heads = [], lines = text.split('\n');
+      for (var j = 0; j < lines.length; j++) {
+        var m = lines[j].match(/^#{1,4}\s+(.+)$/);
+        if (m) heads.push(m[1].replace(/[#`*]/g, '').trim());
+      }
+      posts.push({
+        slug: String(p.slug), title: String(p.title || ''),
+        date: String(p.date || '').slice(0, 10), tags: (p.tags || []).slice(),
+        summary: String(p.summary || ''), heads: heads.slice(0, 40),
+        text: text, low: (String(p.title || '') + ' ' + (p.tags || []).join(' ') + ' ' + text).toLowerCase()
+      });
+    }
+    var chat = arr('chatter'), proj = arr('projects'), alb = arr('albums');
+    nekoKbCache = {
+      posts: posts,
+      tags: (DATA.tagLibrary || []).slice(),
+      chatter: chat.map(function (c) {
+        return { id: c.id, title: String(c.title || ''), date: String(c.date || '').slice(0, 10),
+          tags: c.tags || [], summary: String(c.summary || '').slice(0, 120) };
+      }),
+      moments: arr('moments').length,
+      projects: proj.map(function (x) { return String(x.name || ''); }),
+      albums: alb.map(function (a) { return String(a.title || ''); }),
+      name: CFG.displayName || '星梦Staream'
+    };
+    return nekoKbCache;
+  }
+
+  /* 中文没法按空格切词，这里走「整段 + 2/3 元」的粗分词：
+     长句里抠出相邻两三个字的组合，命中率比整句匹配高得多；
+     高频虚词与疑问词进停用表，避免「文章」「怎么」这类词把所有结果一起抬高。 */
+  var NEKO_STOP = { '的': 1, '了': 1, '是': 1, '吗': 1, '呢': 1, '啊': 1, '吧': 1, '和': 1, '与': 1,
+    '我': 1, '你': 1, '他': 1, '她': 1, '它': 1, '这': 1, '那': 1, '有': 1, '在': 1, '就': 1, '都': 1,
+    '文章': 1, '一篇': 1, '两篇': 1, '这个': 1, '那个': 1, '帮我': 1, '一下': 1, '关于': 1, '什么': 1,
+    '怎么': 1, '如何': 1, '可以': 1, '能不': 1, '不能': 1, '请问': 1, '想看': 1, '看看': 1, '找找': 1,
+    '哪些': 1, '哪个': 1, '这里': 1, '那里': 1, '告诉': 1, '记得': 1, '之前': 1, '以前': 1 };
+  /* 站里常用的几种说法：站长问「建站」时，文章里可能通篇写的是「域名」「托管」「搭博客」，
+     只靠字面匹配会漏，所以给一小张同义词表把问法摊开。表小、可在控制台查看。 */
+  var NEKO_SYN = {
+    '建站': ['搭一个', '域名', '托管', '博客'],
+    '搭站': ['建站', '域名', '托管'],
+    '评论': ['留言'],
+    '留言': ['评论'],
+    '夜间': ['暗色', 'night'],
+    '暗色': ['夜间', 'night'],
+    '语法': ['markdown', '拓展'],
+    '折叠': ['折叠块', 'info', 'succ', 'warn', 'err'],
+    '目录': ['竖条', 'toc'],
+    '竖条': ['引用', ':::|'],
+    '竖线': ['竖条', '引用', ':::|'],
+    '竖向': ['竖条', '引用', ':::|'],
+    '计数': ['浏览', '点赞', 'abacus'],
+    '点赞': ['计数', '爱心'],
+    '相册': ['照片', 'photowall'],
+    '字体': ['字号', '阅读'],
+    '更新': ['版本', '日志']
+  };
+  function nekoTerms(q) {
+    var s = String(q || '').toLowerCase();
+    var parts = s.split(/[^0-9a-z\u4e00-\u9fa5]+/i), seen = {}, out = [];
+    function add(t, boost) {
+      if (!t || t.length < 2 || NEKO_STOP[t]) return;
+      if (seen[t]) { if (boost) seen[t] = 1.4; return; }
+      seen[t] = boost ? 1.4 : 1; out.push(t);
+    }
+    for (var i = 0; i < parts.length; i++) {
+      var w = parts[i];
+      if (!w) continue;
+      if (/^[0-9a-z]+$/.test(w)) { add(w); continue; }
+      if (w.length <= 4) add(w);
+      for (var n = 2; n <= 3; n++) {
+        for (var k = 0; k + n <= w.length; k++) add(w.substr(k, n));
+      }
+    }
+    /* 同义词只按「整词出现」补，避免把表里每个字都摊成噪音 */
+    for (var key in NEKO_SYN) {
+      if (!NEKO_SYN.hasOwnProperty(key)) continue;
+      if (s.indexOf(key) < 0) continue;
+      var list = NEKO_SYN[key];
+      for (var j = 0; j < list.length; j++) add(list[j], 1);
+    }
+    return { list: out.slice(0, 26), weight: seen };
+  }
+  /* 片段：把命中词前后的原文切一小段出来，给模型当事实依据 */
+  function nekoSnippet(p, term) {
+    var text = String(p.text || '');
+    if (!text) return String(p.summary || '');
+    var at = term ? text.toLowerCase().indexOf(term) : -1;
+    if (at < 0) at = 0;
+    /* 找命中处所属的小节标题：讲语法时小节名本身就是关键信息
+       （比如「四色折叠框 info / succ / warn / err」），少了它模型容易编出个不存在的类型名 */
+    var lines = text.slice(0, at).split('\n'), head = '', hs = -1, off = 0;
+    for (var k = 0; k < lines.length; k++) {
+      var hm = lines[k].match(/^#{1,4}\s+(.+)$/);
+      if (hm) { head = hm[1].replace(/[#`*]/g, '').trim(); hs = off; }
+      off += lines[k].length + 1;
+    }
+    /* 小节标题就在附近时，从标题处开始切，别把上一节的内容混进来 */
+    var from = (hs >= 0 && at - hs <= 420) ? hs : Math.max(0, at - 110);
+    var to = Math.min(text.length, at + 220);
+    if (to - from > 420) to = from + 420;
+    var body = text.slice(from, to).replace(/\s+/g, ' ');
+    return (from === hs ? '' : (head ? '〔小节：' + head + '〕' : '')) +
+      (from > 0 && from !== hs ? '…' : '') + body + (to < text.length ? '…' : '');
+  }
+  function nekoSearch(q, limit) {
+    var tz = nekoTerms(q), terms = tz.list;
+    var kb = nekoKb();
+    var N = Math.max(1, kb.posts.length), df = [], i, j;
+    /* 「最新 / 最近发了什么」这类问法本身不含主题：把时间词与泛词剥掉，
+       剩下没关键词就直接按日期给最新的几篇，别去正文里瞎匹配「新」和「文章」。 */
+    var sq = String(q || '').toLowerCase();
+    if (/最新|最近|刚发|刚更新|新发/.test(sq)) {
+      var rest = sq.replace(/最新|最近|刚刚|刚发|刚更新|新发|新发布|更新了|文章|博客|内容|现在|都有啥|有什么|多少|的|了|吗|呢|呀/g, ' ');
+      if (!nekoTerms(rest).list.length) {
+        var byNew = kb.posts.slice().sort(function (a, b) {
+          return String(b.date).localeCompare(String(a.date));
+        });
+        var fresh = [];
+        for (i = 0; i < byNew.length && i < (limit || 3); i++) {
+          fresh.push({ p: byNew[i], score: 40 - i * 10,
+            snippet: nekoSnippet(byNew[i], '') });
+        }
+        return fresh;
+      }
+    }
+    if (!terms.length) return [];
+    /* 词频太高（过半文章都有）的字组合多半是「博客」「这个」这类泛词，
+       按 IDF 思路压权，不然后者会压过真正的关键词。 */
+    for (i = 0; i < terms.length; i++) {
+      var c = 0;
+      for (j = 0; j < N; j++) if (kb.posts[j].low.indexOf(terms[i]) >= 0) c++;
+      df.push(c);
+    }
+    /* 日期两种说法都要认：带年份的 2026-11-11 / 2026年11月11日，和不带年份的 11月11日 */
+    var dm = String(q).match(/(\d{4})[-/年.](\d{1,2})[-/月.](\d{1,2})/);
+    var md = dm ? null : String(q).match(/(\d{1,2})\s*月\s*(\d{1,2})/);
+    var wantDate = dm ? (dm[1] + '-' + ('0' + dm[2]).slice(-2) + '-' + ('0' + dm[3]).slice(-2))
+      : (md ? ('-' + ('0' + md[1]).slice(-2) + '-' + ('0' + md[2]).slice(-2)) : '');
+    var hits = [];
+    /* 问句里直接点了某个标签名（「算法」「Markdown」），这就是最强的意图：
+       这类词在正文里到处都是、单靠词频会被压掉，所以按标签库直给一记加权。 */
+    var tagHit = {};
+    for (i = 0; i < kb.tags.length; i++) {
+      var tg = String(kb.tags[i] || '').toLowerCase();
+      if (tg.length >= 2 && sq.indexOf(tg) >= 0) tagHit[kb.tags[i]] = 1;
+    }
+    for (i = 0; i < kb.posts.length; i++) {
+      var p = kb.posts[i], score = 0, best = '', bestHit = 0;
+      if (wantDate && p.date.indexOf(wantDate) >= 0) score += 20;
+      for (var tgk in tagHit) {
+        if (tagHit.hasOwnProperty(tgk) && (p.tags || []).indexOf(tgk) >= 0) { score += 14; break; }
+      }
+      for (j = 0; j < terms.length; j++) {
+        var t = terms[j];
+        var w = (df[j] / N > 0.66 ? 0.18 : (df[j] === 1 ? 1.35 : 1)) * (tz.weight[t] || 1);
+        if (p.title.toLowerCase().indexOf(t) >= 0) score += 6 * w;
+        if (p.tags.join(' ').toLowerCase().indexOf(t) >= 0) score += 5 * w;
+        if (p.summary.toLowerCase().indexOf(t) >= 0) score += 2 * w;
+        if (p.heads.join(' ').toLowerCase().indexOf(t) >= 0) score += 3 * w;
+        var n = 0, at = 0, idx = -1;
+        while ((idx = p.low.indexOf(t, at)) >= 0 && n < 8) { n++; at = idx + t.length; }
+        if (n) { score += Math.min(n, 4) * w; if (n * w > bestHit) { bestHit = n * w; best = t; } }
+      }
+      if (score >= 6) hits.push({ p: p, score: Math.round(score), snippet: nekoSnippet(p, best) });
+    }
+    hits.sort(function (a, b) {
+      return b.score - a.score || String(b.p.date).localeCompare(String(a.p.date));
+    });
+    return hits.slice(0, limit || 3);
+  }
+  /* 站内有哪些页面：给「带路」用的路线表 */
+  var NEKO_ROUTES = [
+    { kw: ['归档', '时间线', '时间轴'], hash: '#/timeline', label: '去归档' },
+    { kw: ['全部文章', '文章列表', '所有文章'], hash: '#/posts', label: '看全部文章' },
+    { kw: ['标签总览', '有哪些标签'], hash: '#/tags', label: '标签总览' },
+    { kw: ['项目'], hash: '#/projects', label: '看项目' },
+    { kw: ['相册', '图集', '照片'], hash: '#/photowall', label: '去相册' },
+    { kw: ['说说'], hash: '#/moments', label: '看说说' },
+    { kw: ['杂谈'], hash: '#/chatter', label: '看杂谈' },
+    { kw: ['友链', '友情链接'], hash: '#/friends', label: '看友链' },
+    { kw: ['关于', '站长是谁', '作者是谁'], hash: '#/about', label: '关于这个站' },
+    { kw: ['设置', '画质'], hash: '#/settings', label: '打开设置' }
+  ];
+  /* 生成「看得见点得着」的结果卡片：文章可直开、标签可筛、页面可去 */
+  function nekoActs(q, hits) {
+    var acts = [], seen = {}, kbPosts = nekoKb().posts, sq = String(q || '');
+    function push(a) { if (!a || seen[a.hash]) return; seen[a.hash] = 1; acts.push(a); }
+    var top = hits.length ? hits[0].score : 0;
+    /* 先看问的是不是某个页面本身（「相册」「友链」）：这种问法下沾边的文章卡片
+       只会碍事，门槛抬高；不给带路的时候才放宽，让弱命中的文章也能点开。 */
+    var routes = [];
+    for (var r = 0; r < NEKO_ROUTES.length; r++) {
+      var rt = NEKO_ROUTES[r], hitRt = false;
+      for (var k = 0; k < rt.kw.length; k++) if (sq.indexOf(rt.kw[k]) >= 0) hitRt = true;
+      if (hitRt) routes.push(rt);
+    }
+    var minCard = routes.length ? 16 : 8;
+    for (var i = 0; i < hits.length && i < 2; i++) {
+      /* 只给最贴题的一两条：分数不到首条一半、或低到离谱的，宁可不给 */
+      if (i > 0 && (hits[i].score < 10 || hits[i].score < top * 0.55)) break;
+      if (i === 0 && hits[i].score < minCard) break;
+      push({ hash: '#/post/' + encodeURIComponent(hits[i].p.slug),
+        label: '打开《' + hits[i].p.title + '》' });
+    }
+    var tags = nekoKb().tags;
+    for (var t = 0; t < tags.length && acts.length < 4; t++) {
+      var tg = tags[t];
+      if (!tg || tg === 'A' || tg === 'B' || tg === '⭐') continue;
+      if (sq.indexOf(tg) < 0) continue;
+      /* 标签得真有文章贴着才给卡片，否则点进去是一页空白 */
+      var used = false;
+      for (var u = 0; u < kbPosts.length; u++) {
+        if ((kbPosts[u].tags || []).indexOf(tg) >= 0) { used = true; break; }
+      }
+      if (!used) continue;
+      push({ hash: '#/tag/' + encodeURIComponent(tg), label: '看标签「' + tg + '」' });
+    }
+    /* 页面卡片：没有命中文章时给；有命中但分数明显不够时也给——
+       问「相册」「友链」这类页面名，别拿一篇沾边的旧文章糊弄过去 */
+    if (!hits.length || top < 12) {
+      for (var v = 0; v < routes.length; v++) push({ hash: routes[v].hash, label: routes[v].label });
+    }
+    /* 什么也没匹配上时给一条兜底带路，别让气泡只剩一句「没找到」 */
+    if (!acts.length) push({ hash: '#/posts', label: '看全部文章' });
+    return acts.slice(0, 4);
+  }
+  /* 站点快照：每次提问都带上，所以她永远知道「现在站里有什么」 */
+  function nekoSiteDigest() {
+    var kb = nekoKb();
+    var top = kb.posts.slice(0, 6).map(function (p) {
+      return '《' + p.title + '》' + p.date + (p.tags.length ? '[' + p.tags.join('/') + ']' : '');
+    }).join('；');
+    var s = '【站点快照】站名 ' + kb.name + '；文章 ' + kb.posts.length + ' 篇；标签：' +
+      kb.tags.filter(function (x) { return x && x !== 'A' && x !== 'B'; }).join('、') +
+      '；最近发布：' + top;
+    if (kb.chatter.length) s += '；杂谈 ' + kb.chatter.length + ' 则（' + kb.chatter.slice(0, 3).map(function (c) { return c.title; }).join('、') + '）';
+    if (kb.projects.length) s += '；项目：' + kb.projects.join('、');
+    if (kb.albums.length) s += '；相册：' + kb.albums.join('、');
+    if (kb.moments) s += '；说说 ' + kb.moments + ' 条';
+    return s;
+  }
+  function nekoHitsDigest(hits) {
+    if (!hits || !hits.length) return '【检索片段】这次没有命中任何文章的原文。';
+    return '【检索片段】\n' + hits.map(function (h, i) {
+      var p = h.p;
+      return (i + 1) + '.《' + p.title + '》' + p.date + (p.tags.length ? ' 标签:' + p.tags.join('/') : '') +
+        '\n摘要：' + (p.summary || '（无）') + '\n原文：' + (h.snippet || '（空）');
+    }).join('\n');
+  }
+  /* 内置规范来自 花信-SKILL.md（构建注入）；站长另外上传的规范追加在后，冲突以它为准 */
+  function nekoSkillText(skill) {
+    var def = '';
+    try { def = (window.ZB_SKILL && window.ZB_SKILL.text) || ''; } catch (e) { def = ''; }
+    var extra = String(skill || '').trim();
+    if (!extra) return def;
+    return (def ? def + '\n\n---\n\n' : '') +
+      '以下是站长另外上传的规范，与上文冲突时以它为准：\n' + extra;
+  }
+  function nekoSystemPrompt(skill, hits) {
     var p = '你是「' + nekoName() + '」，一只住在星梦 Staream 博客角落里的白猫，也是这座小站看家的那只。\n' +
       '【说话规矩】\n' +
       '1. 一次只说 1~3 句、40 字以内说完；句子短，像打字聊天，不写长段落、不写作文。\n' +
@@ -2940,7 +3299,10 @@
       '【性子】好奇、嘴硬心软：对来客爱搭不理又忍不住凑过去；对站长星梦亲昵黏人，会撒娇要小鱼干。' +
       '喜欢晒太阳、窗台、毛线团、深夜还亮着的屏幕；讨厌被拽尾巴、被说胖、突然的巨响。\n' +
       '【示例】问「你在干嘛」→「趴在窗台上晒太阳喵，光正好。」；问「今天好累」→「唔…那先把手搭这儿，累了就先别想了。」';
-    if (skill) p += '\n\n下面这份 SKILL 规范优先于以上所有描述，冲突时以它为准：\n' + skill;
+    var sk = nekoSkillText(skill);
+    if (sk) p += '\n\n下面这份 SKILL 规范优先于以上所有描述，冲突时以它为准：\n' + sk;
+    /* 站点快照 + 命中的原文片段：她「知根知底」的全部事实来源都在这两段里 */
+    p += '\n\n' + nekoSiteDigest() + '\n' + nekoHitsDigest(hits);
     return p;
   }
   /* 流式读 SSE：智谱与 DeepSeek 都是 `data: {...}` 分块、`data: [DONE]` 收尾 */
@@ -3009,7 +3371,17 @@
     var seq = nekoChat.seq;
     nekoChat.busy = true;
     var cfg = nekoCfg();
-    var msgs = [{ role: 'system', content: nekoSystemPrompt(String(cfg.skill || '').trim()) }];
+    /* 先在本站里检索：命中越贴题，她答得越准，卡片也越可能是来访者要的那篇。
+       「最新/最近」这类没有实词的问法，直接把最近三篇摆出来。 */
+    var hits = nekoSearch(msg, 3);
+    /* 「最近/最新发了什么」没有实词可检索，直接把最新的三篇端出来 */
+    if (/最新|最近|新发|刚发|新写|刚刚更新|最近更新/.test(msg)) {
+      hits = nekoKb().posts.slice(0, 3).map(function (p, i) {
+        return { p: p, score: 40 - i * 10, snippet: String(p.summary || '') };
+      });
+    }
+    var acts = nekoActs(msg, hits);
+    var msgs = [{ role: 'system', content: nekoSystemPrompt(String(cfg.skill || '').trim(), hits) }];
     nekoChat.hist = nekoChat.hist.slice(-8);
     for (var i = 0; i < nekoChat.hist.length; i++) msgs.push(nekoChat.hist[i]);
     msgs.push({ role: 'user', content: msg });
@@ -3043,7 +3415,17 @@
       if (!outText) throw new Error('empty reply');
       nekoChat.hist.push({ role: 'user', content: msg });
       nekoChat.hist.push({ role: 'assistant', content: outText });
-      nekoBubbleFinish(outText);
+      /* 卡片比纯文字多留一会儿，方便点；命中只有一篇且明确说了“打开”时直接带过去 */
+      nekoBubbleFinish(outText, acts.length ? 24000 : 0);
+      nekoBubbleActsList(acts);
+      if (acts.length === 1 && hits.length === 1 && /打开|带我去|跳转|调出|直接给我|定位到|翻出/.test(msg)) {
+        var dest = acts[0].hash;
+        window.setTimeout(function () {
+          if (nekoChat.seq !== seq) return;
+          nekoHideBubble();
+          location.hash = dest;
+        }, 1100);
+      }
       var api = nekoApi();
       if (api && api.talkFor) {
         try { api.talkFor(Math.max(1800, Math.min(9000, outText.length * 200))); } catch (err) {}
@@ -3058,6 +3440,13 @@
       nekoChat.ctl = null;
     });
   }
+
+  /* 自检入口：控制台敲 ZB_NEKO.search('折叠块') 就能看到她检索到什么、
+     ZB_NEKO.digest() 看每次提问带给她的站点快照。 */
+  try {
+    window.ZB_NEKO = { kb: nekoKb, search: nekoSearch, acts: nekoActs, digest: nekoSiteDigest,
+      prompt: nekoSystemPrompt, ask: nekoAsk };
+  } catch (e) { /* 忽略 */ }
 
   /* 让她的默认状态像一只真的在坐着的猫：
      模型自带呼吸与头部的慢摆，但耳朵和尾巴是静态的，所以这里补两层「生命感」：
