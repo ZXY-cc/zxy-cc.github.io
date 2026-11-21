@@ -2728,10 +2728,11 @@
   var NEKO_SKILL_MAX = 128 * 1024;
   var NEKO_NAME_KEY = 'zb-neko-name';
   var NEKO_NAME_DEFAULT = '花信';
-  /* 站内预置的聊天接口（智谱 BigModel，OpenAI 兼容）：用户无痕访问也能聊。
-     地址 | 密钥 | 模型；温度与最大输出随请求一起带上。
+  /* 站内预置的聊天接口：经 Cloudflare Worker 中转调用智谱 BigModel。
+     浏览器直连智谱会被其防火墙拦掉跨域预检，故改由 Worker 转发并保管密钥；
+     网页侧不接触密钥。格式 地址 | 密钥(空) | 模型；温度与最大输出随请求带上。
      用户可在设置里改成自己的接口，改后即覆盖这个默认值。 */
-  var NEKO_API_DEFAULT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions|4a84b8074a3e48d6be02c73ad24a4a59.OwArXpuaOjGUAqyR|glm-4-flash';
+  var NEKO_API_DEFAULT = 'https://huaxin-api.262779815.workers.dev||glm-4-flash';
   var NEKO_TEMPERATURE = 0.9;
   var NEKO_MAX_TOKENS = 4096;
   var nekoChat = { hist: [], busy: false, hideTimer: 0 };
@@ -2771,8 +2772,12 @@
     try { o = JSON.parse(raw || 'null'); } catch (e) { o = null; }
     /* 从未存过配置才用站内预置接口；用户主动清空（存下空 api）时尊重其选择 */
     if (!raw || !o || typeof o !== 'object') return { api: NEKO_API_DEFAULT, skill: '' };
-    /* 自愈：早期预置密钥误把大写 O 抄成数字 0，若本机曾存下这串失效 key，自动修正为当前预置值 */
-    if (typeof o.api === 'string' && o.api.indexOf('0wArXpua0jGUAqyR') >= 0) {
+    /* 自愈：早期预置的是智谱直连地址（含正确/错误 key），浏览器直连必被跨域拦掉。
+       若本机曾存下这类配置，自动切到 Worker 中转地址，密钥交由 Worker 保管。 */
+    if (typeof o.api === 'string' &&
+        (o.api.indexOf('open.bigmodel.cn') >= 0 ||
+         o.api.indexOf('0wArXpua0jGUAqyR') >= 0 ||
+         o.api.indexOf('OwArXpuaOjGUAqyR') >= 0)) {
       o.api = NEKO_API_DEFAULT;
       nekoCfgSave(o);
     }
