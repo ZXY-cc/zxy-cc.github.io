@@ -779,8 +779,14 @@
       nekoSetVisible(t.checked);
       var nkNote = document.getElementById('neko-show-state');
       if (nkNote) nkNote.textContent = t.checked ?
-        '已开启：雪团常驻右下角；关闭后不会再出现，也不再下载它的资源。' :
-        '已关闭：雪团不会再出现；重新打开后会自动回来（位置和大小保持原样）。';
+        '已开启：' + nekoName() + '常驻右下角；关闭后不会再出现，也不再下载它的资源。' :
+        '已关闭：' + nekoName() + '不会再出现；重新打开后会自动回来（位置和大小保持原样）。';
+      return;
+    }
+    if (t && t.getAttribute && t.getAttribute('data-neko-name') !== null) {
+      var nn = nekoSetName(t.value);
+      var nnNote = document.getElementById('neko-name-state');
+      if (nnNote) nnNote.textContent = '已保存：聊天与提示都改叫「' + nn + '」，立即生效。';
       return;
     }
     if (t && t.getAttribute && t.getAttribute('data-neko-api') !== null) {
@@ -891,25 +897,31 @@
       '<p>数字变化时每一位独立滚动（0~9 循环）。「所有」= 统计大数字与浏览量、点赞量都滚；「部分」= 仅首页卡片与归档的彩色大数字滚动；「关闭」= 全部直接显示。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
       '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
-      /* 「小猫」卡片：右下角站宠雪团的显隐、聊天 API 与 SKILL 规范 */
+      /* 「小猫」卡片：右下角站宠花信的昵称、显隐、聊天 API 与 SKILL 规范 */
       '<section class="settings-card glass reveal" aria-label="小猫设置">' +
       '<div class="settings-block stack"><div class="settings-info">' +
-      '<h2>小猫</h2><p>右下角的站宠雪团：显示开关、聊天用的 API 与 SKILL 规范。偏好只保存在本机，不会上传到任何地方。</p></div>' +
+      '<h2>小猫</h2><p>右下角的站宠' + esc(nekoName()) + '：昵称、显示开关、聊天用的 API 与 SKILL 规范。偏好只保存在本机，不会上传到任何地方。</p></div>' +
+      '<div class="settings-sub"><h3>宠物昵称</h3>' +
+      '<p>给小猫起个名字，聊天提示与回复里的称呼会跟着变；留空恢复默认「花信」。</p>' +
+      '<input class="f-input" id="neko-name-input" type="text" data-neko-name' +
+      ' maxlength="24" placeholder="' + NEKO_NAME_DEFAULT + '"' +
+      ' value="' + esc(nekoName()) + '" autocomplete="off">' +
+      '<p class="settings-foot" id="neko-name-state">当前昵称：<b>' + esc(nekoName()) + '</b>。</p></div>' +
       '<div class="settings-sub"><h3>显示小猫</h3>' +
       '<label class="no-count-item"><input type="checkbox" data-neko-show' +
-      (nekoShown() ? ' checked' : '') + '><span>显示右下角的站宠雪团（可拖动、聊天、喂小鱼干）</span></label>' +
+      (nekoShown() ? ' checked' : '') + '><span>显示右下角的站宠' + esc(nekoName()) + '（可拖动、聊天、喂小鱼干）</span></label>' +
       '<p class="settings-foot" id="neko-show-state">' +
-      esc(nekoShown() ? '已开启：雪团常驻右下角；关闭后不会再出现，也不再下载它的资源。' :
-        '已关闭：雪团不会再出现；重新打开后会自动回来（位置和大小保持原样）。') + '</p></div>' +
+      esc(nekoShown() ? '已开启：' + nekoName() + '常驻右下角；关闭后不会再出现，也不再下载它的资源。' :
+        '已关闭：' + nekoName() + '不会再出现；重新打开后会自动回来（位置和大小保持原样）。') + '</p></div>' +
       '<div class="settings-sub"><h3>聊天 API</h3>' +
-      '<p>填一个 OpenAI 兼容的 /chat/completions 接口，格式：<code>接口地址|密钥|模型名</code>（模型可省略，默认 gpt-4o-mini）。' +
-      '请求由浏览器直接发往该接口，接口需允许跨域；留空时聊天会提示 [未设置API]。</p>' +
+      '<p>已预置站内接口，开箱即可聊天。也可填自己的 OpenAI 兼容 /chat/completions 接口，格式：<code>接口地址|密钥|模型名</code>（模型可省略，默认 gpt-4o-mini）。' +
+      '请求由浏览器直接发往该接口，接口需允许跨域；清空后会提示 [未设置API]。</p>' +
       '<input class="f-input" id="neko-api-input" type="text" data-neko-api' +
       ' placeholder="https://api.example.com/v1/chat/completions|sk-xxx|gpt-4o-mini"' +
       ' value="' + esc(String(nekoCfg().api || '')) + '" autocomplete="off" spellcheck="false">' +
       '<p class="settings-foot" id="neko-api-state">' + esc(nekoApiStateNote(nekoCfg().api)) + '</p></div>' +
       '<div class="settings-sub"><h3>宠物 SKILL</h3>' +
-      '<p>上传一份文本规范（.txt / .md 等，128KB 以内），雪团聊天时会严格遵守里面的设定；重新上传即覆盖。</p>' +
+      '<p>上传一份文本规范（.txt / .md 等，128KB 以内），' + esc(nekoName()) + '聊天时会严格遵守里面的设定；重新上传即覆盖。</p>' +
       '<label class="file-zone"><input class="f-file" type="file" data-neko-skill accept=".txt,.md,.markdown,.json,text/plain,text/markdown"><span>选择 SKILL 文件上传</span></label>' +
       '<p class="settings-foot" id="neko-skill-state">' + esc(nekoSkillNote(nekoCfg().skill)) + '</p>' +
       '<button class="soft-btn" type="button" data-neko-skill-clear' +
@@ -2430,7 +2442,7 @@
       window.setTimeout(done, 30);
     }
   }
-  /* ================= 右下角站宠「雪团」 =================
+  /* ================= 右下角站宠「花信」（昵称可改） =================
      模型是 51 个部件的 Canvas2D 运行时，隔离在自己的 iframe 里（同一个源，
      所以可以直接调 contentWindow.NekoCat）。宿主这边只做四件事：
        ① 延迟挂载（不抢首屏）  ② 长按拖动  ③ 拖动时滚轮缩放  ④ 视线跟随全局鼠标
@@ -2493,6 +2505,7 @@
     var grab = document.getElementById('neko-grab');
     if (!box || !frame || !grab) return;
     neko.box = box; neko.frame = frame; neko.grab = grab;
+    nekoRefreshNameLabels();
 
     /* ---- 恢复上次的位置与大小 ---- */
     var saved = nekoLoad();
@@ -2645,6 +2658,24 @@
     var stopNekoEvt = function (e) {
       if (e.stopPropagation) e.stopPropagation();
     };
+    /* 点聊天后把猫挪到输入框能完整落进视口的位置：
+       默认 bottom 已抬高，但用户若把猫拖到屏幕顶/右缘，输入框仍可能出屏，
+       这里按实测矩形把整只猫平移进来（气泡/按钮是子元素，一起跟随）。 */
+    function nekoEnsureChatVisible() {
+      if (!neko.box || !chatForm) return;
+      var f = chatForm.getBoundingClientRect();
+      var pad = 10, dx = 0, dy = 0;
+      var vw = window.innerWidth || 1024, vh = window.innerHeight || 768;
+      if (f.right > vw - pad) dx = vw - pad - f.right;
+      if (f.left < pad) dx = pad - f.left;
+      if (f.bottom > vh - pad) dy = vh - pad - f.bottom;
+      if (f.top < pad) dy = pad - f.top;
+      if (dx || dy) {
+        var r = neko.box.getBoundingClientRect();
+        nekoPlace(r.left + dx, r.top + dy);
+        nekoSave();
+      }
+    }
     if (chatBtn && chatForm && chatInput) {
       ['pointerdown', 'pointerup', 'touchstart'].forEach(function (en) {
         chatBtn.addEventListener(en, stopNekoEvt);
@@ -2655,7 +2686,10 @@
         stopNekoEvt(e);
         chatForm.hidden = !chatForm.hidden;
         nekoHideBubble();
-        if (!chatForm.hidden) { try { chatInput.focus(); } catch (err) {} }
+        if (!chatForm.hidden) {
+          nekoEnsureChatVisible();
+          try { chatInput.focus({ preventScroll: true }); } catch (err) { try { chatInput.focus(); } catch (e2) {} }
+        }
       });
       chatForm.addEventListener('submit', function (e) {
         stopNekoEvt(e);
@@ -2692,11 +2726,52 @@
      静态站没有后端，请求由访客浏览器直接发往所填接口（需要接口支持跨域）。 */
   var NEKO_CHAT_KEY = 'zb-neko-chat:v1';
   var NEKO_SKILL_MAX = 128 * 1024;
+  var NEKO_NAME_KEY = 'zb-neko-name';
+  var NEKO_NAME_DEFAULT = '花信';
+  /* 站内预置的聊天接口（智谱 BigModel，OpenAI 兼容）：用户无痕访问也能聊。
+     地址 | 密钥 | 模型；温度与最大输出随请求一起带上。
+     用户可在设置里改成自己的接口，改后即覆盖这个默认值。 */
+  var NEKO_API_DEFAULT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions|4a84b8074a3e48d6be02c73ad24a4a59.0wArXpua0jGUAqyR|glm-4-flash';
+  var NEKO_TEMPERATURE = 0.9;
+  var NEKO_MAX_TOKENS = 4096;
   var nekoChat = { hist: [], busy: false, hideTimer: 0 };
+  function nekoName() {
+    var v = '';
+    try { v = String(window.localStorage.getItem(NEKO_NAME_KEY) || ''); } catch (e) { /* 忽略 */ }
+    v = v.trim();
+    return v ? v.slice(0, 24) : NEKO_NAME_DEFAULT;
+  }
+  function nekoSetName(v) {
+    var s = String(v || '').trim().slice(0, 24) || NEKO_NAME_DEFAULT;
+    try { window.localStorage.setItem(NEKO_NAME_KEY, s); } catch (e) { /* 忽略 */ }
+    /* 昵称进入 system：改完立即生效，清掉旧对话历史避免串味 */
+    nekoChat.hist = [];
+    nekoRefreshNameLabels();
+    return s;
+  }
+  /* 把昵称同步到小猫挂载标记里的无障碍文案与占位符 */
+  function nekoRefreshNameLabels() {
+    var n = nekoName();
+    var cbtn = document.getElementById('neko-chat-btn');
+    var fbtn = document.getElementById('neko-feed-btn');
+    var frame = document.getElementById('neko-frame');
+    var input = document.getElementById('neko-chat-input');
+    if (cbtn) cbtn.setAttribute('aria-label', '和' + n + '聊天');
+    if (fbtn) fbtn.setAttribute('aria-label', '给' + n + '喂小鱼干');
+    if (frame) frame.setAttribute('title', '站宠 ' + n);
+    if (input) {
+      input.setAttribute('placeholder', '跟' + n + '说点啥…');
+      input.setAttribute('aria-label', '对' + n + '说一句话');
+    }
+  }
   function nekoCfg() {
+    var raw = null;
+    try { raw = window.localStorage.getItem(NEKO_CHAT_KEY); } catch (e) { /* 忽略 */ }
     var o = null;
-    try { o = JSON.parse(window.localStorage.getItem(NEKO_CHAT_KEY) || 'null'); } catch (e) { o = null; }
-    return (o && typeof o === 'object') ? o : {};
+    try { o = JSON.parse(raw || 'null'); } catch (e) { o = null; }
+    /* 从未存过配置才用站内预置接口；用户主动清空（存下空 api）时尊重其选择 */
+    if (!raw || !o || typeof o !== 'object') return { api: NEKO_API_DEFAULT, skill: '' };
+    return o;
   }
   function nekoCfgSave(cfg) {
     try { window.localStorage.setItem(NEKO_CHAT_KEY, JSON.stringify(cfg)); } catch (e) { /* 忽略 */ }
@@ -2712,11 +2787,11 @@
       return '已填写，但接口地址看起来不是 http(s) 开头，聊天会请求失败。';
     }
     var n = raw.split('|').length;
-    return '已设置：接口就绪' + (n >= 3 ? '（含模型名）' : n === 2 ? '（未填模型名，默认 gpt-4o-mini）' : '（未填密钥与模型名）') + '，去右下角找雪团聊天试试。';
+    return '已设置：接口就绪' + (n >= 3 ? '（含模型名）' : n === 2 ? '（未填模型名，默认 gpt-4o-mini）' : '（未填密钥与模型名）') + '，去右下角找' + nekoName() + '聊天试试。';
   }
   function nekoSkillNote(skill) {
     var s = String(skill || '');
-    if (!s.trim()) return '未上传：雪团按默认性格回复。';
+    if (!s.trim()) return '未上传：' + nekoName() + '按默认性格回复。';
     return '已加载 SKILL（' + s.length + ' 字）：聊天时会严格遵守这份规范。';
   }
   function nekoSetVisible(on) {
@@ -2757,7 +2832,7 @@
     };
   }
   function nekoSystemPrompt(skill) {
-    var p = '你是博客站点右下角的站宠小猫「雪团」。用简短、可爱、口语化的中文回复，' +
+    var p = '你是博客站点右下角的站宠小猫「' + nekoName() + '」。用简短、可爱、口语化的中文回复，' +
       '一般不超过 60 个字；不要使用 Markdown 格式，不要自称模型或助手。';
     if (skill) p += '\n\n你必须严格遵守下面这份 SKILL 规范来扮演与回复，规范与上面冲突时以规范为准：\n' + skill;
     return p;
@@ -2780,7 +2855,8 @@
     fetch(part.url, {
       method: 'POST',
       headers: headers,
-      body: JSON.stringify({ model: part.model, messages: msgs, temperature: 0.9, stream: false }),
+      body: JSON.stringify({ model: part.model, messages: msgs, temperature: NEKO_TEMPERATURE,
+        max_tokens: NEKO_MAX_TOKENS, stream: false }),
       signal: ctl ? ctl.signal : undefined
     }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);

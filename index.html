@@ -22,8 +22,8 @@
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <link rel="icon" type="image/png" sizes="64x64" href="assets/avatar-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/avatar-180.png">
-<link rel="stylesheet" href="assets/style.css?v=v3.69.0">
-<link rel="stylesheet" href="assets/interactions.css?v=v3.69.0">
+<link rel="stylesheet" href="assets/style.css?v=v11.1.0">
+<link rel="stylesheet" href="assets/interactions.css?v=v11.1.0">
 <!-- 画质偏好在首屏渲染前落到根节点，避免中/低画质闪一下完整特效 -->
 <script>try{var q=localStorage.getItem('zb-quality');if(q!=='ultra'&&q!=='high'&&q!=='mid'){var m=navigator.deviceMemory||8,c=navigator.hardwareConcurrency||8;q=(m<=2||c<=2)?'mid':(m<=4||c<=4)?'high':'ultra';}if(q==='mid'||q==='ultra')document.documentElement.setAttribute('data-quality',q);var r=document.documentElement,fe=localStorage.getItem('zb-font-en'),fc=localStorage.getItem('zb-font-code'),fn=localStorage.getItem('zb-font-cn'),ft=localStorage.getItem('zb-font-tex');if(!/^(default|consolas|maple|jbmono)$/.test(fe||''))fe='jbmono';if(!/^(default|consolas|maple)$/.test(fc||''))fc='maple';if(fn!=='default')fn='default';if(!/^(default|cm|katex)$/.test(ft||''))ft='cm';r.setAttribute('data-font-en',fe);r.setAttribute('data-font-code',fc);r.setAttribute('data-font-cn',fn);r.setAttribute('data-font-tex',ft);}catch(e){}</script>
 <!-- JSONLD:START -->
@@ -199,24 +199,24 @@
   </div>
 </div>
 
-<!-- 右下角站宠「雪团」：51 部件 Canvas2D 运行时，隔离在 iframe 里；
+<!-- 右下角站宠「花信」：51 部件 Canvas2D 运行时，隔离在 iframe 里；
      拖动 / 滚轮缩放 / 视线跟随都由 app.js 的 initNekoPet() 驱动。
      左侧两个互动按钮（聊天 / 喂小鱼干）、头顶气泡与聊天输入框都是
-     #neko-pet 的子元素，拖动时整体跟随、相对位置不变。 -->
+     #neko-pet 的子元素，拖动时整体跟随、相对位置不变。昵称可在设置里改。 -->
 <div id="neko-pet" class="neko-pet">
   <div class="neko-bubble" id="neko-bubble" hidden></div>
   <div class="neko-actions" id="neko-actions">
-    <button class="neko-act" id="neko-chat-btn" type="button" title="聊天" aria-label="和雪团聊天">
+    <button class="neko-act" id="neko-chat-btn" type="button" title="聊天" aria-label="和花信聊天">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.804 21.644A6.707 6.707 0 0 0 6 21.75a6.721 6.721 0 0 0 3.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 0 1-.814 1.686.75.75 0 0 0 .44 1.223ZM8.25 10.875a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25ZM10.875 12a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875-1.125a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Z"/></svg>
     </button>
-    <button class="neko-act neko-act-emoji" id="neko-feed-btn" type="button" title="喂小鱼干" aria-label="给雪团喂小鱼干">🐟</button>
+    <button class="neko-act neko-act-emoji" id="neko-feed-btn" type="button" title="喂小鱼干" aria-label="给花信喂小鱼干">🐟</button>
   </div>
   <div class="neko-stage" aria-hidden="true">
-    <iframe id="neko-frame" title="站宠 雪团" tabindex="-1" scrolling="no"></iframe>
+    <iframe id="neko-frame" title="站宠 花信" tabindex="-1" scrolling="no"></iframe>
   </div>
   <div class="neko-grab" id="neko-grab" title="按住拖动 · 拖动时滚轮缩放"></div>
   <form class="neko-chat" id="neko-chat" hidden>
-    <input id="neko-chat-input" type="text" maxlength="200" placeholder="跟雪团说点啥…" autocomplete="off" aria-label="对雪团说一句话">
+    <input id="neko-chat-input" type="text" maxlength="200" placeholder="跟花信说点啥…" autocomplete="off" aria-label="对花信说一句话">
     <button type="submit" aria-label="发送">➤</button>
   </form>
 </div>
@@ -234,16 +234,16 @@
 </script>
 <script src="assets/changelog.js"></script>
 <!-- Markdown + LaTeX 渲染：工坊预览、前台文章与杂谈共用 -->
-<script src="assets/markdown.js?v=v3.69.0"></script>
-<script src="assets/studio.js?v=v3.69.0"></script>
+<script src="assets/markdown.js?v=v11.1.0"></script>
+<script src="assets/studio.js?v=v11.1.0"></script>
 <!-- 留言归档：仓库内纯文本快照，页面唯一数据源，不依赖任何服务 -->
-<script src="assets/comments-data.js?v=v3.69.0"></script>
-<script src="assets/comment-archive.js?v=v3.69.0"></script>
+<script src="assets/comments-data.js?v=v11.1.0"></script>
+<script src="assets/comment-archive.js?v=v11.1.0"></script>
 <!-- 互动区：配置独立于主程序；归档装载零请求，实时层按需读取公开 Issues -->
-<script src="assets/interactions-config.js?v=v3.69.0"></script>
-<script src="assets/interactions.js?v=v3.69.0"></script>
-<script src="assets/issues-live.js?v=v3.69.0"></script>
-<script src="assets/likes.js?v=v3.69.0"></script>
-<script src="assets/app.js?v=v3.69.0"></script>
+<script src="assets/interactions-config.js?v=v11.1.0"></script>
+<script src="assets/interactions.js?v=v11.1.0"></script>
+<script src="assets/issues-live.js?v=v11.1.0"></script>
+<script src="assets/likes.js?v=v11.1.0"></script>
+<script src="assets/app.js?v=v11.1.0"></script>
 </body>
 </html>

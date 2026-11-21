@@ -2470,13 +2470,15 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 }
 
 /* ============================================================
-   右下角站宠「雪团」—— 容器 / 拖拽把手 / 缩放
+   右下角站宠「花信」—— 容器 / 拖拽把手 / 缩放
    容器本身不接收指针事件，靠上面那层 .neko-grab 接管：
    这样 iframe 内部的鼠标移动不会和宿主页抢事件。
    ============================================================ */
 .neko-pet {
   position: fixed; z-index: 28;   /* 压在回顶按钮(30)下面 */
-  right: 12px; bottom: 10px;
+  /* 底部抬高：给下方聊天输入框留足空间（间距 12 + 输入框约 46 + 余量），
+     保证点开聊天后输入框完整落在视口内，不再贴着屏幕底边被裁 */
+  right: 12px; bottom: 76px;
   width: 190px; height: 216px;
   /* 尺寸靠 JS 写 --neko-w / --neko-h，缩放时只改这两个变量 */
   pointer-events: none;
@@ -2506,7 +2508,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 .neko-pet.dragging { filter: brightness(1.03); }
 .neko-pet.dragging .neko-stage { filter: drop-shadow(0 22px 30px rgba(120, 108, 150, .26)); }
 @media (max-width: 760px) {
-  .neko-pet { right: 8px; bottom: 74px; }
+  .neko-pet { right: 8px; bottom: 76px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .neko-pet { transition: opacity .2s ease; }
@@ -2538,7 +2540,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 .neko-act:active { transform: scale(.94); }
 .neko-act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .neko-bubble {
-  position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: calc(100% + 10px); right: 0; left: auto; transform: none;
   max-width: min(250px, 68vw); padding: 10px 14px; border-radius: 14px;
   background: var(--glass-sheen), var(--glass-strong); border: 1px solid var(--glass-line);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
@@ -2549,12 +2551,13 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 }
 .neko-bubble.show { opacity: 1; translate: 0 0; }
 .neko-bubble::after {
-  content: ''; position: absolute; left: 50%; bottom: -6px; width: 11px; height: 11px;
+  content: ''; position: absolute; right: 24px; bottom: -6px; width: 11px; height: 11px;
   margin-left: -6px; background: inherit; border-right: 1px solid var(--glass-line);
   border-bottom: 1px solid var(--glass-line); transform: rotate(45deg); border-radius: 2px;
 }
 .neko-chat {
-  position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+  /* 右对齐猫的右缘而非居中：窄屏居中会右侧出屏，输入不完整 */
+  position: absolute; top: calc(100% + 12px); right: 0; left: auto; transform: none;
   width: min(240px, 74vw); display: flex; align-items: center; gap: 6px;
   padding: 7px 8px 7px 14px; border-radius: 999px;
   background: var(--glass-sheen), var(--glass-strong); border: 1px solid var(--glass-line);
