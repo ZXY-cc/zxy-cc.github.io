@@ -2638,6 +2638,7 @@
         var api = nekoApi();
         if (api && api.resize) { try { api.resize(); } catch (e) {} }
         nekoBubbleFit();
+        nekoChatFit();
       }, 200);
     }, { passive: true });
 
@@ -2689,6 +2690,7 @@
         nekoHideBubble();
         if (!chatForm.hidden) {
           nekoEnsureChatVisible();
+          nekoChatFit();
           try { chatInput.focus({ preventScroll: true }); } catch (err) { try { chatInput.focus(); } catch (e2) {} }
         }
       });
@@ -2839,6 +2841,18 @@
     if (r.left < pad) dx = pad - r.left;
     else if (r.right > vw - pad) dx = vw - pad - r.right;
     if (dx) el.style.setProperty('--neko-bubble-dx', Math.round(dx) + 'px');
+  }
+  /* 输入框与气泡共用同一条竖轴（猫容器中线）：正常情况下零横移，
+     只有极窄屏下宽度被 min-width 撑开、又贴着视口边缘时才临时挪一点 */
+  function nekoChatFit() {
+    var el = document.getElementById('neko-chat');
+    if (!el || el.hidden) return;
+    el.style.setProperty('--neko-chat-dx', '0px');
+    var r = el.getBoundingClientRect();
+    var pad = 8, dx = 0, vw = window.innerWidth || 1024;
+    if (r.left < pad) dx = pad - r.left;
+    else if (r.right > vw - pad) dx = vw - pad - r.right;
+    if (dx) el.style.setProperty('--neko-chat-dx', Math.round(dx) + 'px');
   }
   function nekoSay(text, ms) {
     var el = document.getElementById('neko-bubble');

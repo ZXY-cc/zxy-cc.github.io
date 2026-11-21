@@ -283,9 +283,10 @@ CACHE_VER = LOG_VER;
 /* 缓存键在版本号后追加脚本内容指纹：同一版本内脚本改动也能让浏览器拉到新文件，
    避免「合并修复不升版本号 → 手机端复用旧缓存」导致修复不生效。 */
 try {
-  const appHash = crypto.createHash('sha256').update(read('assets/app.js')).digest('hex').slice(0, 8);
-  CACHE_VER += '-' + appHash;
-} catch (e) { /* 读不到脚本时退回纯版本号 */ }
+  const fp = (f) => crypto.createHash('sha256').update(read(f)).digest('hex').slice(0, 8);
+  /* 脚本与样式各取一段指纹：只改了 CSS 也要换缓存键，否则手机端会继续用旧样式 */
+  CACHE_VER += '-' + fp('assets/app.js') + fp('assets/style.css');
+} catch (e) { /* 读不到文件时退回纯版本号 */ }
 const versions = [];
 for (const b of blocks) {
   if (b.type === 'table' && tableKind(b.header) === 't-ver') {

@@ -2567,9 +2567,12 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   border-bottom: 1px solid var(--glass-line); transform: rotate(45deg); border-radius: 2px;
 }
 .neko-chat {
-  /* 右对齐猫的右缘而非居中：窄屏居中会右侧出屏，输入不完整 */
-  position: absolute; top: calc(100% + 12px); right: 0; left: auto; transform: none;
-  width: min(240px, 74vw); display: flex; align-items: center; gap: 6px;
+  /* 与头顶气泡同一条竖轴：以猫容器中线居中 + translateX(-50%)，宽度上限取猫容器宽度，
+     这样猫在右缘也不出屏、平时不需要横移（--neko-chat-dx 只在极窄屏兜底） */
+  position: absolute; top: calc(100% + 12px); left: 50%; right: auto;
+  transform: translateX(calc(-50% + var(--neko-chat-dx, 0px)));
+  width: min(240px, 100%); min-width: 168px;
+  display: flex; align-items: center; gap: 6px;
   padding: 7px 8px 7px 14px; border-radius: 999px;
   background: var(--glass-sheen), var(--glass-strong); border: 1px solid var(--glass-line);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
