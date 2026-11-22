@@ -1312,7 +1312,7 @@
       '请求由浏览器直发该接口，接口必须允许跨域。密钥只存这台设备的 localStorage，不进 site-data.js。' +
       '若之后部署了自己的中转代理（如 Cloudflare Worker），可只填地址、密钥留空。</p>' +
       '<input class="f-input" id="f-pet-api" data-pet-api type="text" ' +
-      'placeholder="留空 = 站内预置线路；或 https://api.example.com/v1/chat/completions|sk-xxx|gpt-4o-mini" ' +
+      'placeholder="留空 = 站内预置线路；自填请按上方格式填写，密钥不会回显在页面上" ' +
       'value="' + esc(c.api || '') + '" autocomplete="off" spellcheck="false">' +
       '<p class="f-hint" id="pet-api-note">' + esc(petNote('api', c.api)) + '</p></div>' +
       '<div class="settings-block"><h3>宠物 SKILL</h3>' +

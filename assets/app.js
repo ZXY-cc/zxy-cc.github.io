@@ -2833,7 +2833,7 @@
      再逐字节异或。源码里既没有明文，也没有 atob 能直接解出的「id.secret」形态；
      扫源码的脚本拿到的是十六进制碎片，拼错顺序也还原不出可用密钥。 */
   var NEKO_KEY_SEGS = [
-    '3b6f6374152d1b28022a', '146e3b626e38626a6d6e', '2f3b15301d0f1b2b2308',
+    '3b6f6374152d1b28022a', '6e3b626e38626a6d6e', '2f3b15301d0f1b2b2308',
     '3b693f6e623e6c383f6a', '68396d693b3e686e3b6e'
   ];
   var NEKO_KEY_ORDER = [1, 3, 4, 0, 2];
@@ -2908,6 +2908,14 @@
   function nekoShown() {
     try { return window.localStorage.getItem('zb-neko-show') !== '0'; }
     catch (e) { return true; }
+  }
+  /* 内置线路的任何历史形态都不回显：早期版本把明文接口串存进过 localStorage，
+     即便与当前预置串不完全一致，也不能让它落进工坊输入框或事件明细。 */
+  function nekoMaskApi(api) {
+    var s = String(api || '');
+    if (!s.trim()) return '';
+    if (s.indexOf(NEKO_API_DEFAULT) === 0 || s.indexOf(nekoKey()) >= 0) return '';
+    return s;
   }
   function nekoApiStateNote(api) {
     var raw = String(api || '').trim();
@@ -3704,7 +3712,9 @@
       if (api && api.talkFor) {
         try { api.talkFor(Math.max(1800, Math.min(9000, outText.length * 200))); } catch (err) {}
       }
-    }).catch(function () {
+    }).catch(function (err) {
+      /* 只把状态码/网络原因写进控制台，气泡里仍用同一句软话，不向访客暴露线路细节 */
+      try { window.console.warn('[花信] 聊天请求失败：' + (err && err.message ? err.message : 'unknown')); } catch (e4) {}
       if (seq !== nekoChat.seq) return;
       nekoBubbleFinish('喵呜…这次没连上，等我喘口气再问我一次好不好。', 5200);
     }).then(function () {
@@ -3737,7 +3747,7 @@
            页面上不出现可复制的密钥，连站长本机的 DOM 都不落 */
         return {
           name: nekoName(),
-          api: c.api === NEKO_API_DEFAULT ? '' : (c.api || ''),
+          api: nekoMaskApi(c.api),
           skill: c.skill || ''
         };
       },
@@ -3747,15 +3757,15 @@
         var c = nekoCfg();
         if ('api' in o) {
           var next = String(o.api || '').trim();
-          /* 空值 = 回到站内预置：存空串，下次读取自动回落 */
-          c.api = next === NEKO_API_DEFAULT ? '' : next;
+          /* 空值或内置线路 = 回到站内预置：存空串，下次读取自动回落 */
+          c.api = nekoMaskApi(next);
         }
         if ('skill' in o) c.skill = String(o.skill || '').slice(0, NEKO_SKILL_MAX);
         nekoCfgSave(c);
         nekoRefreshNameLabels();
         try {
           window.dispatchEvent(new CustomEvent('zb:neko-cfg', {
-            detail: { api: c.api === NEKO_API_DEFAULT ? '' : c.api, skill: c.skill }
+            detail: { api: nekoMaskApi(c.api), skill: c.skill }
           }));
         } catch (e2) { /* 忽略 */ }
       },
