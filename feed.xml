@@ -24,6 +24,14 @@
     <summary>这篇汇总目前本站渲染引擎支持的全部 Markdown 拓展语法，写法与洛谷 Markdown 手册保持一致。每一节先给出写法，接着直接展示渲染效果；代码块里的源码不会被解析，下面的效果才是真正渲染出来的样子。 :::cont[2]::: 一、目录 在文章任意位置写一行 :::cont::: ，就会按全文标题生成一张与站点「本页目录」同款的卡片，星标链接点击直达对应标题（本文开头这张就是它生成的……</summary>
   </entry>
   <entry>
+    <title>第2次周报</title>
+    <id>https://zxy-blog.top/posts/p-mwhf1abawj06.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/p-mwhf1abawj06.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/p-mwhf1abawj06"/>
+    <updated>2026-11-22T00:00:00Z</updated>
+    <summary>完成事项 先搭建了基于dpdns的免费博客，确认了基本主题和框架，做出了基本雏形。（……一系列版本迭代……）然后买了个top域名，把所有原域名的内容全部转移，弃用原域名，（……一系列版本迭代……） 更新内容太多了，这里写不下。具体见 https://zxy blog.top/ /about https://zxy blog.top/ /about 我在工坊上投入了很多，为了方便我写文章，我加入……</summary>
+  </entry>
+  <entry>
     <title>第3次周报</title>
     <id>https://zxy-blog.top/posts/p-mwrkp1sjwxez.html</id>
     <link rel="alternate" href="https://zxy-blog.top/posts/p-mwrkp1sjwxez.html"/>
@@ -38,14 +46,6 @@
     <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/free-blog"/>
     <updated>2026-11-16T00:00:00Z</updated>
     <summary>域名、证书、托管这三件事各管什么，以及一条最省事的上线路径。</summary>
-  </entry>
-  <entry>
-    <title>第2次周报</title>
-    <id>https://zxy-blog.top/posts/p-mwhf1abawj06.html</id>
-    <link rel="alternate" href="https://zxy-blog.top/posts/p-mwhf1abawj06.html"/>
-    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/p-mwhf1abawj06"/>
-    <updated>2026-11-15T00:00:00Z</updated>
-    <summary>完成事项 先搭建了基于dpdns的免费博客，确认了基本主题和框架，做出了基本雏形。（……一系列版本迭代……）然后买了个top域名，把所有原域名的内容全部转移，弃用原域名，（……一系列版本迭代……） 更新内容太多了，这里写不下。具体见 https://zxy blog.top/ /about https://zxy blog.top/ /about 我在工坊上投入了很多，为了方便我写文章，我加入……</summary>
   </entry>
   <entry>
     <title>博客食用说明！ฅ^•~•^ฅ</title>
