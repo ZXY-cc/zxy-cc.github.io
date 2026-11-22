@@ -2576,6 +2576,13 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 }
 .neko-chip:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--accent-text); }
 .neko-chip:active { transform: scale(.96); }
+/* 正文里长出来的链接按钮（模型列相册时常自己拼链接）：跟卡片同款，收小一号贴着字排 */
+.neko-bubble-text .neko-chip-inline {
+  display: inline-block; margin: 2px 3px 0 0; padding: 3px 8px;
+  font-size: 11.5px; border-radius: 9px; vertical-align: baseline;
+  text-decoration: none; color: var(--accent-text);
+}
+.neko-bubble-text .neko-chip-inline + .neko-chip-inline { margin-left: 0; }
 .neko-bubble.has-acts { padding: 11px 12px 10px; }
 /* 等待首字时轻轻呼吸，一眼能看出在打字 */
 .neko-bubble.is-typing { animation: neko-typing 1.1s ease-in-out infinite; }

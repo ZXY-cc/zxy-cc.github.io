@@ -783,40 +783,6 @@
         '已关闭：' + nekoName() + '不会再出现；重新打开后会自动回来（位置和大小保持原样）。';
       return;
     }
-    if (t && t.getAttribute && t.getAttribute('data-neko-name') !== null) {
-      var nn = nekoSetName(t.value);
-      var nnNote = document.getElementById('neko-name-state');
-      if (nnNote) nnNote.textContent = '已保存：聊天与提示都改叫「' + nn + '」，立即生效。';
-      return;
-    }
-    if (t && t.getAttribute && t.getAttribute('data-neko-api') !== null) {
-      var nkCfg = nekoCfg();
-      nkCfg.api = String(t.value || '').trim();
-      nekoCfgSave(nkCfg);
-      var nkApiNote = document.getElementById('neko-api-state');
-      if (nkApiNote) nkApiNote.textContent = nekoApiStateNote(nkCfg.api);
-      return;
-    }
-    if (t && t.getAttribute && t.getAttribute('data-neko-skill') !== null) {
-      var nkFile = t.files && t.files[0];
-      if (!nkFile) return;
-      var nkSkillNote = document.getElementById('neko-skill-state');
-      if (nkFile.size > NEKO_SKILL_MAX) {
-        if (nkSkillNote) nkSkillNote.textContent = '文件太大（超过 128KB），请换一份更小的 SKILL 文件。';
-        return;
-      }
-      var rd = new FileReader();
-      rd.onload = function () {
-        var cfg2 = nekoCfg();
-        cfg2.skill = String(rd.result || '').slice(0, NEKO_SKILL_MAX);
-        nekoCfgSave(cfg2);
-        if (nkSkillNote) nkSkillNote.textContent = nekoSkillNote(cfg2.skill);
-        var clr = document.querySelector('[data-neko-skill-clear]');
-        if (clr) clr.hidden = !cfg2.skill.trim();
-      };
-      rd.readAsText(nkFile);
-      return;
-    }
   });
   function qualitySpecHtml() {
     var head = '<thead><tr><th scope="col">效果</th><th scope="col">高</th>' +
@@ -897,35 +863,18 @@
       '<p>数字变化时每一位独立滚动（0~9 循环）。「所有」= 统计大数字与浏览量、点赞量都滚；「部分」= 仅首页卡片与归档的彩色大数字滚动；「关闭」= 全部直接显示。</p>' +
       '<div class="opt-group" role="radiogroup" aria-label="数字滚动动画">' + rollOpts + '</div>' +
       '<p class="settings-foot" id="roll-mode-state">' + esc(rollModeNote(rmode)) + '</p></div></div></section>' +
-      /* 「小猫」卡片：右下角站宠花信的昵称、显隐、聊天 API 与 SKILL 规范 */
+      /* 「小猫」卡片：设置页只留出不出场这一个开关；
+         昵称、聊天接口与 SKILL 规范都收进「工坊 · 宠物」，不摆在公开的设置页上 */
       '<section class="settings-card glass reveal" aria-label="小猫设置">' +
       '<div class="settings-block stack"><div class="settings-info">' +
-      '<h2>小猫</h2><p>右下角的站宠' + esc(nekoName()) + '：昵称、显示开关、聊天用的 API 与 SKILL 规范。偏好只保存在本机，不会上传到任何地方。</p></div>' +
-      '<div class="settings-sub"><h3>宠物昵称</h3>' +
-      '<p>给小猫起个名字，聊天提示与回复里的称呼会跟着变；留空恢复默认「花信」。</p>' +
-      '<input class="f-input" id="neko-name-input" type="text" data-neko-name' +
-      ' maxlength="24" placeholder="' + NEKO_NAME_DEFAULT + '"' +
-      ' value="' + esc(nekoName()) + '" autocomplete="off">' +
-      '<p class="settings-foot" id="neko-name-state">当前昵称：<b>' + esc(nekoName()) + '</b>。</p></div>' +
+      '<h2>小猫</h2><p>右下角的站宠' + esc(nekoName()) + '：这里只管她出不出场。切换立即生效，偏好只保存在本机。</p></div>' +
       '<div class="settings-sub"><h3>显示小猫</h3>' +
       '<label class="no-count-item"><input type="checkbox" data-neko-show' +
       (nekoShown() ? ' checked' : '') + '><span>显示右下角的站宠' + esc(nekoName()) + '（可拖动、聊天、喂小鱼干）</span></label>' +
       '<p class="settings-foot" id="neko-show-state">' +
       esc(nekoShown() ? '已开启：' + nekoName() + '常驻右下角；关闭后不会再出现，也不再下载它的资源。' :
-        '已关闭：' + nekoName() + '不会再出现；重新打开后会自动回来（位置和大小保持原样）。') + '</p></div>' +
-      '<div class="settings-sub"><h3>聊天 API</h3>' +
-      '<p>已预置站内接口，开箱即可聊天。也可填自己的 OpenAI 兼容 /chat/completions 接口，格式：<code>接口地址|密钥|模型名</code>（模型可省略，默认 gpt-4o-mini）。' +
-      '请求由浏览器直接发往该接口，接口需允许跨域；清空后会提示 [未设置API]。</p>' +
-      '<input class="f-input" id="neko-api-input" type="text" data-neko-api' +
-      ' placeholder="https://api.example.com/v1/chat/completions|sk-xxx|gpt-4o-mini"' +
-      ' value="' + esc(String(nekoCfg().api || '')) + '" autocomplete="off" spellcheck="false">' +
-      '<p class="settings-foot" id="neko-api-state">' + esc(nekoApiStateNote(nekoCfg().api)) + '</p></div>' +
-      '<div class="settings-sub"><h3>宠物 SKILL</h3>' +
-      '<p>上传一份文本规范（.txt / .md 等，128KB 以内），' + esc(nekoName()) + '聊天时会严格遵守里面的设定；重新上传即覆盖。</p>' +
-      '<label class="file-zone"><input class="f-file" type="file" data-neko-skill accept=".txt,.md,.markdown,.json,text/plain,text/markdown"><span>选择 SKILL 文件上传</span></label>' +
-      '<p class="settings-foot" id="neko-skill-state">' + esc(nekoSkillNote(nekoCfg().skill)) + '</p>' +
-      '<button class="soft-btn" type="button" data-neko-skill-clear' +
-      (nekoCfg().skill ? '' : ' hidden') + '>清空 SKILL</button></div>' +
+        '已关闭：' + nekoName() + '不会再出现；重新打开后会自动回来（位置和大小保持原样）。') + '</p>' +
+      '<p class="settings-foot">她的昵称、聊天接口与 SKILL 规范都收在「工坊 · 宠物」里，只存在站长自己的浏览器中，访客看不到也改不到。</p></div>' +
       '</div></section>' +
       /* 浏览统计只对站长设备显示：普通访客用不上「本机不计入浏览量」 */
       (window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner() ?
@@ -2080,17 +2029,6 @@
             if (qc) qc.textContent = qualityName(qv);
             return;
           }
-          /* 小猫卡：清空 SKILL 规范 */
-          var nkClr = node.closest('[data-neko-skill-clear]');
-          if (nkClr) {
-            var c2 = nekoCfg();
-            c2.skill = '';
-            nekoCfgSave(c2);
-            var sn = document.getElementById('neko-skill-state');
-            if (sn) sn.textContent = nekoSkillNote('');
-            nkClr.hidden = true;
-            return;
-          }
           var order = node.closest('[data-morder]');
           if (order) { momentOrder = order.getAttribute('data-morder'); retintMoments(); return; }
           var cf = node.closest('[data-cfilter]');
@@ -2517,39 +2455,50 @@
     if (!nekoShown()) box.style.display = 'none';
 
     /* ---- 延迟挂载：等页面空闲再拉 4.6MB 的部件 ---- */
-    var mounted = false;
+    var mounted = false, frameTries = 0;
+    /* 猫本体在 iframe 里，加载失败时不会有任何报错，只会静悄悄一片空白。
+       这里把「重试一次」做成显式路径：error 事件、加载后拿不到接口、超时 22 秒都算失败。 */
+    function nekoFrameLoad(bust) {
+      frame.src = 'assets/neko/index.html?embed=1' + (bust ? '&r=' + Date.now() : '');
+    }
+    function nekoFrameRetry() {
+      if (frameTries >= 1 || !nekoShown()) return;
+      frameTries++;
+      nekoFrameLoad(true);
+    }
     function mount() {
       if (mounted) return;
       /* 设置里关掉了小猫：不下载任何资源，等重新打开时再挂载 */
       if (!nekoShown()) { neko.pending = true; return; }
       mounted = true;
-      /* 省流量模式 / 2G 网络：不下载这只猫，页面其余功能不受影响 */
+      /* 省流量 / 2G：照样挂载，只是让出更久的空闲——
+         以前这里是「标记已加载但不设 src」，结果访客只看到一块空玻璃。 */
       var conn = navigator.connection || navigator.mozConnection || null;
-      if (conn && (conn.saveData || /(^|-)2g$/.test(String(conn.effectiveType || '')))) {
-        box.classList.add('loaded');
-        return;
-      }
+      var lean = !!(conn && (conn.saveData || /(^|-)2g$/.test(String(conn.effectiveType || ''))));
       frame.addEventListener('load', function () {
         var api = nekoApi();
-        if (!api) return;
+        if (!api) { nekoFrameRetry(); return; }
+        if (neko.ready) { try { tuneNeko(api); } catch (e) {} return; }
         var finish = function () {
+          if (neko.ready) return;
           neko.ready = true;
+          if (neko.bootTimer) { clearTimeout(neko.bootTimer); neko.bootTimer = 0; }
           box.classList.add('loaded');
           box.classList.add('ready');      /* 猫就绪后才亮出左侧互动按钮 */
           tuneNeko(api);
         };
         if (api.whenReady) api.whenReady(finish); else finish();
-      }, { once: true });
-      if (reduced()) {
-        /* 减少动效：只挂一张静止的猫，不跑循环 */
-        frame.addEventListener('load', function () {
-          var api0 = nekoApi();
-          if (api0 && api0.pause) api0.pause(true);
-        }, { once: true });
-        setTimeout(function () { frame.src = 'assets/neko/index.html?embed=1'; }, 2200);
-      } else {
-        frame.src = 'assets/neko/index.html?embed=1';
-      }
+        if (reduced()) { try { api.pause(true); } catch (e) {} }
+      });
+      frame.addEventListener('error', nekoFrameRetry);
+      if (neko.bootTimer) clearTimeout(neko.bootTimer);
+      neko.bootTimer = window.setTimeout(function () {
+        neko.bootTimer = 0;
+        if (!neko.ready) nekoFrameRetry();
+      }, 22000);
+      if (lean) setTimeout(function () { nekoFrameLoad(false); }, 2600);
+      else if (reduced()) setTimeout(function () { nekoFrameLoad(false); }, 2200);
+      else nekoFrameLoad(false);
     }
     neko.mount = mount;
     if (window.requestIdleCallback) {
@@ -2642,11 +2591,18 @@
       }, 200);
     }, { passive: true });
 
-    /* ---- 切到后台就冻结，省电 ---- */
+    /* ---- 切到后台就冻结，省电；回来时补一次尺寸重算 ---- */
     nekoWatchTheme();
     document.addEventListener('visibilitychange', function () {
       var api = nekoApi();
       if (api && api.pause) { try { api.pause(document.hidden); } catch (e) {} }
+      if (document.hidden) return;
+      if (api && api.resize) { try { api.resize(); } catch (e) {} }
+      /* 首次挂载时若正好在后台，requestIdleCallback 不会跑，回来时补挂 */
+      if (!neko.ready && neko.mount && !document.getElementById('neko-frame').getAttribute('src')) {
+        neko.pending = false;
+        neko.mount();
+      }
     });
 
     /* ---- 左侧互动按钮（聊天 / 喂小鱼干）与聊天输入框 ----
@@ -2821,7 +2777,11 @@
     try { window.localStorage.setItem('zb-neko-show', on ? '1' : '0'); } catch (e) { /* 忽略 */ }
     if (!neko.box) return;
     neko.box.style.display = on ? '' : 'none';
-    if (on && neko.pending) { neko.pending = false; if (neko.mount) neko.mount(); }
+    if (!on) return;
+    if (neko.pending) { neko.pending = false; if (neko.mount) neko.mount(); }
+    /* 藏起来时 iframe 宽高是 0，画布按 96px 兜底；重新亮出来必须重算一次，
+       否则猫会被按 96px 画好再拉伸，看着糊成一团 */
+    nekoApplySize(neko.w || 190);
   }
   function nekoHideBubble() {
     var el = document.getElementById('neko-bubble');
@@ -2877,9 +2837,85 @@
       .replace(/\n{3,}/g, '\n\n')
       .replace(/\s+$/, '');
   }
-  function nekoBubbleText(v) {
+  function nekoBubbleText(v) { nekoRich(v); }
+  /* 模型偶尔自己拼链接（列相册时最常见）：气泡是纯文本节点，不处理就会把
+     [成都-蓉城 · LIVE](https://…) 原样露出来。这里把链接抽成和结果卡片同款的
+     圆角按钮：站内路径转 hash 路由，站外地址开新标签。 */
+  /* 比较链接文字与真实标题时去掉标点与 emoji，只留汉字/字母/数字 */
+  function nekoPlain(x) { return String(x || '').replace(/[^\u4e00-\u9fa5a-z0-9]/gi, '').toLowerCase(); }
+  function nekoLinkTarget(url, label) {
+    var raw = String(url || '').trim();
+    if (!raw) return '';
+    if (raw.charAt(0) === '#') return raw;
+    try {
+      var u = new URL(raw, location.href);
+      var path = u.pathname.replace(/\/+$/, '') || '/';
+      var want = nekoPlain(label);
+      /* 模型可能把站内地址写成别的域名（它自己补的 staream.top 之类），
+         但路径就是本站结构：一律当站内路由，别把访客带去不存在的站 */
+      if (/^\/(album|post|tag|posts|photowall|moments|projects|friends|timeline|about|chatter|tags|search|settings)(\/|$)/.test(path)) {
+        /* 相册 / 文章：模型常自己编 1、2、3 这种 id。
+           先看 id 是否真实存在，不存在就用链接文字去对标题，再不行回列表页 */
+        var ma = path.match(/^\/album\/([^/]+)$/);
+        if (ma) {
+          var aid = decodeURIComponent(ma[1]), refs = nekoKb().albumRefs || [], i;
+          for (i = 0; i < refs.length; i++) if (refs[i].id === aid) return '#/album/' + aid;
+          for (i = 0; i < refs.length; i++) {
+            var t = nekoPlain(refs[i].title);
+            if (want && t && (t.indexOf(want) >= 0 || want.indexOf(t) >= 0)) return '#/album/' + refs[i].id;
+          }
+          return '#/photowall';
+        }
+        var mp = path.match(/^\/post\/([^/]+)$/);
+        if (mp) {
+          var slug = decodeURIComponent(mp[1]), ps = nekoKb().posts, k;
+          for (k = 0; k < ps.length; k++) if (ps[k].slug === slug) return '#/post/' + slug;
+          for (k = 0; k < ps.length; k++) {
+            var pt = nekoPlain(ps[k].title);
+            if (want && pt && (pt.indexOf(want) >= 0 || want.indexOf(pt) >= 0)) {
+              return '#/post/' + encodeURIComponent(ps[k].slug);
+            }
+          }
+          return '#/posts';
+        }
+        return '#' + path + (u.search || '');
+      }
+      if (u.origin === location.origin) return u.hash || '#' + path;
+      return u.href;
+    } catch (e) {
+      return /^\/[^/]/.test(raw) ? '#' + raw : raw;
+    }
+  }
+  /* 流式还没收完时，末尾半个链接先藏起来，免得闪一串括号 */
+  function nekoTrimPartialLink(s) {
+    var i = s.lastIndexOf('[');
+    if (i < 0) return s;
+    var rest = s.slice(i), p = rest.indexOf('](');
+    if (p >= 0) return rest.lastIndexOf(')') < p ? s.slice(0, i) : s;
+    return rest.length < 64 && /^\[[^\]\n]*$/.test(rest) ? s.slice(0, i) : s;
+  }
+  function nekoRich(t) {
     var q = nekoBubbleParts();
-    if (q) q.text.textContent = nekoPretty(v);
+    if (!q) return;
+    var s = nekoTrimPartialLink(nekoPretty(t));
+    var host = q.text;
+    while (host.firstChild) host.removeChild(host.firstChild);
+    var re = /\[([^\]\n]{1,48})\]\((https?:\/\/[^\s)]+|\/[^\s)]*|#[^\s)]*)\)|(https?:\/\/[^\s，。！？、）)]+)/g;
+    var at = 0, m;
+    while ((m = re.exec(s))) {
+      if (m.index > at) host.appendChild(document.createTextNode(s.slice(at, m.index)));
+      var label = String(m[1] || m[3] || '').replace(/^\s+|\s+$/g, '').slice(0, 40) || '打开链接';
+      var href = nekoLinkTarget(m[2] || m[3] || '', label);
+      var a = document.createElement('a');
+      a.className = 'neko-chip neko-chip-inline';
+      a.textContent = label;
+      a.setAttribute('href', href || '#');
+      if (href.charAt(0) === '#') a.setAttribute('data-neko-go', href);
+      else { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
+      host.appendChild(a);
+      at = m.index + m[0].length;
+    }
+    if (at < s.length) host.appendChild(document.createTextNode(s.slice(at)));
   }
   function nekoBubbleActsList(acts) {
     var q = nekoBubbleParts();
@@ -2901,15 +2937,16 @@
     q.el.classList.add('has-acts');
     nekoBubbleFit();
   }
-  /* 卡片点击：收起气泡，跳到对应地址（站内都是 hash 路由，不刷新页面） */
+  /* 卡片点击：收起气泡，跳到对应地址（站内都是 hash 路由，不刷新页面）。
+     正文里渲染出来的站外链接没有 data-neko-go，放行给浏览器自己开新标签。 */
   document.addEventListener('click', function (e) {
     var t = e.target;
     var b = t && t.closest ? t.closest('.neko-chip') : null;
     if (!b) return;
-    e.preventDefault(); e.stopPropagation();
     var go = b.getAttribute('data-neko-go') || '';
-    nekoHideBubble();
     if (!go) return;
+    e.preventDefault(); e.stopPropagation();
+    nekoHideBubble();
     if (go.charAt(0) === '#') location.hash = go; else location.href = go;
   }, true);
 
@@ -3072,6 +3109,7 @@
       moments: arr('moments').length,
       projects: proj.map(function (x) { return String(x.name || ''); }),
       albums: alb.map(function (a) { return String(a.title || ''); }),
+      albumRefs: alb.map(function (a) { return { id: String(a.id || ''), title: String(a.title || '') }; }),
       name: CFG.displayName || '星梦Staream'
     };
     return nekoKbCache;
@@ -3290,7 +3328,13 @@
       '；最近发布：' + top;
     if (kb.chatter.length) s += '；杂谈 ' + kb.chatter.length + ' 则（' + kb.chatter.slice(0, 3).map(function (c) { return c.title; }).join('、') + '）';
     if (kb.projects.length) s += '；项目：' + kb.projects.join('、');
-    if (kb.albums.length) s += '；相册：' + kb.albums.join('、');
+    if (kb.albums.length) {
+      /* 带 id 一起给：她列相册时能直接抄对地址，不会自己编 /album/1 */
+      s += '；相册：' + kb.albums.map(function (t, i) {
+        var id = kb.albumRefs && kb.albumRefs[i] ? kb.albumRefs[i].id : '';
+        return id ? t + '（#/album/' + id + '）' : t;
+      }).join('、');
+    }
     if (kb.moments) s += '；说说 ' + kb.moments + ' 条';
     return s;
   }
@@ -3474,49 +3518,145 @@
      ZB_NEKO.digest() 看每次提问带给她的站点快照。 */
   try {
     window.ZB_NEKO = { kb: nekoKb, search: nekoSearch, acts: nekoActs, digest: nekoSiteDigest,
-      prompt: nekoSystemPrompt, ask: nekoAsk, tidy: nekoTidyReply };
+      prompt: nekoSystemPrompt, ask: nekoAsk, tidy: nekoTidyReply, rich: nekoRich,
+      /* 用取值器：nekoLife 的声明在这个对象之后，直接取值会拿到 undefined */
+      get life() { return { state: nekoLife, tick: nekoLifeTick }; } };
+  } catch (e) { /* 忽略 */ }
+
+  /* 宠物配置的唯一入口：设置页只留显隐开关，昵称 / 接口 / SKILL 由工坊「宠物」页读写。
+     都放本机 localStorage，绝不写进 site-data.js，所以不会跟着网站发布出去。 */
+  try {
+    window.ZB_NEKO_CFG = {
+      nameDefault: NEKO_NAME_DEFAULT,
+      maxSkill: NEKO_SKILL_MAX,
+      get: function () {
+        var c = nekoCfg();
+        return { name: nekoName(), api: c.api || '', skill: c.skill || '' };
+      },
+      save: function (o) {
+        if (!o) return;
+        if ('name' in o) nekoSetName(o.name);
+        var c = nekoCfg();
+        if ('api' in o) c.api = String(o.api || '').trim();
+        if ('skill' in o) c.skill = String(o.skill || '').slice(0, NEKO_SKILL_MAX);
+        nekoCfgSave(c);
+        nekoRefreshNameLabels();
+        try {
+          window.dispatchEvent(new CustomEvent('zb:neko-cfg', { detail: { api: c.api, skill: c.skill } }));
+        } catch (e2) { /* 忽略 */ }
+      },
+      apiNote: nekoApiStateNote,
+      skillNote: nekoSkillNote,
+      shown: nekoShown,
+      setShown: nekoSetVisible
+    };
   } catch (e) { /* 忽略 */ }
 
   /* 让她的默认状态像一只真的在坐着的猫：
-     模型自带呼吸与头部的慢摆，但耳朵和尾巴是静态的，所以这里补两层「生命感」：
-       · 尾巴：两个不同周期的正弦叠加，慢速左右扫（不是机械等幅摆动）
-       · 耳朵：随机间隔的轻抽动，幅度小、带回落，像被什么声音惊了一下
-     直接写 base.*（模型每帧读它），所以是零延迟、无缝的，不会和缓动队列打架。 */
-  var nekoLife = { t0: 0, raf: 0, earAt: 0, earBusy: 0, guard: 0 };
+     模型自带呼吸与眨眼，但头、耳朵、尾巴是静态的，所以这里补一套「自发小动作」：
+       · 尾巴：常驻慢摆（两个不同周期的正弦叠加），隔一阵收小幅度歇一会，再接着摇
+       · 头：隔几秒轻微歪头 / 转头 / 抬头 / 低头，停一两秒再慢慢回正
+       · 耳朵：随机单只轻抽（偶尔两只一起），歪向哪边承重那侧耳朵略压
+     所有值都写进 api.idle() 的「增量」，不直接改 base：touch() / pose() / emotion()
+     的补间永远是权威值，自发动作只叠在它们上面。 */
+  var nekoLife = {
+    t0: 0, raf: 0, last: 0, guard: 0,
+    phase: Math.random() * 6.28, sway: 0.9, swayT: 0.9, swayAt: 0,
+    hd: { ax: 0, ay: 0, az: 0 }, hdT: { ax: 0, ay: 0, az: 0 }, hdAt: 0, hdBack: Infinity,
+    ears: [], earAt: 0
+  };
+  /* 单帧推进：拆成独立函数，.rAF 循环与自检（ZB_NEKO.life.tick）共用同一套逻辑 */
+  function nekoLifeTick(now) {
+    var api = nekoApi();
+    if (!api || !neko.ready) { nekoLife.last = now; return; }
+    var L = nekoLife;
+    var dt = Math.min(0.1, Math.max(0, (now - L.last) / 1000));
+    L.last = now;
+    if (!dt) return;
+    var dragging = !!neko.dragging;
+
+    /* ---- 尾巴：摇一阵、歇一阵，歇着也不是完全不动 ---- */
+    if (now > L.swayAt) {
+      L.swayT = L.swayT > 0.5 ? 0.10 + Math.random() * 0.12 : 0.78 + Math.random() * 0.22;
+      L.swayAt = now + (L.swayT > 0.5 ? 2400 + Math.random() * 2600 : 1500 + Math.random() * 3600);
+    }
+    L.sway += (L.swayT - L.sway) * (1 - Math.pow(0.08, dt));
+    L.phase += dt * (0.86 + 0.5 * L.sway) * (dragging ? 1.5 : 1);
+    var ts = L.sway * (0.40 * Math.sin(L.phase) + 0.13 * Math.sin(L.phase * 2.37 + 1.2));
+    var tl = 0.045 + 0.018 * Math.sin(L.phase * 0.31 + 0.7);
+    var tc = 0.14 + 0.02 * Math.sin(L.phase * 0.23);
+
+    /* ---- 头：歪 / 转 / 抬 / 低，停一两秒后回正 ---- */
+    if (dragging || now < L.guard) {
+      L.hdT.ax = 0; L.hdT.ay = 0; L.hdT.az = 0; L.hdBack = 0;
+    }
+    if (now > L.hdBack) { L.hdT.ax = 0; L.hdT.ay = 0; L.hdT.az = 0; L.hdBack = Infinity; }
+    if (!dragging && now > L.guard && now > L.hdAt) {
+      var pick = Math.random();
+      if (pick < 0.36) {                       /* 歪头：最像活人的一个动作 */
+        L.hdT.az = (Math.random() < 0.5 ? -1 : 1) * (0.07 + Math.random() * 0.06);
+        L.hdT.ax = (Math.random() - 0.5) * 0.04;
+      } else if (pick < 0.66) {                /* 转头看旁边 */
+        L.hdT.ax = (Math.random() < 0.5 ? -1 : 1) * (0.065 + Math.random() * 0.06);
+        L.hdT.az = (Math.random() - 0.5) * 0.03;
+      } else if (pick < 0.84) {                /* 抬头 */
+        L.hdT.ay = 0.03 + Math.random() * 0.03;
+      } else {                                  /* 低头 */
+        L.hdT.ay = -(0.028 + Math.random() * 0.03);
+      }
+      /* 保持 1.3~3.4 秒再回正；回正之后还要空 0.9~3.5 秒才轮到下一个动作，
+         否则一个接一个地歪，看着像在抽搐而不是「歪一会儿再正回来」 */
+      var hold = 1300 + Math.random() * 2100;
+      L.hdBack = now + hold;
+      L.hdAt = now + hold + 900 + Math.random() * 2600;
+    }
+    var kh = 1 - Math.pow(0.02, dt);
+    L.hd.ax += (L.hdT.ax - L.hd.ax) * kh;
+    L.hd.ay += (L.hdT.ay - L.hd.ay) * kh;
+    L.hd.az += (L.hdT.az - L.hd.az) * kh;
+
+    /* ---- 耳朵：随机轻抽，快起慢落 ---- */
+    if (!dragging && now > L.guard && now > L.earAt) {
+      L.ears.push({
+        t: 0, dur: 0.58 + Math.random() * 0.26,
+        amp: 0.13 + Math.random() * 0.13,
+        side: Math.random() < 0.22 ? 3 : (Math.random() < 0.5 ? 1 : 2)
+      });
+      L.earAt = now + 3000 + Math.random() * 5200;
+    }
+    var earL = 0, earR = 0;
+    for (var i = L.ears.length - 1; i >= 0; i--) {
+      var e = L.ears[i];
+      e.t += dt;
+      if (e.t >= e.dur) { L.ears.splice(i, 1); continue; }
+      var p = e.t / e.dur;
+      var v = Math.sin(Math.PI * p) * Math.pow(1 - p, 0.35) * e.amp;
+      if (e.side === 1 || e.side === 3) earL += v;
+      if (e.side === 2 || e.side === 3) earR += v;
+    }
+    if (L.hd.az > 0) earR += L.hd.az * 0.30;
+    else if (L.hd.az < 0) earL -= L.hd.az * 0.30;
+
+    var bx = 0.014 * Math.sin(L.phase * 0.42 + 1.7);
+    if (api.idle) {
+      api.idle({ ts: ts, tl: tl, tc: tc, bx: bx,
+        ax: L.hd.ax, ay: L.hd.ay, az: L.hd.az, earL: earL, earR: earR });
+    } else if (api.base) {
+      /* 旧版 iframe（浏览器缓存还没换）退化：直接写 base，至少尾巴还在摇 */
+      api.base.ts = ts; api.base.tl = tl; api.base.tc = tc; api.base.bx = bx;
+      api.base.ax = L.hd.ax; api.base.ay = L.hd.ay; api.base.az = L.hd.az;
+      api.base.earL = earL; api.base.earR = earR;
+    }
+  }
   function nekoLifeStart() {
     if (nekoLife.raf) return;
     nekoLife.t0 = performance.now();
-    nekoLife.earAt = 3 + Math.random() * 4;
+    nekoLife.last = nekoLife.t0;
+    nekoLife.earAt = nekoLife.t0 + 2200 + Math.random() * 3200;
+    nekoLife.hdAt = nekoLife.t0 + 2400 + Math.random() * 2600;
     var tick = function (now) {
       nekoLife.raf = window.requestAnimationFrame(tick);
-      var api = nekoApi();
-      if (!api || !neko.ready) return;
-      var t = (now - nekoLife.t0) / 1000;
-      var base = api.base;
-      if (base) {
-        /* 尾巴：慢扫 + 一点不规则；抬起角度也跟着轻轻起伏 */
-        /* 尾巴：主摆 + 副波（不同周期），抬起/弯曲各用更慢的周期，相位错开。
-           v3.69：主摆 0.26→0.44、副波 0.10→0.17，主波稍提速（0.55→0.68）——
-           待机时轻微但一眼能看出在摇；抬起 0.045→0.055、卷曲基准不变只留慢起伏 */
-        base.ts = 0.44 * Math.sin(t * 0.68) + 0.17 * Math.sin(t * 1.42 + 2.1);
-        base.tl = 0.055 + 0.020 * Math.sin(t * 0.33 + 0.4);
-        base.tc = 0.15 + 0.022 * Math.sin(t * 0.27);
-        /* 身体：极轻的重心左右转移，和尾巴反相，看起来才像"活着" */
-        base.bx = 0.018 * Math.sin(t * 0.37 + 2.0);
-      }
-      /* 耳朵抽动：每 4~9 秒一次，左右随机，0.28s 回落 */
-      if (now >= nekoLife.earAt && now > nekoLife.guard && !neko.dragging) {
-        var left = Math.random() < 0.5;
-        var amp = 0.16 + Math.random() * 0.14;
-        var cur = api.base ? { l: api.base.earL || 0, r: api.base.earR || 0 } : { l: 0, r: 0 };
-        if (api.ears) {
-          api.ears(left ? cur.l + amp : cur.l, left ? cur.r : cur.r + amp);
-          window.setTimeout(function () {
-            if (api.ears) api.ears(cur.l, cur.r);
-          }, 260 + Math.random() * 120);
-        }
-        nekoLife.earAt = now + 4000 + Math.random() * 5200;
-      }
+      nekoLifeTick(now);
     };
     nekoLife.raf = window.requestAnimationFrame(tick);
   }

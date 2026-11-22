@@ -803,6 +803,11 @@
       ['manage', '内容', 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'],
       ['taglib', '标签', 'M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z']
     ] },
+    { group: '站宠', items: [
+      /* 「宠物」：花信的昵称 / 聊天接口 / SKILL 追加规范。这些只存本机，
+         放在工坊里而不是公开设置页，API 与规范文件就不会摆在访客面前 */
+      ['pet', '宠物', 'M4.5 15.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.5-4c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm5 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.5 4c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-6 4.5c-2.5 0-4.5-1.4-4.5-3.2 0-1.2 1-2.1 2.2-1.8.8.2 1.5.5 2.3.5s1.5-.3 2.3-.5c1.2-.3 2.2.6 2.2 1.8 0 1.8-2 3.2-4.5 3.2z']
+    ] },
     { group: '站点与发布', items: [
       ['settings', '设置', 'M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'],
       ['site', '名片', 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-9 7H5V9h6v2zm0-4H5V5h6v2zm9 10h-8v-2h8v2zm0-4h-8v-2h8v2z'],
@@ -818,7 +823,9 @@
   }
   function admMenu() {
     return ADM_TABS.map(function (g) {
-      return '<div class="adm-group">' + g.group + '</div>' + g.items.map(function (t) {
+      var items = g.items.filter(function (t) { return t[0] !== 'pet' || isOwner(); });
+      if (!items.length) return '';
+      return '<div class="adm-group">' + g.group + '</div>' + items.map(function (t) {
         return '<button class="adm-item' + (state.tab === t[0] ? ' on' : '') +
           '" type="button" data-tab="' + t[0] + '">' +
           '<span class="adm-ico"><svg viewBox="0 0 24 24"><path d="' + t[2] + '"/></svg></span>' +
@@ -1276,6 +1283,47 @@
       '<p class="f-hint">粘贴代码时自动识别原来的缩进层级并换算成这里选择的长度；点击「格式优化」也会把代码块缩进统一成该长度。格式优化还会按上面的方式整理公式两侧的空格。</p></div>' +
       '</div>';
   }
+  /* 宠物（花信）：昵称 / 聊天接口 / SKILL 追加规范。
+     全部走 window.ZB_NEKO_CFG（app.js 暴露），落本机 localStorage，
+     绝不写进 site-data.js；所以这些设置不会随网站发布给任何访客。 */
+  function petCfg() {
+    var api = window.ZB_NEKO_CFG;
+    return (api && api.get) ? api.get() : { name: '花信', api: '', skill: '' };
+  }
+  function petNote(kind, v) {
+    var api = window.ZB_NEKO_CFG;
+    if (!api) return '';
+    return kind === 'api' ? api.apiNote(v) : api.skillNote(v);
+  }
+  function formPet() {
+    var c = petCfg(), has = !!(c.skill && c.skill.trim());
+    var def = (window.ZB_NEKO_CFG && window.ZB_NEKO_CFG.nameDefault) || '花信';
+    return '<div class="studio-form glass"><h2>宠物</h2>' +
+      '<p class="f-hint">右下角的站宠「' + esc(c.name || def) + '」。昵称、聊天接口与 SKILL 规范都只保存在这台设备的浏览器里，' +
+      '<b>不会写进 site-data.js，也不会出现在任何访客的页面上</b>；设置页只留一个「显示小猫」开关。</p>' +
+      '<div class="settings-block"><h3>宠物昵称</h3>' +
+      '<p class="f-hint">聊天提示、气泡称呼与无障碍文案都会跟着改；留空恢复默认「' + esc(def) + '」。</p>' +
+      '<input class="f-input" id="f-pet-name" data-pet-name type="text" maxlength="24" ' +
+      'placeholder="' + esc(def) + '" value="' + esc(c.name || '') + '" autocomplete="off">' +
+      '<p class="f-hint" id="pet-name-note">当前昵称：<b>' + esc(c.name || def) + '</b></p></div>' +
+      '<div class="settings-block"><h3>聊天接口</h3>' +
+      '<p class="f-hint">已预置站内接口，开箱即可聊天。换成自己的 OpenAI 兼容接口时格式是 ' +
+      '<code>接口地址|密钥|模型名</code>（模型可省略，默认 gpt-4o-mini）。请求由浏览器直发该接口，' +
+      '接口必须允许跨域；清空后她会回「[未设置API]」。</p>' +
+      '<input class="f-input" id="f-pet-api" data-pet-api type="text" ' +
+      'placeholder="https://api.example.com/v1/chat/completions|sk-xxx|gpt-4o-mini" ' +
+      'value="' + esc(c.api || '') + '" autocomplete="off" spellcheck="false">' +
+      '<p class="f-hint" id="pet-api-note">' + esc(petNote('api', c.api)) + '</p></div>' +
+      '<div class="settings-block"><h3>宠物 SKILL</h3>' +
+      '<p class="f-hint">站内已内置由 <code>花信-SKILL.md</code> 生成的功能与性格规范；这里上传的是「站长追加规范」，' +
+      '会接在内置规范之后，冲突时以它为准（.txt / .md，128KB 以内）。</p>' +
+      '<label class="file-zone"><input class="f-file" id="f-pet-skill" data-pet-skill type="file" ' +
+      'accept=".txt,.md,.markdown,text/plain,text/markdown"><span>选择 SKILL 文件上传</span></label>' +
+      '<p class="f-hint" id="pet-skill-note">' + esc(petNote('skill', c.skill)) + '</p>' +
+      '<div class="f-actions"><button class="soft-btn" type="button" data-act="pet-skill-clear"' +
+      (has ? '' : ' hidden') + '>清空追加规范</button></div></div>' +
+      '</div>';
+  }
   function formPublish() {
     var auto = autoEnabled(), has = !!syncToken();
     return '<div class="studio-form glass"><h2>发布上线 / 自动同步</h2>' +
@@ -1307,12 +1355,14 @@
       '<p class="f-hint">提交后 GitHub Pages 通常 1 分钟内完成构建；站点数据地址每 10 秒轮换，访客不会读到旧缓存。</p></div>';
   }
   function formHtml() {
+    /* 宠物页只给站长：游客连菜单项都看不到，这里再兜一层，防止手改 state.tab 翻出来 */
+    var tab = (state.tab === 'pet' && !isOwner()) ? 'post' : state.tab;
     return {
       post: formPost, photo: formPhoto, moment: formMoment, chatter: formChatter,
       project: formProject, friend: formFriend, site: formSite, about: formAbout,
       manage: formManage, taglib: formTagLib, publish: formPublish,
-      settings: formSettings
-    }[state.tab]();
+      settings: formSettings, pet: formPet
+    }[tab]();
   }
 
   /* ---------- 图片压缩 ---------- */
@@ -2090,6 +2140,14 @@
     if (!act) return;
     var a = act.getAttribute('data-act');
     if (a === 'lock') { revoke(); syncNav(); render(document.getElementById('app')); return; }
+    if (a === 'pet-skill-clear') {
+      if (window.ZB_NEKO_CFG) window.ZB_NEKO_CFG.save({ skill: '' });
+      var skn = document.getElementById('pet-skill-note');
+      if (skn) skn.textContent = petNote('skill', '');
+      act.hidden = true;
+      say('追加规范已清空，她回到站内内置的规范。');
+      return;
+    }
     if (a === 'cancel-edit') {
       var wasPost = !!(state.editing && state.editing.kind === 'posts');
       var wasAlbum = !!(state.editing && state.editing.kind === 'albums');
@@ -2199,6 +2257,44 @@
     var sk = t && t.getAttribute ? t.getAttribute('data-studio-set') : null;
     if (sk === 'zb-tidy') { setLs(TIDY_KEY, t.value === 'loose' ? 'loose' : 'compact'); say('格式优化方式已设为「' + (t.value === 'loose' ? '舒展' : '紧凑') + '」。'); return; }
     if (sk === 'zb-indent') { setLs(INDENT_KEY, t.value); say('代码缩进已设为 ' + t.value + ' 空格。'); return; }
+    /* 宠物页：昵称 / 接口 / SKILL 追加规范，全部只落本机 */
+    if (t && t.getAttribute && t.getAttribute('data-pet-name') !== null) {
+      if (window.ZB_NEKO_CFG) window.ZB_NEKO_CFG.save({ name: t.value });
+      var nm = petCfg().name;
+      var pn = document.getElementById('pet-name-note');
+      if (pn) pn.innerHTML = '当前昵称：<b>' + esc(nm) + '</b>';
+      say('昵称已保存为「' + nm + '」，右下角与聊天气泡立即生效。');
+      return;
+    }
+    if (t && t.getAttribute && t.getAttribute('data-pet-api') !== null) {
+      if (window.ZB_NEKO_CFG) window.ZB_NEKO_CFG.save({ api: t.value });
+      var pa = document.getElementById('pet-api-note');
+      if (pa) pa.textContent = petNote('api', t.value);
+      say('聊天接口已保存到这台设备（不会发布到网站）。');
+      return;
+    }
+    if (t && t.getAttribute && t.getAttribute('data-pet-skill') !== null) {
+      var pf = t.files && t.files[0];
+      if (!pf) return;
+      var max = (window.ZB_NEKO_CFG && window.ZB_NEKO_CFG.maxSkill) || 131072;
+      var ps = document.getElementById('pet-skill-note');
+      if (pf.size > max) {
+        if (ps) ps.textContent = '文件太大（超过 128KB），请换一份更小的 SKILL 文件。';
+        return;
+      }
+      var fr = new FileReader();
+      fr.onload = function () {
+        if (window.ZB_NEKO_CFG) window.ZB_NEKO_CFG.save({ skill: String(fr.result || '') });
+        var now = petCfg();
+        var note = document.getElementById('pet-skill-note');
+        if (note) note.textContent = petNote('skill', now.skill);
+        var clr = document.querySelector('[data-act="pet-skill-clear"]');
+        if (clr) clr.hidden = !(now.skill && now.skill.trim());
+        say('追加规范已载入：' + String(fr.result || '').length + ' 字，聊天时接在内置规范之后。');
+      };
+      fr.readAsText(pf);
+      return;
+    }
     if (!t || !t.id) return;
     if (t.id === 'f-manage-time' || t.id === 'f-manage-tag') { applyManageFilter(); return; }
     if (t.id === 'f-files' && t.files && t.files.length) {

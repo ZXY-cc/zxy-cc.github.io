@@ -128,6 +128,12 @@ const ctx = cv.getContext('2d', { alpha: true });
 const ly = {};
 PARTS.forEach(p => {
   const im = new Image();
+  /* 部件偶发 404 / 断流时重试一次：少一件就少一块，比整只猫不显示好 */
+  let tries = 0;
+  im.addEventListener('error', () => {
+    if (tries++ >= 1) return;
+    setTimeout(() => { im.src = p.d + '?r=1'; }, 900 + Math.random() * 800);
+  });
   im.src = p.d;
   ly[p.n] = Object.assign({}, p, { img: im });
 });
@@ -162,7 +168,10 @@ const st = {
   tailWag: 0, wagAmt: 0, wagTarget: 1, wagTimer: 4,
   waveOn: false, waveAmt: 0,
   bg: true,
-  paused: false
+  paused: false,
+  /* 宿主待机循环写进来的「增量参数」：算参数前叠到 base 上、画完还原，
+     这样她对歪头/耳朵/尾巴的自发小动作不会盖掉 touch() / pose() 的补间 */
+  idleAdd: null
 };
 const mouse = { x: W * 0.5, y: H * 0.42 };
 const view = { dpr: 1, w: 1, h: 1, s: 1, ox: 0, oy: 0 };
@@ -505,11 +514,32 @@ function spring(cur, vel, target, k, damp, dt){
 }
 
 let last = performance.now(), fpsAcc = 0, fpsN = 0;
+/* 待机增量只活在 base 的「本次绘制」里：进 tick 叠加、出 tick 还原 */
+const IDLE_KEYS = ['ax','ay','az','bx','ts','tl','tc','earL','earR','el','er'];
+let idleSaved = null;
+function idleApply(){
+  idleSaved = null;
+  const add = st.idleAdd;
+  if (!add) return;
+  idleSaved = {};
+  for (let i = 0; i < IDLE_KEYS.length; i++){
+    const k = IDLE_KEYS[i], v = add[k];
+    if (!v) continue;
+    idleSaved[k] = base[k];
+    base[k] += v;
+  }
+}
+function idleRestore(){
+  if (!idleSaved) return;
+  for (const k in idleSaved) base[k] = idleSaved[k];
+  idleSaved = null;
+}
 function tick(now){
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (st.paused){ requestAnimationFrame(tick); return; }
   st.t += dt;
   nekoTweenTick(dt);
+  idleApply();
 
   if (st.idle){
     st.blinkT -= dt;
@@ -579,6 +609,7 @@ function tick(now){
 
   buildTail();
   render();
+  idleRestore();
 
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.8){
@@ -818,6 +849,16 @@ const NekoCat = {
     nekoSet(d, ms === undefined ? 300 : ms); return NekoCat;
   },
   ears(l, r){ nekoSet({ earL: nekoClamp(l, -1, 1), earR: nekoClamp(r === undefined ? l : r, -1, 1) }, 0); return NekoCat; },
+  /* 待机增量：宿主每帧写一次（只写增量，不是绝对值）。
+     与 base 叠加后参与这一帧的绘制，画完还原——所以自己歪头、抖耳朵、
+     摇尾巴都不会盖掉 touch()/pose()/emotion() 正在跑的补间。 */
+  idle(o){
+    if (!o) return NekoCat;
+    const cur = st.idleAdd || (st.idleAdd = {});
+    for (const k in o){ if (k in base) cur[k] = +o[k] || 0; }
+    return NekoCat;
+  },
+  idleClear(){ st.idleAdd = null; return NekoCat; },
   wave(on){ st.waveOn = !!on; return NekoCat; },
   wag(on){ st.wag = !!on; return NekoCat; },
   breathe(on){ st.idle = !!on; return NekoCat; },
@@ -858,9 +899,10 @@ NekoCat.ready = new Promise(resolve => {
   const t0 = performance.now();
   const check = () => {
     const list = Object.keys(ly).map(k => ly[k].img);
+    /* 只要有部件彻底失败（naturalWidth 0 且已 complete），就别死等全量 */
     if (list.every(im => im.complete && im.naturalWidth > 0)) return resolve(true);
-    if (performance.now() - t0 > 20000) return resolve(false);
-    setTimeout(check, 50);
+    if (performance.now() - t0 > 9000) return resolve(false);
+    setTimeout(check, 60);
   };
   check();
 });
@@ -888,9 +930,39 @@ if (NEKO_EMBED){
 
 </script>
 
-<style>#cat{opacity:0;transition:opacity .35s}</style>
+<style>#cat{opacity:0;transition:opacity .45s}</style>
 <script>
-NekoCat.whenReady(function(ok){ if (ok) document.getElementById('cat').style.opacity = 1; });
+/* 渐进显示：原来只在 51 件全部就绪时点亮，手机上 4.6MB 冷启动经常超过超时，
+   于是画布永远是 opacity:0——访客看到的就是「猫不见了」。现在分四步放出来：
+     ① 全部部件就绪   ② 主干部件（身体/头/耳/尾根/眼白）齐了，剩下的边画边补
+     ③ 身体到了就先亮，别等全量   ④ 绝对兜底 20 秒，哪怕加载很慢也先把画布放出来 */
+(function () {
+  var shown = false;
+  var canvas = document.getElementById('cat');
+  function paint() {
+    if (shown || !canvas) return;
+    shown = true;
+    canvas.style.opacity = 1;
+  }
+  function partReady(k) {
+    var im = ly[k] && ly[k].img;
+    return !!(im && im.complete && im.naturalWidth > 0);
+  }
+  NekoCat.whenReady(paint);
+  var core = ['body_up', 'body_lo', 'head', 'ear_L', 'ear_R', 'tail_01', 'eye_L_sclera', 'eye_R_sclera'];
+  var timer = setInterval(function () {
+    if (core.every(partReady)) { clearInterval(timer); paint(); }
+  }, 240);
+  setTimeout(function () {
+    clearInterval(timer);
+    /* 6 秒还没齐：身体到了就先放出来；身体都没到，最多再等 14 秒 */
+    if (partReady('body_up')) { paint(); return; }
+    var later = setInterval(function () {
+      if (partReady('body_up')) { clearInterval(later); paint(); }
+    }, 300);
+    setTimeout(function () { clearInterval(later); paint(); }, 14000);
+  }, 6000);
+})();
 </script>
 
 </body></html>
