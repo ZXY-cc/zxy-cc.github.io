@@ -1215,6 +1215,18 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .tl-item time { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tl-item b { font-size: 14.5px; font-weight: 600; color: var(--ink-strong); line-height: 1.6; }
 .tl-item > span { grid-column: 2; font-size: 11.5px; color: var(--accent-text); }
+/* 类型小标：归档里区分文章 / 项目 / 相册 / 说说 / 杂谈，颜色只做轻微暗示 */
+.tl-kind { display: inline-block; margin-right: 7px; padding: 1px 7px; border-radius: 7px;
+  border: 1px solid var(--glass-line); background: var(--glass); color: var(--muted);
+  font-size: 10.5px; font-weight: 500; letter-spacing: .4px; vertical-align: 1.5px; white-space: nowrap; }
+.tl-kind.is-post { color: var(--accent-text); }
+.tl-kind.is-project { color: var(--accent-2-text); }
+.tl-kind.is-album { color: var(--accent-3-text); }
+.tl-kind.is-moment { color: var(--accent-3-text); }
+.tl-kind.is-chatter { color: var(--accent-2-text); }
+.tl-item .tl-meta { display: flex; flex-wrap: wrap; gap: 4px 9px; align-items: baseline; }
+.tl-item .tl-note { font-size: 11.5px; color: var(--muted); }
+.tl-item .tl-tags { font-size: 11.5px; color: var(--accent-text); }
 
 /* ---------- 首页快捷卡片（2×2） ----------
    文章 / 相册(4:3) / 说说 / 杂谈各占一格，各自轮播最新三条。 */
@@ -2548,6 +2560,8 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   /* width:max-content 不能省：绝对定位只给 left 时可用宽度只剩「中线到右缘」那半截，
      气泡会被挤成一条窄柱；先按内容撑开，再收口。上限取猫容器宽度——猫就在右缘，
      气泡比它宽就必然溢出、只能横移，那样又回到「偏右」的老样子 */
+  /* border-box：JS 写 max-height 时按含内边距的整体高度算，才不会多出上下各 10px */
+  box-sizing: border-box;
   width: max-content; max-width: min(250px, 100%); padding: 10px 12px; border-radius: 14px;
   background: var(--glass-sheen), var(--glass-strong); border: 1px solid var(--glass-line);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
@@ -2555,9 +2569,12 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   color: var(--ink); font-size: 13px; line-height: 1.7; text-align: center;
   white-space: pre-wrap;
   pointer-events: none; z-index: 4; word-break: break-word;
+  overscroll-behavior: contain; scrollbar-width: thin;
   opacity: 0; translate: 0 6px; transition: opacity .28s ease, translate .28s ease;
 }
 .neko-bubble.show { opacity: 1; translate: 0 0; }
+/* 点空白处收起：比自然消失快得多，几乎立刻让开视线 */
+.neko-bubble.is-out { transition-duration: .16s; }
 /* 气泡里的结果卡片：命中文章 / 标签 / 页面各给一个按钮，点一下就带过去。
    气泡整体是 pointer-events:none，这里单独放开，否则点不到按钮。 */
 .neko-bubble-text { display: block; }
@@ -2581,6 +2598,8 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   display: inline-block; margin: 2px 3px 0 0; padding: 3px 8px;
   font-size: 11.5px; border-radius: 9px; vertical-align: baseline;
   text-decoration: none; color: var(--accent-text);
+  /* 气泡整体 pointer-events:none，这里不单独放开的话按钮看得见点不动 */
+  pointer-events: auto; cursor: pointer;
 }
 .neko-bubble-text .neko-chip-inline + .neko-chip-inline { margin-left: 0; }
 .neko-bubble.has-acts { padding: 11px 12px 10px; }
@@ -2588,10 +2607,13 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 .neko-bubble.is-typing { animation: neko-typing 1.1s ease-in-out infinite; }
 @keyframes neko-typing { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 .neko-bubble::after {
-  content: ''; position: absolute; left: 50%; bottom: -6px; width: 11px; height: 11px;
+  /* 气泡加宽后会横移，小尖角要跟着减掉位移，才还指着猫头顶 */
+  content: ''; position: absolute; left: calc(50% - var(--neko-bubble-dx, 0px));
+  bottom: -6px; width: 11px; height: 11px;
   margin-left: -6px; background: inherit; border-right: 1px solid var(--glass-line);
   border-bottom: 1px solid var(--glass-line); transform: rotate(45deg); border-radius: 2px;
 }
+.neko-bubble.is-scroll::after { display: none; }
 .neko-chat {
   /* 与头顶气泡同一条竖轴：以猫容器中线居中 + translateX(-50%)，宽度上限取猫容器宽度，
      这样猫在右缘也不出屏、平时不需要横移（--neko-chat-dx 只在极窄屏兜底） */

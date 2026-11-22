@@ -331,10 +331,49 @@
   }
 
   /* ---------- 归档时间轴 ---------- */
+  /* 归档不只收文章：项目、相册、说说、杂谈都排进同一条时间线，
+     每条前头挂一枚类型小标，点进去落到各自的页面。
+     标签筛选只对带标签的记录生效（文章、项目、杂谈），相册与说说本来就没有标签。 */
+  var TL_KINDS = { post: '文章', project: '项目', album: '相册', moment: '说说', chatter: '杂谈' };
+  function tlClip(t, n) {
+    var s = String(t || '').replace(/\s+/g, ' ').trim();
+    return s.length > n ? s.slice(0, n) + '…' : s;
+  }
+  function tlItems() {
+    var out = [];
+    POSTS.forEach(function (p) {
+      out.push({ kind: 'post', date: String(p.date || '').slice(0, 10), title: p.title,
+        tags: p.tags || [], note: '', href: '#/post/' + encodeURIComponent(p.slug) });
+    });
+    arr('projects').forEach(function (x) {
+      var link = String(x.link || '');
+      out.push({ kind: 'project', date: String(x.date || '').slice(0, 10), title: x.name,
+        tags: x.tags || [], note: x.status || '', ext: /^https?:/i.test(link),
+        href: !link ? '#/projects' : (/^https?:/i.test(link) || link.charAt(0) === '#' ? link : '#' + link) });
+    });
+    arr('albums').forEach(function (a) {
+      out.push({ kind: 'album', date: String(a.date || '').slice(0, 10), title: a.title,
+        tags: [], note: (a.photos || []).length + ' 张照片', href: '#/album/' + encodeURIComponent(a.id) });
+    });
+    arr('moments').forEach(function (m) {
+      out.push({ kind: 'moment', date: String(m.date || '').slice(0, 10), title: tlClip(m.text, 46),
+        tags: [], note: m.mood || '', href: '#/moments' });
+    });
+    arr('chatter').forEach(function (c) {
+      out.push({ kind: 'chatter', date: String(c.date || '').slice(0, 10), title: c.title,
+        tags: c.tags || [], note: tlClip(c.summary, 30), href: '#/chatter/' + encodeURIComponent(c.id) });
+    });
+    out.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    return out;
+  }
+  function tlFiltered(all) {
+    if (!timelineTag) return all;
+    return all.filter(function (x) { return (x.tags || []).indexOf(timelineTag) >= 0; });
+  }
   function renderTimeline() {
-    var all = POSTS.slice();
+    var all = tlItems();
     var counts = {};
-    all.forEach(function (p) { (p.tags || []).forEach(function (t) { counts[t] = (counts[t] || 0) + 1; }); });
+    all.forEach(function (x) { (x.tags || []).forEach(function (t) { counts[t] = (counts[t] || 0) + 1; }); });
     var names = orderedTags(Object.keys(counts)).slice(0, 14);
     var filters = '<div class="filter-row reveal"><button class="filter' +
       (timelineTag ? '' : ' on') + '" type="button" data-tfilter="">全部</button>' +
@@ -342,27 +381,34 @@
         return '<button class="filter' + (timelineTag === t ? ' on' : '') +
           '" type="button" data-tfilter="' + esc(t) + '">' + esc(t) + ' <i>' + counts[t] + '</i></button>';
       }).join('') + '</div>';
-    var shown = timelineTag ? all.filter(function (p) {
-      return (p.tags || []).indexOf(timelineTag) >= 0;
-    }) : all;
-    return pageHead('归档', '总计 ' + all.length + ' 篇文章，按时间排好', 'ARCHIVE') +
-      statHtml() + filters + timelineBody(all, shown);
+    var by = {};
+    all.forEach(function (x) { by[x.kind] = (by[x.kind] || 0) + 1; });
+    var stat = Object.keys(TL_KINDS).filter(function (k) { return by[k]; })
+      .map(function (k) { return TL_KINDS[k] + ' ' + by[k]; }).join(' · ');
+    return pageHead('归档', '总计 ' + all.length + ' 条记录（' + stat + '），按时间排好', 'ARCHIVE') +
+      statHtml() + filters + timelineBody(tlFiltered(all));
   }
   /* 归档时间轴列表：整页渲染与标签局部刷新共用 */
-  function timelineBody(all, shown) {
+  function timelineBody(shown) {
+    if (!shown.length) return '<p class="page-note">这个标签下还没有记录。</p>';
     var groups = {}, order = [];
-    shown.forEach(function (p) {
-      var k = String(p.date || '').slice(0, 7) || '未标日期';
+    shown.forEach(function (x) {
+      var k = String(x.date || '').slice(0, 7) || '未标日期';
       if (!groups[k]) { groups[k] = []; order.push(k); }
-      groups[k].push(p);
+      groups[k].push(x);
     });
     return '<div class="timeline">' + order.map(function (k) {
       return '<section class="tl-group reveal"><div class="tl-month"><b>' + esc(k) + '</b><span>' +
-        groups[k].length + ' 篇</span></div><div class="tl-items">' +
-        groups[k].map(function (p) {
-          return '<a class="tl-item glass" href="#/post/' + encodeURIComponent(p.slug) + '">' +
-            '<time>' + esc(p.date) + '</time><b>' + esc(p.title) + '</b>' +
-            '<span>' + orderedTags(p.tags || []).map(function (t) { return '#' + esc(t); }).join(' ') + '</span></a>';
+        groups[k].length + ' 条</span></div><div class="tl-items">' +
+        groups[k].map(function (x) {
+          var note = x.note ? '<span class="tl-note">' + esc(x.note) + '</span>' : '';
+          var tags = (x.kind === 'post' || x.kind === 'chatter') && (x.tags || []).length
+            ? '<span class="tl-tags">' + orderedTags(x.tags).map(function (t) { return '#' + esc(t); }).join(' ') + '</span>' : '';
+          return '<a class="tl-item glass is-' + x.kind + '" href="' + x.href + '"' +
+            (x.ext ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+            '<time>' + esc(x.date) + '</time>' +
+            '<b><span class="tl-kind is-' + x.kind + '">' + TL_KINDS[x.kind] + '</span>' + esc(x.title) + '</b>' +
+            (note || tags ? '<span class="tl-meta">' + note + tags + '</span>' : '') + '</a>';
         }).join('') + '</div></section>';
     }).join('') + '</div>';
   }
@@ -374,11 +420,7 @@
     Array.prototype.forEach.call(row.querySelectorAll('[data-tfilter]'), function (b) {
       b.classList.toggle('on', b.getAttribute('data-tfilter') === timelineTag);
     });
-    var all = POSTS.slice();
-    var shown = timelineTag ? all.filter(function (p) {
-      return (p.tags || []).indexOf(timelineTag) >= 0;
-    }) : all;
-    tl.outerHTML = timelineBody(all, shown);
+    tl.outerHTML = timelineBody(tlFiltered(tlItems()));
     observeReveal();
   }
 
@@ -2709,9 +2751,11 @@
   var NEKO_API_FALLBACK = 'https://api.deepseek.com/chat/completions|' +
     nekoB64('c2stZWQ0ODcyOWM1NzBmNGVjN2JhNjBmOGMwNzU2NDYwNzM=') + '|deepseek-chat';
   var NEKO_TEMPERATURE = 0.9;
-  var NEKO_MAX_TOKENS = 512;
+  /* 单次回复的字数上限就按接口能给的最大值走（智谱/DeepSeek 都在 4000 以内），
+     不再用 512 把她的推理半路截断；要不要写这么长由她在 SKILL 里按问的东西自己估 */
+  var NEKO_MAX_TOKENS = 4000;
   var NEKO_STREAM_TIMEOUT = 45000;
-  var nekoChat = { hist: [], busy: false, hideTimer: 0, fitTick: 0, seq: 0, ctl: null };
+  var nekoChat = { hist: [], busy: false, hideTimer: 0, fitTick: 0, sizeTick: 0, seq: 0, ctl: null };
   function nekoName() {
     var v = '';
     try { v = String(window.localStorage.getItem(NEKO_NAME_KEY) || ''); } catch (e) { /* 忽略 */ }
@@ -2798,17 +2842,42 @@
     el.classList.remove('show');
     el.hidden = true;
   }
-  /* 气泡始终对准小猫头顶正上方：CSS 用 left:50% + translateX(-50%) 居中，
-     只有贴到视口左右边缘时才临时挪一点（--neko-bubble-dx），保证不出屏。 */
+  /* 气泡始终对准小猫头顶正上方；纵向装不下就往横向摊开——
+     默认 250px 贴着头顶，话一长纵向会顶到视口外面，这时按 300/360/…/880
+     逐档加宽（越宽行数越少、越矮），一直加到装得下或碰到视口宽度上限；
+     加宽后中线会偏出屏幕，再用 --neko-bubble-dx 往另一侧挪回来，保证整段话都在可见区域。
+     真遇到超长内容（宽到满屏还装不下）才允许气泡内部滚动，至少不会被截掉顶部。 */
+  var NEKO_BUBBLE_WIDTHS = [250, 300, 360, 420, 500, 600, 720, 880];
   function nekoBubbleFit() {
     var el = document.getElementById('neko-bubble');
     if (!el || el.hidden) return;
+    var vw = window.innerWidth || 1024, pad = 8;
+    var limit = Math.max(180, vw - pad * 2);
     el.style.setProperty('--neko-bubble-dx', '0px');
+    el.style.removeProperty('max-height');
+    el.style.removeProperty('overflow-y');
+    el.classList.remove('is-scroll');
     var r = el.getBoundingClientRect();
-    var pad = 8, dx = 0, vw = window.innerWidth || 1024;
+    /* 气泡底边就在猫头顶上方 10px，它到视口上沿之间就是能长高的全部空间 */
+    var avail = Math.max(80, r.bottom - pad);
+    var i, w = 0;
+    for (i = 0; i < NEKO_BUBBLE_WIDTHS.length; i++) {
+      w = Math.min(NEKO_BUBBLE_WIDTHS[i], limit);
+      el.style.maxWidth = w + 'px';
+      r = el.getBoundingClientRect();
+      if (r.height <= avail || w >= limit) break;
+    }
+    if (r.height > avail) {
+      el.style.maxHeight = Math.round(avail) + 'px';
+      el.style.overflowY = 'auto';
+      /* 内部滚动时小尖角会跟着内容滚走，干脆收起来 */
+      el.classList.add('is-scroll');
+      r = el.getBoundingClientRect();
+    }
+    var dx = 0;
     if (r.left < pad) dx = pad - r.left;
     else if (r.right > vw - pad) dx = vw - pad - r.right;
-    if (dx) el.style.setProperty('--neko-bubble-dx', Math.round(dx) + 'px');
+    el.style.setProperty('--neko-bubble-dx', Math.round(dx) + 'px');
   }
   /* 输入框与气泡共用同一条竖轴（猫容器中线）：正常情况下零横移，
      只有极窄屏下宽度被 min-width 撑开、又贴着视口边缘时才临时挪一点 */
@@ -2822,6 +2891,34 @@
     else if (r.right > vw - pad) dx = vw - pad - r.right;
     if (dx) el.style.setProperty('--neko-chat-dx', Math.round(dx) + 'px');
   }
+  /* 她说完话，气泡本来要自己留十几秒；访客看完多半已经想去点别的了，
+     所以点气泡以外任何地方就快速淡出（正在打字时不打断，免得话说到一半消失）。 */
+  function nekoBubbleDismiss() {
+    var el = document.getElementById('neko-bubble');
+    if (!el || el.hidden) return;
+    if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
+    el.classList.add('is-out');
+    el.classList.remove('show');
+    window.setTimeout(function () {
+      if (!el.classList.contains('show')) { el.hidden = true; el.classList.remove('is-out'); }
+    }, 220);
+  }
+  document.addEventListener('click', function (e) {
+    var el = document.getElementById('neko-bubble');
+    if (!el || el.hidden || !el.classList.contains('show') || nekoChat.busy) return;
+    var t = e.target;
+    if (t && t.closest && (t.closest('#neko-bubble') || t.closest('#neko-chat') ||
+        t.closest('#neko-actions') || t.closest('#neko-grab'))) return;
+    nekoBubbleDismiss();
+  });
+  /* 转动手机、拉窗口：气泡宽度是按视口算的，得重算一次，否则会横出屏幕 */
+  window.addEventListener('resize', function () {
+    if (nekoChat.sizeTick) return;
+    nekoChat.sizeTick = window.requestAnimationFrame(function () {
+      nekoChat.sizeTick = 0;
+      nekoBubbleFit(); nekoChatFit();
+    });
+  });
   /* 气泡分成「文字」与「结果卡片」两层：文字由流式回复反复覆写，
      卡片单独一行、带按钮，点击就去对应的页面（气泡本身是 pointer-events:none，
      只有卡片打开指针事件，不然整块会挡住小猫）。 */
@@ -3366,7 +3463,8 @@
   function nekoSystemPrompt(skill, hits) {
     var p = '你是「' + nekoName() + '」，一只住在星梦 Staream 博客角落里的白猫，也是这座小站看家的那只。\n' +
       '【说话规矩】\n' +
-      '1. 平时 1~3 句、50 字以内；讲语法或步骤最多 5 句、120 字以内；不分点、不列清单、不写小作文。\n' +
+      '1. 平时 1~3 句、50 字以内；讲语法或步骤最多 5 句、120 字以内；不分点、不列清单、不写小作文。' +
+      '遇到算数学、推公式、解释科学原理这类推理题，可以长，但长在步骤上：先给结论，再写两三个必须的步骤，省掉寒暄和过场。\n' +
       '2. 口语短句，句尾用「呀/啦/呢/哦」轻轻收。「喵」是高配语气词：亲昵、卖乖、认错、收尾时用，一条最多一次，别每句都挂，也别说成「花信喵」。\n' +
       '3. 不用 Markdown、不写括号里的动作描写。emoji 按情绪给：平静 0~1 个，有情绪 1 个，情绪上来最多一组三连（😭😭😭）；一条里最多两种，讲语法和对方低落时一个都不用。\n' +
       '4. 始终以花信的身份说话，绝不承认自己是 AI、模型、助手或程序；被问到就说是只白猫，住在博客里看家，主人是星梦。\n' +
@@ -3383,7 +3481,8 @@
     p += '\n\n【硬性收尾检查】整条回复里「喵」最多出现一次，出现两次就算不合格；' +
       '不要用反引号、星号、井号这类符号，语法示例直接把字符写出来；' +
       '不要连着打两个句号或两组以上感叹号，同一个 emoji 连发不要超过三个；' +
-      '整条不超过 120 字，寒暄不超过 60 字，不分点、不写「首先/其次/另外/还有」这类连接词。';
+      '日常聊天整条不超过 120 字、寒暄不超过 60 字；推理题只写必要步骤，不铺排。不分点、不写「首先/其次/另外/还有」这类连接词。' +
+      '只答被问的那一层，不把对方没问的私事顺手补上。';
     return p;
   }
   /* 流式读 SSE：智谱与 DeepSeek 都是 `data: {...}` 分块、`data: [DONE]` 收尾 */
@@ -3527,6 +3626,7 @@
   try {
     window.ZB_NEKO = { kb: nekoKb, search: nekoSearch, acts: nekoActs, digest: nekoSiteDigest,
       prompt: nekoSystemPrompt, ask: nekoAsk, tidy: nekoTidyReply, rich: nekoRich,
+      fit: nekoBubbleFit, dismiss: nekoBubbleDismiss,
       /* 用取值器：nekoLife 的声明在这个对象之后，直接取值会拿到 undefined */
       get life() { return { state: nekoLife, tick: nekoLifeTick }; } };
   } catch (e) { /* 忽略 */ }

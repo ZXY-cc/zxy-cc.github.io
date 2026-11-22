@@ -349,8 +349,8 @@ p{margin:10px 0}
 .fold-btn svg{transition:transform .18s ease;display:block}
 .fold-btn.open svg{transform:rotate(180deg)}
 .fold-body.collapsed{display:none}
-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px;margin:6px 0 4px}
-th{background:var(--chip-bg);text-align:left;font-weight:600;white-space:nowrap;color:var(--ink)}
+table{width:100%;border-collapse:collapse;background:transparent;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px;margin:6px 0 4px}
+th{background:transparent;text-align:left;font-weight:600;white-space:nowrap;color:var(--ink)}
 th,td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--chip-bg)}
