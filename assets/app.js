@@ -2459,7 +2459,15 @@
     /* 猫本体在 iframe 里，加载失败时不会有任何报错，只会静悄悄一片空白。
        这里把「重试一次」做成显式路径：error 事件、加载后拿不到接口、超时 22 秒都算失败。 */
     function nekoFrameLoad(bust) {
-      frame.src = 'assets/neko/index.html?embed=1' + (bust ? '&r=' + Date.now() : '');
+      /* 带上主程序的版本号：iframe 页面本身也会被 CDN 缓存，
+         不换 key 的话模型升级（比如新增的自发动作接口）迟迟到不了访客浏览器 */
+      var ver = '';
+      try {
+        var tag = document.querySelector('script[src*="assets/app.js"]');
+        var m = tag && String(tag.getAttribute('src') || '').match(/[?&]v=([^&]+)/);
+        if (m) ver = '&v=' + encodeURIComponent(m[1]);
+      } catch (e) { ver = ''; }
+      frame.src = 'assets/neko/index.html?embed=1' + ver + (bust ? '&r=' + Date.now() : '');
     }
     function nekoFrameRetry() {
       if (frameTries >= 1 || !nekoShown()) return;
