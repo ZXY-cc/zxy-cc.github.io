@@ -536,7 +536,7 @@ window.STUDIO_DATA = {
     {
       "slug": "p-mwhf1abawj06",
       "title": "第2次周报",
-      "date": "2026-11-15",
+      "date": "2026-11-22",
       "tags": [
         "科协",
         "B"
