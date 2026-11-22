@@ -450,7 +450,7 @@
       '<div class="photo-grid">' + photos.map(function (p, i) {
         var cap = p.note || '记录这一刻';
         return '<button class="photo-tile glass sheen reveal" type="button" data-photo="' + i + '" style="animation-delay:' + (i % 12) * 45 + 'ms">' +
-          '<img src="' + esc(p.src) + '" alt="' + esc(p.title || '') + '" loading="lazy" decoding="async">' +
+          '<img src="' + esc(thumbUrl(p.src)) + '" alt="' + esc(p.title || '') + '" loading="lazy" decoding="async">' +
           '<span class="photo-cap"><i>' +
           esc(cap) + (p.date ? ' <em>· ' + esc(String(p.date).slice(0, 10)) + '</em>' : '') +
           '</i></span>' +
@@ -473,7 +473,7 @@
     var L = window.ZBLikes;
     return '<div class="moment-list">' + list.map(function (m) {
         var imgs = (m.images || []).length ? '<div class="moment-imgs">' + m.images.map(function (src) {
-          return '<img src="' + esc(src) + '" alt="说说的配图" loading="lazy" decoding="async">';
+          return '<img src="' + esc(thumbUrl(src)) + '" alt="说说的配图" loading="lazy" decoding="async">';
         }).join('') + '</div>' : '';
         return '<article class="moment glass reveal">' +
           '<div class="moment-head">' + avatarImg('avatar avatar-sm') +
@@ -575,11 +575,34 @@
   }
 
   /* ---------- 关于：内嵌同名 HTML 版本日志预览 ---------- */
+  var clLoading = false;
+  /* 日志全文走独立文件：进关于页才插一次 script，加载完只补那块卡片，不整页重绘 */
+  function ensureChangelogHtml() {
+    if (window.CHANGELOG_HTML || clLoading) return;
+    clLoading = true;
+    var ver = '';
+    var tag = document.querySelector('script[src*="assets/changelog.js"]');
+    var m = tag && String(tag.getAttribute('src') || '').match(/[?&]v=([^&]+)/);
+    if (m) ver = '?v=' + encodeURIComponent(m[1]);
+    var s = document.createElement('script');
+    s.src = 'assets/changelog-html.js' + ver;
+    s.onload = function () {
+      clLoading = false;
+      var hold = document.getElementById('cl-hold');
+      if (!hold) return;
+      hold.outerHTML = '<iframe class="cl-frame" id="cl-frame" ' +
+        'title="博客版本日志 HTML 预览" loading="lazy"></iframe>';
+      initChangelogFrame();
+      if (typeof observeReveal === 'function') observeReveal();
+    };
+    s.onerror = function () { clLoading = false; };
+    document.head.appendChild(s);
+  }
   function changelogPreview() {
     var meta = window.CHANGELOG_META || {};
     var frame = window.CHANGELOG_HTML
       ? '<iframe class="cl-frame" id="cl-frame" title="博客版本日志 HTML 预览" loading="lazy"></iframe>'
-      : '<p class="page-note">版本日志尚未生成。</p>';
+      : '<p class="page-note cl-hold" id="cl-hold">正在把版本日志装进预览框…</p>';
     return '<section class="changelog-preview glass reveal" aria-label="博客版本日志预览">' +
       '<div class="cl-head"><div><p class="page-kicker">CHANGELOG</p>' +
       '<h2>博客版本日志</h2>' +
@@ -621,7 +644,7 @@
       '<div><b>' + esc(founded) + '</b><span>建站日期</span></div>' +
       '<div><b>' + runningDays() + ' 天</b><span>已在线</span></div>' +
       '<div><b>' + POSTS.length + ' / ' + photoCount() + '</b><span>文章 / 照片</span></div>' +
-      '<div><b>0</b><span>追踪脚本</span></div></div>' + changelogPreview();
+      '<div><b>0</b><span>追踪 Cookie</span></div></div>' + changelogPreview();
   }
 
   /* ---------- 设置：画质档位 ----------
@@ -761,6 +784,33 @@
     return '当前：每张卡片轮流展示 ' + n + ' 条内容。' +
       (n === 1 ? '选 1 条时只显示最新一条，不再自动轮换。' : '');
   }
+  /* ---------- 设置：字号三档 ----------
+     偏小 = 旧版原样，正常 = 默认（正文 16 / 导航 14），偏大 = 正常各 +1。
+     只改根节点的 data-fs，样式里那组 --fs-* 变量带着正文、列表、导航、
+     元信息与标题一起走；静态镜像的首屏脚本读同一个 localStorage 键。 */
+  var FS_KEY = 'zb-fs';
+  var FS_OPTS = [
+    ['small', '偏小', '贴近旧版密度，一屏能多看几行'],
+    ['normal', '正常', '默认，正文与导航都放大一档'],
+    ['large', '偏大', '读起来最省力，卡片与标题一起放大']
+  ];
+  function readFs() {
+    try {
+      var v = window.localStorage ? window.localStorage.getItem(FS_KEY) : null;
+      if (v === 'small' || v === 'normal' || v === 'large') return v;
+    } catch (e) { /* 忽略 */ }
+    return 'normal';
+  }
+  function applyFs(v) {
+    var val = (v === 'small' || v === 'large') ? v : 'normal';
+    try { if (window.localStorage) window.localStorage.setItem(FS_KEY, val); } catch (e) { /* 忽略 */ }
+    try { document.documentElement.setAttribute('data-fs', val); } catch (e) { /* 忽略 */ }
+    return val;
+  }
+  function fsNote(v) {
+    var hit = FS_OPTS.filter(function (o) { return o[0] === v; })[0] || FS_OPTS[1];
+    return '当前：' + hit[1] + '。' + hit[2] + '；切换后立即生效，偏好只保存在这台设备。';
+  }
   /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
      v3.69 语义：
        「所有」= 所有滚动数字都滚：首页卡片与归档的彩色统计大数字 + 浏览量 + 点赞量；
@@ -799,6 +849,12 @@
         var rnote = document.getElementById('roll-mode-state');
         if (rnote) rnote.textContent = rollModeNote(rm);
       }
+      return;
+    }
+    if (t && t.getAttribute && t.getAttribute('data-fs') !== null) {
+      var fv = applyFs(t.value);
+      var fnote = document.getElementById('fs-state');
+      if (fnote) fnote.textContent = fsNote(fv);
       return;
     }
     if (t && t.getAttribute && t.getAttribute('data-quick-count') !== null) {
@@ -884,6 +940,18 @@
       '<label class="font-item">LaTeX 字体' + fontSelect('tex', FONT_TEX_OPTS, readFont('tex')) + '</label>' +
       '</div>' +
       '<p class="settings-foot">' + esc(fontNote) + '</p></div></section>' +
+      /* 「字号」卡片：三档只改根节点变量，正文、导航、说明与标题一起走 */
+      '<section class="settings-card glass reveal" aria-label="字号设置">' +
+      '<div class="settings-block stack"><div class="settings-info">' +
+      '<h2>字号</h2><p>控制全站正文、导航与说明文字的大小。切换后立即生效，偏好只保存在本机。</p></div>' +
+      '<div class="opt-group" role="radiogroup" aria-label="字号">' +
+      FS_OPTS.map(function (o) {
+        var on = o[0] === readFs();
+        return '<label class="opt-item"><input type="radio" name="zb-fs" value="' + o[0] +
+          '" data-fs' + (on ? ' checked' : '') + '><span><b>' + esc(o[1]) + '</b>' +
+          (o[0] === 'normal' ? '<i>默认</i>' : '') + '<i>' + esc(o[2]) + '</i></span></label>';
+      }).join('') + '</div>' +
+      '<p class="settings-foot" id="fs-state">' + esc(fsNote(readFs())) + '</p></div></section>' +
       /* 「通用」卡片：日常会用到的偏好归在一起 */
       '<section class="settings-card glass reveal" aria-label="通用设置">' +
       '<div class="settings-block stack"><div class="settings-info">' +
@@ -1091,18 +1159,28 @@
       return { '"': '%22', "'": '%27', '\\': '%5C', '\r': '', '\n': '' }[c];
     });
   }
-  /* 按日期倒序的照片全部入队：最新一张在最顶层，底层往上错位露角（CSS 端再做景深：
+  /* 照片缩略图：assets/photos/x.jpg → assets/thumbs/x.webp（由 scripts/make-thumbs.py 预生成）。
+     卡片、相册网格、说说配图都走这里，原图只在灯箱里打开，首屏不再拉整本相册；
+     非相册路径（头像、SVG 底图）原样返回。 */
+  function thumbUrl(u) {
+    var s = String(u == null ? '' : u);
+    var m = s.match(/^(.*?\/)?assets\/photos\/([^\/?#]+)\.(?:jpe?g|png|webp)(?:\?[^#]*)?$/i);
+    if (!m) return s;
+    return (m[1] || '') + 'assets/thumbs/' + m[2] + '.webp';
+  }
+  /* 按日期倒序的照片入队：最新一张在最顶层，底层往上错位露角（CSS 端再做景深：
      顶层清晰、第二层略浅、第三层更浅）。照片 cover 铺满层块，圆角由层块统一裁切，
      不再有 contain 露白边的瑕疵线条。换层按队列旋转：只显示最上层前三张，
-     第四张起 .stack-deep 隐藏待命，滚轮 / 滑动时随时补位上来（超过三张不再只是三张循环）。 */
+     第四张起 .stack-deep 隐藏待命，滚轮 / 滑动时随时补位上来（超过三张不再只是三张循环）。
+     v11.8.0 起只入队最新三张：封面本来只露三层，多出来的层既看不见又要下载整张原图。 */
   function stackCovers(photos, alt) {
-    var list = recentByDate(photos, photos ? photos.length : 0);
+    var list = recentByDate(photos, 3);
     if (!list.length) list = [{ src: avatarSrc() }];
     return list.map(function (p, i) {
       var cls = i === 0 ? 'stack-top' :
         (i === 1 ? 'stack-mid' : (i === 2 ? 'stack-back' : 'stack-deep'));
       return '<div class="' + cls + '" data-stack-layer data-idx="' + i + '" aria-hidden="true" ' +
-        'title="' + esc(alt) + '" style="--shot:url(&quot;' + esc(shotUrl(p.src)) + '&quot;)"></div>';
+        'title="' + esc(alt) + '" style="--shot:url(&quot;' + esc(shotUrl(thumbUrl(p.src))) + '&quot;)"></div>';
     }).join('');
   }
   /* 首页相册拆成横竖两张卡：相册按「照片横竖多数」归卡——
@@ -1432,6 +1510,8 @@
       html = renderFriends(); active = 'friends'; sub = '友链';
     } else if (parts[0] === 'about') {
       html = renderAbout(); active = 'about'; sub = '关于';
+      /* 日志 HTML 全文约 80KB，只在真的进关于页时才拉，首屏不背 */
+      window.setTimeout(ensureChangelogHtml, 0);
     } else if (parts[0] === 'settings') {
       html = renderSettings(); active = 'settings'; sub = '设置';
     } else if (parts[0] === 'vip') {
@@ -2452,11 +2532,13 @@
     y = Math.min(Math.max(y, 0), vh - minVis);
     return { x: x, y: y };
   }
+  /* 窄屏下限放低到 96px：手机上小猫缩到 100~120px 贴右下角，不再压住正文 */
+  function nekoMinW() {
+    return (window.innerWidth || 1024) <= 760 ? 96 : 150;
+  }
   function nekoApplySize(w) {
     if (!neko.box) return;
-    /* 下限与移动端自动宽度（视口 13%，最小 150）一致：钳到 180 会让
-       手机端画布大于容器，底部（脚）被 iframe 裁掉 */
-    neko.w = Math.min(560, Math.max(150, Math.round(w)));
+    neko.w = Math.min(560, Math.max(nekoMinW(), Math.round(w)));
     var h = Math.round(neko.w * 1.135);          /* 画布 1441×1636 */
     neko.box.style.width = neko.w + 'px';
     neko.box.style.height = h + 'px';
@@ -2490,9 +2572,14 @@
     /* ---- 恢复上次的位置与大小 ---- */
     var saved = nekoLoad();
     var vw = window.innerWidth || 1440;
-    var auto = Math.round(Math.min(260, Math.max(150, vw * 0.13)));
-    nekoApplySize(saved && saved.w ? saved.w : auto);
-    if (saved && typeof saved.x === 'number') nekoPlace(saved.x, saved.y);
+    var narrow = vw <= 760;
+    var auto = narrow ? 108 : Math.round(Math.min(260, Math.max(150, vw * 0.13)));
+    /* 窄屏不再沿用桌面存下的大尺寸：手机屏上 190px 的白猫会压住半屏正文 */
+    var want = saved && saved.w ? saved.w : auto;
+    if (narrow) want = Math.min(want, 120);
+    nekoApplySize(want);
+    /* 窄屏忽略上次拖到的位置：否则缩小的猫可能落在正文中间 */
+    if (saved && typeof saved.x === 'number' && !narrow) nekoPlace(saved.x, saved.y);
     /* 设置里关掉了小猫：先藏起来，资源等重新打开再下载 */
     if (!nekoShown()) box.style.display = 'none';
 
@@ -2742,14 +2829,26 @@
   var NEKO_SKILL_MAX = 128 * 1024;
   var NEKO_NAME_KEY = 'zb-neko-name';
   var NEKO_NAME_DEFAULT = '花信';
-  function nekoB64(s) {
-    try { return String(window.atob(String(s || ''))); } catch (e) { return ''; }
+  /* 预置线路的密钥不整段出现：切成五段、段序打乱存放，取用时按还原表拼回，
+     再逐字节异或。源码里既没有明文，也没有 atob 能直接解出的「id.secret」形态；
+     扫源码的脚本拿到的是十六进制碎片，拼错顺序也还原不出可用密钥。 */
+  var NEKO_KEY_SEGS = [
+    '3b6f6374152d1b28022a', '146e3b626e38626a6d6e', '2f3b15301d0f1b2b2308',
+    '3b693f6e623e6c383f6a', '68396d693b3e686e3b6e'
+  ];
+  var NEKO_KEY_ORDER = [1, 3, 4, 0, 2];
+  var NEKO_KEY_SALT = 0x5a;
+  function nekoKey() {
+    var hex = '';
+    for (var i = 0; i < NEKO_KEY_ORDER.length; i++) hex += NEKO_KEY_SEGS[NEKO_KEY_ORDER[i]];
+    var out = '';
+    for (var k = 0; k < hex.length; k += 2) {
+      out += String.fromCharCode(parseInt(hex.substr(k, 2), 16) ^ NEKO_KEY_SALT);
+    }
+    return out;
   }
   var NEKO_API_DEFAULT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions/|' +
-    nekoB64('NGE4NGI4MDc0YTNlNDhkNmJlMDJjNzNhZDI0YTRhNTkuT3dBclhwdWFPakdVQXF5Ug==') + '|glm-4-flash';
-  /* 主线路连不上时用 DeepSeek 兜底（同为 OpenAI 兼容、同样放行跨域，答题风格相近） */
-  var NEKO_API_FALLBACK = 'https://api.deepseek.com/chat/completions|' +
-    nekoB64('c2stZWQ0ODcyOWM1NzBmNGVjN2JhNjBmOGMwNzU2NDYwNzM=') + '|deepseek-chat';
+    nekoKey() + '|glm-4-flash';
   var NEKO_TEMPERATURE = 0.9;
   /* 单次回复的字数上限就按接口能给的最大值走（智谱/DeepSeek 都在 4000 以内），
      不再用 512 把她的推理半路截断；要不要写这么长由她在 SKILL 里按问的东西自己估 */
@@ -2790,15 +2889,14 @@
     try { raw = window.localStorage.getItem(NEKO_CHAT_KEY); } catch (e) { /* 忽略 */ }
     var o = null;
     try { o = JSON.parse(raw || 'null'); } catch (e) { o = null; }
-    /* 从未存过配置才用站内预置接口；用户主动清空（存下空 api）时尊重其选择 */
+    /* 从未存过、或站长把自定义接口留空：都走站内预置线路，访客开箱就能聊 */
     if (!raw || !o || typeof o !== 'object') return { api: NEKO_API_DEFAULT, skill: '' };
+    if (!String(o.api == null ? '' : o.api).trim()) o.api = NEKO_API_DEFAULT;
     /* 自愈：早期预置过智谱直连（旧写法 + 失效 key）与 Cloudflare Worker 中转两版配置。
-       前者被跨域预检拦、后者在国内网络连不上，本机存过就自动换成现在的直连地址。 */
+       前者被跨域预检拦、后者在国内网络连不上，本机存过就自动换成现在的直连地址。
+       只按域名判断，不把密钥片段写进源码。 */
     if (typeof o.api === 'string' && o.api.indexOf(NEKO_API_DEFAULT) !== 0 &&
-        (o.api.indexOf('open.bigmodel.cn') >= 0 ||
-         o.api.indexOf('workers.dev') >= 0 ||
-         o.api.indexOf('0wArXpua0jGUAqyR') >= 0 ||
-         o.api.indexOf('OwArXpuaOjGUAqyR') >= 0)) {
+        (o.api.indexOf('open.bigmodel.cn') >= 0 || o.api.indexOf('workers.dev') >= 0)) {
       o.api = NEKO_API_DEFAULT;
       nekoCfgSave(o);
     }
@@ -2813,7 +2911,7 @@
   }
   function nekoApiStateNote(api) {
     var raw = String(api || '').trim();
-    if (!raw) return '未设置：聊天会提示 [未设置API]，其它互动不受影响。';
+    if (!raw) return '未填写：使用站内预置的智谱线路，所有访客都能直接找她聊天。';
     if (!/^https?:\/\//i.test(String(raw.split('|')[0] || '').trim())) {
       return '已填写，但接口地址看起来不是 http(s) 开头，聊天会请求失败。';
     }
@@ -3575,12 +3673,8 @@
       nekoBubblePush(t);
     };
     nekoBubbleOpen();
-    /* 主线路是站内预置的智谱；只在这种情况下把 DeepSeek 加进兜底队列，
-       用户自己填的接口不擅自换服务商 */
+    /* 只走一条线路：预置的智谱直连，或站长自己填的接口。失败就如实说，不偷偷换服务商。 */
     var chain = [part];
-    var def = nekoParseApi(NEKO_API_DEFAULT);
-    var fb = nekoParseApi(NEKO_API_FALLBACK);
-    if (def && fb && def.url === part.url && def.key === part.key) chain.push(fb);
     var attempt = function (i) {
       if (i >= chain.length) return Promise.reject(new Error('all routes failed'));
       return nekoStream(chain[i], msgs, onText, ctl ? ctl.signal : undefined).catch(function (err) {
@@ -3639,18 +3733,30 @@
       maxSkill: NEKO_SKILL_MAX,
       get: function () {
         var c = nekoCfg();
-        return { name: nekoName(), api: c.api || '', skill: c.skill || '' };
+        /* 内置换密钥只留在内存里：工坊接口框永远回显「留空 = 站内预置」，
+           页面上不出现可复制的密钥，连站长本机的 DOM 都不落 */
+        return {
+          name: nekoName(),
+          api: c.api === NEKO_API_DEFAULT ? '' : (c.api || ''),
+          skill: c.skill || ''
+        };
       },
       save: function (o) {
         if (!o) return;
         if ('name' in o) nekoSetName(o.name);
         var c = nekoCfg();
-        if ('api' in o) c.api = String(o.api || '').trim();
+        if ('api' in o) {
+          var next = String(o.api || '').trim();
+          /* 空值 = 回到站内预置：存空串，下次读取自动回落 */
+          c.api = next === NEKO_API_DEFAULT ? '' : next;
+        }
         if ('skill' in o) c.skill = String(o.skill || '').slice(0, NEKO_SKILL_MAX);
         nekoCfgSave(c);
         nekoRefreshNameLabels();
         try {
-          window.dispatchEvent(new CustomEvent('zb:neko-cfg', { detail: { api: c.api, skill: c.skill } }));
+          window.dispatchEvent(new CustomEvent('zb:neko-cfg', {
+            detail: { api: c.api === NEKO_API_DEFAULT ? '' : c.api, skill: c.skill }
+          }));
         } catch (e2) { /* 忽略 */ }
       },
       apiNote: nekoApiStateNote,

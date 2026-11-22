@@ -16,9 +16,10 @@ window.ZB_INTERACTIONS = {
   cacheSeconds: 120,
   maxReplyFetches: 8,
   timeoutMs: 5000,
-  /* 留空 = 发布即公开（站长可随时关闭或删除 Issue 下架）；
-     填 '已公开' = 先审后发，只有带上同名标签的留言才会进入归档 */
-  approvalLabel: '',
+  /* 先审后发：只有被打上「已公开」标签的留言才会显示进评论区与归档。
+     访客提交后看到「等待审核」的提示，站长在 GitHub Issue 上打标签即公开；
+     不打标签的留言实时层与归档都读不到，垃圾留言也不会出现在页面上。 */
+  approvalLabel: '已公开',
   /* 页面内输入框写好的正文直接预填进新建 Issue；标题由同步脚本用来定位文章。
      不带 body 时打开空白新建页，访客自己填写。 */
   newIssueUrl: function (slug, body) {

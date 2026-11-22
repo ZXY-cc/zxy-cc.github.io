@@ -38,6 +38,18 @@
   --gold-b: rgba(255, 222, 152, .20);
   --gold-c: rgba(255, 216, 138, .16);
 
+  /* 字号三档（设置页可选，默认「正常」）：
+     偏小 = 旧版原样；正常 = 阅读更舒服的一档；偏大 = 在正常基础上再 +1。
+     正文、列表、导航、元信息各走一条变量，卡片与标题跟着同一档微调。 */
+  --fs-body: 16px;      /* 文章正文 */
+  --fs-text: 15.5px;    /* 卡片与列表正文 */
+  --fs-small: 14px;     /* 说明文字、摘要、评论 */
+  --fs-ui: 14px;        /* 导航、输入框、按钮 */
+  --fs-meta: 13px;      /* 时间、计数、页脚 */
+  --fs-h1: 28.5px;
+  --fs-h2: 22.5px;
+  --fs-h3: 17.5px;
+
   --ink: #4c5476;
   --ink-strong: #39436a;
   /* 次要文字提到 WCAG AA：对纯白与浅粉底均 >= 4.5:1 */
@@ -99,6 +111,20 @@
   /* 夜空下整体压暗，日光层与薄雾层的透明度单独可调 */
   --frost-opacity: .30;
   --sunbeam-opacity: .70;
+}
+
+/* ---------- 字号三档：只改这几个变量，全站排版一起跟着走 ----------
+   偏小 = 旧版原样；正常 = 默认，阅读更舒服；偏大 = 正常再 +1。
+   首屏引导脚本把偏好写到 :root[data-fs]，静态镜像也走同一段。 */
+:root[data-fs="small"] {
+  --fs-body: 15.5px; --fs-text: 15px; --fs-small: 13.5px;
+  --fs-ui: 13.5px; --fs-meta: 12.5px;
+  --fs-h1: 28px; --fs-h2: 22px; --fs-h3: 17px;
+}
+:root[data-fs="large"] {
+  --fs-body: 17px; --fs-text: 16.5px; --fs-small: 15px;
+  --fs-ui: 15px; --fs-meta: 14px;
+  --fs-h1: 29.5px; --fs-h2: 23.5px; --fs-h3: 18.5px;
 }
 
 /* 星夜：仍是蓝调夜空，不压成黑；底色压暗一档，亮色文字更清楚。
@@ -181,7 +207,7 @@ body {
   color: var(--ink);
   background: var(--sky-top);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  font-size: 15px;
+  font-size: var(--fs-text);
   line-height: 1.8;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -192,7 +218,7 @@ body {
 
 /* ---------- 背景：水彩天空 ---------- */
 .sky {
-  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; overflow: clip; pointer-events: none;
   contain: layout paint;
   isolation: isolate;
   transform: translateZ(0);
@@ -486,7 +512,10 @@ a:hover { color: var(--accent-3-text); text-decoration: none; }
 .wrap { position: relative; z-index: 1; width: 100%; max-width: none;
   margin: 0 auto; padding: 0; }
 .shell { width: 100%; max-width: var(--shell); margin-left: auto; margin-right: auto;
-  padding-left: var(--gutter); padding-right: var(--gutter); }
+  padding-left: var(--gutter); padding-right: var(--gutter);
+  /* min-width:0 让外壳在窄屏也能被压缩：grid / flex 子项的默认 min-width:auto
+     会被长标题顶宽，卡片右侧跟着出屏（简介与统计被裁就是这个原因） */
+  min-width: 0; }
 
 .reading-progress {
   position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 40;
@@ -549,7 +578,7 @@ a:hover { color: var(--accent-3-text); text-decoration: none; }
 .icon-btn:hover { transform: rotate(-18deg) scale(1.08); color: var(--accent-3-text); box-shadow: 0 0 18px rgba(171, 139, 212, .28), var(--glass-inner); }
 .icon-btn svg { display: block; width: 18px; height: 18px; }
 
-.nav { display: flex; gap: 2px; font-size: 13px; margin-left: auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; position: relative; }
+.nav { display: flex; gap: 2px; font-size: var(--fs-ui); margin-left: auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; position: relative; }
 /* 导航胶囊：选中态的底衬独立成一层，切换时用弹簧丝滑滑到新项背后，
    移动快时沿运动方向拉伸变细（水滴张力），JS 弹簧驱动 .nav-pill */
 .nav-pill {
@@ -587,7 +616,7 @@ a:hover { color: var(--accent-3-text); text-decoration: none; }
 .search-bar input {
   flex: 1 1 auto; width: 100%; min-width: 0;
   border: 0; outline: 0; background: none;
-  color: var(--ink); font: inherit; font-size: 13.5px;
+  color: var(--ink); font: inherit; font-size: var(--fs-ui);
 }
 .search-bar input::placeholder { color: var(--faint); }
 .search-bar input::-webkit-search-cancel-button { cursor: pointer; }
@@ -595,7 +624,7 @@ a:hover { color: var(--accent-3-text); text-decoration: none; }
 
 main { min-height: 320px; }
 
-.page-note { color: var(--muted); font-size: 14px; margin: 20px 4px 6px; letter-spacing: .3px; }
+.page-note { color: var(--muted); font-size: var(--fs-small); margin: 20px 4px 6px; letter-spacing: .3px; }
 
 /* ---------- 文章列表：每列独立的瀑布流 ----------
    不再按行对齐，卡片只与同列上方卡片留固定间距，行与行之间可以错位。 */
@@ -623,10 +652,10 @@ main { min-height: 320px; }
 }
 .post-item:hover { transform: translateY(-4px); box-shadow: 0 22px 52px rgba(112, 138, 190, .20), var(--glass-inner); }
 
-.post-meta { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; letter-spacing: .4px; }
+.post-meta { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; letter-spacing: .4px; }
 .post-title { display: block; margin: 9px 0 9px; font-size: 20px; font-weight: 650; line-height: 1.45; color: var(--ink-strong); }
 .post-title:hover { color: var(--accent-text); }
-.post-summary { margin: 0; color: var(--muted); font-size: 14.5px;
+.post-summary { margin: 0; color: var(--muted); font-size: var(--fs-text);
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 /* 首页卡片只读统计：爱心数与匿名浏览数 */
 .post-stats { display: flex; align-items: center; gap: 16px; margin-top: 14px;
@@ -680,15 +709,15 @@ main { min-height: 320px; }
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner);
 }
-.article h1 { font-size: 28px; font-weight: 650; line-height: 1.4; margin: 0 0 14px; color: var(--ink-strong); letter-spacing: .5px; }
+.article h1 { font-size: var(--fs-h1); font-weight: 650; line-height: 1.4; margin: 0 0 14px; color: var(--ink-strong); letter-spacing: .5px; }
 .article .post-meta { margin-bottom: 26px; }
 /* 文章正文标题不再带左侧装饰竖条：Markdown 标题在评论预览、工坊预览与
    正文页保持同一个干净样子（用户要求全站去掉竖线），层级靠字号与字重区分 */
 .article h2 {
-  font-size: 22px; font-weight: 650; margin: 40px 0 16px;
+  font-size: var(--fs-h2); font-weight: 650; margin: 40px 0 16px;
   color: var(--ink-strong);
 }
-.article h3 { font-size: 17px; font-weight: 650; margin: 28px 0 10px; }
+.article h3 { font-size: var(--fs-h3); font-weight: 650; margin: 28px 0 10px; }
 /* Markdown 里的渐变竖线：##| 标题 或 :::vl 区块。用主题变量写渐变，
    日夜自动换色；只有作者显式写了标记才出现，普通标题保持干净。 */
 .article-body .zb-vl, .desk-preview .zb-vl {
@@ -724,9 +753,9 @@ main { min-height: 320px; }
 .article-byline { display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 8px 16px; margin-bottom: 20px; }
 .article-byline .article-author { margin-bottom: 0; }
-.article-date { font-size: 12.5px; color: var(--muted); letter-spacing: .4px;
+.article-date { font-size: var(--fs-meta); color: var(--muted); letter-spacing: .4px;
   font-variant-numeric: tabular-nums; }
-.article p { margin: 0 0 18px; font-size: 15.5px; line-height: 1.9; }
+.article p { margin: 0 0 18px; font-size: var(--fs-body); line-height: 1.9; }
 .article ul, .article ol { padding-left: 22px; margin: 0 0 20px; }
 .article li { margin-bottom: 8px; }
 .article strong { font-weight: 650; color: var(--ink-strong); }
@@ -945,7 +974,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
   margin: 52px 0 40px; padding: 15px 24px;
   border-radius: 999px;
-  color: var(--muted); font-size: 12.5px;
+  color: var(--muted); font-size: var(--fs-meta);
 }
 
 .to-top {
@@ -1049,18 +1078,24 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* ---------- 首页名片：仿参考站结构，配色沿用本站晴蓝樱粉 ---------- */
 .profile-card {
   --stat-1: var(--accent-text); --stat-2: var(--accent-2-text); --stat-3: var(--accent-3-text);
-  position: relative; overflow: hidden;
+  /* overflow: clip 不产生滚动容器：装饰光晕（::before 向右上溢出）就不会再把
+     scrollWidth 撑大，窄屏测宽也不会误判成「简介被裁」 */
+  position: relative; overflow: hidden; overflow: clip; min-width: 0;
   margin: 12px 0 2px; padding: 22px 28px 20px;
   border-radius: var(--radius-lg);
 }
 .profile-card::before {
-  content: ''; position: absolute; top: -50%; right: -12%; width: 62%; height: 170%;
+  /* 装饰光晕不再向右溢出：negative right 会把 scrollWidth 撑大 53px，
+     窄屏测宽就会误判成「简介被裁」；光斑本体靠高度与渐变维持原样 */
+  content: ''; position: absolute; top: -50%; right: 0; width: 68%; height: 170%;
   pointer-events: none; opacity: .72;
   background: radial-gradient(closest-side, var(--star-mist), var(--star-fade) 58%, transparent 78%),
               radial-gradient(closest-side at 72% 34%, var(--wash-pink), transparent 74%);
 }
 .profile-card > * { position: relative; z-index: 1; }
-.profile-top { display: flex; align-items: center; gap: 26px; }
+.profile-top { display: flex; align-items: center; gap: 26px; min-width: 0; }
+/* 文本列允许收缩：长句按列宽换行，不再把名片撑出屏幕 */
+.profile-top > div { min-width: 0; }
 .profile-avatar-wrap {
   flex: 0 0 auto; padding: 3px; border-radius: 27px;
   background: linear-gradient(140deg, #93b6f0, #b79ae2 52%, #f0aecf);
@@ -1081,7 +1116,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
 }
-.profile-bio { margin: 0; font-size: 14.5px; line-height: 1.95; color: var(--muted); letter-spacing: .2px; }
+.profile-bio { margin: 0; font-size: var(--fs-text); line-height: 1.95; color: var(--muted); letter-spacing: .2px; overflow-wrap: anywhere; }
 .profile-foot { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 20px; }
 .profile-stats { display: flex; align-items: stretch; }
 .p-stat { display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1237,6 +1272,16 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   box-shadow: var(--glass-shadow), var(--glass-inner); color: inherit;
   transition: transform .38s cubic-bezier(.22,.68,.28,1), box-shadow .38s ease; }
 .q-card:hover { transform: translateY(-5px); box-shadow: 0 20px 46px rgba(112,138,190,.22); }
+/* 文本卡（文章 / 说说 / 杂谈）用网格叠放：所有滑片占同一格，
+   容器高度取最高那张，卡片自然贴合内容，不再靠 min-height:420px 硬撑出 200 多像素空白。
+   照片卡保留绝对定位——它有 aspect-ratio，高度由比例锁定。 */
+.q-post .q-slides, .q-moment .q-slides, .q-chatter .q-slides {
+  position: relative; display: grid; grid-template-rows: 1fr; height: 100%;
+}
+/* 文本卡的滑片回到同一网格单元里：互相叠放、谁高谁定高，淡入淡出不变 */
+.q-post .q-slide, .q-moment .q-slide, .q-chatter .q-slide {
+  grid-area: 1 / 1; position: relative; inset: auto; height: 100%;
+}
 .q-slides { position: absolute; inset: 0; }
 .q-slide { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 9px;
   padding: 20px 22px 32px; color: inherit; text-decoration: none;
@@ -1313,7 +1358,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .q-slide { transition: none; } }
 /* 中窄屏：文章卡通栏，横竖两张相册并排一行错落，说说 / 杂谈再各占半行 */
 @media (max-width: 1080px) {
-  .q-post { grid-column: 1 / 13; grid-row: 1; min-height: 420px; }
+  .q-post { grid-column: 1 / 13; grid-row: 1; min-height: 0; }
+  /* 窄屏文章卡不再跨两行，两半区按各自内容撑高 */
+  .q-post .q-pane { flex: 1 1 auto; }
   .q-photo-h { grid-column: 1 / 5; grid-row: 2; }
   .q-photo-v { grid-column: 5 / 8; grid-row: 2; aspect-ratio: 3 / 4; align-self: start;
     width: min(100%, 320px); }
@@ -1559,7 +1606,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .moment-head b { font-size: 14px; color: var(--ink-strong); font-weight: 650; }
 .moment-head time { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .mood { margin-left: auto; font-size: 12px; color: var(--accent-3-text); }
-.moment-text { margin: 14px 0 0; font-size: 14.5px; line-height: 1.9; color: var(--ink); white-space: pre-wrap; }
+.moment-text { margin: 14px 0 0; font-size: var(--fs-text); line-height: 1.9; color: var(--ink); white-space: pre-wrap; }
 .moment-imgs { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 13px; }
 .moment-imgs img { width: 132px; height: 100px; object-fit: cover; border-radius: 12px;
   border: 1px solid var(--glass-line); }
@@ -1583,7 +1630,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .chatter-meta time { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .chatter-title { display: block; margin: 12px 0 7px; font-size: 18px; font-weight: 650; color: var(--ink-strong); }
 .chatter-title:hover { color: var(--accent-text); }
-.chatter-card p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.chatter-card p { margin: 0; font-size: var(--fs-small); color: var(--muted); }
 
 /* ---------- 友链 ---------- */
 .friend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)); gap: 14px; margin: 26px 0 40px; }
@@ -1604,7 +1651,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .about-top { display: flex; align-items: center; gap: 20px; margin-bottom: 22px; }
 .about-top h2 { margin: 0 0 4px; font-size: 22px; font-weight: 650; color: var(--ink-strong); }
 .about-top p { margin: 0; font-size: 13.5px; color: var(--muted); }
-.about-intro p { font-size: 15px; line-height: 1.9; margin: 0 0 15px; }
+.about-intro p { font-size: var(--fs-text); line-height: 1.9; margin: 0 0 15px; }
 .about-skills { margin: 18px 0 22px; }
 .about-social { display: flex; flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--glass-line); padding-top: 18px; }
 .about-social a { display: flex; flex-direction: column; font-size: 13.5px; color: var(--accent-text);
@@ -1857,7 +1904,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   content: ''; flex: 0 0 auto; width: 4px; height: 17px; border-radius: 4px;
   background: linear-gradient(180deg, var(--accent), var(--accent-3));
 }
-.settings-info p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--muted); }
+.settings-info p { margin: 0; font-size: var(--fs-small); line-height: 1.9; color: var(--muted); }
 /* 通用 / 动画卡片里的子项：小标题 + 说明 + 选项组（复用 opt-group 胶囊）。
    上下排列时 info 不能保留横向布局的 flex-basis（column 下会变成最小高度，
    把选项组顶出大片留空），必须放开让内容决定高度 */
@@ -2129,7 +2176,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   .post-title { font-size: 18px; }
   .article { padding: 26px 20px; border-radius: 22px; }
   .article h1 { font-size: 23px; }
-  .article p { font-size: 15px; }
+  .article p { font-size: var(--fs-body); }
   .tag-cloud, .about-card { padding: 20px; }
   .site-foot { flex-direction: column; border-radius: 18px; padding: 14px 20px; }
   .to-top { right: 16px; bottom: 16px; width: 42px; height: 42px; }
@@ -2520,7 +2567,8 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 .neko-pet.dragging { filter: brightness(1.03); }
 .neko-pet.dragging .neko-stage { filter: drop-shadow(0 22px 30px rgba(120, 108, 150, .26)); }
 @media (max-width: 760px) {
-  .neko-pet { right: 8px; bottom: 76px; }
+  /* 窄屏缩小并贴右下角：90~120px 的小猫不压正文，仍看得清表情 */
+  .neko-pet { right: 6px; bottom: 68px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .neko-pet { transition: opacity .2s ease; }

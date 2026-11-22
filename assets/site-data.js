@@ -25,7 +25,7 @@ window.STUDIO_DATA = {
   ],
   "site": {
     "avatar": "assets/avatar.jpg",
-    "author": "我",
+    "author": "星梦",
     "displayName": "星梦Staream",
     "bio": "在阳光盛放的花田里，做一缕飘忽的梦；在星光低垂的旷野上，做一尾不倦的鱼。",
     "tagline": "在阳光盛放的花田里，做一缕飘忽的梦；在星光低垂的旷野上，做一尾不倦的鱼。",

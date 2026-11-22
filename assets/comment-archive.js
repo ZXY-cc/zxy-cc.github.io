@@ -161,19 +161,19 @@
       'placeholder="路过、读后感，或者只是打个招呼…（支持 Markdown 语法）"></textarea>' +
       '<div class="zb-composer-preview" id="zb-composer-preview" hidden aria-live="polite"></div>' +
       '<div class="zb-composer-bar">' +
-      '<span class="zb-composer-tip">支持 Markdown · 留言会公开保存在本站仓库 · 发布需 GitHub 账号</span>' +
+      '<span class="zb-composer-tip">支持 Markdown · 提交后需站长确认再公开 · 发布需 GitHub 账号</span>' +
       '<span class="zb-composer-count" id="zb-composer-count">0 / 2000</span>' +
       '<button class="interactions-btn primary" type="button" id="zb-composer-submit">发布留言</button>' +
       '</div>' +
       '<p class="zb-composer-after" id="zb-composer-after" hidden>' +
-      '已打开 GitHub 发布页，登录后确认提交；回来刷新就能在这里看到。</p>' +
+      '已打开 GitHub 发布页，登录后确认提交；站长审核通过后才会显示在这里。</p>' +
       '</div>';
   }
   function emptyHtml(id) {
     return '<div class="zb-archive zb-empty" id="' + esc(id || 'zb-archive') + '">' +
       '<span class="zb-empty-star" aria-hidden="true">✦</span>' +
       '<p class="zb-empty-title">还没有留言</p>' +
-      '<p class="zb-empty-note">在上方写下第一句话吧，留言会长期保存在本站仓库里。</p>' +
+      '<p class="zb-empty-note">在上方写下第一句话吧，留言会长期保存在本站仓库里，站长确认后公开。</p>' +
       '</div>';
   }
   function item(c, inner) {
@@ -246,8 +246,8 @@
       (likes > 0 ? '<span class="zb-archive-total">♥ ' + likes + '</span>' : '') +
       '</div>';
     var note = o.live
-      ? '留言实时读取自本站仓库的 GitHub Issues，发布后刷新即可看到；关闭或删除的留言会自动消失。'
-      : '留言保存在本站仓库的 GitHub Issues，并随站点一起存档；关闭或删除的留言会在下次同步后移除。';
+      ? '留言经站长确认后公开：实时读取自本站仓库的 GitHub Issues，审核通过并刷新即可看到。'
+      : '留言保存在本站仓库的 GitHub Issues，站长确认后才随站点存档；未通过审核的不会出现在这里。';
     return '<div class="zb-archive"' + (o.live ? ' data-live="1"' : '') +
       ' id="' + esc(o.id || 'zb-archive') + '">' + head +
       (rows ? '<ol class="zb-archive-list">' + rows + '</ol>' : '') + more +

@@ -1307,11 +1307,12 @@
       'placeholder="' + esc(def) + '" value="' + esc(c.name || '') + '" autocomplete="off">' +
       '<p class="f-hint" id="pet-name-note">当前昵称：<b>' + esc(c.name || def) + '</b></p></div>' +
       '<div class="settings-block"><h3>聊天接口</h3>' +
-      '<p class="f-hint">已预置站内接口，开箱即可聊天。换成自己的 OpenAI 兼容接口时格式是 ' +
-      '<code>接口地址|密钥|模型名</code>（模型可省略，默认 gpt-4o-mini）。请求由浏览器直发该接口，' +
-      '接口必须允许跨域；清空后她会回「[未设置API]」。</p>' +
+      '<p class="f-hint">留空即使用站内预置的智谱线路，所有访客开箱就能聊天，页面不会显示密钥。' +
+      '要换成自己的 OpenAI 兼容接口，按 <code>接口地址|密钥|模型名</code> 填写（模型可省略，默认 gpt-4o-mini）；' +
+      '请求由浏览器直发该接口，接口必须允许跨域。密钥只存这台设备的 localStorage，不进 site-data.js。' +
+      '若之后部署了自己的中转代理（如 Cloudflare Worker），可只填地址、密钥留空。</p>' +
       '<input class="f-input" id="f-pet-api" data-pet-api type="text" ' +
-      'placeholder="https://api.example.com/v1/chat/completions|sk-xxx|gpt-4o-mini" ' +
+      'placeholder="留空 = 站内预置线路；或 https://api.example.com/v1/chat/completions|sk-xxx|gpt-4o-mini" ' +
       'value="' + esc(c.api || '') + '" autocomplete="off" spellcheck="false">' +
       '<p class="f-hint" id="pet-api-note">' + esc(petNote('api', c.api)) + '</p></div>' +
       '<div class="settings-block"><h3>宠物 SKILL</h3>' +
