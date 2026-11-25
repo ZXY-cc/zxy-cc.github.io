@@ -162,7 +162,7 @@ window.catModel = {
 };
 
 const st = {
-  t: 0, gx: 0, gy: 0, tx: 0, ty: 0, follow: true, idle: true, wag: true,
+  t: 0, gx: 0, gy: 0, tx: 0, ty: 0, follow: true, idle: true, wag: true, petT: 0,
   blinkStart: -9, blinkT: 2.6, forceBlink: false,
   earL: 0, earVL: 0, earR: 0, earVR: 0, prevAX: 0,
   tailWag: 0, wagAmt: 0, wagTarget: 1, wagTimer: 4,
@@ -607,6 +607,21 @@ function tick(now){
   [st.earL, st.earVL] = spring(st.earL, st.earVL, clamp(tL, -0.10, 0.10), 120, 13, dt);
   [st.earR, st.earVR] = spring(st.earR, st.earVR, clamp(tR, -0.10, 0.10), 120, 13, dt);
 
+  /* 被摸头：闭眼 + 小幅左右扭头 + 耳朵自然微动，末段淡出回到原来的姿态。
+     直接叠加在 P 上，不写 base，所以不会盖掉情绪 / 姿态补间。 */
+  if (st.petT > 0){
+    st.petT = Math.max(0, st.petT - dt);
+    const ph = st.t * 7.4;
+    const env = Math.min(1, st.petT / 0.30);
+    P.ParamAngleZ += Math.sin(ph) * 22 * env;
+    P.ParamAngleX += Math.sin(ph * 0.5 + 1.2) * 30 * env;
+    P.ParamEarL += (0.5 + 0.5 * Math.sin(ph * 1.9)) * 26 * env;
+    P.ParamEarR += (0.5 + 0.5 * Math.sin(ph * 1.9 + 2.2)) * 26 * env;
+    P.ParamEyeLOpen = Math.min(P.ParamEyeLOpen, 0.08);
+    P.ParamEyeROpen = Math.min(P.ParamEyeROpen, 0.08);
+    P.ParamMouthForm = base.mf * 100 + 22 * env;
+  }
+
   buildTail();
   render();
   idleRestore();
@@ -862,6 +877,13 @@ const NekoCat = {
   wave(on){ st.waveOn = !!on; return NekoCat; },
   wag(on){ st.wag = !!on; return NekoCat; },
   breathe(on){ st.idle = !!on; return NekoCat; },
+
+  /* 被摸一会儿：闭眼、左右轻轻扭头、耳朵自然微动（开心但不夸张），到时自动收 */
+  pet(ms){
+    st.petT = Math.max(0.6, (ms || 2200) / 1000);
+    nekoSet({ mf: 0.55 }, 220);
+    return NekoCat;
+  },
 
   /* 被摸一下：歪头 + 耳朵抖 + 眨眼，自动回落 */
   touch(){

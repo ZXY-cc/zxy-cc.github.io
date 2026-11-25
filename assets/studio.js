@@ -1318,11 +1318,13 @@
       '<div class="settings-block"><h3>宠物 SKILL</h3>' +
       '<p class="f-hint">站内已内置由 <code>花信-SKILL.md</code> 生成的功能与性格规范；这里上传的是「站长追加规范」，' +
       '会接在内置规范之后，冲突时以它为准（.txt / .md，128KB 以内）。</p>' +
+      '<div class="pet-skill-row">' +
       '<label class="file-zone"><input class="f-file" id="f-pet-skill" data-pet-skill type="file" ' +
       'accept=".txt,.md,.markdown,text/plain,text/markdown"><span>选择 SKILL 文件上传</span></label>' +
-      '<p class="f-hint" id="pet-skill-note">' + esc(petNote('skill', c.skill)) + '</p>' +
-      '<div class="f-actions"><button class="soft-btn" type="button" data-act="pet-skill-clear"' +
-      (has ? '' : ' hidden') + '>清空追加规范</button></div></div>' +
+      '<button class="soft-btn" type="button" data-act="pet-skill-clear"' +
+      (has ? '' : ' hidden') + '>清空追加规范</button></div>' +
+      '<p class="f-hint pet-skill-note" id="pet-skill-note">' + esc(petNote('skill', c.skill)) + '</p>' +
+      '</div>' +
       '</div>';
   }
   function formPublish() {

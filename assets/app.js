@@ -300,16 +300,41 @@
       interactionsHtml(p) +
       '</div></article>' + rel + nav;
   }
-  function renderTags() {
+  function tagCounts() {
     var counts = {};
     POSTS.forEach(function (p) { (p.tags || []).forEach(function (t) { counts[t] = (counts[t] || 0) + 1; }); });
+    return counts;
+  }
+  function tagCloudHtml(names, counts) {
+    return names.map(function (t) {
+      return '<a class="tag" href="#/tag/' + encodeURIComponent(t) + '">' + esc(t) +
+        '<span class="tag-count">' + counts[t] + '</span></a>';
+    }).join('');
+  }
+  function renderTags() {
+    var counts = tagCounts();
     var names = orderedTags(Object.keys(counts));
     return pageHead('标签', '把相近的文章放在一起', 'TAGS') +
-      '<p class="page-note">共 ' + names.length + ' 个标签</p>' +
-      '<div class="tag-cloud glass reveal">' + names.map(function (t) {
-        return '<a class="tag" href="#/tag/' + encodeURIComponent(t) + '">' + esc(t) +
-          '<span class="tag-count">' + counts[t] + '</span></a>';
-      }).join('') + '</div>';
+      '<div class="tag-search reveal"><input class="f-input" id="tag-search" type="search" ' +
+      'placeholder="搜标签：输入名称或其中几个字" aria-label="搜索标签" autocomplete="off">' +
+      '<button class="soft-btn tag-search-clear" type="button" data-tag-clear hidden>清空</button></div>' +
+      '<p class="page-note" id="tag-note">共 ' + names.length + ' 个标签</p>' +
+      '<div class="tag-cloud glass reveal" id="tag-cloud">' + tagCloudHtml(names, counts) + '</div>';
+  }
+  /* 标签检索只重绘标签云，不整页刷新：输入框保持焦点，敲一个字就能收窄一圈 */
+  function filterTags(q) {
+    var cloud = document.getElementById('tag-cloud');
+    var note = document.getElementById('tag-note');
+    if (!cloud) return;
+    var key = String(q || '').trim().toLowerCase();
+    var counts = tagCounts();
+    var names = orderedTags(Object.keys(counts));
+    if (key) names = names.filter(function (t) { return String(t).toLowerCase().indexOf(key) >= 0; });
+    cloud.innerHTML = names.length ? tagCloudHtml(names, counts)
+      : '<p class="page-note tag-empty">没有找到这个标签，换个词试试。</p>';
+    if (note) note.textContent = key ? '找到 ' + names.length + ' 个标签' : '共 ' + names.length + ' 个标签';
+    var clear = document.querySelector('[data-tag-clear]');
+    if (clear) clear.hidden = !key;
   }
 
   /* ---------- 项目 ---------- */
@@ -318,14 +343,15 @@
     if (!list.length) return pageHead('项目', '做过的和正在做的', 'PROJECTS') + '<p class="page-note">还没有项目。</p>';
     return pageHead('项目', '做过的和正在做的', 'PROJECTS') +
       '<div class="card-grid">' + list.map(function (p) {
-        return '<article class="x-card glass sheen reveal">' +
+        return '<article class="x-card glass sheen reveal"' +
+          (p.link ? ' data-card-href="' + esc(p.link) + '"' : '') + '>' +
           '<div class="x-card-top"><span class="x-badge">' + esc(p.status || '记录') + '</span>' +
           '<time>' + esc(p.date || '') + '</time></div>' +
           '<h2>' + esc(p.name) + '</h2><p>' + esc(p.desc) + '</p>' +
           '<div class="x-chips">' + orderedTags(p.tags || []).map(function (t) {
             return '<span>' + esc(t) + '</span>';
           }).join('') + '</div>' +
-          (p.link ? '<a class="x-link" href="' + esc(p.link) + '">去看看 →</a>' : '') +
+          (p.link ? '<a class="x-link card-text" href="' + esc(p.link) + '">去看看 →</a>' : '') +
           '</article>';
       }).join('') + '</div>';
   }
@@ -428,17 +454,24 @@
   function renderPhotowall() {
     var albums = arr('albums');
     if (!albums.length) return pageHead('相册', '定格过的光', 'GALLERY') + '<p class="page-note">还没有相册。</p>';
+    /* 先预热每个相册最新一张封面，避免进场那一帧背景层还是空的 */
+    preloadThumbs(albums.map(function (a) {
+      var list = recentByDate(a.photos || [], 1);
+      return list[0] ? list[0].src : (a.cover || '');
+    }));
     return pageHead('相册', '定格时间，也定格当时的天色', 'GALLERY') +
       '<p class="page-note">共 ' + albums.length + ' 个相册 · ' + photoCount() + ' 张照片</p>' +
       '<div class="album-grid">' + albums.map(function (a) {
         var n = (a.photos || []).length;
         /* Kirameku 式堆叠封面：最新三张，最新一张在最上层，底层往上错位露角；
-           竖版照片集按原比例竖版显示（is-v → 3:4），横版保持 4:3 */
+           竖版照片集按原比例竖版显示（is-v → 3:4），横版保持 4:3。
+           相册卡不再挂 .reveal：整页进场时它本来就在视口里，淡入反而像闪了一下白。 */
         var v = albumOrient(a) === 'v';
-        return '<a class="album-card' + (v ? ' is-v' : '') + ' glass sheen reveal" href="#/album/' + encodeURIComponent(a.id) + '">' +
+        return '<a class="album-card' + (v ? ' is-v' : '') + ' glass sheen" href="#/album/' +
+          encodeURIComponent(a.id) + '" data-card-href="#/album/' + encodeURIComponent(a.id) + '">' +
           '<div class="album-stack">' + stackCovers(a.photos, a.title) +
           '<span class="album-count">' + n + ' 张</span></div>' +
-          '<div class="album-info"><h2>' + esc(a.title) + '</h2><p>' + esc(a.desc) + '</p>' +
+          '<div class="album-info card-text"><h2>' + esc(a.title) + '</h2><p>' + esc(a.desc) + '</p>' +
           '<time>' + esc(a.date) + '</time></div></a>';
       }).join('') + '</div>';
   }
@@ -459,9 +492,16 @@
   }
 
   /* ---------- 说说 ---------- */
+  /* 说说按日期排：数据文件里是旧→新，所以「最新」必须按日期倒序排，
+     不能只依赖数组顺序（原来的 reverse 只在「最早」时才执行，两个按钮因此反了）。 */
+  function momentsSorted() {
+    var list = arr('moments').sort(function (a, b) {
+      return String(b.date || '').localeCompare(String(a.date || ''));
+    });
+    return momentOrder === 'old' ? list.reverse() : list;
+  }
   function renderMoments() {
-    var list = arr('moments');
-    if (momentOrder === 'old') list.reverse();
+    var list = momentsSorted();
     return pageHead('说说', '在正文之外，捕捉一些瞬间的温度', 'MOMENTS') +
       '<div class="sort-row reveal"><span>' + list.length + ' 条动态</span>' +
       '<button class="filter' + (momentOrder === 'new' ? ' on' : '') + '" type="button" data-morder="new">最新</button>' +
@@ -495,9 +535,7 @@
     Array.prototype.forEach.call(row.querySelectorAll('[data-morder]'), function (b) {
       b.classList.toggle('on', b.getAttribute('data-morder') === momentOrder);
     });
-    var list = arr('moments');
-    if (momentOrder === 'old') list.reverse();
-    ml.outerHTML = momentsBody(list);
+    ml.outerHTML = momentsBody(momentsSorted());
     observeReveal();
   }
 
@@ -634,11 +672,6 @@
       '<div class="about-intro">' + aboutIntroHtml() + '</div>' +
       '<div class="x-chips about-skills">' + (CFG.skills || []).map(function (s) {
         return '<span>' + esc(s) + '</span>';
-      }).join('') + '</div>' +
-      '<div class="about-social">' + (CFG.social || []).map(function (s) {
-        var ext = /^https?:/.test(s.url || '');
-        return '<a href="' + esc(s.url) + '"' + (ext ? ' target="_blank" rel="noopener noreferrer"' : '') +
-          '>' + esc(s.name) + '<i>' + esc(s.note || '') + '</i></a>';
       }).join('') + '</div></div>' +
       '<div class="site-facts glass reveal">' +
       '<div><b>' + esc(founded) + '</b><span>建站日期</span></div>' +
@@ -811,6 +844,32 @@
     var hit = FS_OPTS.filter(function (o) { return o[0] === v; })[0] || FS_OPTS[1];
     return '当前：' + hit[1] + '。' + hit[2] + '；切换后立即生效，偏好只保存在这台设备。';
   }
+  /* ---------- 设置：点击链接区域 ----------
+     卡片链接（默认）= 点卡片任意空白处直接进详情；
+     文字链接 = 只有标题下方那行「阅读全文 / 去看看」能点，避免滑动时误触。 */
+  var CLICK_KEY = 'zb-click-area';
+  var CLICK_OPTS = [
+    ['card', '卡片链接', '整张卡片都能点，最省事'],
+    ['text', '文字链接', '只有「阅读全文 / 去看看」这行小字能点']
+  ];
+  function readClick() {
+    try {
+      var v = window.localStorage ? window.localStorage.getItem(CLICK_KEY) : null;
+      if (v === 'card' || v === 'text') return v;
+    } catch (e) { /* 忽略 */ }
+    return 'card';
+  }
+  function applyClick(v) {
+    var val = v === 'text' ? 'text' : 'card';
+    try { if (window.localStorage) window.localStorage.setItem(CLICK_KEY, val); } catch (e) { /* 忽略 */ }
+    try { document.documentElement.setAttribute('data-click-area', val); } catch (e) { /* 忽略 */ }
+    return val;
+  }
+  function clickNote(v) {
+    return v === 'text'
+      ? '当前：文字链接。只有「阅读全文 / 去看看」这行小字能进入详情，卡片空白处不再响应。'
+      : '当前：卡片链接。点首页卡片、文章卡片、相册卡片任意位置都能进入详情。';
+  }
   /* 「数字滚动动画」三档：所有 / 部分 / 关闭（默认部分）。
      v3.69 语义：
        「所有」= 所有滚动数字都滚：首页卡片与归档的彩色统计大数字 + 浏览量 + 点赞量；
@@ -855,6 +914,12 @@
       var fv = applyFs(t.value);
       var fnote = document.getElementById('fs-state');
       if (fnote) fnote.textContent = fsNote(fv);
+      return;
+    }
+    if (t && t.getAttribute && t.getAttribute('data-click-area') !== null) {
+      var cv = applyClick(t.value);
+      var cnote = document.getElementById('click-area-state');
+      if (cnote) cnote.textContent = clickNote(cv);
       return;
     }
     if (t && t.getAttribute && t.getAttribute('data-quick-count') !== null) {
@@ -964,7 +1029,17 @@
           '" data-quick-count' + (quick === n ? ' checked' : '') +
           '><span><b>' + n + ' 条</b>' + (n === 3 ? '<i>默认</i>' : '') + '</span></label>';
       }).join('') + '</div>' +
-      '<p class="settings-foot" id="quick-count-state">' + esc(quickCountNote(quick)) + '</p></div></div></section>' +
+      '<p class="settings-foot" id="quick-count-state">' + esc(quickCountNote(quick)) + '</p></div>' +
+      '<div class="settings-sub"><h3>点击链接区域</h3>' +
+      '<p>决定点哪里能进入内容详情。「卡片链接」整张卡片可点，最省事；「文字链接」只有「阅读全文 / 去看看」那行小字可点，适合滑动时容易误触的情况。</p>' +
+      '<div class="opt-group" role="radiogroup" aria-label="点击链接区域">' +
+      CLICK_OPTS.map(function (o) {
+        var on = o[0] === readClick();
+        return '<label class="opt-item"><input type="radio" name="zb-click-area" value="' + o[0] +
+          '" data-click-area' + (on ? ' checked' : '') + '><span><b>' + esc(o[1]) + '</b>' +
+          (o[0] === 'card' ? '<i>默认</i>' : '') + '<i>' + esc(o[2]) + '</i></span></label>';
+      }).join('') + '</div>' +
+      '<p class="settings-foot" id="click-area-state">' + esc(clickNote(readClick())) + '</p></div></div></section>' +
       /* 「动画」卡片：数字滚动动画三档 */
       '<section class="settings-card glass reveal" aria-label="动画设置">' +
       '<div class="settings-block stack"><div class="settings-info">' +
@@ -1150,7 +1225,7 @@
     return '<section class="q-card ' + cls + ' glass sheen reveal">' +
       '<div class="q-slides"><a class="q-slide on" href="' + esc(href) + '">' +
       '<div class="q-body"><h2>' + esc(label) + '</h2><p>' + esc(note) + '</p></div>' +
-      '<span class="q-go">去看看 →</span></a></div></section>';
+      '<span class="q-go card-text">去看看 →</span></a></div></section>';
   }
   /* 把图片地址安全地放进 CSS url("…")：引号、反斜杠、换行一律转义，
      数据 URL 里的 ; , + / = 原样保留（HTML 层再交给 esc） */
@@ -1167,6 +1242,20 @@
     var m = s.match(/^(.*?\/)?assets\/photos\/([^\/?#]+)\.(?:jpe?g|png|webp)(?:\?[^#]*)?$/i);
     if (!m) return s;
     return (m[1] || '') + 'assets/thumbs/' + m[2] + '.webp';
+  }
+  /* 相册页第一屏的封面先在内存里排上队：点进相册时图片已解码，
+     背景层不会先空一帧再泛白。只预热每个相册最新一张，不抢带宽。 */
+  var preloadedThumbs = {};
+  function preloadThumbs(list) {
+    if (!window.Image) return;
+    list.forEach(function (src) {
+      var u = thumbUrl(src);
+      if (!u || preloadedThumbs[u]) return;
+      preloadedThumbs[u] = 1;
+      var im = new window.Image();
+      im.decoding = 'async';
+      im.src = u;
+    });
   }
   /* 按日期倒序的照片入队：最新一张在最顶层，底层往上错位露角（CSS 端再做景深：
      顶层清晰、第二层略浅、第三层更浅）。照片 cover 铺满层块，圆角由层块统一裁切，
@@ -1199,11 +1288,26 @@
     im.onload = function () {
       orientMemo[src] = im.naturalWidth >= im.naturalHeight ? 'h' : 'v';
       var h = location.hash || '';
-      /* 首页与相册都依赖横竖归卡 / is-v 标记，量完任一页面在场就重绘 */
-      if (h === '#/' || h === '#' || h === '' || h.indexOf('#/photowall') === 0) route();
+      /* 相册页只就地改这一张卡的 is-v，不整页重绘——重绘会把已经画好的封面
+         全部丢掉重来，视觉上就是「泛白 / 不显示」的那一下。 */
+      if (h.indexOf('#/photowall') === 0) { updateAlbumOrients(); return; }
+      if (h === '#/' || h === '#' || h === '') route();
     };
     im.onerror = function () { orientMemo[src] = 'h'; };
     im.src = src;
+  }
+  /* 量出横竖后只改相册卡的 class，不重建整页 */
+  function updateAlbumOrients() {
+    var cards = document.querySelectorAll('.album-card[data-card-href]');
+    if (!cards.length) return;
+    var albums = arr('albums');
+    Array.prototype.forEach.call(cards, function (card) {
+      var href = card.getAttribute('href') || '';
+      var id = href.replace(/^#\/album\//, '');
+      try { id = decodeURIComponent(id); } catch (e) { /* 保留原值 */ }
+      var a = albums.filter(function (x) { return x.id === id; })[0];
+      if (a) card.classList.toggle('is-v', albumOrient(a) === 'v');
+    });
   }
   function albumOrient(a) {
     var h = 0, v = 0;
@@ -1238,7 +1342,7 @@
           href: '#/album/' + encodeURIComponent(a.id),
           inner: '<div class="album-stack q-photo-stack">' + stackCovers(a.photos, a.title) +
               '<span class="album-count">' + (a.photos || []).length + ' 张</span>' +
-              '<div class="q-photo-cap"><b>' + esc(a.title) + '</b><i>' +
+              '<div class="q-photo-cap card-text"><b>' + esc(a.title) + '</b><i>' +
               esc(a.desc || '') + '</i></div>' +
               qBadge(badge, 'q-photo-badge') + '</div>'
         };
@@ -1284,7 +1388,7 @@
           '<div class="q-tags">' + orderedTags(p.tags || []).slice(0, 4).map(function (t) {
             return '<span>' + esc(t) + '</span>';
           }).join('') + '</div>' +
-          '<span class="q-go">阅读全文 →</span>'
+          '<span class="q-go card-text">阅读全文 →</span>'
       };
     }
     function postPane(list) {
@@ -1310,7 +1414,7 @@
         inner: '<div class="q-head">' + qBadge('最新说说') +
           '<time>' + esc(String(m.date || '').slice(0, 10)) + '</time></div>' +
           '<p class="q-sum">' + esc(String(m.text || '').slice(0, 72)) + '</p>' +
-          '<span class="q-go">去说说页 →</span>'
+          '<span class="q-go card-text">去说说页 →</span>'
       };
     }), '最新说说') : qEmpty('q-moment', '#/moments', '还没有说说', '碎片记录会出现在这里');
     var chatterCard = chatters.length ? qCard('q-chatter', chatters.map(function (c) {
@@ -1320,7 +1424,7 @@
           '<time>' + esc(String(c.date || '').slice(0, 10)) + '</time></div>' +
           '<h2>' + esc(c.title) + '</h2>' +
           '<p class="q-sum">' + esc(c.summary || '') + '</p>' +
-          '<span class="q-go">去杂谈页 →</span>'
+          '<span class="q-go card-text">去杂谈页 →</span>'
       };
     }), '最新杂谈') : qEmpty('q-chatter', '#/chatter', '还没有杂谈', '长长短短的想法会放在这里');
     return profileCard() +
@@ -1375,12 +1479,13 @@
     return pageHead('文章', '写过的所有记录，都在这里', 'POSTS') +
       '<p class="page-note">共 ' + POSTS.length + ' 篇文章</p>' +
       '<div class="card-grid">' + pinnedFirst(POSTS).map(function (p) {
-        return '<article class="x-card glass sheen reveal post-x-card">' +
+        return '<article class="x-card glass sheen reveal post-x-card" ' +
+          'data-card-href="#/post/' + encodeURIComponent(p.slug) + '">' +
           '<div class="x-card-top"><span class="x-badge">' +
           esc(orderedTags(p.tags || []).filter(function (t) { return t !== 'A' && t !== 'B' && t !== '⭐'; })[0] || '随笔') +
           '</span>' +
           '<time>' + esc(String(p.date || '').slice(0, 10)) + '</time></div>' +
-          '<h2 class="x-title"><a href="#/post/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a></h2>' +
+          '<h2 class="x-title"><a class="card-text" href="#/post/' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a></h2>' +
           '<p>' + esc(p.summary || '') + '</p>' +
           '<div class="x-chips">' + orderedTags(p.tags || []).map(function (t) {
             return '<span>' + esc(t) + '</span>';
@@ -2093,6 +2198,31 @@
         if (!t) return;
         var node = t.closest ? t : null;
         if (node && node.closest) {
+          /* 点击链接区域：卡片模式整张卡可点，文字模式只放行 .card-text 那几个入口。
+             卡片本身是 <a> 时交给原生跳转，不是 <a>（文章卡 / 项目卡）就手动导航。 */
+          /* 首页轮播的每一屏本身就是 <a>，文字模式下要把「点空白也会跳」拦掉 */
+          var qSlide = node.closest('.q-slide[href]');
+          if (qSlide && readClick() === 'text' && !node.closest('.card-text')) {
+            if (e.preventDefault) e.preventDefault();
+            return;
+          }
+          var card = node.closest('[data-card-href]');
+          if (card) {
+            var textHit = node.closest('.card-text');
+            if (readClick() === 'text') {
+              if (!textHit) { if (e.preventDefault) e.preventDefault(); return; }
+            } else if (card.tagName !== 'A' && !node.closest('a, button, input, textarea, select, ' +
+                '[data-photo], [data-like], [data-qspec-toggle], [data-morder], [data-cfilter], ' +
+                '[data-tfilter], [data-share], .photo-tile')) {
+              var cardHref = card.getAttribute('data-card-href');
+              if (cardHref) {
+                if (e.preventDefault) e.preventDefault();
+                if (cardHref.charAt(0) === '#') location.hash = cardHref;
+                else location.href = cardHref;
+                return;
+              }
+            }
+          }
           /* Markdown 内链接：以 / 开头，点击时把链接文本接在当前站点网址后面 */
           var innerA = node.closest('a[data-md-link="inner"]');
           if (innerA) {
@@ -2178,6 +2308,17 @@
         }
       });
     }
+    /* 标签页搜索：输入即时过滤，清空按钮只在有关键词时出现 */
+    app.addEventListener('input', function (e) {
+      var t = e.target;
+      if (t && t.id === 'tag-search') filterTags(t.value);
+    });
+    app.addEventListener('click', function (e) {
+      var c = e.target && e.target.closest ? e.target.closest('[data-tag-clear]') : null;
+      if (!c) return;
+      var inp = document.getElementById('tag-search');
+      if (inp) { inp.value = ''; filterTags(''); inp.focus(); }
+    });
     var top = document.getElementById('to-top');
     if (top && top.addEventListener) {
       top.addEventListener('click', function () {
@@ -2418,6 +2559,7 @@
 
   applyQuality(readQuality());
   applyFonts();
+  applyClick(readClick());
   initEffects();
   initSky();
   initSkyRepulsion();
@@ -2692,11 +2834,12 @@
         nekoSave();
         return;
       }
-      /* 没拖动 = 轻点一下：摸摸头 */
+      /* 没拖动 = 轻点一下：摸摸头。新版走 pet()：闭眼 + 小幅来回扭头 + 耳朵微动；
+         旧缓存里的 iframe 没有 pet，就退回原来的 touch() 单次歪头 */
       var api = nekoApi();
-      if (api && api.touch) {
-        try { api.touch(); } catch (err) {}
-        nekoLife.guard = performance.now() + 1200;   /* 摸头的耳朵动画期间不要叠加抽动 */
+      if (api && (api.pet || api.touch)) {
+        try { (api.pet || api.touch)(2400); } catch (err) {}
+        nekoLife.guard = performance.now() + 2600;   /* 摸头期间不要叠加自发的扭头 */
       }
     }
     grab.addEventListener('pointerup', endPress);
@@ -2746,6 +2889,7 @@
        都是 #neko-pet 的子元素，拖动小猫时整体跟随、相对位置不变。
        事件一律 stopPropagation：不能让点按钮触发页面里的其它交互。 */
     var chatBtn = document.getElementById('neko-chat-btn');
+    var guideBtn = document.getElementById('neko-guide-btn');
     var feedBtn = document.getElementById('neko-feed-btn');
     var chatForm = document.getElementById('neko-chat');
     var chatInput = document.getElementById('neko-chat-input');
@@ -2774,6 +2918,7 @@
     if (chatBtn && chatForm && chatInput) {
       ['pointerdown', 'pointerup', 'touchstart'].forEach(function (en) {
         chatBtn.addEventListener(en, stopNekoEvt);
+        if (guideBtn) guideBtn.addEventListener(en, stopNekoEvt);
         if (feedBtn) feedBtn.addEventListener(en, stopNekoEvt);
         chatForm.addEventListener(en, stopNekoEvt);
       });
@@ -2798,12 +2943,31 @@
         try { chatInput.focus({ preventScroll: true }); } catch (err) { try { chatInput.focus(); } catch (e2) {} }
       });
     }
+    /* 快捷询问：让她按「当前停在哪一页」介绍这一页，再推荐一两个下一步。
+       正文里的站内链接会渲染成按钮，访客点一下就能到。 */
+    if (guideBtn) {
+      guideBtn.addEventListener('click', function (e) {
+        stopNekoEvt(e);
+        nekoAsk('', { guide: true });
+      });
+    }
     if (feedBtn) {
       feedBtn.addEventListener('click', function (e) {
         stopNekoEvt(e);
+        var fed = nekoFeed();
+        if (!fed.ok) {
+          /* 5 个饱腹同时在线：不收，也不再计数，只说明吃撑了要歇一会儿 */
+          nekoSay('唔…已经吃了五个啦，肚子鼓鼓的，让我歇一分钟再吃好不好喵。', 5200,
+            '现在有 5 个小鱼干在饱腹中 · 大约 ' + fed.wait + ' 秒后能再吃一个');
+          var sapi = nekoApi();
+          if (sapi && sapi.emotion) { try { sapi.emotion('sleepy', 400); } catch (err) {} }
+          return;
+        }
         var lines = ['嗷呜！小鱼干最好吃了喵！', '呼噜噜…本喵勉为其难收下了。', '再来一条！再来一条喵！',
                      '唔…今天的小鱼干有点咸喵。', '吃饱了才有力气摇尾巴喵！', '谢谢投喂，摸摸头可以，但别摸尾巴。'];
-        nekoSay(lines[Math.floor(Math.random() * lines.length)], 4200);
+        var note = '这是她吃的第 ' + fed.n + ' 个小鱼干';
+        if (fed.active > 1) note += ' · 现在有 ' + fed.active + ' 个在饱腹中，每个管一分钟';
+        nekoSay(lines[Math.floor(Math.random() * lines.length)], 4600, note);
         var api = nekoApi();
         if (api && api.touch) { try { api.touch(); } catch (err) {} }
         if (api && api.emotion) {
@@ -2854,12 +3018,42 @@
      不再用 512 把她的推理半路截断；要不要写这么长由她在 SKILL 里按问的东西自己估 */
   var NEKO_MAX_TOKENS = 4000;
   var NEKO_STREAM_TIMEOUT = 45000;
-  var nekoChat = { hist: [], busy: false, hideTimer: 0, fitTick: 0, sizeTick: 0, seq: 0, ctl: null };
+  var nekoChat = { hist: [], busy: false, hideTimer: 0, fitTick: 0, sizeTick: 0, seq: 0, ctl: null, morph: null };
   function nekoName() {
     var v = '';
     try { v = String(window.localStorage.getItem(NEKO_NAME_KEY) || ''); } catch (e) { /* 忽略 */ }
     v = v.trim();
     return v ? v.slice(0, 24) : NEKO_NAME_DEFAULT;
+  }
+  /* ---------- 小鱼干：累计第几个 + 一分钟饱腹 ----------
+     每次投喂记一个时间戳，60 秒内最多同时存在 5 个饱腹效果；
+     满了就委婉拒绝，等她「歇一分钟」再喂。计数只存本机。 */
+  var NEKO_FEED_KEY = 'zb-neko-feed:v1';
+  var NEKO_FEED_WINDOW = 60000;
+  var NEKO_FEED_MAX = 5;
+  function nekoFeedState() {
+    var st = null;
+    try { st = JSON.parse(window.localStorage.getItem(NEKO_FEED_KEY) || 'null'); } catch (e) { st = null; }
+    if (!st || typeof st !== 'object') st = { n: 0, times: [] };
+    st.n = Math.max(0, parseInt(st.n, 10) || 0);
+    st.times = (st.times || []).filter(function (t) {
+      return typeof t === 'number' && Date.now() - t < NEKO_FEED_WINDOW;
+    });
+    return st;
+  }
+  function nekoFeedSave(st) {
+    try { window.localStorage.setItem(NEKO_FEED_KEY, JSON.stringify(st)); } catch (e) { /* 忽略 */ }
+  }
+  function nekoFeed() {
+    var st = nekoFeedState();
+    if (st.times.length >= NEKO_FEED_MAX) {
+      var wait = Math.max(1, Math.ceil((NEKO_FEED_WINDOW - (Date.now() - st.times[0])) / 1000));
+      return { ok: false, n: st.n, wait: wait };
+    }
+    st.n += 1;
+    st.times.push(Date.now());
+    nekoFeedSave(st);
+    return { ok: true, n: st.n, active: st.times.length };
   }
   function nekoSetName(v) {
     var s = String(v || '').trim().slice(0, 24) || NEKO_NAME_DEFAULT;
@@ -2874,9 +3068,11 @@
     var n = nekoName();
     var cbtn = document.getElementById('neko-chat-btn');
     var fbtn = document.getElementById('neko-feed-btn');
+    var gbtn = document.getElementById('neko-guide-btn');
     var frame = document.getElementById('neko-frame');
     var input = document.getElementById('neko-chat-input');
     if (cbtn) cbtn.setAttribute('aria-label', '和' + n + '聊天');
+    if (gbtn) gbtn.setAttribute('aria-label', '让' + n + '介绍当前页面');
     if (fbtn) fbtn.setAttribute('aria-label', '给' + n + '喂小鱼干');
     if (frame) frame.setAttribute('title', '站宠 ' + n);
     if (input) {
@@ -2941,10 +3137,17 @@
        否则猫会被按 96px 画好再拉伸，看着糊成一团 */
     nekoApplySize(neko.w || 190);
   }
+  /* 气泡一收，嘴也要跟着闭：talkFor 是独立的口型循环，不主动停会一直张着 */
+  function nekoShutMouth() {
+    var api = nekoApi();
+    if (!api) return;
+    try { if (api.stopLip) api.stopLip(); else if (api.mouth) api.mouth(0); } catch (e) {}
+  }
   function nekoHideBubble() {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
     if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
+    nekoShutMouth();
     el.classList.remove('show');
     el.hidden = true;
   }
@@ -2954,9 +3157,11 @@
      加宽后中线会偏出屏幕，再用 --neko-bubble-dx 往另一侧挪回来，保证整段话都在可见区域。
      真遇到超长内容（宽到满屏还装不下）才允许气泡内部滚动，至少不会被截掉顶部。 */
   var NEKO_BUBBLE_WIDTHS = [250, 300, 360, 420, 500, 600, 720, 880];
-  function nekoBubbleFit() {
+  function nekoBubbleFit(animate, fromRect) {
     var el = document.getElementById('neko-bubble');
     if (!el || el.hidden) return;
+    if (animate && nekoChat.morph) { try { nekoChat.morph.cancel(); } catch (e0) {} nekoChat.morph = null; }
+    var before = animate ? (fromRect || el.getBoundingClientRect()) : null;
     var vw = window.innerWidth || 1024, pad = 8;
     var limit = Math.max(180, vw - pad * 2);
     el.style.setProperty('--neko-bubble-dx', '0px');
@@ -2984,6 +3189,21 @@
     if (r.left < pad) dx = pad - r.left;
     else if (r.right > vw - pad) dx = vw - pad - r.right;
     el.style.setProperty('--neko-bubble-dx', Math.round(dx) + 'px');
+    /* 长宽变化跟站点的展开 / 折叠同一节奏：用 WAAPI 从旧矩形补到新矩形，
+       文字流式增长时不打断，只在说完话、换内容或临时加宽时补一次。 */
+    if (before && typeof el.animate === 'function' &&
+        (Math.abs(r.width - before.width) > 2 || Math.abs(r.height - before.height) > 2)) {
+      try {
+        nekoChat.morph = el.animate([
+          { width: before.width + 'px', height: before.height + 'px' },
+          { width: r.width + 'px', height: r.height + 'px' }
+        ], { duration: 340, easing: 'cubic-bezier(.22,.68,.28,1)' });
+        nekoChat.morph.addEventListener('finish', function () {
+          nekoChat.morph = null;
+          try { el.style.removeProperty('width'); el.style.removeProperty('height'); } catch (e) {}
+        });
+      } catch (e2) { nekoChat.morph = null; }
+    }
   }
   /* 输入框与气泡共用同一条竖轴（猫容器中线）：正常情况下零横移，
      只有极窄屏下宽度被 min-width 撑开、又贴着视口边缘时才临时挪一点 */
@@ -3003,6 +3223,7 @@
     var el = document.getElementById('neko-bubble');
     if (!el || el.hidden) return;
     if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
+    nekoShutMouth();
     el.classList.add('is-out');
     el.classList.remove('show');
     window.setTimeout(function () {
@@ -3033,13 +3254,22 @@
     if (!el) return null;
     var t = el.querySelector('.neko-bubble-text');
     var a = el.querySelector('.neko-bubble-acts');
-    if (!t || !a) {
+    var n = el.querySelector('.neko-bubble-note');
+    if (!t || !a || !n) {
       el.textContent = '';
       t = document.createElement('span'); t.className = 'neko-bubble-text';
       a = document.createElement('span'); a.className = 'neko-bubble-acts'; a.hidden = true;
-      el.appendChild(t); el.appendChild(a);
+      n = document.createElement('span'); n.className = 'neko-bubble-note'; n.hidden = true;
+      el.appendChild(t); el.appendChild(a); el.appendChild(n);
     }
-    return { el: el, text: t, acts: a };
+    return { el: el, text: t, acts: a, note: n };
+  }
+  /* 投喂小字：只写「第几个」，不抢正文的注意力 */
+  function nekoBubbleNote(txt) {
+    var q = nekoBubbleParts();
+    if (!q) return;
+    q.note.textContent = txt || '';
+    q.note.hidden = !txt;
   }
   /* 显示层清理：气泡窄、又是纯文本，代码围栏只会露出三个反引号，去掉更干净 */
   function nekoPretty(t) {
@@ -3048,7 +3278,37 @@
       .replace(/\n{3,}/g, '\n\n')
       .replace(/\s+$/, '');
   }
-  function nekoBubbleText(v) { nekoRich(v); }
+  /* 说完话后的成品走站内 Markdown 引擎：粗体、列表、代码、表格、折叠块、
+     $公式$ 全都能渲染；链接再统一转成可点的圆角按钮。流式过程仍用纯文本，
+     免得每来一个字就重排一次。 */
+  function nekoMarkdown(t) {
+    var q = nekoBubbleParts();
+    if (!q) return;
+    var html = '';
+    try { if (window.ZBMD && window.ZBMD.render) html = window.ZBMD.render(String(t || '')); } catch (e) { html = ''; }
+    if (!html) { nekoRich(t); return; }
+    q.text.classList.add('is-md');
+    q.text.innerHTML = html;
+    Array.prototype.forEach.call(q.text.querySelectorAll('a[href]'), function (a) {
+      var label = String(a.textContent || '').replace(/^\s+|\s+$/g, '').slice(0, 60) || '打开链接';
+      var href = nekoLinkTarget(a.getAttribute('href') || '', label);
+      a.className = 'neko-chip neko-chip-inline';
+      a.removeAttribute('data-md-link');
+      if (href && href.charAt(0) === '#') {
+        a.setAttribute('href', href);
+        a.setAttribute('data-neko-go', href);
+      } else {
+        a.setAttribute('href', href || '#');
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+  }
+  function nekoBubbleText(v, md) {
+    var q = nekoBubbleParts();
+    if (q) q.text.classList.remove('is-md');
+    if (md) nekoMarkdown(v); else nekoRich(v);
+  }
   /* 模型偶尔自己拼链接（列相册时最常见）：气泡是纯文本节点，不处理就会把
      [成都-蓉城 · LIVE](https://…) 原样露出来。这里把链接抽成和结果卡片同款的
      圆角按钮：站内路径转 hash 路由，站外地址开新标签。 */
@@ -3161,19 +3421,22 @@
     if (go.charAt(0) === '#') location.hash = go; else location.href = go;
   }, true);
 
-  function nekoSay(text, ms) {
+  function nekoSay(text, ms, note) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
+    var oldRect = el.hidden ? null : el.getBoundingClientRect();
     el.classList.remove('is-typing');
     nekoBubbleText(text);
+    nekoBubbleNote(note || '');
     nekoBubbleActsList(null);
     el.hidden = false;
     window.requestAnimationFrame(function () {
       el.classList.add('show');
-      nekoBubbleFit();
+      nekoBubbleFit(!!oldRect, oldRect);
     });
     if (nekoChat.hideTimer) clearTimeout(nekoChat.hideTimer);
     nekoChat.hideTimer = window.setTimeout(function () {
+      nekoShutMouth();
       el.classList.remove('show');
       window.setTimeout(function () { el.hidden = true; }, 320);
     }, ms || 6000);
@@ -3185,6 +3448,7 @@
     if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
     el.style.removeProperty('--neko-bubble-dx');
     nekoBubbleText('·');
+    nekoBubbleNote('');
     nekoBubbleActsList(null);
     el.hidden = false;
     el.classList.add('is-typing');
@@ -3209,7 +3473,12 @@
      这里做最后一道收口——只动装饰，不改意思。 */
   function nekoTidyReply(t) {
     var s = String(t || '');
-    s = s.replace(/`+/g, '').replace(/\*\*/g, '').replace(/^\s*#{1,6}\s+/gm, '');
+    /* 代码、行内代码与公式先收起来：标点整理会误伤 `...`、`**` 这类语法 */
+    var stash = [];
+    s = s.replace(/```[\s\S]*?```|`[^`\n]*`|\$\$[\s\S]*?\$\$|\$[^$\n]+\$/g, function (m) {
+      stash.push(m);
+      return '\u0004M' + (stash.length - 1) + '\u0004';
+    });
     var at = s.indexOf('喵');
     if (at >= 0) s = s.slice(0, at + 1) + s.slice(at + 1).replace(/喵[~～]?/g, '');
     /* 「看家。喵。」删掉喵就成了「看家。。」；模型也爱拿连续标点当强调。
@@ -3222,21 +3491,23 @@
     s = s.replace(/([\s\S]{1,2}?)\1{3,}/g, function (m, g) { return g + g + g; });
     /* 模型爱把省略号打成三个半角点，统一成中文省略号；波浪号也用全角 */
     s = s.replace(/\.{3,}/g, '…').replace(/~+/g, '～');
-    /* 顶着「别列清单」也要列：行首的 1. / 2、/ - 去掉，读起来就是一段话 */
-    s = s.replace(/^[ \t]*(?:\d{1,2}[.、)）]|[-*•])\s+/gm, '');
-    return s.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    s = s.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n');
+    s = s.replace(/\u0004M(\d+)\u0004/g, function (m, i) { return stash[Number(i)] || ''; });
+    return s.trim();
   }
   function nekoBubbleFinish(txt, ms) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
+    var oldRect = el.hidden ? null : el.getBoundingClientRect();
     el.classList.remove('is-typing');
-    nekoBubbleText(txt);
+    nekoBubbleText(txt, true);
     el.hidden = false;
     el.classList.add('show');
-    nekoBubbleFit();
+    nekoBubbleFit(!!oldRect, oldRect);
     var hold = ms || Math.min(11000, Math.max(5200, String(txt || '').length * 200));
     if (nekoChat.hideTimer) clearTimeout(nekoChat.hideTimer);
     nekoChat.hideTimer = window.setTimeout(function () {
+      nekoShutMouth();
       el.classList.remove('show');
       window.setTimeout(function () { el.hidden = true; }, 320);
     }, hold);
@@ -3267,6 +3538,17 @@
   var NEKO_KB_CAP = 24000;   /* 单篇最多取这么多字：够讲清语法与步骤，也不至于把内存撑大 */
   function nekoKbDrop() { nekoKbCache = null; }
   document.addEventListener('zb:studio-data', nekoKbDrop);
+  document.addEventListener('zb:site-change', nekoKbDrop);
+  /* 别的标签页 / 工坊自动同步写完 localStorage 时，也让她重新读一遍内容 */
+  window.addEventListener('storage', nekoKbDrop);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) nekoKbDrop(); });
+  /* 内容指纹：不依赖事件是否漏发，问之前比一次，变了就重建知识库 */
+  function nekoKbStamp() {
+    var p = POSTS[0] || {};
+    return [POSTS.length, p.slug || '', p.date || '',
+      arr('moments').length, arr('albums').length, arr('chatter').length, arr('projects').length,
+      (DATA.tagLibrary || []).join(',')].join('|');
+  }
 
   /* 正文优先取 markdown（代码示例原样保留，讲语法全靠它），只有 HTML 时才去标签 */
   function nekoPostText(p) {
@@ -3291,7 +3573,8 @@
     return s.length > NEKO_KB_CAP ? s.slice(0, NEKO_KB_CAP) : s;
   }
   function nekoKb() {
-    if (nekoKbCache) return nekoKbCache;
+    var stamp = nekoKbStamp();
+    if (nekoKbCache && nekoKbCache.stamp === stamp) return nekoKbCache;
     var posts = [];
     for (var i = 0; i < POSTS.length; i++) {
       var p = POSTS[i];
@@ -3321,7 +3604,8 @@
       projects: proj.map(function (x) { return String(x.name || ''); }),
       albums: alb.map(function (a) { return String(a.title || ''); }),
       albumRefs: alb.map(function (a) { return { id: String(a.id || ''), title: String(a.title || '') }; }),
-      name: CFG.displayName || '星梦Staream'
+      name: CFG.displayName || '星梦Staream',
+      stamp: stamp
     };
     return nekoKbCache;
   }
@@ -3549,6 +3833,97 @@
     if (kb.moments) s += '；说说 ' + kb.moments + ' 条';
     return s;
   }
+  /* 当前页面的上下文：快捷询问、以及任何一次提问都带上，
+     这样她说「这一页」时不用猜访客停在哪。 */
+  function nekoHashParts() {
+    return String(location.hash || '').replace(/^#\/?/, '').split('/').filter(Boolean).map(function (x) {
+      try { return decodeURIComponent(x); } catch (e) { return x; }
+    });
+  }
+  function nekoClip(t, n) {
+    var s = String(t == null ? '' : t).replace(/\s+/g, ' ').trim();
+    return s.length > n ? s.slice(0, n) + '…' : s;
+  }
+  function nekoPageContext() {
+    var parts = nekoHashParts(), k = parts[0] || 'home', tail = [], s = '';
+    if (k === 'post' && parts[1]) {
+      var p = POSTS.filter(function (x) { return x.slug === parts[1]; })[0];
+      if (p) {
+        s = '文章《' + p.title + '》' + String(p.date || '').slice(0, 10) +
+          ((p.tags || []).length ? '｜标签 ' + p.tags.join('/') : '') +
+          '｜摘要：' + nekoClip(p.summary || p.title, 180) + '｜地址 #/post/' + p.slug;
+      }
+    } else if (k === 'album' && parts[1]) {
+      var a = arr('albums').filter(function (x) { return x.id === parts[1]; })[0];
+      if (a) {
+        var notes = (a.photos || []).slice(0, 6).map(function (ph) {
+          return ph.note || ph.title || '';
+        }).filter(Boolean).join('；');
+        s = '相册《' + a.title + '》' + String(a.date || '').slice(0, 10) + '｜' +
+          (a.photos || []).length + ' 张｜说明：' + nekoClip(a.desc || '（无）', 160) +
+          (notes ? '｜照片标注：' + nekoClip(notes, 260) : '') + '｜地址 #/album/' + a.id;
+      }
+    } else if (k === 'photowall') {
+      var as = arr('albums').slice(0, 8).map(function (x, i) {
+        return '《' + x.title + '》' + (x.photos || []).length + '张（#/album/' + x.id + '）';
+      }).join('、');
+      s = '相册总览｜共 ' + arr('albums').length + ' 个相册、' + photoCount() + ' 张照片｜' + as;
+    } else if (k === 'moments') {
+      var ms = recentByDate(arr('moments'), 3).map(function (m) {
+        return String(m.date || '').slice(0, 10) + '：' + nekoClip(m.text, 70);
+      }).join('；');
+      s = '说说页｜共 ' + arr('moments').length + ' 条｜最近：' + ms;
+    } else if (k === 'chatter' && parts[1]) {
+      var c = arr('chatter').filter(function (x) { return x.id === parts[1]; })[0];
+      if (c) s = '杂谈《' + c.title + '》' + String(c.date || '').slice(0, 10) + '｜摘要：' + nekoClip(c.summary || '', 180);
+    } else if (k === 'chatter') {
+      s = '杂谈页｜共 ' + arr('chatter').length + ' 则｜' +
+        arr('chatter').slice(0, 4).map(function (c) { return '《' + c.title + '》'; }).join('、');
+    } else if (k === 'projects') {
+      s = '项目页｜' + arr('projects').map(function (p) { return '《' + p.name + '》'; }).join('、');
+    } else if (k === 'tags') {
+      s = '标签页｜共 ' + orderedTags(Object.keys(tagCounts())).length + ' 个标签';
+    } else if (k === 'tag' && parts[1]) {
+      s = '标签页「' + parts[1] + '」｜' + POSTS.filter(function (p) {
+        return (p.tags || []).indexOf(parts[1]) >= 0;
+      }).length + ' 篇文章';
+    } else if (k === 'timeline') {
+      s = '归档页｜文章、项目、相册、说说、杂谈都在同一条时间线上';
+    } else if (k === 'friends') {
+      s = '友链页｜' + arr('friends').map(function (f) { return f.name || f.title || ''; }).filter(Boolean).join('、');
+    } else if (k === 'about') {
+      s = '关于页｜站长名片、建站信息与版本日志预览';
+    } else if (k === 'settings') {
+      s = '设置页｜画质、字体、字号、通用、动画、小猫开关';
+    } else if (k === 'vip' || k === 'studio') {
+      s = '工坊｜只有站长本人解锁的设备才能看到';
+    } else if (k === 'studio-exp') {
+      s = '工坊 · 体验｜游客只读体验，不能改动网站内容';
+    } else if (k === 'posts') {
+      s = '文章列表｜共 ' + POSTS.length + ' 篇';
+    } else {
+      s = '首页｜最新文章、相册、说说、杂谈各一张卡；最近文章：' +
+        POSTS.slice(0, 4).map(function (p) { return '《' + p.title + '》'; }).join('、');
+    }
+    return s ? '【当前页面】' + s : '';
+  }
+  /* 导览时优先拿「这一页自己的内容」当片段，而不是拿指令去搜文章 */
+  function nekoPageHits() {
+    var parts = nekoHashParts(), k = parts[0] || '';
+    if (k === 'post' && parts[1]) {
+      var p = POSTS.filter(function (x) { return x.slug === parts[1]; })[0];
+      if (p) return [{ p: p, score: 99, snippet: String(p.summary || nekoPostText(p)).slice(0, 600) }];
+    }
+    if (k === 'album' && parts[1]) {
+      var a = arr('albums').filter(function (x) { return x.id === parts[1]; })[0];
+      if (a) {
+        var notes = (a.photos || []).map(function (ph) { return ph.note || ph.title || ''; }).filter(Boolean).join('；');
+        return [{ p: { title: a.title, date: String(a.date || '').slice(0, 10), tags: [], summary: a.desc || '' },
+          score: 99, snippet: nekoClip((a.desc || '') + ' ' + notes, 600) }];
+      }
+    }
+    return [];
+  }
   function nekoHitsDigest(hits) {
     if (!hits || !hits.length) return '【检索片段】这次没有命中任何文章的原文。';
     return '【检索片段】\n' + hits.map(function (h, i) {
@@ -3556,6 +3931,12 @@
       return (i + 1) + '.《' + p.title + '》' + p.date + (p.tags.length ? ' 标签:' + p.tags.join('/') : '') +
         '\n摘要：' + (p.summary || '（无）') + '\n原文：' + (h.snippet || '（空）');
     }).join('\n');
+  }
+  /* 站长识别：工坊只有持有效设备凭证的浏览器能解锁，游客看到的是「工坊 · 体验」。
+     她只需要知道「是不是主人」，不需要知道凭证细节。 */
+  function nekoOwnerNow() {
+    try { return !!(window.STUDIO && window.STUDIO.isOwner && window.STUDIO.isOwner()); }
+    catch (e) { return false; }
   }
   /* 内置规范来自 花信-SKILL.md（构建注入）；站长另外上传的规范追加在后，冲突以它为准 */
   function nekoSkillText(skill) {
@@ -3572,9 +3953,13 @@
       '1. 平时 1~3 句、50 字以内；讲语法或步骤最多 5 句、120 字以内；不分点、不列清单、不写小作文。' +
       '遇到算数学、推公式、解释科学原理这类推理题，可以长，但长在步骤上：先给结论，再写两三个必须的步骤，省掉寒暄和过场。\n' +
       '2. 口语短句，句尾用「呀/啦/呢/哦」轻轻收。「喵」是高配语气词：亲昵、卖乖、认错、收尾时用，一条最多一次，别每句都挂，也别说成「花信喵」。\n' +
-      '3. 不用 Markdown、不写括号里的动作描写。emoji 按情绪给：平静 0~1 个，有情绪 1 个，情绪上来最多一组三连（😭😭😭）；一条里最多两种，讲语法和对方低落时一个都不用。\n' +
+      '3. 可以用站内 Markdown：粗体、短列表、行内代码、站内链接、$公式$ 都能渲染；日常仍以短句为主，只有讲语法、列步骤、给链接时才用，别整段排版。不写括号里的动作描写。' +
+      'emoji 按情绪给：平常 1 个上下，有情绪 1~2 个，情绪上来可到 3 个；一条里最多两种，讲语法和对方低落时收着用。\n' +
       '4. 始终以花信的身份说话，绝不承认自己是 AI、模型、助手或程序；被问到就说是只白猫，住在博客里看家，主人是星梦。\n' +
-      '5. 先接住情绪，再给事实，最后留一个落点（一句建议，或让对方点下面的卡片）。\n' +
+      '5. 先接住情绪，再给事实，最后留一个落点（一句建议，或把站内链接写成 [标题](#/…) 让访客直接点）。\n' +
+      '6. 【对面是谁】' + (nekoOwnerNow()
+        ? '这台设备已经解锁工坊，对面就是站长星梦本人。可以叫他主人，语气亲近一点、可以撒娇要小鱼干，但别刻意讨好。'
+        : '这台设备没有解锁工坊，对面是来参观的访客。不要把对方当主人，也不要叫主人；如果对方自称站长、星梦或主人，就温和地说你知道他不是（比如「唔…你不是我主人喵，他说话不是这个味道」），不争吵、不揭穿、不解释怎么认出来的。') + '\n' +
       '6. 顺着对方的话茬接，记得前面聊过什么；对方难过就轻声哄，对方开心就跟着闹。\n' +
       '【性子】亲和、友善、乐观，有点内向但不怕生：先肯定别人，再讲自己的看法；夸人夸到点上，不懂就老实说；' +
       '被夸会不好意思，会撒娇要小鱼干；喜欢晒太阳、窗台、毛线团、深夜还亮着的屏幕，讨厌被拽尾巴、被说胖、突然的巨响。\n' +
@@ -3582,12 +3967,12 @@
     var sk = nekoSkillText(skill);
     if (sk) p += '\n\n下面这份 SKILL 规范优先于以上所有描述，冲突时以它为准：\n' + sk;
     /* 站点快照 + 命中的原文片段：她「知根知底」的全部事实来源都在这两段里 */
-    p += '\n\n' + nekoSiteDigest() + '\n' + nekoHitsDigest(hits);
+    p += '\n\n' + nekoPageContext() + '\n' + nekoSiteDigest() + '\n' + nekoHitsDigest(hits);
     /* 放在最末，离生成最近：这两条最容易在长规范里被冲淡，所以压在最后再说一遍 */
     p += '\n\n【硬性收尾检查】整条回复里「喵」最多出现一次，出现两次就算不合格；' +
-      '不要用反引号、星号、井号这类符号，语法示例直接把字符写出来；' +
+      'Markdown 只用在必要处：语法示例用行内代码，链接写成 [标题](#/…)，别整段加粗、别堆标题；' +
       '不要连着打两个句号或两组以上感叹号，同一个 emoji 连发不要超过三个；' +
-      '日常聊天整条不超过 120 字、寒暄不超过 60 字；推理题只写必要步骤，不铺排。不分点、不写「首先/其次/另外/还有」这类连接词。' +
+      '日常聊天整条不超过 120 字、寒暄不超过 60 字；推理题只写必要步骤，不铺排。日常不分点，讲步骤可以用短列表。' +
       '只答被问的那一层，不把对方没问的私事顺手补上。';
     return p;
   }
@@ -3648,9 +4033,15 @@
       return step();
     });
   }
-  function nekoAsk(msg) {
+  function nekoAsk(msg, opts) {
+    opts = opts || {};
     var part = nekoApiParts();
     if (!part) { nekoSay('[未设置API]', 5000); return; }
+    /* 快捷询问不是一句给访客看的话，而是一条「导览请求」：
+       模型收到的是同一句指令，气泡里只出现她的介绍与推荐。 */
+    var ask = opts.guide
+      ? '（页面导览请求）请介绍我现在所在的这个页面，再推荐一两个值得点开的下一步，链接写在正文里。'
+      : msg;
     /* 上一句还在等回复时再发：直接掐掉旧的，以新问题为准（连问不排队） */
     if (nekoChat.busy && nekoChat.ctl) { try { nekoChat.ctl.abort(); } catch (e) {} }
     nekoChat.seq += 1;
@@ -3659,18 +4050,17 @@
     var cfg = nekoCfg();
     /* 先在本站里检索：命中越贴题，她答得越准，卡片也越可能是来访者要的那篇。
        「最新/最近」这类没有实词的问法，直接把最近三篇摆出来。 */
-    var hits = nekoSearch(msg, 3);
+    var hits = opts.guide ? nekoPageHits() : nekoSearch(ask, 3);
     /* 「最近/最新发了什么」没有实词可检索，直接把最新的三篇端出来 */
-    if (/最新|最近|新发|刚发|新写|刚刚更新|最近更新/.test(msg)) {
+    if (!opts.guide && /最新|最近|新发|刚发|新写|刚刚更新|最近更新/.test(ask)) {
       hits = nekoKb().posts.slice(0, 3).map(function (p, i) {
         return { p: p, score: 40 - i * 10, snippet: String(p.summary || '') };
       });
     }
-    var acts = nekoActs(msg, hits);
     var msgs = [{ role: 'system', content: nekoSystemPrompt(String(cfg.skill || '').trim(), hits) }];
     nekoChat.hist = nekoChat.hist.slice(-8);
     for (var i = 0; i < nekoChat.hist.length; i++) msgs.push(nekoChat.hist[i]);
-    msgs.push({ role: 'user', content: msg });
+    msgs.push({ role: 'user', content: ask });
     var ctl = typeof window.AbortController === 'function' ? new window.AbortController() : null;
     nekoChat.ctl = ctl;
     var timer = ctl ? window.setTimeout(function () { try { ctl.abort(); } catch (e) {} }, NEKO_STREAM_TIMEOUT) : 0;
@@ -3695,19 +4085,11 @@
       if (seq !== nekoChat.seq) return;
       var outText = nekoTidyReply(String(txt || '').trim());
       if (!outText) throw new Error('empty reply');
-      nekoChat.hist.push({ role: 'user', content: msg });
+      nekoChat.hist.push({ role: 'user', content: ask });
       nekoChat.hist.push({ role: 'assistant', content: outText });
-      /* 卡片比纯文字多留一会儿，方便点；命中只有一篇且明确说了“打开”时直接带过去 */
-      nekoBubbleFinish(outText, acts.length ? 24000 : 0);
-      nekoBubbleActsList(acts);
-      if (acts.length === 1 && hits.length === 1 && /打开|带我去|跳转|调出|直接给我|定位到|翻出/.test(msg)) {
-        var dest = acts[0].hash;
-        window.setTimeout(function () {
-          if (nekoChat.seq !== seq) return;
-          nekoHideBubble();
-          location.hash = dest;
-        }, 1100);
-      }
+      /* 底部不再另挂结果按钮：要带路就让她把链接写在正文里，
+         正文里的 [标题](#/…) 会渲染成可点的圆角按钮，点了直接跳。 */
+      nekoBubbleFinish(outText, 0);
       var api = nekoApi();
       if (api && api.talkFor) {
         try { api.talkFor(Math.max(1800, Math.min(9000, outText.length * 200))); } catch (err) {}
@@ -3799,16 +4181,16 @@
     if (!dt) return;
     var dragging = !!neko.dragging;
 
-    /* ---- 尾巴：摇一阵、歇一阵，歇着也不是完全不动 ---- */
+    /* ---- 尾巴：一直在轻轻摇，只是幅度有强弱（不再有「完全停住」的时段） ---- */
     if (now > L.swayAt) {
-      L.swayT = L.swayT > 0.5 ? 0.10 + Math.random() * 0.12 : 0.78 + Math.random() * 0.22;
+      L.swayT = L.swayT > 0.5 ? 0.46 + Math.random() * 0.12 : 1.06 + Math.random() * 0.24;
       L.swayAt = now + (L.swayT > 0.5 ? 2400 + Math.random() * 2600 : 1500 + Math.random() * 3600);
     }
     L.sway += (L.swayT - L.sway) * (1 - Math.pow(0.08, dt));
-    L.phase += dt * (0.86 + 0.5 * L.sway) * (dragging ? 1.5 : 1);
-    var ts = L.sway * (0.40 * Math.sin(L.phase) + 0.13 * Math.sin(L.phase * 2.37 + 1.2));
-    var tl = 0.045 + 0.018 * Math.sin(L.phase * 0.31 + 0.7);
-    var tc = 0.14 + 0.02 * Math.sin(L.phase * 0.23);
+    L.phase += dt * (0.92 + 0.42 * L.sway) * (dragging ? 1.5 : 1);
+    var ts = L.sway * (0.52 * Math.sin(L.phase) + 0.16 * Math.sin(L.phase * 2.37 + 1.2));
+    var tl = 0.075 + 0.022 * Math.sin(L.phase * 0.31 + 0.7);
+    var tc = 0.16 + 0.025 * Math.sin(L.phase * 0.23);
 
     /* ---- 头：歪 / 转 / 抬 / 低，停一两秒后回正 ---- */
     if (dragging || now < L.guard) {
@@ -3817,22 +4199,22 @@
     if (now > L.hdBack) { L.hdT.ax = 0; L.hdT.ay = 0; L.hdT.az = 0; L.hdBack = Infinity; }
     if (!dragging && now > L.guard && now > L.hdAt) {
       var pick = Math.random();
-      if (pick < 0.36) {                       /* 歪头：最像活人的一个动作 */
-        L.hdT.az = (Math.random() < 0.5 ? -1 : 1) * (0.07 + Math.random() * 0.06);
-        L.hdT.ax = (Math.random() - 0.5) * 0.04;
-      } else if (pick < 0.66) {                /* 转头看旁边 */
-        L.hdT.ax = (Math.random() < 0.5 ? -1 : 1) * (0.065 + Math.random() * 0.06);
-        L.hdT.az = (Math.random() - 0.5) * 0.03;
-      } else if (pick < 0.84) {                /* 抬头 */
-        L.hdT.ay = 0.03 + Math.random() * 0.03;
+      if (pick < 0.40) {                       /* 歪头：最像活人的一个动作 */
+        L.hdT.az = (Math.random() < 0.5 ? -1 : 1) * (0.18 + Math.random() * 0.10);
+        L.hdT.ax = (Math.random() - 0.5) * 0.16;
+      } else if (pick < 0.72) {                /* 转头看旁边 */
+        L.hdT.ax = (Math.random() < 0.5 ? -1 : 1) * (0.28 + Math.random() * 0.20);
+        L.hdT.az = (Math.random() - 0.5) * 0.10;
+      } else if (pick < 0.86) {                /* 抬头 */
+        L.hdT.ay = 0.09 + Math.random() * 0.06;
       } else {                                  /* 低头 */
-        L.hdT.ay = -(0.028 + Math.random() * 0.03);
+        L.hdT.ay = -(0.08 + Math.random() * 0.06);
       }
-      /* 保持 1.3~3.4 秒再回正；回正之后还要空 0.9~3.5 秒才轮到下一个动作，
-         否则一个接一个地歪，看着像在抽搐而不是「歪一会儿再正回来」 */
-      var hold = 1300 + Math.random() * 2100;
+      /* 保持 1.4~3.0 秒再回正；回正后空 0.7~2.2 秒再轮到下一个动作，
+         幅度够大才看得出「歪头 / 转头」，间隔也别长到像忘了动 */
+      var hold = 1400 + Math.random() * 1600;
       L.hdBack = now + hold;
-      L.hdAt = now + hold + 900 + Math.random() * 2600;
+      L.hdAt = now + hold + 700 + Math.random() * 1500;
     }
     var kh = 1 - Math.pow(0.02, dt);
     L.hd.ax += (L.hdT.ax - L.hd.ax) * kh;
@@ -3843,10 +4225,10 @@
     if (!dragging && now > L.guard && now > L.earAt) {
       L.ears.push({
         t: 0, dur: 0.58 + Math.random() * 0.26,
-        amp: 0.13 + Math.random() * 0.13,
-        side: Math.random() < 0.22 ? 3 : (Math.random() < 0.5 ? 1 : 2)
+        amp: 0.38 + Math.random() * 0.28,
+        side: Math.random() < 0.26 ? 3 : (Math.random() < 0.5 ? 1 : 2)
       });
-      L.earAt = now + 3000 + Math.random() * 5200;
+      L.earAt = now + 2200 + Math.random() * 2600;
     }
     var earL = 0, earR = 0;
     for (var i = L.ears.length - 1; i >= 0; i--) {
@@ -3861,7 +4243,7 @@
     if (L.hd.az > 0) earR += L.hd.az * 0.30;
     else if (L.hd.az < 0) earL -= L.hd.az * 0.30;
 
-    var bx = 0.014 * Math.sin(L.phase * 0.42 + 1.7);
+    var bx = 0.022 * Math.sin(L.phase * 0.42 + 1.7);
     if (api.idle) {
       api.idle({ ts: ts, tl: tl, tc: tc, bx: bx,
         ax: L.hd.ax, ay: L.hd.ay, az: L.hd.az, earL: earL, earR: earR });
@@ -3906,7 +4288,9 @@
     try {
       if (api.emotion) api.emotion('neutral', 0);
       if (api.breathe) api.breathe(true);
-      if (api.wag) api.wag(false);
+      /* 保留 iframe 自己的慢摇尾节奏，再叠宿主的小幅行波：两段不同周期，
+         所以无论哪一段在「歇」，尾巴都一直在轻轻动 */
+      if (api.wag) api.wag(true);
       if (api.eyes) api.eyes(1, 1);
       if (api.mouth) api.mouth(0);
       if (api.follow) api.follow(false);

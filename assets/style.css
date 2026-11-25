@@ -696,6 +696,11 @@ main { min-height: 320px; }
 }
 .tag:hover { color: var(--accent-3-text); border-color: rgba(224, 150, 189, .55); box-shadow: 0 0 16px rgba(224, 150, 189, .24); transform: translateY(-2px); }
 
+/* 标签页顶部搜索：与全站输入框同款，清空按钮只在有关键词时出现 */
+.tag-search { display: flex; gap: 10px; align-items: center; margin: 20px 0 4px; }
+.tag-search .f-input { flex: 1 1 auto; }
+.tag-search-clear { flex: 0 0 auto; }
+.tag-empty { margin: 10px 0 0; }
 .tag-cloud { display: flex; flex-wrap: wrap; gap: 11px; margin: 26px 0 40px; padding: 26px 28px; border-radius: var(--radius); background: var(--glass-sheen), var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-line); box-shadow: var(--glass-shadow), var(--glass-inner); }
 .tag-cloud .tag { font-size: 14px; padding: 6px 17px; }
 .tag-count { color: var(--muted); font-size: 12px; margin-left: 7px; }
@@ -1221,8 +1226,19 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .x-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
 .x-chips span { font-size: 11.5px; color: var(--accent-text); padding: 3px 10px; border-radius: 999px;
   background: var(--accent-soft); border: 1px solid var(--glass-line); }
-.x-link { display: inline-block; margin-top: 18px; font-size: 13px; color: var(--accent-3-text); }
+.x-link { display: inline-block; position: relative; margin-top: 18px; padding: 6px 2px;
+  font-size: 13px; color: var(--accent-3-text); }
 .x-link:hover { filter: brightness(1.12); }
+/* 判定区比文字宽一圈：视觉不变，手指更容易点中 */
+.x-link::after, .q-go::after {
+  content: ''; position: absolute; inset: -14px -18px; border-radius: 10px;
+}
+.q-go { position: relative; }
+/* 点击链接区域：卡片模式下整张卡是热区；文字模式只留 .card-text 那几个入口 */
+:root[data-click-area="card"] [data-card-href]:not(a) { cursor: pointer; }
+:root[data-click-area="text"] .q-slide,
+:root[data-click-area="text"] .album-card { cursor: default; }
+:root[data-click-area="text"] .card-text { cursor: pointer; }
 
 /* ---------- 筛选与排序 ---------- */
 .filter-row, .sort-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 22px 0 24px; }
@@ -1502,7 +1518,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .album-card.is-v .album-stack { aspect-ratio: 3 / 4; }
 .album-stack > [data-stack-layer] { position: absolute; inset: 12px;
   border-radius: 14px; overflow: hidden;
-  background: var(--shot) center / cover no-repeat;
+  background-color: #dde7f5;
+  background-image: var(--shot);
+  background-position: center; background-size: cover; background-repeat: no-repeat;
   box-shadow: 0 10px 26px rgba(96,118,168,.16);
   transition: transform .55s cubic-bezier(.34,1.45,.5,1), opacity .3s ease; will-change: transform; }
 .album-stack .stack-back { transform: rotate(-2.6deg) translateY(-13px) scale(.955); z-index: 1; }
@@ -1652,11 +1670,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .about-top h2 { margin: 0 0 4px; font-size: 22px; font-weight: 650; color: var(--ink-strong); }
 .about-top p { margin: 0; font-size: 13.5px; color: var(--muted); }
 .about-intro p { font-size: var(--fs-text); line-height: 1.9; margin: 0 0 15px; }
-.about-skills { margin: 18px 0 22px; }
-.about-social { display: flex; flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--glass-line); padding-top: 18px; }
-.about-social a { display: flex; flex-direction: column; font-size: 13.5px; color: var(--accent-text);
-  padding: 7px 15px; border-radius: 12px; background: var(--accent-soft); }
-.about-social a i { font-style: normal; font-size: 11px; color: var(--muted); }
+.about-skills { margin: 18px 0 0; }
 .site-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 18px 0 40px;
   padding: 18px 12px; border-radius: var(--radius); border: 1px solid var(--glass-line);
   box-shadow: var(--glass-shadow), var(--glass-inner); }
@@ -1835,6 +1849,14 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .f-cell { display: block; min-width: 0; margin-top: 15px; }
 .f-cell .f-label { margin-top: 0; }
 .f-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+/* 宠物 SKILL：上传框与清空按钮同一行、底边对齐；说明文字放到按钮下方，
+   不再像原来那样夹在两个按钮中间，窄屏自动折成两行 */
+.pet-skill-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin-top: 4px; }
+.pet-skill-row .file-zone { flex: 1 1 260px; min-height: 44px; margin: 0; }
+.pet-skill-row .soft-btn { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 18px; }
+.pet-skill-row .soft-btn[hidden] { display: none; }
+.pet-skill-note { margin: 10px 0 0; }
 .primary-btn { font: inherit; font-size: 13.5px; cursor: pointer; color: #ffffff;
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
   border: 1px solid var(--glass-line); border-radius: 999px; padding: 8px 22px;
@@ -2595,7 +2617,9 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   font: inherit;
 }
 .neko-act svg { width: 19px; height: 19px; fill: currentColor; pointer-events: none; }
-.neko-act-emoji { font-size: 18px; line-height: 1; }
+.neko-act-emoji { line-height: 0; }
+/* 小鱼干改图形 UI：各系统 emoji 字形不同，统一用自己的 SVG，颜色与按钮一致 */
+.neko-fish { display: block; width: 19px; height: 19px; }
 .neko-act:hover { transform: scale(1.1); color: var(--accent-3-text); box-shadow: 0 6px 18px rgba(171, 139, 212, .3); }
 .neko-act:active { transform: scale(.94); }
 .neko-act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -2618,7 +2642,10 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
   white-space: pre-wrap;
   pointer-events: none; z-index: 4; word-break: break-word;
   overscroll-behavior: contain; scrollbar-width: thin;
-  opacity: 0; translate: 0 6px; transition: opacity .28s ease, translate .28s ease;
+  opacity: 0; translate: 0 6px;
+  /* 加宽 / 收高跟站点展开折叠同一节奏；WAAPI 再补长宽两帧，长度变化不跳变 */
+  transition: opacity .28s ease, translate .28s ease,
+    max-width .34s cubic-bezier(.22,.68,.28,1), max-height .34s cubic-bezier(.22,.68,.28,1);
 }
 .neko-bubble.show { opacity: 1; translate: 0 0; }
 /* 点空白处收起：比自然消失快得多，几乎立刻让开视线 */
@@ -2626,11 +2653,38 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 /* 气泡里的结果卡片：命中文章 / 标签 / 页面各给一个按钮，点一下就带过去。
    气泡整体是 pointer-events:none，这里单独放开，否则点不到按钮。 */
 .neko-bubble-text { display: block; }
+/* 气泡里的 Markdown：字体与全站一致（跟着字体设置走），块级内容左对齐、间距收紧，
+   代码 / 公式用站点自带的字体与配色，不再挤成一行。 */
+.neko-bubble-text.is-md { white-space: normal; text-align: left; }
+.neko-bubble-text.is-md > :first-child { margin-top: 0; }
+.neko-bubble-text.is-md > :last-child { margin-bottom: 0; }
+.neko-bubble-text.is-md p { margin: 0 0 6px; line-height: 1.75; }
+.neko-bubble-text.is-md h1,
+.neko-bubble-text.is-md h2,
+.neko-bubble-text.is-md h3 { margin: 6px 0 4px; font-size: 14px; line-height: 1.45; color: var(--ink-strong); }
+.neko-bubble-text.is-md ul,
+.neko-bubble-text.is-md ol { margin: 4px 0 6px; padding-left: 1.25em; }
+.neko-bubble-text.is-md li { margin: 2px 0; line-height: 1.7; }
+.neko-bubble-text.is-md code { font-family: var(--font-code); font-size: 12px;
+  padding: 1px 4px; border-radius: 5px; background: var(--accent-soft); color: var(--accent-text); }
+.neko-bubble-text.is-md pre { margin: 6px 0; padding: 9px 10px; overflow-x: auto; border-radius: 10px;
+  background: var(--glass-sheen), var(--glass); border: 1px solid var(--glass-line); }
+.neko-bubble-text.is-md pre code { padding: 0; background: none; color: inherit; font-size: 11.5px; line-height: 1.6; }
+.neko-bubble-text.is-md blockquote { margin: 6px 0; padding: 2px 0 2px 10px; border-left: 2px solid var(--accent);
+  color: var(--muted); }
+.neko-bubble-text.is-md table { width: 100%; margin: 6px 0; border-collapse: collapse; font-size: 12px; }
+.neko-bubble-text.is-md th,
+.neko-bubble-text.is-md td { padding: 3px 6px; border: 1px solid var(--glass-line); }
+.neko-bubble-text.is-md img { max-width: 100%; height: auto; border-radius: 8px; }
 .neko-bubble-acts {
   display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
   margin-top: 8px; pointer-events: auto;
 }
 .neko-bubble-acts[hidden] { display: none; }
+/* 投喂后的小字：比正文小一号、颜色更淡，挂在正文下方 */
+.neko-bubble-note { display: block; margin-top: 6px; font-size: 11px; line-height: 1.5;
+  color: var(--muted); letter-spacing: .2px; }
+.neko-bubble-note[hidden] { display: none; }
 .neko-chip {
   /* 气泡宽度被猫容器卡住，长标题宁可换行也别撑破居中：这里放开折行、不设省略号 */
   max-width: 100%; padding: 5px 9px; border-radius: 11px; cursor: pointer;
