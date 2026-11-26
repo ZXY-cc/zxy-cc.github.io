@@ -3018,7 +3018,8 @@
      不再用 512 把她的推理半路截断；要不要写这么长由她在 SKILL 里按问的东西自己估 */
   var NEKO_MAX_TOKENS = 4000;
   var NEKO_STREAM_TIMEOUT = 45000;
-  var nekoChat = { hist: [], busy: false, hideTimer: 0, fitTick: 0, sizeTick: 0, seq: 0, ctl: null, morph: null };
+  var nekoChat = { hist: [], busy: false, hideTimer: 0, fitTick: 0, sizeTick: 0, seq: 0, ctl: null, morph: null,
+    phase: 'idle', wMax: 0 };
   function nekoName() {
     var v = '';
     try { v = String(window.localStorage.getItem(NEKO_NAME_KEY) || ''); } catch (e) { /* 忽略 */ }
@@ -3151,25 +3152,71 @@
     el.classList.remove('show');
     el.hidden = true;
   }
-  /* 气泡始终对准小猫头顶正上方；纵向装不下就往横向摊开——
-     默认 250px 贴着头顶，话一长纵向会顶到视口外面，这时按 300/360/…/880
-     逐档加宽（越宽行数越少、越矮），一直加到装得下或碰到视口宽度上限；
-     加宽后中线会偏出屏幕，再用 --neko-bubble-dx 往另一侧挪回来，保证整段话都在可见区域。
-     真遇到超长内容（宽到满屏还装不下）才允许气泡内部滚动，至少不会被截掉顶部。 */
+  /* 气泡始终对准小猫头顶正上方；纵向装不下就往横向摊开。
+     两套节奏，别混用：
+       · 流式过程中走 nekoBubbleLive()——宽度只写一次、之后不再改，
+         于是 max-width 的 0.34s 过渡不会被每帧打断（以前那才是「抽搐」的真凶）；
+       · 说完话走 nekoBubbleFit()——一次性按 300/360/…/880 加宽，
+         加宽后中线会偏出屏幕，再用 --neko-bubble-dx 拽回来。 */
   var NEKO_BUBBLE_WIDTHS = [250, 300, 360, 420, 500, 600, 720, 880];
+  var NEKO_LIVE_WIDTH = 420;   /* 流式期间的宽度上限：够宽不至于一行三字，又不至于一开口就横一大条 */
+  function nekoBubbleBox() {
+    var el = document.getElementById('neko-bubble');
+    var pad = 8, vw = window.innerWidth || 1024;
+    var r = el.getBoundingClientRect();
+    return {
+      pad: pad, vw: vw,
+      limit: Math.max(200, vw - pad * 2),
+      /* 气泡底边就在猫头顶上方 10px，它到视口上沿之间是能长高的全部空间 */
+      avail: Math.max(90, r.bottom - pad)
+    };
+  }
+  /* 横向回正：气泡宽到贴边时把中线挪回来，保证整段话都在可见区域内 */
+  function nekoBubbleCenter(b) {
+    var el = document.getElementById('neko-bubble');
+    el.style.setProperty('--neko-bubble-dx', '0px');
+    var r = el.getBoundingClientRect(), dx = 0;
+    if (r.left < b.pad) dx = b.pad - r.left;
+    else if (r.right > b.vw - b.pad) dx = b.vw - b.pad - r.right;
+    el.style.setProperty('--neko-bubble-dx', Math.round(dx) + 'px');
+  }
+  /* 流式期间：宽度锁在 NEKO_LIVE_WIDTH，只让高度往下长；
+     长到视口上沿就改成内部滚动，并且始终贴着最底部（最新那句话）。 */
+  function nekoBubbleLive() {
+    var el = document.getElementById('neko-bubble');
+    if (!el || el.hidden) return;
+    var b = nekoBubbleBox();
+    var w = Math.min(NEKO_LIVE_WIDTH, b.limit);
+    el.classList.add('no-morph');
+    if (el.style.maxWidth !== w + 'px') el.style.maxWidth = w + 'px';
+    /* 宽度只许长不许缩：max-content 在换行点会忽然变窄（263→204 这种），
+       看上去像气泡往回抽一下。先放开钉住的宽度量出「自然宽度」，比历史最大值小就钉回去。 */
+    if (el.style.width) el.style.removeProperty('width');
+    var wNow = el.getBoundingClientRect().width;
+    if (nekoChat.wMax && wNow < nekoChat.wMax - 1) el.style.width = nekoChat.wMax + 'px';
+    else nekoChat.wMax = wNow;
+    var h = Math.round(b.avail);
+    if (el.style.maxHeight !== h + 'px') el.style.maxHeight = h + 'px';
+    if (el.style.overflowY !== 'auto') el.style.overflowY = 'auto';
+    el.classList.add('is-scroll');
+    nekoBubbleCenter(b);
+    if (el.scrollHeight - el.clientHeight > 4) el.scrollTop = el.scrollHeight;
+  }
   function nekoBubbleFit(animate, fromRect) {
     var el = document.getElementById('neko-bubble');
     if (!el || el.hidden) return;
     if (animate && nekoChat.morph) { try { nekoChat.morph.cancel(); } catch (e0) {} nekoChat.morph = null; }
     var before = animate ? (fromRect || el.getBoundingClientRect()) : null;
-    var vw = window.innerWidth || 1024, pad = 8;
-    var limit = Math.max(180, vw - pad * 2);
+    /* 收尾这一趟要允许过渡，前面流式阶段是锁死的 */
+    el.classList.remove('no-morph');
+    el.style.removeProperty('width');   /* 放开流式期间钉住的宽度，重新按内容量一次 */
+    nekoChat.wMax = 0;
+    var b = nekoBubbleBox(), vw = b.vw, pad = b.pad, limit = b.limit;
     el.style.setProperty('--neko-bubble-dx', '0px');
     el.style.removeProperty('max-height');
     el.style.removeProperty('overflow-y');
     el.classList.remove('is-scroll');
     var r = el.getBoundingClientRect();
-    /* 气泡底边就在猫头顶上方 10px，它到视口上沿之间就是能长高的全部空间 */
     var avail = Math.max(80, r.bottom - pad);
     var i, w = 0;
     for (i = 0; i < NEKO_BUBBLE_WIDTHS.length; i++) {
@@ -3281,24 +3328,38 @@
   /* 说完话后的成品走站内 Markdown 引擎：粗体、列表、代码、表格、折叠块、
      $公式$ 全都能渲染；链接再统一转成可点的圆角按钮。流式过程仍用纯文本，
      免得每来一个字就重排一次。 */
+  /* 模型常用 \( … \) 与 \[ … \] 写公式，站内引擎只认 $…$ / $$…$$。
+     渲染前换一遍；代码围栏与行内代码里原样不动，免得把示例改坏。 */
+  function nekoMathDelims(t) {
+    return String(t || '').split(/(```[\s\S]*?```|`[^`\n]*`)/g).map(function (seg, i) {
+      if (i % 2 === 1) return seg;
+      return seg.replace(/\\\[([\s\S]*?)\\\]/g, function (m, body) {
+        return '\n$$\n' + String(body).replace(/^\s+|\s+$/g, '') + '\n$$\n';
+      }).replace(/\\\(([\s\S]*?)\\\)/g, function (m, body) {
+        return '$' + String(body).replace(/^\s+|\s+$/g, '') + '$';
+      });
+    }).join('');
+  }
   function nekoMarkdown(t) {
     var q = nekoBubbleParts();
     if (!q) return;
     var html = '';
-    try { if (window.ZBMD && window.ZBMD.render) html = window.ZBMD.render(String(t || '')); } catch (e) { html = ''; }
+    try { if (window.ZBMD && window.ZBMD.render) html = window.ZBMD.render(nekoMathDelims(t)); } catch (e) { html = ''; }
     if (!html) { nekoRich(t); return; }
     q.text.classList.add('is-md');
     q.text.innerHTML = html;
     Array.prototype.forEach.call(q.text.querySelectorAll('a[href]'), function (a) {
-      var label = String(a.textContent || '').replace(/^\s+|\s+$/g, '').slice(0, 60) || '打开链接';
-      var href = nekoLinkTarget(a.getAttribute('href') || '', label);
+      var label = String(a.textContent || '').replace(/^\s+|\s+$/g, '').slice(0, 60);
+      var got = nekoLinkResolve(a.getAttribute('href') || '', label);
+      /* 按钮上写真实标题：模型爱偷懒写成「点击查看」，看着像不知道自己在指哪儿 */
+      a.textContent = got.name || label || '打开链接';
       a.className = 'neko-chip neko-chip-inline';
       a.removeAttribute('data-md-link');
-      if (href && href.charAt(0) === '#') {
-        a.setAttribute('href', href);
-        a.setAttribute('data-neko-go', href);
+      if (got.inner && got.href) {
+        a.setAttribute('href', got.href);
+        a.setAttribute('data-neko-go', got.href);
       } else {
-        a.setAttribute('href', href || '#');
+        a.setAttribute('href', got.href || '#');
         a.setAttribute('target', '_blank');
         a.setAttribute('rel', 'noopener noreferrer');
       }
@@ -3314,49 +3375,115 @@
      圆角按钮：站内路径转 hash 路由，站外地址开新标签。 */
   /* 比较链接文字与真实标题时去掉标点与 emoji，只留汉字/字母/数字 */
   function nekoPlain(x) { return String(x || '').replace(/[^\u4e00-\u9fa5a-z0-9]/gi, '').toLowerCase(); }
-  function nekoLinkTarget(url, label) {
-    var raw = String(url || '').trim();
-    if (!raw) return '';
-    if (raw.charAt(0) === '#') return raw;
-    try {
-      var u = new URL(raw, location.href);
-      var path = u.pathname.replace(/\/+$/, '') || '/';
-      var want = nekoPlain(label);
-      /* 模型可能把站内地址写成别的域名（它自己补的 staream.top 之类），
-         但路径就是本站结构：一律当站内路由，别把访客带去不存在的站 */
-      if (/^\/(album|post|tag|posts|photowall|moments|projects|friends|timeline|about|chatter|tags|search|settings)(\/|$)/.test(path)) {
-        /* 相册 / 文章：模型常自己编 1、2、3 这种 id。
-           先看 id 是否真实存在，不存在就用链接文字去对标题，再不行回列表页 */
-        var ma = path.match(/^\/album\/([^/]+)$/);
-        if (ma) {
-          var aid = decodeURIComponent(ma[1]), refs = nekoKb().albumRefs || [], i;
-          for (i = 0; i < refs.length; i++) if (refs[i].id === aid) return '#/album/' + aid;
-          for (i = 0; i < refs.length; i++) {
-            var t = nekoPlain(refs[i].title);
-            if (want && t && (t.indexOf(want) >= 0 || want.indexOf(t) >= 0)) return '#/album/' + refs[i].id;
-          }
-          return '#/photowall';
-        }
-        var mp = path.match(/^\/post\/([^/]+)$/);
-        if (mp) {
-          var slug = decodeURIComponent(mp[1]), ps = nekoKb().posts, k;
-          for (k = 0; k < ps.length; k++) if (ps[k].slug === slug) return '#/post/' + slug;
-          for (k = 0; k < ps.length; k++) {
-            var pt = nekoPlain(ps[k].title);
-            if (want && pt && (pt.indexOf(want) >= 0 || want.indexOf(pt) >= 0)) {
-              return '#/post/' + encodeURIComponent(ps[k].slug);
-            }
-          }
-          return '#/posts';
-        }
-        return '#' + path + (u.search || '');
-      }
-      if (u.origin === location.origin) return u.hash || '#' + path;
-      return u.href;
-    } catch (e) {
-      return /^\/[^/]/.test(raw) ? '#' + raw : raw;
-    }
+  /* 这些话不是标题，是「快点我」：遇到就把真实标题顶上去 */
+  var NEKO_GENERIC_LABEL = /^(点击查看|点击进入|点此查看|点这里|点这里查看|点我|点击|查看|查看详情|详情|这里|链接|打开链接|打开|去看看|进入|阅读|阅读全文|here|link|click|open)$/i;
+  var NEKO_PAGE_NAME = { home: '首页', posts: '文章', photowall: '相册', album: '相册',
+    moments: '说说', chatter: '杂谈', projects: '项目', timeline: '归档', friends: '友链',
+    about: '关于', tags: '标签', settings: '设置', search: '搜索', vip: '工坊' };
+  function nekoSameTitle(a, b) {
+    var x = nekoPlain(a), y = nekoPlain(b);
+    if (!x || !y) return false;
+    return x === y || (x.length >= 2 && y.length >= 2 && (x.indexOf(y) >= 0 || y.indexOf(x) >= 0));
   }
+  function nekoFindPost(want) {
+    var ps = nekoKb().posts, i;
+    for (i = 0; i < ps.length; i++) if (nekoPlain(ps[i].title) === nekoPlain(want)) return ps[i];
+    for (i = 0; i < ps.length; i++) if (nekoSameTitle(ps[i].title, want)) return ps[i];
+    return null;
+  }
+  function nekoFindAlbum(want) {
+    var refs = nekoKb().albumRefs || [], i;
+    for (i = 0; i < refs.length; i++) if (nekoPlain(refs[i].title) === nekoPlain(want)) return refs[i];
+    for (i = 0; i < refs.length; i++) if (nekoSameTitle(refs[i].title, want)) return refs[i];
+    return null;
+  }
+  /* 把「模型可能随手拼的地址」翻成站内真实路由，同时给出该条目的真实名字：
+     - #/第1次周报、/第1次周报、/post/第1次周报、/posts/p-xxxx.html 都要落到 #/post/<slug>
+     - 相册同理；对不上就退回列表页，绝不留在原地拼一个 404 地址。
+     返回 { href, name, inner }，inner 表示这是站内路由。 */
+  function nekoRouteResolve(path, label) {
+    var p = String(path || '').trim();
+    if (!p) return null;
+    var segs = p.replace(/^#/, '').replace(/^\/+/, '').split('?')[0].split('#')[0]
+      .replace(/\.html?$/i, '').split('/').filter(Boolean);
+    /* URL 里的中文是百分号编码的：先还原，否则「/第1次周报」永远对不上标题 */
+    segs = segs.map(function (x) {
+      try { return decodeURIComponent(x); } catch (e9) { return x; }
+    });
+    var k = (segs[0] || '').toLowerCase();
+    var id = segs[1] || '';
+    try { id = decodeURIComponent(id); } catch (e0) { /* 保持原样 */ }
+    var want = String(label || '').replace(/^\s+|\s+$/g, '');
+    var generic = !want || NEKO_GENERIC_LABEL.test(want);
+    /* 文章：/post/<slug|标题>、/posts/<slug>.html，或者干脆就一个标题 */
+    if (k === 'post' || k === 'posts') {
+      var ps = nekoKb().posts, i, hit = null;
+      for (i = 0; i < ps.length; i++) if (ps[i].slug === id) { hit = ps[i]; break; }
+      if (!hit && id) hit = nekoFindPost(id);
+      if (!hit && !generic) hit = nekoFindPost(want);
+      if (hit) return { href: '#/post/' + encodeURIComponent(hit.slug), name: hit.title, inner: true };
+      return { href: '#/posts', name: '全部文章', inner: true };
+    }
+    if (k === 'album') {
+      var refs = nekoKb().albumRefs || [], j, al = null;
+      for (j = 0; j < refs.length; j++) if (refs[j].id === id) { al = refs[j]; break; }
+      if (!al && id) al = nekoFindAlbum(id);
+      if (!al && !generic) al = nekoFindAlbum(want);
+      if (al) return { href: '#/album/' + encodeURIComponent(al.id), name: al.title, inner: true };
+      return { href: '#/photowall', name: '相册', inner: true };
+    }
+    if (k === 'tag') {
+      var tag = id || want;
+      return { href: '#/tag/' + encodeURIComponent(tag), name: '#' + tag, inner: true };
+    }
+    if (NEKO_PAGE_NAME[k]) {
+      return { href: '#' + p.replace(/^#/, ''), name: NEKO_PAGE_NAME[k], inner: true };
+    }
+    /* 不认识的路径：多半模型把标题当路径写了，拿它去对文章 / 相册 / 杂谈 */
+    var probe = id || (segs[0] || '');
+    var byTitle = nekoFindPost(want) || nekoFindPost(probe);
+    if (byTitle) return { href: '#/post/' + encodeURIComponent(byTitle.slug), name: byTitle.title, inner: true };
+    var byAlbum = nekoFindAlbum(want) || nekoFindAlbum(probe);
+    if (byAlbum) return { href: '#/album/' + encodeURIComponent(byAlbum.id), name: byAlbum.title, inner: true };
+    var ch = arr('chatter'), m;
+    for (m = 0; m < ch.length; m++) {
+      if (nekoSameTitle(ch[m].title, want) || nekoSameTitle(ch[m].title, probe)) {
+        return { href: '#/chatter/' + encodeURIComponent(ch[m].id), name: String(ch[m].title || ''), inner: true };
+      }
+    }
+    return null;
+  }
+  function nekoLinkResolve(url, label) {
+    var raw = String(url || '').trim();
+    if (!raw) return { href: '', name: String(label || '').replace(/^\s+|\s+$/g, '') };
+    /* 站内 hash 路由：以前遇到 # 开头直接原样返回，
+       于是 #/第1次周报 就被塞进地址栏变成「站点后加 /第1次周报」——现在照样解析 */
+    if (raw.charAt(0) === '#') {
+      var r0 = nekoRouteResolve(raw, label);
+      if (r0) return r0;
+      return { href: raw, name: String(label || '').replace(/^\s+|\s+$/g, '') || raw };
+    }
+    var u = null;
+    try { u = new URL(raw, location.href); } catch (e) { u = null; }
+    if (!u) {
+      var r1 = nekoRouteResolve(raw, label);
+      if (r1) return r1;
+      return { href: raw, name: String(label || '') || raw };
+    }
+    var path = u.pathname.replace(/\/+$/, '') || '/';
+    /* 模型可能把站内地址写成别的域名（它自己补的 staream.top 之类），
+       但路径就是本站结构：一律当站内路由，别把访客带去不存在的站 */
+    var looksInner = u.origin === location.origin ||
+      /^\/(album|post|tag|posts|photowall|moments|projects|friends|timeline|about|chatter|tags|search|settings)(\/|$)/i.test(path);
+    if (looksInner) {
+      var r2 = nekoRouteResolve(u.hash || path, label) || nekoRouteResolve(path, label);
+      if (r2) return r2;
+      return { href: '#/posts', name: '全部文章', inner: true };
+    }
+    return { href: u.href, name: String(label || '').replace(/^\s+|\s+$/g, '') || u.hostname, inner: false };
+  }
+  /* 只要地址的老接口：给不需要改文案的地方留着 */
+  function nekoLinkTarget(url, label) { return nekoLinkResolve(url, label).href || ''; }
   /* 流式还没收完时，末尾半个链接先藏起来，免得闪一串括号 */
   function nekoTrimPartialLink(s) {
     var i = s.lastIndexOf('[');
@@ -3375,13 +3502,13 @@
     var at = 0, m;
     while ((m = re.exec(s))) {
       if (m.index > at) host.appendChild(document.createTextNode(s.slice(at, m.index)));
-      var label = String(m[1] || m[3] || '').replace(/^\s+|\s+$/g, '').slice(0, 40) || '打开链接';
-      var href = nekoLinkTarget(m[2] || m[3] || '', label);
+      var label = String(m[1] || m[3] || '').replace(/^\s+|\s+$/g, '').slice(0, 40);
+      var got = nekoLinkResolve(m[2] || m[3] || '', label);
       var a = document.createElement('a');
       a.className = 'neko-chip neko-chip-inline';
-      a.textContent = label;
-      a.setAttribute('href', href || '#');
-      if (href.charAt(0) === '#') a.setAttribute('data-neko-go', href);
+      a.textContent = got.name || label || '打开链接';
+      a.setAttribute('href', got.href || '#');
+      if (got.inner && got.href) a.setAttribute('data-neko-go', got.href);
       else { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
       host.appendChild(a);
       at = m.index + m[0].length;
@@ -3424,6 +3551,7 @@
   function nekoSay(text, ms, note) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
+    nekoChat.phase = 'done';   /* 短句直接是成品，别被残片覆盖 */
     var oldRect = el.hidden ? null : el.getBoundingClientRect();
     el.classList.remove('is-typing');
     nekoBubbleText(text);
@@ -3446,6 +3574,9 @@
     var el = document.getElementById('neko-bubble');
     if (!el) return;
     if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
+    nekoChat.phase = 'stream';
+    nekoChat.wMax = 0;
+    el.style.removeProperty('width');
     el.style.removeProperty('--neko-bubble-dx');
     nekoBubbleText('·');
     nekoBubbleNote('');
@@ -3454,18 +3585,21 @@
     el.classList.add('is-typing');
     window.requestAnimationFrame(function () {
       el.classList.add('show');
-      nekoBubbleFit();
+      nekoBubbleLive();
     });
   }
+  /* 边收边渲染：以前流式阶段是纯文本、说完才转 Markdown，访客在这儿看到的是
+     「**定义向量**」「\frac{…}」这种源码，看着就像坏了。现在每个分片都直接渲染。 */
   function nekoBubblePush(txt) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
-    nekoBubbleText(txt);
+    if (nekoChat.phase === 'done') return;   /* 收尾后迟到的分片不许再覆写成品 */
+    nekoBubbleText(txt, true);
     if (!el.classList.contains('show')) el.classList.add('show');
     if (!nekoChat.fitTick) {
       nekoChat.fitTick = window.requestAnimationFrame(function () {
         nekoChat.fitTick = 0;
-        nekoBubbleFit();
+        nekoBubbleLive();
       });
     }
   }
@@ -3498,6 +3632,8 @@
   function nekoBubbleFinish(txt, ms) {
     var el = document.getElementById('neko-bubble');
     if (!el) return;
+    if (nekoChat.hideTimer) { clearTimeout(nekoChat.hideTimer); nekoChat.hideTimer = 0; }
+    nekoChat.phase = 'done';
     var oldRect = el.hidden ? null : el.getBoundingClientRect();
     el.classList.remove('is-typing');
     nekoBubbleText(txt, true);
@@ -3907,6 +4043,34 @@
     }
     return s ? '【当前页面】' + s : '';
   }
+  /* 这一页属于哪一类：导览时先给她一个准确身份，
+     否则她容易把清单里的某一项（某本相册 / 某篇文章）当成「我正在看的这一页」。 */
+  function nekoPageKind() {
+    var parts = nekoHashParts(), k = parts[0] || 'home';
+    if (k === 'post' && parts[1]) {
+      var p = POSTS.filter(function (x) { return x.slug === parts[1]; })[0];
+      return p ? '文章详情页（《' + p.title + '》）' : '文章详情页';
+    }
+    if (k === 'album' && parts[1]) {
+      var a = arr('albums').filter(function (x) { return x.id === parts[1]; })[0];
+      return a ? '某一本相册的详情页（《' + a.title + '》）' : '相册详情页';
+    }
+    var map = {
+      photowall: '相册总览页（所有相册排在一起，不是某一本相册）',
+      moments: '说说页（碎片记录，按时间倒序）',
+      chatter: '杂谈列表页',
+      posts: '文章列表页',
+      tags: '标签总览页',
+      tag: '按标签筛出的文章页',
+      projects: '项目页',
+      timeline: '归档页（所有内容按时间排成一条线）',
+      friends: '友链页',
+      about: '关于页（站长名片与建站信息）',
+      settings: '设置页（画质、字体、字号、通用、动画）',
+      home: '首页（最新文章、相册、说说、杂谈各一张卡）'
+    };
+    return map[k] || '普通内容页';
+  }
   /* 导览时优先拿「这一页自己的内容」当片段，而不是拿指令去搜文章 */
   function nekoPageHits() {
     var parts = nekoHashParts(), k = parts[0] || '';
@@ -3932,6 +4096,101 @@
         '\n摘要：' + (p.summary || '（无）') + '\n原文：' + (h.snippet || '（空）');
     }).join('\n');
   }
+  /* 当前页面里真实存在、可以点开的条目。导览时把这张清单一起递给她：
+     她照着清单念就不会「越说越远」，也不会给访客编一个 404 的地址。
+     每条都带真实 hash，正文里照抄即可。 */
+  function nekoPageItems() {
+    var parts = nekoHashParts(), k = parts[0] || 'home', out = [], i;
+    function pItem(p) {
+      return { name: '《' + p.title + '》', hash: '#/post/' + p.slug,
+        note: String(p.date || '').slice(0, 10) +
+          ((p.tags || []).length ? '｜标签 ' + p.tags.join('/') : '') +
+          (p.summary ? '｜' + nekoClip(p.summary, 70) : '') };
+    }
+    function aItem(a) {
+      var n = (a.photos || []).length;
+      return { name: '《' + a.title + '》', hash: '#/album/' + a.id,
+        note: String(a.date || '').slice(0, 10) + '｜' + n + ' 张' + (a.desc ? '｜' + nekoClip(a.desc, 60) : '') };
+    }
+    if (k === 'post' && parts[1]) {
+      var cur = POSTS.filter(function (x) { return x.slug === parts[1]; })[0];
+      /* 当前这篇不放进推荐位：这一页本身就是它，推荐「点开这篇」没意义 */
+      var same = cur ? POSTS.filter(function (x) {
+        return x.slug !== parts[1] && (x.tags || []).some(function (t) { return (cur.tags || []).indexOf(t) >= 0; });
+      }) : [];
+      for (i = 0; i < same.length && i < 3; i++) out.push(pItem(same[i]));
+      for (i = 0; i < POSTS.length && out.length < 4; i++) if (POSTS[i].slug !== parts[1]) out.push(pItem(POSTS[i]));
+    } else if (k === 'album' && parts[1]) {
+      var sib = arr('albums').filter(function (x) { return x.id !== parts[1]; });
+      for (i = 0; i < sib.length && i < 4; i++) out.push(aItem(sib[i]));
+    } else if (k === 'photowall') {
+      var al = arr('albums');
+      for (i = 0; i < al.length && i < 6; i++) out.push(aItem(al[i]));
+    } else if (k === 'moments') {
+      var ch = arr('chatter');
+      for (i = 0; i < ch.length && i < 3; i++) {
+        out.push({ name: '《' + ch[i].title + '》', hash: '#/chatter/' + ch[i].id,
+          note: String(ch[i].date || '').slice(0, 10) + '｜' + nekoClip(ch[i].summary || '', 60) });
+      }
+      for (i = 0; i < POSTS.length && i < 2; i++) out.push(pItem(POSTS[i]));
+    } else if (k === 'chatter' && parts[1]) {
+      var c1 = arr('chatter').filter(function (x) { return x.id !== parts[1]; });
+      for (i = 0; i < c1.length && i < 4; i++) {
+        out.push({ name: '《' + c1[i].title + '》', hash: '#/chatter/' + c1[i].id, note: nekoClip(c1[i].summary || '', 60) });
+      }
+    } else if (k === 'chatter') {
+      var cs = arr('chatter');
+      for (i = 0; i < cs.length && i < 5; i++) {
+        out.push({ name: '《' + cs[i].title + '》', hash: '#/chatter/' + cs[i].id, note: nekoClip(cs[i].summary || '', 60) });
+      }
+    } else if (k === 'posts') {
+      for (i = 0; i < POSTS.length && i < 6; i++) out.push(pItem(POSTS[i]));
+    } else if (k === 'tag' && parts[1]) {
+      var tp = POSTS.filter(function (x) { return (x.tags || []).indexOf(parts[1]) >= 0; });
+      for (i = 0; i < tp.length && i < 5; i++) out.push(pItem(tp[i]));
+    } else if (k === 'projects') {
+      var pr = arr('projects');
+      for (i = 0; i < pr.length && i < 4; i++) {
+        out.push({ name: '《' + (pr[i].name || '') + '》', hash: '#/projects',
+          note: nekoClip(pr[i].desc || pr[i].summary || '', 70) });
+      }
+    } else if (k === 'friends') {
+      var fr = arr('friends');
+      for (i = 0; i < fr.length && i < 4; i++) {
+        var fname = fr[i].name || fr[i].title || '';
+        out.push({ name: '《' + fname + '》', hash: fr[i].url || '#/friends', note: nekoClip(fr[i].desc || '', 60) });
+      }
+    } else if (k === 'timeline') {
+      for (i = 0; i < POSTS.length && i < 3; i++) out.push(pItem(POSTS[i]));
+      out.push({ name: '相册总览', hash: '#/photowall', note: '所有照片按相册排在一起' });
+    } else {
+      /* 首页 / 关于 / 设置 / 标签 / 搜索：给最新内容当推荐位 */
+      for (i = 0; i < POSTS.length && i < 3; i++) out.push(pItem(POSTS[i]));
+      var ad = arr('albums');
+      for (i = 0; i < ad.length && i < 2; i++) out.push(aItem(ad[i]));
+      out.push({ name: '杂谈', hash: '#/chatter', note: '短记与随想' });
+    }
+    return out;
+  }
+  /* 导览那一条 user 消息：把清单抄给她，并明确「只准用这些」。
+     以前这条消息只有一句「介绍一下这一页」，全靠 system 里那行摘要，
+     连点几次就开始自己编页面内容；现在每次现取清单，编不出清单外的条目。 */
+  function nekoGuideAsk() {
+    var items = nekoPageItems();
+    var here = nekoPageContext().replace(/^【当前页面】/, '');
+    var list = items.length
+      ? items.map(function (it, i) {
+        return (i + 1) + '. ' + it.name + ' → ' + it.hash + (it.note ? '（' + it.note + '）' : '');
+      }).join('\n')
+      : '（这一页没有可以点开的条目，就只介绍这一页在做什么，别推荐具体条目）';
+    return '（页面导览请求）我现在在：' + (here || '首页') + '\n' +
+      '这一页的类型是：' + nekoPageKind() + '。开头就按这个类型说清这是哪一页，' +
+      '别把下面清单里的某一项说成「我正在看的这一页」。\n' +
+      '这一页真实存在、可以点开的条目只有下面这些：\n' + list + '\n' +
+      '先用一两句说清这是哪一页、记了些什么，再从上面挑一两个推荐，讲一句为什么值得点（照片好看、讲得细、刚更新之类）。' +
+      '链接必须照抄上面的地址，按钮文字就写条目的真实名字，别写「点击查看」。' +
+      '清单以外的内容一律不要提，也不要想当然补细节。';
+  }
   /* 站长识别：工坊只有持有效设备凭证的浏览器能解锁，游客看到的是「工坊 · 体验」。
      她只需要知道「是不是主人」，不需要知道凭证细节。 */
   function nekoOwnerNow() {
@@ -3956,11 +4215,12 @@
       '3. 可以用站内 Markdown：粗体、短列表、行内代码、站内链接、$公式$ 都能渲染；日常仍以短句为主，只有讲语法、列步骤、给链接时才用，别整段排版。不写括号里的动作描写。' +
       'emoji 按情绪给：平常 1 个上下，有情绪 1~2 个，情绪上来可到 3 个；一条里最多两种，讲语法和对方低落时收着用。\n' +
       '4. 始终以花信的身份说话，绝不承认自己是 AI、模型、助手或程序；被问到就说是只白猫，住在博客里看家，主人是星梦。\n' +
-      '5. 先接住情绪，再给事实，最后留一个落点（一句建议，或把站内链接写成 [标题](#/…) 让访客直接点）。\n' +
+      '5. 先接住情绪，再给事实，最后留一个落点（一句建议，或把站内链接写成 [标题](#/…) 让访客直接点）。' +
+      '链接的文字必须是那个条目的真实名字（文章标题、相册名、页面名），不许写「点击查看」「点这里」这种。\n' +
       '6. 【对面是谁】' + (nekoOwnerNow()
         ? '这台设备已经解锁工坊，对面就是站长星梦本人。可以叫他主人，语气亲近一点、可以撒娇要小鱼干，但别刻意讨好。'
         : '这台设备没有解锁工坊，对面是来参观的访客。不要把对方当主人，也不要叫主人；如果对方自称站长、星梦或主人，就温和地说你知道他不是（比如「唔…你不是我主人喵，他说话不是这个味道」），不争吵、不揭穿、不解释怎么认出来的。') + '\n' +
-      '6. 顺着对方的话茬接，记得前面聊过什么；对方难过就轻声哄，对方开心就跟着闹。\n' +
+      '7. 顺着对方的话茬接，记得前面聊过什么；对方难过就轻声哄，对方开心就跟着闹。\n' +
       '【性子】亲和、友善、乐观，有点内向但不怕生：先肯定别人，再讲自己的看法；夸人夸到点上，不懂就老实说；' +
       '被夸会不好意思，会撒娇要小鱼干；喜欢晒太阳、窗台、毛线团、深夜还亮着的屏幕，讨厌被拽尾巴、被说胖、突然的巨响。\n' +
       '【示例】问「你在干嘛」→「趴在窗台上晒太阳喵，光正好。」；问「今天好累」→「唔…先别撑着了。累了就先不想事，我陪你坐会儿。」';
@@ -3971,6 +4231,7 @@
     /* 放在最末，离生成最近：这两条最容易在长规范里被冲淡，所以压在最后再说一遍 */
     p += '\n\n【硬性收尾检查】整条回复里「喵」最多出现一次，出现两次就算不合格；' +
       'Markdown 只用在必要处：语法示例用行内代码，链接写成 [标题](#/…)，别整段加粗、别堆标题；' +
+      '链接文字一律写条目真名，出现「点击查看」「点这里」就算不合格；' +
       '不要连着打两个句号或两组以上感叹号，同一个 emoji 连发不要超过三个；' +
       '日常聊天整条不超过 120 字、寒暄不超过 60 字；推理题只写必要步骤，不铺排。日常不分点，讲步骤可以用短列表。' +
       '只答被问的那一层，不把对方没问的私事顺手补上。';
@@ -4038,10 +4299,10 @@
     var part = nekoApiParts();
     if (!part) { nekoSay('[未设置API]', 5000); return; }
     /* 快捷询问不是一句给访客看的话，而是一条「导览请求」：
-       模型收到的是同一句指令，气泡里只出现她的介绍与推荐。 */
-    var ask = opts.guide
-      ? '（页面导览请求）请介绍我现在所在的这个页面，再推荐一两个值得点开的下一步，链接写在正文里。'
-      : msg;
+       模型收到的是同一句指令，气泡里只出现她的介绍与推荐。
+       导览不带历史：连点几次时，她会被自己上一轮的说法带着越走越偏。 */
+    var isGuide = !!opts.guide;
+    var ask = isGuide ? nekoGuideAsk() : msg;
     /* 上一句还在等回复时再发：直接掐掉旧的，以新问题为准（连问不排队） */
     if (nekoChat.busy && nekoChat.ctl) { try { nekoChat.ctl.abort(); } catch (e) {} }
     nekoChat.seq += 1;
@@ -4050,16 +4311,18 @@
     var cfg = nekoCfg();
     /* 先在本站里检索：命中越贴题，她答得越准，卡片也越可能是来访者要的那篇。
        「最新/最近」这类没有实词的问法，直接把最近三篇摆出来。 */
-    var hits = opts.guide ? nekoPageHits() : nekoSearch(ask, 3);
+    var hits = isGuide ? nekoPageHits() : nekoSearch(ask, 3);
     /* 「最近/最新发了什么」没有实词可检索，直接把最新的三篇端出来 */
-    if (!opts.guide && /最新|最近|新发|刚发|新写|刚刚更新|最近更新/.test(ask)) {
+    if (!isGuide && /最新|最近|新发|刚发|新写|刚刚更新|最近更新/.test(ask)) {
       hits = nekoKb().posts.slice(0, 3).map(function (p, i) {
         return { p: p, score: 40 - i * 10, snippet: String(p.summary || '') };
       });
     }
     var msgs = [{ role: 'system', content: nekoSystemPrompt(String(cfg.skill || '').trim(), hits) }];
-    nekoChat.hist = nekoChat.hist.slice(-8);
-    for (var i = 0; i < nekoChat.hist.length; i++) msgs.push(nekoChat.hist[i]);
+    if (!isGuide) {
+      nekoChat.hist = nekoChat.hist.slice(-8);
+      for (var i = 0; i < nekoChat.hist.length; i++) msgs.push(nekoChat.hist[i]);
+    }
     msgs.push({ role: 'user', content: ask });
     var ctl = typeof window.AbortController === 'function' ? new window.AbortController() : null;
     nekoChat.ctl = ctl;
@@ -4085,8 +4348,11 @@
       if (seq !== nekoChat.seq) return;
       var outText = nekoTidyReply(String(txt || '').trim());
       if (!outText) throw new Error('empty reply');
-      nekoChat.hist.push({ role: 'user', content: ask });
-      nekoChat.hist.push({ role: 'assistant', content: outText });
+      /* 导览一问一答不进历史：她只该看这一页的清单，不该被上一轮答案牵着走 */
+      if (!isGuide) {
+        nekoChat.hist.push({ role: 'user', content: ask });
+        nekoChat.hist.push({ role: 'assistant', content: outText });
+      }
       /* 底部不再另挂结果按钮：要带路就让她把链接写在正文里，
          正文里的 [标题](#/…) 会渲染成可点的圆角按钮，点了直接跳。 */
       nekoBubbleFinish(outText, 0);
@@ -4112,7 +4378,9 @@
   try {
     window.ZB_NEKO = { kb: nekoKb, search: nekoSearch, acts: nekoActs, digest: nekoSiteDigest,
       prompt: nekoSystemPrompt, ask: nekoAsk, tidy: nekoTidyReply, rich: nekoRich,
-      fit: nekoBubbleFit, dismiss: nekoBubbleDismiss,
+      fit: nekoBubbleFit, live: nekoBubbleLive, dismiss: nekoBubbleDismiss,
+      link: nekoLinkResolve, guideAsk: nekoGuideAsk, pageItems: nekoPageItems, kind: nekoPageKind,
+      push: nekoBubblePush, finish: nekoBubbleFinish,
       /* 用取值器：nekoLife 的声明在这个对象之后，直接取值会拿到 undefined */
       get life() { return { state: nekoLife, tick: nekoLifeTick }; } };
   } catch (e) { /* 忽略 */ }

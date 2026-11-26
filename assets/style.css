@@ -2623,6 +2623,20 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 .neko-act:hover { transform: scale(1.1); color: var(--accent-3-text); box-shadow: 0 6px 18px rgba(171, 139, 212, .3); }
 .neko-act:active { transform: scale(.94); }
 .neko-act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 导览按钮：一个圆，中间一个白色问号——「问一问这一页」比一颗星星更好懂 */
+.neko-act-guide {
+  background: linear-gradient(158deg, #93bcf8, #6f97ea);
+  border-color: transparent; color: #fff;
+  box-shadow: 0 6px 16px rgba(96, 140, 220, .3);
+}
+.neko-act-guide:hover { color: #fff; background: linear-gradient(158deg, #a3c8ff, #7aa2ef);
+  box-shadow: 0 8px 20px rgba(96, 140, 220, .38); }
+.neko-q {
+  font: 700 21px/1 "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #fff; letter-spacing: 0; transform: translateY(-.5px);
+  text-shadow: 0 1px 2px rgba(52, 82, 140, .35);
+  pointer-events: none; user-select: none;
+}
 .neko-bubble {
   /* 正中对着小猫头顶：以猫容器中线为基准左右居中，不再贴右缘。
      只有气泡宽到快要出屏时，JS 才写 --neko-bubble-dx 临时挪一点。 */
@@ -2648,11 +2662,20 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
     max-width .34s cubic-bezier(.22,.68,.28,1), max-height .34s cubic-bezier(.22,.68,.28,1);
 }
 .neko-bubble.show { opacity: 1; translate: 0 0; }
+/* 流式阶段锁宽度：这期间只让高度长，不再逐档试宽度。
+   否则每来一个字都会打断 max-width 的 .34s 过渡，看着就是气泡在抽搐。 */
+.neko-bubble.no-morph { transition: opacity .28s ease, translate .28s ease; }
 /* 点空白处收起：比自然消失快得多，几乎立刻让开视线 */
 .neko-bubble.is-out { transition-duration: .16s; }
 /* 气泡里的结果卡片：命中文章 / 标签 / 页面各给一个按钮，点一下就带过去。
    气泡整体是 pointer-events:none，这里单独放开，否则点不到按钮。 */
 .neko-bubble-text { display: block; }
+/* 长串公式、超长链接在窄气泡里必须能断，否则会顶出边界、看着溢出屏幕 */
+.neko-bubble-text,
+.neko-bubble-text.is-md p,
+.neko-bubble-text.is-md li,
+.neko-bubble-text.is-md td { overflow-wrap: anywhere; word-break: break-word; }
+.neko-bubble-text.is-md .zb-math-block { max-width: 100%; }
 /* 气泡里的 Markdown：字体与全站一致（跟着字体设置走），块级内容左对齐、间距收紧，
    代码 / 公式用站点自带的字体与配色，不再挤成一行。 */
 .neko-bubble-text.is-md { white-space: normal; text-align: left; }
