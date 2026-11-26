@@ -24,6 +24,14 @@
     <summary>声明：本篇不对所有题目完整解答。仅采用C++语言。 :::cont::: C 小馒头的十六进制 https://code.sipc115.com/problem/669 由于 x &lt;=8\times10^5 ，显然不可能把这个十六进制字符串转换对应的数值再判断因子 2 的个数大于 k 。由于十六进制与二进制息息相关，我们可以从这里入手。 我们可以从十六进制字符串的末尾（最低位）开始往前遍历……</summary>
   </entry>
   <entry>
+    <title>第4次周报</title>
+    <id>https://zxy-blog.top/posts/p-mwxg9htyyua5.html</id>
+    <link rel="alternate" href="https://zxy-blog.top/posts/p-mwxg9htyyua5.html"/>
+    <link rel="alternate" type="text/html" href="https://zxy-blog.top/#/post/p-mwxg9htyyua5"/>
+    <updated>2026-11-26T00:00:00Z</updated>
+    <summary>完成事项 进一步优化站宠的使用体验 优化了花信常态待机动作，计数小鱼干，新增问询当前页按钮。 允许花信直接在对话中使用Markdown语法及本站拓展语法和LaTeX语法 优化长篇内容对话框的调整大小效果。 针对末期考核题目复盘 末期考核的题解与拓展思考 https://zxy blog.top/ /post/p mwwuqanusl4k 重温线段树其在逆序对中的运用 未完成的事项及原因 找到博……</summary>
+  </entry>
+  <entry>
     <title>本站支持的 Markdown 拓展语法</title>
     <id>https://zxy-blog.top/posts/markdown-extensions.html</id>
     <link rel="alternate" href="https://zxy-blog.top/posts/markdown-extensions.html"/>
