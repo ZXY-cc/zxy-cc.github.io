@@ -528,7 +528,7 @@ window.STUDIO_DATA = {
     {
       "slug": "p-mwg23n3vy3gg",
       "title": "中期考核的题解与拓展思考",
-      "date": "2026-11-14",
+      "date": "2026-11-26",
       "tags": [
         "B",
         "科协",
