@@ -312,7 +312,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <h1>末期考核的题解与拓展思考</h1>
 <p class="meta" data-view-post="p-mwwuqanusl4k">2026-11-26 · 科协 / B · <span class="mirror-likes"><span data-like-stat="post:p-mwwuqanusl4k">0</span> 次点赞</span> · <span class="mirror-views"><span data-view="p-mwwuqanusl4k">0</span> 次浏览（不含站长）</span></p>
 <div class="body"><p>*声明：本篇不对所有题目完整解答。仅采用C++语言。</p>
-<nav class="toc" data-toc-levels="" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--c-小馒头的十六进制-https-code-sipc115-com-probl">[C 小馒头的十六进制](https://code.sipc115.com/problem/669)</a><a class="toc-item" href="#h--d-逆序对2-https-code-sipc115-com-problem-6">[D 逆序对2](https://code.sipc115.com/problem/670)</a><a class="toc-item" href="#h-解题思路">解题思路</a></div></nav>
+<nav class="toc" data-toc-levels="" aria-label="本页目录"><div class="toc-title">本 页 目 录</div><div class="toc-list"><a class="toc-item" href="#h--c-小馒头的十六进制-https-code-sipc115-com-probl">[C 小馒头的十六进制](https://code.sipc115.com/problem/669)</a><a class="toc-item" href="#h--d-逆序对2-https-code-sipc115-com-problem-6">[D 逆序对2](https://code.sipc115.com/problem/670)</a><a class="toc-item" href="#h--e-第101次提交-https-code-sipc115-com-proble">[E 第101次提交](https://code.sipc115.com/problem/671)</a></div></nav>
 <h2 class="zb-vl" id="h--c-小馒头的十六进制-https-code-sipc115-com-probl"><a href="https://code.sipc115.com/problem/669" data-md-link="outer" target="_blank" rel="noopener noreferrer">C 小馒头的十六进制</a></h2>
 <p>由于<span class="zb-math zb-math-inline"><span class="zb-textchar">|</span><i class="zb-var">x</i><span class="zb-textchar">|</span><span class="zb-op">&lt;</span><span class="zb-op">=</span><span class="zb-digit">8</span><span class="zb-sym">×</span><span class="zb-digit">1</span><span class="zb-script"><span class="zb-base"><span class="zb-digit">0</span></span><span class="zb-scripts"><span class="zb-sup"><span class="zb-digit">5</span></span><span class="zb-sub"></span></span></span></span>，显然不可能把这个十六进制字符串转换对应的数值再判断因子<span class="zb-math zb-math-inline"><span class="zb-digit">2</span></span>的个数大于<span class="zb-math zb-math-inline"><i class="zb-var">k</i></span>。由于十六进制与二进制息息相关，我们可以从这里入手。</p>
 <p>我们可以从十六进制字符串的末尾（最低位）开始往前遍历：<br>如果遇到字符 <code>&#39;0&#39;</code>，它对应的二进制是 <code>0000</code>，包含 4 个因子 2，累加因子个数，并继续往前看。<br>如果遇到非 <code>&#39;0&#39;</code> 字符，将其转换为对应的数值，并计算其二进制末尾 0 的个数（例如 <code>8</code> 对应 <code>1000</code> 包含 3 个 0，<code>C</code> 对应 <code>1100</code> 包含 2 个 0）。累加完后，<strong>由于再往前的位数不可能再产生末尾的 0</strong>，此时可以直接判断结果并退出循环。</p>
@@ -372,7 +372,6 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 }</code><button class="copy-btn" type="button">复制</button></pre>
 <hr>
 <h2 class="zb-vl" id="h--d-逆序对2-https-code-sipc115-com-problem-6"><a href="https://code.sipc115.com/problem/670" data-md-link="outer" target="_blank" rel="noopener noreferrer">D 逆序对2</a></h2>
-<h3 id="h-解题思路">解题思路</h3>
 <p>为了让两个排列的逆序对总数最小，我们可以将<span class="zb-math zb-math-inline"><span class="zb-textchar">(</span><span class="zb-script"><span class="zb-base"><i class="zb-var">a</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">i</i></span></span></span><span class="zb-textchar">,</span><span class="zb-script"><span class="zb-base"><i class="zb-var">b</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">i</i></span></span></span><span class="zb-textchar">)</span></span>看作一个整体。根据贪心思想，<strong>我们将所有的二元组按照<span class="zb-math zb-math-inline"><span class="zb-script"><span class="zb-base"><i class="zb-var">a</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">i</i></span></span></span></span>升序进行排序</strong>。</p>
 <ul><li>排序后，排列<span class="zb-math zb-math-inline"><i class="zb-var">a</i></span>变成了完全升序，其逆序对数量为<span class="zb-math zb-math-inline"><span class="zb-digit">0</span></span>。</li><li>此时，逆序对的总数就等于排列<span class="zb-math zb-math-inline"><i class="zb-var">b</i></span>在按照<span class="zb-math zb-math-inline"><i class="zb-var">a</i></span>排序后的新序列中的逆序对数量。</li></ul>
 <ul><li>为什么按<span class="zb-math zb-math-inline"><span class="zb-script"><span class="zb-base"><i class="zb-var">a</i></span><span class="zb-scripts"><span class="zb-sup"></span><span class="zb-sub"><i class="zb-var">i</i></span></span></span></span>升序是最优的？</li></ul>
@@ -423,6 +422,37 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
     ios_base::<span class="tk-fn">sync_with_stdio</span>(<span class="tk-cs">false</span>);
     cin.<span class="tk-fn">tie</span>(<span class="tk-cs">nullptr</span>);
     <span class="tk-fn">solve</span>();
+    <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
+}</code><button class="copy-btn" type="button">复制</button></pre>
+<h2 class="zb-vl" id="h--e-第101次提交-https-code-sipc115-com-proble"><a href="https://code.sipc115.com/problem/671" data-md-link="outer" target="_blank" rel="noopener noreferrer">E 第101次提交</a></h2>
+<p>题目允许我们对数组 <code>nums</code> 中的任意元素进行任意次的 <code>+value</code> 或 <code>-value</code> 操作。这意味着，<strong>一个数最终能够变成什么数，完全取决于它对 <code>value</code> 取模的余数</strong>。</p>
+<p>为了得到最大的 MEX（最小缺失的非负整数），我们的目标是尽可能构造出连续的整数序列：<code>0, 1, 2, 3, ...</code>。</p>
+<ul><li>为了构造出 <code>0</code>，我们需要一个余数为 <code>0 % value</code> 的数。</li><li>为了构造出 <code>1</code>，我们需要一个余数为 <code>1 % value</code> 的数。</li><li>以此类推，构造数字 <code>x</code>，就需要一个余数为 <code>x % value</code> 的数。</li></ul>
+<p><strong>贪心策略：</strong></p>
+<ol><li>我们首先将 <code>nums</code> 中所有的数字转换为它们对 <code>value</code> 的<strong>非负余数</strong>。</li><li>记录每种余数出现的次数。例如 <code>count[r]</code> 表示余数为 <code>r</code> 的数字有多少个。</li><li>从 <code>mex = 0</code> 开始，依次尝试构造 <code>0, 1, 2, ...</code>。</li><li>对于当前想要构造的 <code>mex</code>，计算它需要的余数 <code>r = mex % value</code>。<ul><li>如果 <code>count[r] &gt; 0</code>，说明我们还有可用的数，消耗掉一个，<code>count[r]--</code>，然后继续尝试构造 <code>mex + 1</code>。</li><li>如果 <code>count[r] == 0</code>，说明没有数能变成 <code>mex</code> 了，那么当前的最大 MEX 就是 <code>mex</code>，直接停止。</li></ul></li><li>由于数组最多只有<span class="zb-math zb-math-inline"><i class="zb-var">n</i></span>个元素，所以最多只能构造出<span class="zb-math zb-math-inline"><i class="zb-var">n</i></span>个连续的非负整数。因此，MEX 的上界是<span class="zb-math zb-math-inline"><i class="zb-var">n</i></span>。</li></ol>
+<p><strong>注意点：</strong></p>
+<ul><li>在 C++ 中，负数取模的结果仍是负数（例如 <code>-5 % 3 = -2</code>）。为了得到非负余数，需要写成 <code>(num % value + value) % value</code>。</li></ul>
+<pre class="zb-code" data-lang="C++" data-code-lang="cpp"><span class="zb-lang">C++</span><code><span class="tk-kw">#include</span> &lt;bits/stdc++.<span class="tk-pr">h</span>&gt;
+<span class="tk-kw">using</span> <span class="tk-kw">namespace</span> std;
+<span class="tk-ty">int</span> <span class="tk-fn">main</span>() {
+    ios_base::<span class="tk-fn">sync_with_stdio</span>(<span class="tk-cs">false</span>);
+    cin.<span class="tk-fn">tie</span>(<span class="tk-cs">nullptr</span>);
+    <span class="tk-ty">int</span> n;
+    <span class="tk-ty">long</span> <span class="tk-ty">long</span> value;
+    cin &gt;&gt; n &gt;&gt; value;
+    <span class="tk-cm">// 统计每种余数的个数</span>
+    vector&lt;<span class="tk-ty">int</span>&gt; <span class="tk-fn">count</span>(value, <span class="tk-nu">0</span>);
+    <span class="tk-kw">for</span> (<span class="tk-ty">int</span> i = <span class="tk-nu">0</span>; i &lt; n; ++i) {
+        <span class="tk-ty">long</span> <span class="tk-ty">long</span> num;
+        cin &gt;&gt; num;
+        count[(num % value + value) % value]++;
+    }
+    <span class="tk-ty">int</span> mex = <span class="tk-nu">0</span>;
+    <span class="tk-kw">while</span> (mex &lt; n &amp;&amp; count[mex % value] &gt; <span class="tk-nu">0</span>) {
+        count[mex % value]--;
+        mex++;
+    }
+    cout &lt;&lt; mex &lt;&lt; endl;
     <span class="tk-kw">return</span> <span class="tk-nu">0</span>;
 }</code><button class="copy-btn" type="button">复制</button></pre></div>
 <section class="interactions" aria-label="互动区">
