@@ -99,6 +99,14 @@ nav.toc[hidden]{display:none}
   --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-code: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
 }
+/* 中文字体：默认 PingFang SC（缺字形时按栈回落）；选「默认」交还系统中文栈，
+   不再优先匹 PingFang，两者在 macOS 上观感有区别、在 Windows 上都落到雅黑 */
+:root[data-font-cn="pingfang"] {
+  --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+:root[data-font-cn="default"] {
+  --font-cn: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
 :root[data-font-code="default"] {
   --font-code: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", var(--font-cn), monospace;
 }

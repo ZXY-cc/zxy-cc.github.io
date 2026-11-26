@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://zxy-blog.top/assets/og-card.jpg">
 <meta property="article:published_time" content="2026-11-16">
-<link rel="stylesheet" href="../assets/interactions.css?v=v11.8.2-b1c432821de04009">
+<link rel="stylesheet" href="../assets/interactions.css?v=v11.8.3-4a092ca912ba33b2">
 <style>
 :root{--ink:#39436a;--muted:#525d84;--line:#e5eaf7;--brand:#3f5c9c}
 *{box-sizing:border-box}
@@ -115,6 +115,14 @@ nav.toc[hidden]{display:none}
 :root {
   --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-code: "ZB Mono", "JetBrains Maple Mono", "Maple Mono NF CN", "Maple Mono SC CN", "Maple Mono SC", "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
+}
+/* 中文字体：默认 PingFang SC（缺字形时按栈回落）；选「默认」交还系统中文栈，
+   不再优先匹 PingFang，两者在 macOS 上观感有区别、在 Windows 上都落到雅黑 */
+:root[data-font-cn="pingfang"] {
+  --font-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+:root[data-font-cn="default"] {
+  --font-cn: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
 }
 :root[data-font-code="default"] {
   --font-code: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", var(--font-cn), monospace;
@@ -303,7 +311,7 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 }
 
 </style>
-<script>try{var r=document.documentElement,fe=localStorage.getItem('zb-font-en'),fc=localStorage.getItem('zb-font-code'),fn=localStorage.getItem('zb-font-cn'),ft=localStorage.getItem('zb-font-tex');if(!/^(default|consolas|maple|jbmono)$/.test(fe||''))fe='jbmono';if(!/^(default|consolas|maple)$/.test(fc||''))fc='maple';if(fn!=='default')fn='default';if(!/^(default|cm|katex)$/.test(ft||''))ft='cm';r.setAttribute('data-font-en',fe);r.setAttribute('data-font-code',fc);r.setAttribute('data-font-cn',fn);r.setAttribute('data-font-tex',ft);var fsz=localStorage.getItem('zb-fs');if(fsz!=='small'&&fsz!=='large')fsz='normal';r.setAttribute('data-fs',fsz);var ca=localStorage.getItem('zb-click-area');if(ca!=='text')ca='card';r.setAttribute('data-click-area',ca);}catch(e){}</script>
+<script>try{var r=document.documentElement,fe=localStorage.getItem('zb-font-en'),fc=localStorage.getItem('zb-font-code'),fn=localStorage.getItem('zb-font-cn'),ft=localStorage.getItem('zb-font-tex');if(!/^(default|consolas|maple|jbmono)$/.test(fe||''))fe='jbmono';if(!/^(default|consolas|maple)$/.test(fc||''))fc='maple';if(!/^(default|pingfang)$/.test(fn||''))fn='pingfang';if(!/^(default|cm|katex)$/.test(ft||''))ft='cm';r.setAttribute('data-font-en',fe);r.setAttribute('data-font-code',fc);r.setAttribute('data-font-cn',fn);r.setAttribute('data-font-tex',ft);var fsz=localStorage.getItem('zb-fs');if(fsz!=='small'&&fsz!=='large')fsz='normal';r.setAttribute('data-fs',fsz);var ca=localStorage.getItem('zb-click-area');if(ca!=='text')ca='card';r.setAttribute('data-click-area',ca);}catch(e){}</script>
 </head>
 <body>
 <div class="wrap">
@@ -341,12 +349,12 @@ pre, pre > code, .article :not(pre) > code, .desk-preview :not(pre) > code {
 <p class="back"><a href="/#/post/free-blog">在站点中打开 →</a></p>
 <footer class="mirror-badge">静态页面 · 无追踪 · 轻量交互 · 有星光、有梦想</footer>
 </div>
-<script src="../assets/comments-data.js?v=v11.8.2-b1c432821de04009"></script>
-<script src="../assets/comment-archive.js?v=v11.8.2-b1c432821de04009"></script>
-<script src="../assets/interactions-config.js?v=v11.8.2-b1c432821de04009"></script>
-<script src="../assets/interactions.js?v=v11.8.2-b1c432821de04009"></script>
-<script src="../assets/issues-live.js?v=v11.8.2-b1c432821de04009"></script>
-<script src="../assets/likes.js?v=v11.8.2-b1c432821de04009"></script>
+<script src="../assets/comments-data.js?v=v11.8.3-4a092ca912ba33b2"></script>
+<script src="../assets/comment-archive.js?v=v11.8.3-4a092ca912ba33b2"></script>
+<script src="../assets/interactions-config.js?v=v11.8.3-4a092ca912ba33b2"></script>
+<script src="../assets/interactions.js?v=v11.8.3-4a092ca912ba33b2"></script>
+<script src="../assets/issues-live.js?v=v11.8.3-4a092ca912ba33b2"></script>
+<script src="../assets/likes.js?v=v11.8.3-4a092ca912ba33b2"></script>
 <script>window.ZBInteractions && window.ZBInteractions.mount("free-blog");
 window.ZBLive && window.ZBLive.mount("free-blog");
 window.ZBLikes && window.ZBLikes.mount();</script>

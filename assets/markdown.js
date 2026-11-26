@@ -1129,7 +1129,7 @@
   function tidyFence(line) {
     var m = line.match(/^([ \t\u3000]*)(`{3,}|~{3,})[ \t]*([^\n]*)$/);
     if (!m) return null;
-    return { lead: m[1], ch: m[2][0], n: m[2].length };
+    return { lead: m[1], ch: m[2][0], n: m[2].length, meta: (m[3] || '').trim() };
   }
   function leadWidth(s) {
     var w = 0;
@@ -1279,6 +1279,10 @@
     var text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
     var lines = text.split('\n');
     var out = [], fence = null, fenceBuf = [], fenceBase = 0, math = false, blank = 0;
+    /* 复合代码块的两个状态：多语言组里「带语言的围栏行」既是上一段的收尾、
+       又是下一段的开头，不能当成整块结束；声明式组（cpp …|python …）里
+       第 N-1 个裸围栏同样只是分段。fenceLeft 记录本组还剩几段没走完。 */
+    var fenceLeft = 1, fenceDecl = false, fenceLang = false;
     function collapse(s) {
       /* 双美元行内公式也要整段保护：表格行里的 $$O(n^2)$$ 不会被压掉空格 */
       return s.replace(/(`[^`\n]*`|\$\$[^$\n]+\$\$|\$[^$\n]+\$)|( {2,})/g, function (m, keep) {
@@ -1299,12 +1303,31 @@
       var ln = lines[i], f = tidyFence(ln);
       if (fence) {
         if (fenceClose(ln, fence.ch, fence.n)) {
+          var nf = tidyFence(ln);
+          /* ① 多语言组：围栏行带语言（```python）＝换段，不是收块；
+             ② 声明式组：本组还剩多段时，裸围栏也只是分段。
+             不区分这两种情况的话，第一段收尾处整块就被关掉了，
+             后面的代码行会掉进正文清洗里被抹掉缩进，而且再往后的围栏
+             全部错位一格（正文被当成代码、代码被当成正文）。 */
+          var seg = fenceDecl ? fenceLeft > 1
+            : (fenceLang && nf && /^[A-Za-z][\w+#.-]*(\s|$)/.test(nf.meta || ''));
+          if (seg) {
+            flushFence();
+            if (nf) fenceBase = leadWidth(nf.lead);
+            out.push(ln.replace(/^[ \t\u3000]+/, ''));
+            if (fenceDecl) fenceLeft--;
+            blank = 0; continue;
+          }
           flushFence(); out.push(ln.replace(/^[ \t\u3000]+/, '')); fence = null;
         } else fenceBuf.push(ln);
         blank = 0; continue;
       }
       if (f) {
         fence = f; fenceBase = leadWidth(f.lead);
+        /* 竖线是声明式的分段描述：段数＝竖线分出的段数，其余按多语言组处理 */
+        var pipeN = f.meta.indexOf('|') >= 0 ? f.meta.split('|').length : 0;
+        fenceDecl = pipeN > 1; fenceLeft = fenceDecl ? pipeN : 1;
+        fenceLang = !!f.meta;
         out.push(ln.replace(/^[ \t\u3000]+/, ''));
         fenceBuf = []; blank = 0; continue;
       }

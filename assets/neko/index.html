@@ -217,7 +217,9 @@ function bodyUpT(g){
 function headT(g){
   const ax = P.ParamAngleX / 100, ay = P.ParamAngleY / 100, az = P.ParamAngleZ / 100;
   g.translate(NECK.x + ax * 26, NECK.y - ay * 22);
-  g.rotate(az * 0.14 + ax * 0.05);
+  /* 歪头（roll）原来只乘 0.14，ParamAngleZ=25 时头部才转 2°，肉眼几乎看不出；
+     放大到 0.5，同样参数是 7° 上下，歪头一眼就能看见。左右转头（ax）仍按 0.05 轻微带一点。 */
+  g.rotate(az * 0.5 + ax * 0.05);
   g.scale(1 - Math.abs(ax) * 0.05, 1 + ay * 0.025);
   g.translate(-NECK.x, -NECK.y);
 }
@@ -269,9 +271,13 @@ function tailBend(i){
   b += lift * (j === 0 ? 0.130 : 0.0235);
   /* 卷曲：越靠尾尖越强，形成向内收卷 */
   b += -curl * (0.006 + 0.048 * u * u);
-  /* 摆动 / 摇尾：沿链传播的行波，净位移小、柔软感强 */
-  b += sway * 0.016 * Math.sin(j * 0.62 - st.t * 1.9) * (0.30 + 0.70 * u);
-  b += st.tailWag * 0.024 * Math.sin(j * 0.58 - st.t * 2.3) * u;
+  /* 摆动 / 摇尾：整条尾巴同向摆的行波。
+     以前两条正弦各自带相位差、波长又短，一正一负互相抵消，尾尖实际只挪 2~4px，
+     肉眼看就是「尾巴没动」。现在改成一条统一的行波：波长为整条尾巴的 0.75 个周期，
+     各关节同向叠加，再从尾根向尾尖放大，尾尖的位移才是真的看得见。
+     底数 0.004 让尾巴始终有一点点呼吸感，不会在 wagAmt 落回 0 时完全僵住。 */
+  const amp = 0.004 + Math.abs(sway) * 0.008 + st.tailWag * 0.005;
+  b += amp * Math.sin(st.t * 2.15 - j * 0.30) * (0.40 + 0.60 * u);
   return b;
 }
 

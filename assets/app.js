@@ -755,7 +755,13 @@
     { id: 'consolas', name: 'Consolas', label: '代码字体' },
     { id: 'maple', name: 'JetBrains Maple Mono', label: '代码字体' }
   ];
-  var FONT_CN_OPTS = [{ id: 'default', name: '默认', label: '中文字体' }];
+  /* 中文字体首项是具体字体 PingFang SC（默认），选「默认」才回到系统中文栈。
+     没有这套字形的设备（Windows / Android）按栈顺序回落到雅黑 / 思源黑，
+     观感接近，不会出现方块字。 */
+  var FONT_CN_OPTS = [
+    { id: 'default', name: '默认', label: '中文字体' },
+    { id: 'pingfang', name: 'PingFang SC', label: '中文字体' }
+  ];
   var FONT_TEX_OPTS = [
     { id: 'default', name: '默认', label: 'LaTeX 字体' },
     { id: 'cm', name: 'Computer Modern', label: 'LaTeX 字体' },
@@ -776,7 +782,7 @@
   }
   function readFont(kind) {
     var v = null, def = kind === 'code' ? 'maple' : kind === 'en' ? 'jbmono' :
-      kind === 'tex' ? 'cm' : 'default';
+      kind === 'tex' ? 'cm' : 'pingfang';
     try { v = window.localStorage ? window.localStorage.getItem('zb-font-' + kind) : null; } catch (e) {}
     var opts = fontOpts(kind);
     for (var i = 0; i < opts.length; i++) if (opts[i].id === v) return v;
@@ -979,7 +985,8 @@
         '" data-roll-mode' + (on ? ' checked' : '') + '><span><b>' + o[1] + '</b>' +
         (o[0] === 'part' ? '<i>默认</i>' : '') + '<i>' + o[2] + '</i></span></label>';
     }).join('');
-    var fontNote = '代码字体选 JetBrains Maple Mono 时，代码里的中文也用它' +
+    var fontNote = '中文字体默认 PingFang SC，本机没装这套字形时按雅黑 / 思源黑顺序回落到最接近的观感；选「默认」则完全交给系统中文栈。' +
+      '代码字体选 JetBrains Maple Mono 时，代码里的中文也用它' +
       '（该字体自带中文字形）；选「默认」或 Consolas 时，代码里的中文按上面「中文字体」的设置显示。' +
       '英文字体里的 JetBrains Mono 只有英文字形，选它时页面中文仍按「中文字体」显示；' +
       '英文字体初始默认为 JetBrains Mono；选项按字典序排列。' +
@@ -2956,18 +2963,17 @@
         stopNekoEvt(e);
         var fed = nekoFeed();
         if (!fed.ok) {
-          /* 5 个饱腹同时在线：不收，也不再计数，只说明吃撑了要歇一会儿 */
-          nekoSay('唔…已经吃了五个啦，肚子鼓鼓的，让我歇一分钟再吃好不好喵。', 5200,
-            '现在有 5 个小鱼干在饱腹中 · 大约 ' + fed.wait + ' 秒后能再吃一个');
+          /* 5 个饱腹同时在线：不收，也不再计数，只说明吃撑了要歇一会儿。
+             小字只留给「这是第几个」，拒绝时没有新的一份，就不再挂小字。 */
+          nekoSay('唔…已经吃了五个啦，肚子鼓鼓的，让我歇一分钟再吃好不好喵。', 5200);
           var sapi = nekoApi();
           if (sapi && sapi.emotion) { try { sapi.emotion('sleepy', 400); } catch (err) {} }
           return;
         }
         var lines = ['嗷呜！小鱼干最好吃了喵！', '呼噜噜…本喵勉为其难收下了。', '再来一条！再来一条喵！',
                      '唔…今天的小鱼干有点咸喵。', '吃饱了才有力气摇尾巴喵！', '谢谢投喂，摸摸头可以，但别摸尾巴。'];
-        var note = '这是她吃的第 ' + fed.n + ' 个小鱼干';
-        if (fed.active > 1) note += ' · 现在有 ' + fed.active + ' 个在饱腹中，每个管一分钟';
-        nekoSay(lines[Math.floor(Math.random() * lines.length)], 4600, note);
+        nekoSay(lines[Math.floor(Math.random() * lines.length)], 4600,
+          '这是她吃的第 ' + fed.n + ' 个小鱼干');
         var api = nekoApi();
         if (api && api.touch) { try { api.touch(); } catch (err) {} }
         if (api && api.emotion) {
@@ -3185,6 +3191,8 @@
   function nekoBubbleLive() {
     var el = document.getElementById('neko-bubble');
     if (!el || el.hidden) return;
+    /* 收尾比第一帧还快时，这里会晚于 fit 执行，把流式那套锁宽 / 封高又装回去 */
+    if (nekoChat.phase !== 'stream') return;
     var b = nekoBubbleBox();
     var w = Math.min(NEKO_LIVE_WIDTH, b.limit);
     el.classList.add('no-morph');
@@ -3207,9 +3215,13 @@
     if (!el || el.hidden) return;
     if (animate && nekoChat.morph) { try { nekoChat.morph.cancel(); } catch (e0) {} nekoChat.morph = null; }
     var before = animate ? (fromRect || el.getBoundingClientRect()) : null;
-    /* 收尾这一趟要允许过渡，前面流式阶段是锁死的 */
-    el.classList.remove('no-morph');
+    /* 量尺寸期间必须把过渡关掉：max-width / max-height 正在走 .34s 过渡时，
+       getBoundingClientRect 拿到的是「过渡中途」的尺寸，逐档量宽会全部量错——
+       于是排版按错的宽度定稿，收尾后框还是原来那么大、里面得再滚一遍。
+       量完在函数末尾再把 no-morph 摘掉，尺寸变化交给 WAAPI 补间。 */
+    el.classList.add('no-morph');
     el.style.removeProperty('width');   /* 放开流式期间钉住的宽度，重新按内容量一次 */
+    el.style.removeProperty('bottom');  /* 上一条若往下借过位，先回到猫头顶 */
     nekoChat.wMax = 0;
     var b = nekoBubbleBox(), vw = b.vw, pad = b.pad, limit = b.limit;
     el.style.setProperty('--neko-bubble-dx', '0px');
@@ -3217,16 +3229,36 @@
     el.style.removeProperty('overflow-y');
     el.classList.remove('is-scroll');
     var r = el.getBoundingClientRect();
-    var avail = Math.max(80, r.bottom - pad);
+    var vh = window.innerHeight || 768;
+    var anchorBottom = r.bottom;             /* 气泡底边：小尖角指着猫头顶 */
+    var avail = Math.max(80, anchorBottom - pad);          /* 猫头顶到视口上沿 */
+    var roomBelow = Math.max(0, vh - pad - anchorBottom);  /* 还能往下借多少（最多贴到视口底） */
     var i, w = 0;
-    for (i = 0; i < NEKO_BUBBLE_WIDTHS.length; i++) {
-      w = Math.min(NEKO_BUBBLE_WIDTHS[i], limit);
+    /* 加宽从「流式期间已经在用的宽度」起步：只涨不缩，
+       否则短回复收尾时会从 420 收成 250，看着像框突然缩了一下。
+       还不装得下就一直加到视口宽度上限（880 之外还有一档）。 */
+    var widths = NEKO_BUBBLE_WIDTHS.filter(function (x) { return x >= NEKO_LIVE_WIDTH; });
+    if (!widths.length) widths = [NEKO_BUBBLE_WIDTHS[0]];
+    if (limit > widths[widths.length - 1]) widths.push(limit);
+    for (i = 0; i < widths.length; i++) {
+      w = Math.min(widths[i], limit);
       el.style.maxWidth = w + 'px';
       r = el.getBoundingClientRect();
       if (r.height <= avail || w >= limit) break;
     }
+    /* 加满宽还是装不下：整块往下挪，把猫身后那截空间也用上，
+       高度上限随之涨到「整屏减两圈留白」。宁可暂时压住小猫，也要让整段回复一屏读完，
+       不再出现「框固定大小、里面还得再滚一遍」的情况。 */
     if (r.height > avail) {
-      el.style.maxHeight = Math.round(avail) + 'px';
+      var extra = Math.min(r.height - avail, roomBelow);
+      if (extra > 0) {
+        el.style.bottom = 'calc(100% + 10px - ' + Math.round(extra) + 'px)';
+        r = el.getBoundingClientRect();
+      }
+    }
+    var cap = Math.max(avail, vh - pad * 2);
+    if (r.height > cap) {
+      el.style.maxHeight = Math.round(cap) + 'px';
       el.style.overflowY = 'auto';
       /* 内部滚动时小尖角会跟着内容滚走，干脆收起来 */
       el.classList.add('is-scroll');
@@ -3251,6 +3283,8 @@
         });
       } catch (e2) { nekoChat.morph = null; }
     }
+    /* 尺寸已经按内容定稿，把过渡放回来：下一轮（流式 / 兜底重排）才需要它 */
+    el.classList.remove('no-morph');
   }
   /* 输入框与气泡共用同一条竖轴（猫容器中线）：正常情况下零横移，
      只有极窄屏下宽度被 min-width 撑开、又贴着视口边缘时才临时挪一点 */
@@ -3577,6 +3611,7 @@
     nekoChat.phase = 'stream';
     nekoChat.wMax = 0;
     el.style.removeProperty('width');
+    el.style.removeProperty('bottom');   /* 上一条长回复可能往下借过位，新一句要从猫头顶重新起 */
     el.style.removeProperty('--neko-bubble-dx');
     nekoBubbleText('·');
     nekoBubbleNote('');
@@ -4468,8 +4503,10 @@
     if (!dragging && now > L.guard && now > L.hdAt) {
       var pick = Math.random();
       if (pick < 0.40) {                       /* 歪头：最像活人的一个动作 */
-        L.hdT.az = (Math.random() < 0.5 ? -1 : 1) * (0.18 + Math.random() * 0.10);
-        L.hdT.ax = (Math.random() - 0.5) * 0.16;
+        /* 只歪不转：az 提到 0.24~0.38（模型里 ×0.5 后约 7~11°），
+           ax 收小，避免同时扭头、把「歪头」看成「转过去」 */
+        L.hdT.az = (Math.random() < 0.5 ? -1 : 1) * (0.24 + Math.random() * 0.14);
+        L.hdT.ax = (Math.random() - 0.5) * 0.08;
       } else if (pick < 0.72) {                /* 转头看旁边 */
         L.hdT.ax = (Math.random() < 0.5 ? -1 : 1) * (0.28 + Math.random() * 0.20);
         L.hdT.az = (Math.random() - 0.5) * 0.10;
